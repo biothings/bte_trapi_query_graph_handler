@@ -14,7 +14,6 @@ module.exports = class QEdge {
         this.predicate = info.predicate;
         this.subject = info.subject;
         this.object = info.object;
-        this.edgeReverser = reverse;
     }
 
     getID() {
@@ -44,7 +43,7 @@ module.exports = class QEdge {
             predicate = this.predicate.slice(8);
         }
         if (this.isReversed()) {
-            return this.edgeReverser.reverse(predicate);
+            return reverse.reverse(predicate);
         }
         return predicate;
     }
