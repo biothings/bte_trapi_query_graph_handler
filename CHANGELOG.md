@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v0.0.4...v0.1.0) (2021-03-12)
+
+
+### Features
+
+* :sparkles: modify entry methods ([4f3f2c9](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/4f3f2c9a73f648263144f7d198feddc68baa1217))
+
+
+### Bug Fixes
+
+* :bug: include local json files in build ([97825e1](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/97825e17a96f7a1178bb5f9768b1ea5d017aa521))
+
 ### [0.0.4](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v0.0.3...v0.0.4) (2021-03-12)
 
 
