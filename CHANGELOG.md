@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.4](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v0.0.3...v0.0.4) (2021-03-12)
+
+
+### Bug Fixes
+
+* :bug: fix wrong import path  for InValidQueryGraphError ([92115b7](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/92115b7080c6fefae309d27a60291e274a9e403f))
+
 ### [0.0.3](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v0.0.2...v0.0.3) (2021-03-12)
 
 
