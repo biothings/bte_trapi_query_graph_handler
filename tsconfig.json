@@ -13,7 +13,8 @@
     },
     "include": [
         "./src/**/*",
-        "./src/biolink.json"
+        "./src/biolink.json",
+        "./src/smartapi_specs.json"
     ],
     "exclude": [
         "node_modules",
