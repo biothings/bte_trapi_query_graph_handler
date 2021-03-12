@@ -7,11 +7,13 @@
         "rootDir": "./src",
         "declaration": true,
         "esModuleInterop": true,
+        "resolveJsonModule": true,
         "strict": false,
         "noImplicitAny": false
     },
     "include": [
-        "./src/**/*"
+        "./src/**/*",
+        "./src/biolink.json"
     ],
     "exclude": [
         "node_modules",
