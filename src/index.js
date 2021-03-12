@@ -10,31 +10,21 @@ const QueryResults = require('./query_results');
 const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error');
 const debug = require('debug')('biothings-explorer-trapi:main');
 
-module.exports = class TRAPIQueryHandler {
-    constructor(smartapiID = undefined, team = undefined, resolveOutputIDs = true) {
+exports.InvalidQueryGraphError = InvalidQueryGraphError;
+
+exports.TRAPIQueryHandler = class TRAPIQueryHandler {
+    constructor(options = {}, smartAPIPath = undefined) {
         this.logs = [];
-        this.smartapiID = smartapiID;
-        this.team = team;
-        this.resolveOutputIDs = resolveOutputIDs;
+        this.options = options;
+        this.resolveOutputIDs = (typeof this.options.enableIDResolution === "undefined") ? true : this.options.enableIDResolution;
+        this.path = smartAPIPath || path.resolve(__dirname, './smartapi_specs.json');
     }
 
-    async _loadMetaKG(smartapiID, team) {
-        const kg = new meta_kg();
-        if (smartapiID === undefined && team === undefined) {
-            debug('loading specs without smartapiID and team info.');
-            const smartapi_specs = await readFile(path.resolve(__dirname, '../../../data/smartapi_specs.json'));
-            debug('smartapi specs read from local file');
-            const data = JSON.parse(smartapi_specs);
-            debug('smartapi specs parsed into JSON from local file');
-            kg.constructMetaKGFromUserProvidedSpecs(data);
-            debug(`Total number of ops loaded: ${kg.ops.length}`);
-        }
-        if (smartapiID !== undefined) {
-            await kg.constructMetaKG(false, 'translator', smartapiID);
-        }
-        if (team !== undefined) {
-            await kg.constructMetaKG(false, 'translator', undefined, team);
-        }
+    _loadMetaKG() {
+        const kg = new meta_kg.default(this.path);
+        debug(`Query options are: ${JSON.stringify(this.options)}`);
+        debug(`SmartAPI Specs read from path: ${this.path}`);
+        kg.constructMetaKGSync(this.options);
         return kg;
     }
 
@@ -95,7 +85,7 @@ module.exports = class TRAPIQueryHandler {
     async query() {
         this._initializeResponse();
         debug('start to load metakg.');
-        const kg = await this._loadMetaKG(this.smartapiID, this.team);
+        const kg = this._loadMetaKG(this.smartapiID, this.team);
         debug('metakg successfully loaded');
         let queryPaths = this._processQueryGraph(this.queryGraph);
         debug(`query paths constructed: ${queryPaths}`);
