@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.3](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v0.0.2...v0.0.3) (2021-03-12)
+
+
+### Bug Fixes
+
+* :bug: include biolink.json file as part of the built folder ([1d08e25](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/1d08e2554660e3cf857c26e8ef2e3d0f70800ad8))
+
 ### 0.0.2 (2021-03-11)
 
 
