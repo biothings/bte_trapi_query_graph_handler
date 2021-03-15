@@ -20,10 +20,6 @@ module.exports = class QEdge {
         return this.id;
     }
 
-    setID(id) {
-        this.id = id;
-    }
-
     getHashedEdgeRepresentation() {
         const toBeHashed = this.subject.getCategory() + this.predicate + this.object.getCategory() + this.getInputCurie();
         return new helper()._generateHash(toBeHashed);
