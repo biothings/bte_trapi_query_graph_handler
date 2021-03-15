@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.2.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v0.1.1...v0.2.0) (2021-03-15)
+
+
+### Features
+
+* :sparkles: support multiple predicates ([be1adea](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/be1adea8c58a7c3ab15cd24771db67cb0df156a5))
+
 ### [0.1.1](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v0.1.0...v0.1.1) (2021-03-12)
 
 ## [0.1.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v0.0.4...v0.1.0) (2021-03-12)
