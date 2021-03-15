@@ -114,22 +114,9 @@ describe("Testing QueryNode Module", () => {
 
         test("If equivalent ids are not empty, should update the equivalent ids", () => {
             const gene_node = new QNode("n1", { category: "Gene" });
-            gene_node.equivalentIDs = {
-                "A": [
-                    {
-                        "primaryID": "b"
-                    },
-                    {
-                        "primaryID": "c"
-                    }
-                ],
-                "B": [
-                    {
-                        "primaryID": "d"
-                    }
-                ]
-            };
-            expect(gene_node.getPrimaryIDs()).toEqual(["b", "c", "d"])
+            gene_node.equivalentIDs = { "a": "b", "c": "d" };
+            gene_node.updateEquivalentIDs({ "e": "f" })
+            expect(gene_node.getEquivalentIDs()).toEqual({ "a": "b", "c": "d", "e": "f" })
         })
     })
 })
