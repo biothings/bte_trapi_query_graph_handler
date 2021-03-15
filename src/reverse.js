@@ -1,33 +1,31 @@
-const fs = require('fs');
+const bl = require("biolink-model")
 var path = require('path');
 const debug = require('debug')('biothings-explorer-trapi:EdgeReverse');
 
 class EdgeReverse {
-  constructor() {
-    if (!EdgeReverse.instance) {
-      debug('Edge Reverse class is initiated.');
-      let biolink = fs.readFileSync(path.resolve(__dirname, './biolink.json'));
-      this.data = JSON.parse(biolink);
+    constructor() {
+        if (!EdgeReverse.instance) {
+            debug('Edge Reverse class is initiated.');
+            let biolink_file = path.resolve(__dirname, './biolink.json');
+            this.biolink = new bl.BioLink();
+            this.biolink.loadSync(biolink_file);
+        }
+
+        return EdgeReverse.instance;
     }
 
-    return EdgeReverse.instance;
-  }
+    reverse(predicate) {
+        if (typeof predicate === 'string') {
+            if (predicate in this.biolink.slotTree.objects) {
+                if (this.biolink.slotTree.objects[predicate].symmetric === true) {
+                    return predicate;
+                }
+                return this.biolink.slotTree.objects[predicate].inverse;
+            }
+        }
 
-  reverse(predicate) {
-    if (typeof predicate === 'string') {
-      let modifiedPredicate = predicate.replace('_', ' ');
-      if (modifiedPredicate in this.data.slots) {
-        if (this.data.slots[modifiedPredicate].symmetric === true) {
-          return modifiedPredicate.replace(' ', '_');
-        }
-        if ('inverse' in this.data.slots[modifiedPredicate]) {
-          return this.data.slots[modifiedPredicate].inverse.replace(' ', '_');
-        }
-      }
+        return undefined;
     }
-
-    return undefined;
-  }
 }
 
 const EdgeReverseInstance = new EdgeReverse();
