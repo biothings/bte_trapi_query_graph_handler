@@ -25,4 +25,9 @@ describe("Test EdgeReverse class", () => {
         const res = reverse.reverse('haha');
         expect(res).toBeUndefined();
     })
+
+    test("if input not string, return undefined", () => {
+        const res = reverse.reverse(['dd']);
+        expect(res).toBeUndefined();
+    })
 })
