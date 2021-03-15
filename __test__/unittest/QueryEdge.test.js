@@ -84,4 +84,55 @@ describe("Test QEdge class", () => {
             expect(res).toEqual(['treated_by']);
         })
     })
+
+    describe("Test getOutputNode function", () => {
+        test("reversed edge should return the subject", () => {
+
+            const edge = new qEdge('e01', {
+                predicate: ['biolink:treats', 'biolink:targets'],
+                object: {
+                    getCurie() {
+                        return 'yes'
+                    },
+                    id() {
+                        return 1
+                    }
+                },
+                subject: {
+                    getCurie() {
+                        return undefined;
+                    },
+                    id() {
+                        return 2
+                    }
+                }
+            })
+            const res = edge.getOutputNode();
+            expect(res.id()).toEqual(2);
+        })
+
+        test("non reversed edge should return the object", () => {
+            const edge = new qEdge('e01', {
+                predicate: ['biolink:treats', 'biolink:targets'],
+                object: {
+                    getCurie() {
+                        return undefined
+                    },
+                    id() {
+                        return 1
+                    }
+                },
+                subject: {
+                    getCurie() {
+                        return 'aa';
+                    },
+                    id() {
+                        return 2
+                    }
+                }
+            })
+            const res = edge.getOutputNode();
+            expect(res.id()).toEqual(1);
+        })
+    })
 })
