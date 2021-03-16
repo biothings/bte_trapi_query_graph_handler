@@ -29,8 +29,8 @@ class BioLinkModel {
 
   getDescendantClasses(className) {
     if (className in this.biolink.classTree.objects) {
-      const descendants = this.biolink.classTree.getDescendants(className).map(entity => entity.name);
-      return [...descendants, ...[className]]
+      const descendants = this.biolink.classTree.getDescendants(className).map((entity) => entity.name);
+      return [...descendants, ...[className]];
     }
     return className;
   }

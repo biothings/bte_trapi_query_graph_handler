@@ -30,8 +30,11 @@ module.exports = class QNode {
     if (this.hasEquivalentIDs() === false) {
       const categories = utils.toArray(this.category);
       let expanded_categories = [];
-      categories.map(category => {
-        expanded_categories = [...expanded_categories, ...biolink.getDescendantClasses(utils.removeBioLinkPrefix(category))];
+      categories.map((category) => {
+        expanded_categories = [
+          ...expanded_categories,
+          ...biolink.getDescendantClasses(utils.removeBioLinkPrefix(category)),
+        ];
       });
       return utils.getUnique(expanded_categories);
     }
