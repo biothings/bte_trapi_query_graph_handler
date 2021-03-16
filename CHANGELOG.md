@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.3.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v0.2.3...v0.3.0) (2021-03-16)
+
+
+### Features
+
+* :sparkles: support traversing biolink model to find descendant classes ([4e00df1](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/4e00df17e4a6fc70be1b219eb33e4458a0c47d73))
+* :sparkles: travese biolink hierarchy when handling node category ([017bf6f](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/017bf6ffc73a737c7dca5eac5857768f7a746ae5))
+
 ### [0.2.3](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v0.2.2...v0.2.3) (2021-03-16)
 
 
