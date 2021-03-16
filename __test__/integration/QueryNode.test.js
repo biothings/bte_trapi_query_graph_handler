@@ -119,4 +119,47 @@ describe("Testing QueryNode Module", () => {
             expect(gene_node.getEquivalentIDs()).toEqual({ "a": "b", "c": "d", "e": "f" })
         })
     })
+
+    describe("Test getCategories function", () => {
+        test("If equivalent ids are empty, return itself and its descendants", () => {
+            const node = new QNode("n1", { category: "DiseaseOrPhenotypicFeature" });
+            expect(node.getCategories()).toContain("Disease");
+            expect(node.getCategories()).toContain("PhenotypicFeature");
+            expect(node.getCategories()).toContain("DiseaseOrPhenotypicFeature");
+        })
+
+        test("If equivalent ids are empty, return itself and its descendants using NamedThing as example", () => {
+            const node = new QNode("n1", { category: "NamedThing" });
+            expect(node.getCategories()).toContain("Disease");
+            expect(node.getCategories()).toContain("PhenotypicFeature");
+            expect(node.getCategories()).toContain("DiseaseOrPhenotypicFeature");
+            expect(node.getCategories()).toContain("Gene");
+            expect(node.getCategories()).toContain("NamedThing");
+        })
+
+        test("If equivalent ids are empty, return itself and its descendants using Gene as example", () => {
+            const node = new QNode("n1", { category: "Gene" });
+            expect(node.getCategories()).toEqual(["Gene"])
+        })
+
+        test("If equivalent ids are not empty, return all semantic types defined in the entity", () => {
+            const node = new QNode("n1", { category: "Gene" });
+            node.equivalentIDs = {
+                "A": [
+                    {
+                        "semanticTypes": ["m", "n"]
+                    },
+                    {
+                        "semanticTypes": ["p", "q"]
+                    }
+                ],
+                "B": [
+                    {
+                        "semanticTypes": ["x", "y"]
+                    }
+                ]
+            };
+            expect(node.getCategories()).toEqual(["m", "n", "p", "q", "x", "y"])
+        })
+    })
 })

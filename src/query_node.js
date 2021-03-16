@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const utils = require('./utils');
+const biolink = require('./biolink');
 
 module.exports = class QNode {
   /**
@@ -28,7 +29,11 @@ module.exports = class QNode {
   getCategories() {
     if (this.hasEquivalentIDs() === false) {
       const categories = utils.toArray(this.category);
-      return utils.getUnique(categories.map((category) => utils.removeBioLinkPrefix(category)));
+      let expanded_categories = [];
+      categories.map(category => {
+        expanded_categories = [...expanded_categories, ...biolink.getDescendantClasses(utils.removeBioLinkPrefix(category))];
+      });
+      return utils.getUnique(expanded_categories);
     }
     let categories = [];
     Object.values(this.equivalentIDs).map((entities) => {
