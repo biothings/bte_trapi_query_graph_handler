@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.4.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v0.3.0...v0.4.0) (2021-03-16)
+
+
+### Features
+
+* :sparkles: add log for finding smartapi edges ([589e2f8](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/589e2f895744f72daf7b6ffcfe5589cb98a89bec))
+
 ## [0.3.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v0.2.3...v0.3.0) (2021-03-16)
 
 
