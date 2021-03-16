@@ -30,4 +30,24 @@ describe("Test BioLinkModel class", () => {
         const res = biolink.reverse(['dd']);
         expect(res).toBeUndefined();
     })
+
+    describe("Test getDescendants function", () => {
+        test("if input is in biolink model, return all its desendants and itself", () => {
+            const res = biolink.getDescendantClasses('MolecularEntity');
+            expect(res).toContain("Drug");
+            expect(res).toContain("Gene");
+            expect(res).toContain("MolecularEntity");
+        })
+
+        test("if input is in biolink model but doesn't have descendants, return itself", () => {
+            const res = biolink.getDescendantClasses('Gene');
+            expect(res).toEqual(["Gene"])
+        })
+
+        test("if input is not in biolink, return itself", () => {
+            const res = biolink.getDescendantClasses('Gene1');
+            expect(res).toEqual("Gene1")
+        })
+
+    })
 })
