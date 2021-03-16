@@ -1,33 +1,33 @@
-const reverse = require("../../src/reverse");
+const biolink = require("../../src/biolink");
 
-describe("Test EdgeReverse class", () => {
+describe("Test BioLinkModel class", () => {
     test("test reverse with correct predicate", () => {
-        const res = reverse.reverse('treats');
+        const res = biolink.reverse('treats');
         expect(res).toBe("treated_by");
     })
 
     test("test reverse with correct predicate if it contains underscore", () => {
-        const res = reverse.reverse('treated_by');
+        const res = biolink.reverse('treated_by');
         expect(res).toBe("treats");
     })
 
     test("test reverse with predicate having symmetric equal to true", () => {
-        const res = reverse.reverse('correlated_with');
+        const res = biolink.reverse('correlated_with');
         expect(res).toBe("correlated_with");
     })
 
     test("test predicate with no inverse property and symmetric not equal to true", () => {
-        const res = reverse.reverse('has_phenotype');
+        const res = biolink.reverse('has_phenotype');
         expect(res).toBeUndefined();
     })
 
     test("test predicate not exist in biolink model", () => {
-        const res = reverse.reverse('haha');
+        const res = biolink.reverse('haha');
         expect(res).toBeUndefined();
     })
 
     test("if input not string, return undefined", () => {
-        const res = reverse.reverse(['dd']);
+        const res = biolink.reverse(['dd']);
         expect(res).toBeUndefined();
     })
 })

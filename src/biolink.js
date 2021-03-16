@@ -2,16 +2,16 @@ const bl = require('biolink-model');
 var path = require('path');
 const debug = require('debug')('biothings-explorer-trapi:EdgeReverse');
 
-class EdgeReverse {
+class BioLinkModel {
   constructor() {
-    if (!EdgeReverse.instance) {
-      debug('Edge Reverse class is initiated.');
+    if (!BioLinkModel.instance) {
+      debug('BioLink-model class is initiated.');
       let biolink_file = path.resolve(__dirname, './biolink.json');
       this.biolink = new bl.BioLink();
       this.biolink.loadSync(biolink_file);
     }
 
-    return EdgeReverse.instance;
+    return BioLinkModel.instance;
   }
 
   reverse(predicate) {
@@ -28,7 +28,7 @@ class EdgeReverse {
   }
 }
 
-const EdgeReverseInstance = new EdgeReverse();
-Object.freeze(EdgeReverseInstance);
+const BioLinkModelInstance = new BioLinkModel();
+Object.freeze(BioLinkModelInstance);
 
-module.exports = EdgeReverseInstance;
+module.exports = BioLinkModelInstance;
