@@ -1,7 +1,7 @@
 const helper = require('./helper');
 const debug = require('debug')('biothings-explorer-trapi:QEdge');
 const utils = require('./utils');
-const reverse = require('./reverse');
+const reverse = require('./biolink');
 
 module.exports = class QEdge {
   /**
@@ -21,7 +21,8 @@ module.exports = class QEdge {
   }
 
   getHashedEdgeRepresentation() {
-    const toBeHashed = this.subject.getCategories() + this.predicate + this.object.getCategories() + this.getInputCurie();
+    const toBeHashed =
+      this.subject.getCategories() + this.predicate + this.object.getCategories() + this.getInputCurie();
     return new helper()._generateHash(toBeHashed);
   }
 
