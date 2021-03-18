@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.6.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v0.5.0...v0.6.0) (2021-03-18)
+
+
+### Features
+
+* :sparkles: add node attributes for output nodes in kg ([506afbc](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/506afbc749e90c9f8eb2a47ed924f05dba45f1c7))
+
 ## [0.5.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v0.4.0...v0.5.0) (2021-03-18)
 
 
