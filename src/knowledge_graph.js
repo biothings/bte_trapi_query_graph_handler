@@ -34,22 +34,20 @@ module.exports = class KnowledgeGraph {
       ],
     };
     const additional_attributes = helper._getInputAttributes(record);
-    if (!(typeof additional_attributes === "undefined")) {
+    if (!(typeof additional_attributes === 'undefined')) {
       for (const key in additional_attributes) {
-        res.attributes.push(
-          {
-            name: key,
-            value: additional_attributes[key],
-            type: 'bts:' + key
-          }
-        )
+        res.attributes.push({
+          name: key,
+          value: additional_attributes[key],
+          type: 'bts:' + key,
+        });
       }
     }
     return res;
   }
 
   _createOutputNode(record) {
-    return {
+    const res = {
       category: 'biolink:' + helper._getOutputCategory(record),
       name: helper._getOutputLabel(record),
       attributes: [
@@ -60,6 +58,17 @@ module.exports = class KnowledgeGraph {
         },
       ],
     };
+    const additional_attributes = helper._getOutputAttributes(record);
+    if (!(typeof additional_attributes === 'undefined')) {
+      for (const key in additional_attributes) {
+        res.attributes.push({
+          name: key,
+          value: additional_attributes[key],
+          type: 'bts:' + key,
+        });
+      }
+    }
+    return res;
   }
 
   _createAttributes(record) {
