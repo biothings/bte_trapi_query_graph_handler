@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.7.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v0.6.0...v0.7.0) (2021-03-18)
+
+
+### Features
+
+* :sparkles: add num_of_participants property for pathway ([dc8ceca](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/dc8cecaddcf04a2803189d6ebe7822dabbec36ad))
+
 ## [0.6.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v0.5.0...v0.6.0) (2021-03-18)
 
 
