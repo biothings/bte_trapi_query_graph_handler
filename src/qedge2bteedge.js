@@ -57,10 +57,8 @@ module.exports = class QEdge2BTEEdgeHandler {
         new LogEntry(
           'DEBUG',
           null,
-          `BTE found ${
-            smartapi_edges.length
-          } smartapi edges corresponding to ${qEdge.getID()}. These smartaip edges comes from ${
-            new Set(this._findAPIsFromSmartAPIEdges(smartapi_edges)).size
+          `BTE found ${smartapi_edges.length
+          } smartapi edges corresponding to ${qEdge.getID()}. These smartaip edges comes from ${new Set(this._findAPIsFromSmartAPIEdges(smartapi_edges)).size
           } unique APIs. They are ${Array.from(new Set(this._findAPIsFromSmartAPIEdges(smartapi_edges))).join(',')}`,
         ).getLog(),
       );
@@ -77,7 +75,7 @@ module.exports = class QEdge2BTEEdgeHandler {
     const bteEdges = [];
     const inputID = smartAPIEdge.association.input_id;
     const inputType = smartAPIEdge.association.input_type;
-    const resolvedIDs = smartAPIEdge.reasoner_edge.getSubject().getEquivalentIDs();
+    const resolvedIDs = smartAPIEdge.reasoner_edge.input_equivalent_identifiers;
     for (const curie in resolvedIDs) {
       resolvedIDs[curie].map((entity) => {
         if (entity.semanticType === inputType && inputID in entity.dbIDs) {
@@ -118,7 +116,7 @@ module.exports = class QEdge2BTEEdgeHandler {
     const input_resolved_identifiers = {};
     const inputID = smartAPIEdge.association.input_id;
     const inputType = smartAPIEdge.association.input_type;
-    let resolvedIDs = smartAPIEdge.reasoner_edge.getSubject().getEquivalentIDs();
+    let resolvedIDs = smartAPIEdge.reasoner_edge.input_equivalent_identifiers;
     debug(`Resolved ids: ${JSON.stringify(resolvedIDs)}`);
     debug(`Input id: ${inputID}`);
     for (const curie in resolvedIDs) {

@@ -239,7 +239,7 @@ describe("Test helper moduler", () => {
                 }
             }
             const res = helper._getAPI(record);
-            expect(res).toEqual('')
+            expect(res).toBeUndefined;
         })
     })
 
@@ -261,7 +261,7 @@ describe("Test helper moduler", () => {
                 }
             }
             const res = helper._getAPI(record);
-            expect(res).toEqual('')
+            expect(res).toBeUndefined;
         })
     })
 
@@ -284,7 +284,7 @@ describe("Test helper moduler", () => {
                 }
             }
             const res = helper._getSource(record);
-            expect(res).toEqual('')
+            expect(res).toBeUndefined;
         })
     })
 
