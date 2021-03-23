@@ -1,6 +1,6 @@
 const QNode = require('./query_node');
 const QEdge = require('./query_edge');
-const QExecEdge = require("./query_execution_edge");
+const QExecEdge = require('./query_execution_edge');
 const _ = require('lodash');
 const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error');
 const LogEntry = require('./log_entry');
@@ -86,16 +86,18 @@ module.exports = class QueryGraphHandler {
     this._validate(this.queryGraph);
     const paths = {};
     let current_graph = this._findFirstLevelEdges();
-    paths[0] = current_graph.map(item => item.edge);
+    paths[0] = current_graph.map((item) => item.edge);
     for (let i = 1; i < MAX_DEPTH + 1; i++) {
       current_graph = this._findNextLevelEdges(current_graph);
       if (current_graph.length > 0 && i === MAX_DEPTH) {
-        throw new InvalidQueryGraphError(`Your Query Graph exceeds the maximum query depth set in bte, which is ${MAX_DEPTH}`);
+        throw new InvalidQueryGraphError(
+          `Your Query Graph exceeds the maximum query depth set in bte, which is ${MAX_DEPTH}`,
+        );
       }
       if (current_graph.length === 0) {
         break;
       }
-      paths[i] = current_graph.map(item => item.edge);
+      paths[i] = current_graph.map((item) => item.edge);
     }
     this.logs.push(
       new LogEntry(
@@ -122,15 +124,15 @@ module.exports = class QueryGraphHandler {
         result.push({
           current_node: objectNode,
           edge: new QExecEdge(this.edges[edge_id], false, undefined),
-          path_source_node: subjectNode
+          path_source_node: subjectNode,
         });
       }
       if (objectNode.hasInput()) {
         result.push({
           current_node: subjectNode,
           edge: new QExecEdge(this.edges[edge_id], true, undefined),
-          path_source_node: objectNode
-        })
+          path_source_node: objectNode,
+        });
       }
     }
     return result;
@@ -148,14 +150,14 @@ module.exports = class QueryGraphHandler {
             result.push({
               current_node: edge.object,
               edge: new QExecEdge(edge, false, grp.edge),
-              path_source_node: grp.path_source_node
-            })
+              path_source_node: grp.path_source_node,
+            });
           } else if (edge.object.getID() === grp.current_node.getID()) {
             result.push({
               current_node: edge.subject,
               edge: new QExecEdge(edge, true, grp.edge),
-              path_source_node: grp.path_source_node
-            })
+              path_source_node: grp.path_source_node,
+            });
           }
         }
       }
