@@ -40,6 +40,15 @@ module.exports = class QueryGraphHandler {
     this._validateNodeEdgeCorrespondence(queryGraph);
   }
 
+  _modify(queryGraph) {
+    Object.keys(queryGraph.nodes).map(nodeID => {
+      if (queryGraph.nodes[nodeID].category === "biolink:Drug") {
+        queryGraph.nodes[nodeID].category = ["biolink:Drug", "biolink:ChemicalSubstance"]
+      }
+    })
+    return queryGraph;
+  }
+
   /**
    * @private
    */
@@ -83,6 +92,7 @@ module.exports = class QueryGraphHandler {
    */
   createQueryPaths() {
     this._validate(this.queryGraph);
+    this.queryGraph = this._modify(this.queryGraph);
     let paths = {};
     let FirstLevelEdges = this._findFirstLevelEdges();
     paths[0] = FirstLevelEdges.paths;
