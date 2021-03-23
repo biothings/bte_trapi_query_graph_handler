@@ -1,5 +1,6 @@
 const QNode = require('./query_node');
 const QEdge = require('./query_edge');
+const QExecEdge = require("./query_execution_edge");
 const _ = require('lodash');
 const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error');
 const LogEntry = require('./log_entry');
@@ -83,17 +84,18 @@ module.exports = class QueryGraphHandler {
    */
   createQueryPaths() {
     this._validate(this.queryGraph);
-    let paths = {};
-    let FirstLevelEdges = this._findFirstLevelEdges();
-    paths[0] = FirstLevelEdges.paths;
-    let output_nodes = FirstLevelEdges.output_nodes;
-    for (let i = 1; i < MAX_DEPTH; i++) {
-      let ithLevelEdges = this._findNextLevelEdges(output_nodes);
-      output_nodes = ithLevelEdges.output_nodes;
-      if (output_nodes.length === 0) {
+    const paths = {};
+    let current_graph = this._findFirstLevelEdges();
+    paths[0] = current_graph.map(item => item.edge);
+    for (let i = 1; i < MAX_DEPTH + 1; i++) {
+      current_graph = this._findNextLevelEdges(current_graph);
+      if (current_graph.length > 0 && i === MAX_DEPTH) {
+        throw new InvalidQueryGraphError(`Your Query Graph exceeds the maximum query depth set in bte, which is ${MAX_DEPTH}`);
+      }
+      if (current_graph.length === 0) {
         break;
       }
-      paths[i] = ithLevelEdges.paths;
+      paths[i] = current_graph.map(item => item.edge);
     }
     this.logs.push(
       new LogEntry(
@@ -112,21 +114,23 @@ module.exports = class QueryGraphHandler {
     if (this.edges === undefined) {
       this.edges = this._storeEdges();
     }
-    let result = {
-      paths: [],
-      output_nodes: [],
-    };
-    for (let edge_id in this.edges) {
-      let subjectNode = this.edges[edge_id].getSubject();
-      let objectNode = this.edges[edge_id].getObject();
+    const result = [];
+    for (const edge_id in this.edges) {
+      const subjectNode = this.edges[edge_id].subject;
+      const objectNode = this.edges[edge_id].object;
       if (subjectNode.hasInput()) {
-        result.paths.push(this.edges[edge_id]);
-        result.output_nodes.push(objectNode);
-        continue;
+        result.push({
+          current_node: objectNode,
+          edge: new QExecEdge(this.edges[edge_id], false, undefined),
+          path_source_node: subjectNode
+        });
       }
       if (objectNode.hasInput()) {
-        result.paths.push(this.edges[edge_id]);
-        result.output_nodes.push(subjectNode);
+        result.push({
+          current_node: subjectNode,
+          edge: new QExecEdge(this.edges[edge_id], true, undefined),
+          path_source_node: objectNode
+        })
       }
     }
     return result;
@@ -135,21 +139,25 @@ module.exports = class QueryGraphHandler {
   /**
    * @private
    */
-  _findNextLevelEdges(input_nodes) {
-    if (this.edges === undefined) {
-      this.edges = this._storeEdges();
-    }
-    let result = {
-      paths: [],
-      output_nodes: [],
-    };
-    const input_node_ids = input_nodes.map((item) => item.getID());
-    for (const edge_id in this.edges) {
-      let subjectNode = this.edges[edge_id].getSubject();
-      let objectNode = this.edges[edge_id].getObject();
-      if (input_node_ids.includes(subjectNode.getID())) {
-        result.paths.push(this.edges[edge_id]);
-        result.output_nodes.push(objectNode);
+  _findNextLevelEdges(groups) {
+    const result = [];
+    for (const edge of Object.values(this.edges)) {
+      for (const grp of groups) {
+        if (edge.getID() !== grp.edge.getID()) {
+          if (edge.subject.getID() === grp.current_node.getID()) {
+            result.push({
+              current_node: edge.object,
+              edge: new QExecEdge(edge, false, grp.edge),
+              path_source_node: grp.path_source_node
+            })
+          } else if (edge.object.getID() === grp.current_node.getID()) {
+            result.push({
+              current_node: edge.subject,
+              edge: new QExecEdge(edge, true, grp.edge),
+              path_source_node: grp.path_source_node
+            })
+          }
+        }
       }
     }
     return result;
