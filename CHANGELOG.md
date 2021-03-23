@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.8.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v0.7.0...v0.8.0) (2021-03-23)
+
+
+### Features
+
+* :sparkles: add chemicalsubstance node when user specify drug as output ([ffb81b3](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/ffb81b3f9397bd325ca38f3242f5cd110c03b288))
+
 ## [0.7.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v0.6.0...v0.7.0) (2021-03-18)
 
 
