@@ -5,10 +5,11 @@ const util = require('util');
 const readFile = util.promisify(fs.readFile);
 const BatchEdgeQueryHandler = require('./batch_edge_query');
 const QueryGraph = require('./query_graph');
-const KnowledgeGraph = require('./knowledge_graph');
+const KnowledgeGraph = require('./graph/knowledge_graph');
 const QueryResults = require('./query_results');
 const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error');
 const debug = require('debug')('biothings-explorer-trapi:main');
+const Graph = require('./graph/graph');
 
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 
@@ -30,6 +31,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   }
 
   getResponse() {
+    this.bteGraph.notify();
     return {
       message: {
         query_graph: this.queryGraph,
@@ -51,6 +53,8 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   _initializeResponse() {
     this.knowledgeGraph = new KnowledgeGraph();
     this.queryResults = new QueryResults();
+    this.bteGraph = new Graph();
+    this.bteGraph.subscribe(this.knowledgeGraph);
   }
 
   /**
@@ -77,8 +81,8 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     for (const index in queryPaths) {
       handlers[index] = new BatchEdgeQueryHandler(kg, this.resolveOutputIDs);
       handlers[index].setEdges(queryPaths[index]);
-      handlers[index].subscribe(this.knowledgeGraph);
       handlers[index].subscribe(this.queryResults);
+      handlers[index].subscribe(this.bteGraph);
     }
     return handlers;
   }

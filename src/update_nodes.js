@@ -42,21 +42,25 @@ module.exports = class NodesUpdateHandler {
 
   async setEquivalentIDs(qEdges) {
     const curies = this._getCuries(this.qEdges);
-    if (curies.length === 0) {
+    if (Object.keys(curies).length === 0) {
+      debug(`update nodes based on previous query results!`);
+      qEdges.map((edge) => {
+        edge.input_equivalent_identifiers = edge.prev_edge.output_equivalent_identifiers;
+      });
       return;
     }
     debug(`curies: ${JSON.stringify(curies)}`);
     const equivalentIDs = await this._getEquivalentIDs(curies);
     qEdges.map((edge) => {
       debug(`Edge input curie is ${edge.getInputCurie()}`);
-      let edgeEquivalentIDs = Object.keys(equivalentIDs)
+      const edgeEquivalentIDs = Object.keys(equivalentIDs)
         .filter((key) => edge.getInputCurie().includes(key))
         .reduce((res, key) => {
           return { ...res, [key]: equivalentIDs[key] };
         }, {});
       debug(`Edge Equivalent IDs are: ${JSON.stringify(edgeEquivalentIDs)}`);
       if (Object.keys(edgeEquivalentIDs).length > 0) {
-        edge.getSubject().setEquivalentIDs(edgeEquivalentIDs);
+        edge.input_equivalent_identifiers = edgeEquivalentIDs;
       }
     });
     return;
@@ -77,28 +81,16 @@ module.exports = class NodesUpdateHandler {
    * @param {object} queryResult - query response
    */
   update(queryResult) {
-    debug('update nodes now!');
-    const node_dict = {};
-    const id_dict = {};
     // queryResult.map(record => {
     //     record.$edge_metadata.trapi_qEdge_obj.getOutputNode().updateEquivalentIDs(
     //         this._createEquivalentIDsObject(record)
     //     );
     // })
-    debug(`queryResult, ${queryResult}`);
     queryResult.map((record) => {
-      const nodeID = record.$edge_metadata.trapi_qEdge_obj.getOutputNode().getID();
-      if (!(nodeID in id_dict)) {
-        id_dict[nodeID] = {};
-        node_dict[nodeID] = record.$edge_metadata.trapi_qEdge_obj.getOutputNode();
-      }
-      debug(`output obj record: ${JSON.stringify(record.$output.obj[0].primaryID)}`);
-      if (!(record.$output.obj[0].primaryID in id_dict[nodeID])) {
-        id_dict[nodeID][record.$output.obj[0].primaryID] = record.$output.obj;
+      if (!(record.$output.obj[0].primaryID in record.$edge_metadata.trapi_qEdge_obj.output_equivalent_identifiers)) {
+        record.$edge_metadata.trapi_qEdge_obj.output_equivalent_identifiers[record.$output.obj[0].primaryID] =
+          record.$output.obj;
       }
     });
-    for (const nodeID in id_dict) {
-      node_dict[nodeID].updateEquivalentIDs(id_dict[nodeID]);
-    }
   }
 };

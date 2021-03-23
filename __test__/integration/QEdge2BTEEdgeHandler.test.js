@@ -82,37 +82,4 @@ describe("Testing NodeUpdateHandler Module", () => {
         })
     })
 
-    describe("Testing setEquivalentIDs function", () => {
-        test("test edge with one curie input should be annotated", async () => {
-            const node = new QNode("n1", { category: "Gene", id: "NCBIGene:1017" });
-            const edge = new QEdge("e01", { subject: node, object: chemical_node1 });
-            const nodeUpdater = new NodeUpdateHandler([edge]);
-            expect(node.hasEquivalentIDs()).toBeFalsy();
-            const res = await nodeUpdater.setEquivalentIDs([edge]);
-            expect(node.hasEquivalentIDs()).toBeTruthy();
-        })
-
-        test("test edge with multiple curie input should be annotated", async () => {
-            const node = new QNode("n1", { category: "Gene", id: ["NCBIGene:1017", "NCBIGene:1018"] });
-            const edge = new QEdge("e01", { subject: node, object: chemical_node1 });
-            const nodeUpdater = new NodeUpdateHandler([edge]);
-            expect(node.hasEquivalentIDs()).toBeFalsy();
-            const res = await nodeUpdater.setEquivalentIDs([edge]);
-            expect(node.hasEquivalentIDs()).toBeTruthy();
-            expect(node.getEquivalentIDs()).toHaveProperty("NCBIGene:1017");
-            expect(node.getEquivalentIDs()).toHaveProperty("NCBIGene:1018");
-        })
-
-        test("test edge with one curie input on object end return an array of one", async () => {
-            const node = new QNode("n1", { category: "Gene", id: "NCBIGene:1017" });
-            const edge = new QEdge("e01", { object: node, subject: chemical_node1 });
-            const nodeUpdater = new NodeUpdateHandler([edge]);
-            expect(node.hasEquivalentIDs()).toBeFalsy();
-            const res = await nodeUpdater.setEquivalentIDs([edge]);
-            expect(node.hasEquivalentIDs()).toBeTruthy();
-            expect(node.getEquivalentIDs()).toHaveProperty("NCBIGene:1017");
-            expect(chemical_node1.hasEquivalentIDs()).toBeFalsy();
-        })
-
-    })
 })
