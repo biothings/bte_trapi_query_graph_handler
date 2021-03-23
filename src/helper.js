@@ -37,11 +37,19 @@ module.exports = class QueryGraphHelper {
   }
 
   _getAPI(record) {
-    return record.$edge_metadata.api_name || '';
+    return record.$edge_metadata.api_name || undefined;
   }
 
   _getSource(record) {
-    return record.$edge_metadata.source || '';
+    return record.$edge_metadata.source || undefined;
+  }
+
+  _getPublication(record) {
+    return record.$edge_metadata.publications || undefined;
+  }
+
+  _getKGEdgeID(record) {
+    return [this._getInputID(record), this._getPredicate(record), this._getOutputID(record)].join('-');
   }
 
   _createUniqueEdgeID(record) {
