@@ -41,11 +41,11 @@ module.exports = class QueryGraphHandler {
   }
 
   _modify(queryGraph) {
-    Object.keys(queryGraph.nodes).map(nodeID => {
-      if (queryGraph.nodes[nodeID].category === "biolink:Drug") {
-        queryGraph.nodes[nodeID].category = ["biolink:Drug", "biolink:ChemicalSubstance"]
+    Object.keys(queryGraph.nodes).map((nodeID) => {
+      if (queryGraph.nodes[nodeID].category === 'biolink:Drug') {
+        queryGraph.nodes[nodeID].category = ['biolink:Drug', 'biolink:ChemicalSubstance'];
       }
-    })
+    });
     return queryGraph;
   }
 
