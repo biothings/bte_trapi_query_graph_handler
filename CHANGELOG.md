@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.3](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.1.2...v1.1.3) (2021-03-24)
+
+
+### Bug Fixes
+
+* :bug: fix missing biolink prefix ([0700e71](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/0700e7149f1c9d3a25b7db67dd46d8c9e7d66f2c))
+
 ### [1.1.2](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.1.1...v1.1.2) (2021-03-24)
 
 
