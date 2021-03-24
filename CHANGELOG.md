@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.4](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.1.3...v1.1.4) (2021-03-24)
+
+
+### Bug Fixes
+
+* :bug: fix wrong edge id in results section ([a31c7eb](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/a31c7eb62005663940558d3be2d854f7debc8f67))
+
 ### [1.1.3](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.1.2...v1.1.3) (2021-03-24)
 
 
