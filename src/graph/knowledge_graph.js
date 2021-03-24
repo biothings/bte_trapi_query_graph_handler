@@ -62,6 +62,7 @@ module.exports = class KnowledgeGraph {
         return res;
     }
 
+
     _createAttributes(kgEdge) {
         const attributes = [
             {
@@ -89,6 +90,7 @@ module.exports = class KnowledgeGraph {
         }
         return attributes;
     }
+
 
     _createEdge(kgEdge) {
         return {
