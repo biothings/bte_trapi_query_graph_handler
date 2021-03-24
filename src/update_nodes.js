@@ -44,9 +44,9 @@ module.exports = class NodesUpdateHandler {
     const curies = this._getCuries(this.qEdges);
     if (Object.keys(curies).length === 0) {
       debug(`update nodes based on previous query results!`);
-      qEdges.map(edge => {
+      qEdges.map((edge) => {
         edge.input_equivalent_identifiers = edge.prev_edge.output_equivalent_identifiers;
-      })
+      });
       return;
     }
     debug(`curies: ${JSON.stringify(curies)}`);
@@ -88,7 +88,8 @@ module.exports = class NodesUpdateHandler {
     // })
     queryResult.map((record) => {
       if (!(record.$output.obj[0].primaryID in record.$edge_metadata.trapi_qEdge_obj.output_equivalent_identifiers)) {
-        record.$edge_metadata.trapi_qEdge_obj.output_equivalent_identifiers[record.$output.obj[0].primaryID] = record.$output.obj;
+        record.$edge_metadata.trapi_qEdge_obj.output_equivalent_identifiers[record.$output.obj[0].primaryID] =
+          record.$output.obj;
       }
     });
   }
