@@ -29,7 +29,7 @@ module.exports = class QueryResult {
     return {
       [record.$edge_metadata.trapi_qEdge_obj.getID()]: [
         {
-          id: helper._createUniqueEdgeID(record),
+          id: helper._getKGEdgeID(record)
         },
       ],
     };
