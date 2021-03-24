@@ -41,15 +41,6 @@ module.exports = class QueryGraphHandler {
     this._validateNodeEdgeCorrespondence(queryGraph);
   }
 
-  _modify(queryGraph) {
-    Object.keys(queryGraph.nodes).map((nodeID) => {
-      if (queryGraph.nodes[nodeID].category === 'biolink:Drug') {
-        queryGraph.nodes[nodeID].category = ['biolink:Drug', 'biolink:ChemicalSubstance'];
-      }
-    });
-    return queryGraph;
-  }
-
   /**
    * @private
    */
@@ -93,15 +84,17 @@ module.exports = class QueryGraphHandler {
    */
   createQueryPaths() {
     this._validate(this.queryGraph);
-    this.queryGraph = this._modify(this.queryGraph);
-    let paths = {};
-    let FirstLevelEdges = this._findFirstLevelEdges();
-    paths[0] = FirstLevelEdges.paths;
-    let output_nodes = FirstLevelEdges.output_nodes;
-    for (let i = 1; i < MAX_DEPTH; i++) {
-      let ithLevelEdges = this._findNextLevelEdges(output_nodes);
-      output_nodes = ithLevelEdges.output_nodes;
-      if (output_nodes.length === 0) {
+    const paths = {};
+    let current_graph = this._findFirstLevelEdges();
+    paths[0] = current_graph.map((item) => item.edge);
+    for (let i = 1; i < MAX_DEPTH + 1; i++) {
+      current_graph = this._findNextLevelEdges(current_graph);
+      if (current_graph.length > 0 && i === MAX_DEPTH) {
+        throw new InvalidQueryGraphError(
+          `Your Query Graph exceeds the maximum query depth set in bte, which is ${MAX_DEPTH}`,
+        );
+      }
+      if (current_graph.length === 0) {
         break;
       }
       paths[i] = current_graph.map((item) => item.edge);
