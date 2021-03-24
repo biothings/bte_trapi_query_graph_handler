@@ -45,7 +45,7 @@ module.exports = class QueryGraphHelper {
   }
 
   _getPublication(record) {
-    return record.$edge_metadata.publications || undefined;
+    return record.publications || undefined;
   }
 
   _getKGEdgeID(record) {
