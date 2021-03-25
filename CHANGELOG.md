@@ -2,6 +2,48 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.6](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.1.5...v1.1.6) (2021-03-25)
+
+### [1.1.5](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.1.4...v1.1.5) (2021-03-25)
+
+
+### Bug Fixes
+
+* :bug: fix getCategories of undefined error ([8d19f74](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/8d19f74f371d8a04dd78de18b95c7b40623e647c))
+
+### [1.1.4](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.1.3...v1.1.4) (2021-03-24)
+
+
+### Bug Fixes
+
+* :bug: fix wrong edge id in results section ([a31c7eb](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/a31c7eb62005663940558d3be2d854f7debc8f67))
+
+### [1.1.3](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.1.2...v1.1.3) (2021-03-24)
+
+
+### Bug Fixes
+
+* :bug: fix missing biolink prefix ([0700e71](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/0700e7149f1c9d3a25b7db67dd46d8c9e7d66f2c))
+
+### [1.1.2](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.1.1...v1.1.2) (2021-03-24)
+
+
+### Bug Fixes
+
+* :bug: fix publications not display ([560f3fd](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/560f3fd5cd9759418de3b06b8b6a728c85984cb7))
+* :bug: fix tyypo ([e630909](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/e6309090c6ec432b0af537d8b3471daa21512698))
+
+### [1.0.1](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v0.8.0...v1.0.1) (2021-03-24)
+
+## [0.8.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.0.0...v0.8.0) (2021-03-23)
+
+
+### Features
+
+* :sparkles: add chemicalsubstance node when user specify drug as output ([ffb81b3](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/ffb81b3f9397bd325ca38f3242f5cd110c03b288))
+
+## [1.0.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v0.7.0...v1.0.0) (2021-03-23)
+
 ### [1.1.1](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v0.7.0...v1.1.1) (2021-03-24)
 
 

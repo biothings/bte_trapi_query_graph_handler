@@ -16,9 +16,9 @@ describe("Test graph class", () => {
             },
             api_name: "API1",
             source: "source1",
-            publications: ["PMID:1", "PMID:2"],
             predicate: "predicate1"
         },
+        publications: ["PMID:1", "PMID:2"],
         $output: {
             obj: [
                 {
@@ -45,9 +45,9 @@ describe("Test graph class", () => {
             },
             api_name: "API2",
             source: "source2",
-            publications: ["PMC:1", "PMC:2"],
             predicate: "predicate1"
         },
+        publications: ["PMC:1", "PMC:2"],
         $output: {
             obj: [
                 {
@@ -74,9 +74,9 @@ describe("Test graph class", () => {
             },
             api_name: "API3",
             source: "source3",
-            publications: ["PMC:3", "PMC:4"],
             predicate: "predicate2"
         },
+        publications: ["PMC:3", "PMC:4"],
         $output: {
             obj: [
                 {

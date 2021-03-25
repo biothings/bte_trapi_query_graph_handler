@@ -23,7 +23,7 @@ module.exports = class QExeEdge {
 
   getHashedEdgeRepresentation() {
     const toBeHashed =
-      this.subject.getCategories() + this.predicate + this.object.getCategories() + this.getInputCurie();
+      this.getSubject().getCategories() + this.getPredicate() + this.getObject().getCategories() + this.getInputCurie();
     return new helper()._generateHash(toBeHashed);
   }
 
