@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.5](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.1.4...v1.1.5) (2021-03-25)
+
+
+### Bug Fixes
+
+* :bug: fix getCategories of undefined error ([8d19f74](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/8d19f74f371d8a04dd78de18b95c7b40623e647c))
+
 ### [1.1.4](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.1.3...v1.1.4) (2021-03-24)
 
 
