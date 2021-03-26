@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.2.1](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.2.0...v1.2.1) (2021-03-26)
+
+
+### Bug Fixes
+
+* :bug: fix edge_metadata deepcopy issue ([9e34876](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/9e3487693abd220f0f453ccc6d60c500a44e3caf))
+
 ## [1.2.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.1.10...v1.2.0) (2021-03-26)
 
 
