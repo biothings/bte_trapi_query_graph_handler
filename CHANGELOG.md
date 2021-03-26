@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.9](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.1.8...v1.1.9) (2021-03-26)
+
+
+### Bug Fixes
+
+* :bug: fix wrong attribute type ([2b8d57b](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/2b8d57b70df62aad2cbb7d79d9108bfe1f828234))
+
 ### [1.1.8](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.1.7...v1.1.8) (2021-03-26)
 
 ### [1.1.7](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.1.6...v1.1.7) (2021-03-25)
