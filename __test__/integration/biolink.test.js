@@ -18,7 +18,7 @@ describe("Test BioLinkModel class", () => {
 
     test("test predicate with no inverse property and symmetric not equal to true", () => {
         const res = biolink.reverse('has_phenotype');
-        expect(res).toBeUndefined();
+        expect(res).toBe("phenotype_of");
     })
 
     test("test predicate not exist in biolink model", () => {
