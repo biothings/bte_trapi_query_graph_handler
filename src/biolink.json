@@ -3,7 +3,7 @@
     "name": "Biolink-Model",
     "description": "Entity and association taxonomy and datamodel for life-sciences data",
     "license": "https://creativecommons.org/publicdomain/zero/1.0/",
-    "version": "1.4.0",
+    "version": "1.7.0",
     "prefixes": {
         "Aeolus": "http://translator.ncats.nih.gov/Aeolus_",
         "alliancegenome": "https://www.alliancegenome.org/",
@@ -28,6 +28,7 @@
         "EDAM-FORMAT": "http://edamontology.org/format_",
         "EDAM-OPERATION": "http://edamontology.org/operation_",
         "EDAM-TOPIC": "http://edamontology.org/topic_",
+        "EFO": "http://www.ebi.ac.uk/efo/EFO_",
         "ExO": "http://purl.obolibrary.org/obo/ExO_",
         "fabio": "http://purl.org/spar/fabio/",
         "foaf": "http://xmlns.com/foaf/0.1/",
@@ -49,6 +50,7 @@
         "ICD10": "http://translator.ncats.nih.gov/ICD10_",
         "ICD9": "http://translator.ncats.nih.gov/ICD9_",
         "interpro": "https://www.ebi.ac.uk/interpro/entry/",
+        "INO": "http://purl.obolibrary.org/obo/INO_",
         "isbn": "https://www.isbn-international.org/identifier/",
         "isni": "https://isni.org/isni/",
         "issn": "https://portal.issn.org/resource/ISSN/",
@@ -69,6 +71,7 @@
         "OBOREL": "http://purl.obolibrary.org/obo/RO_",
         "ORCID": "https://orcid.org/",
         "ORPHA": "http://www.orpha.net/ORDO/Orphanet_",
+        "os": "https://github.com/cmungall/owlstar/blob/master/owlstar.ttl",
         "PathWhiz": "http://smpdb.ca/pathways/#",
         "PATO-PROPERTY": "http://purl.obolibrary.org/obo/pato#",
         "pav": "http://purl.org/pav/",
@@ -115,6 +118,21 @@
         "OIO",
         "BIOGRID"
     ],
+    "enums": {
+        "logical_interpretation_enum": {
+            "permissible_values": {
+                "SomeSome": {
+                    "description": "A modifier on a triple that causes the triple to be interpreted as a some-some statement",
+                    "meaning": "os:SomeSomeInterpretation"
+                },
+                "AllSome": {
+                    "description": "A modifier on a triple that causes the triple to be interpreted as an all-some statement.",
+                    "meaning": "os:AllSomeInterpretation"
+                },
+                "InverseAllSome": null
+            }
+        }
+    },
     "subsets": {
         "model_organism_database": {
             "description": "Subset that is relevant for a typical Model Organism Database (MOD)"
@@ -164,7 +182,7 @@
         "symbol type": {
             "typeof": "string"
         },
-        "frequency": {
+        "frequency value": {
             "typeof": "string",
             "uri": "UO:0000105"
         },
@@ -405,7 +423,7 @@
             "is_a": "type",
             "domain": "entity",
             "range": "category type",
-            "description": "Name of the high level ontology class in which this entity is categorized. Corresponds to the label for the biolink entity type class. * In a neo4j database this MAY correspond to the neo4j label tag.\n * In an RDF database it should be a biolink model class URI.\nThis field is multi-valued. It should include values for ancestors of the biolink class; for example, a protein such as Shh would have category values `bl:Protein`, `bl:GeneProduct`, `bl:MolecularEntity`, ...\nIn an RDF database, nodes will typically have an rdf:type triples. This can be to the most specific biolink class, or potentially to a class more specific than something in biolink. For example, a sequence feature `f` may have a rdf:type assertion to a SO class such as TF_binding_site, which is more specific than anything in biolink. Here we would have categories {bl:GenomicEntity, bl:MolecularEntity, bl:NamedThing}",
+            "description": "Name of the high level ontology class in which this entity is categorized. Corresponds to the label for the biolink entity type class. * In a neo4j database this MAY correspond to the neo4j label tag.\n * In an RDF database it should be a biolink model class URI.\nThis field is multi-valued. It should include values for ancestors of the biolink class; for example, a protein such as Shh would have category values `biolink:Protein`, `biolink:GeneProduct`, `biolink:MolecularEntity`, ...\nIn an RDF database, nodes will typically have an rdf:type triples. This can be to the most specific biolink class, or potentially to a class more specific than something in biolink. For example, a sequence feature `f` may have a rdf:type assertion to a SO class such as TF_binding_site, which is more specific than anything in biolink. Here we would have categories {biolink:GenomicEntity, biolink:MolecularEntity, biolink:NamedThing}",
             "is_class_field": true,
             "multivalued": true,
             "in_subset": [
@@ -953,9 +971,9 @@
                 "FMA:continuous_with",
                 "FMA:homonym_of",
                 "FMA:related_developmental_entity_of",
-                "GO:ends_during",
-                "GO:happens_during",
-                "GO:inverse_ends_during",
+                "RO:0002093",
+                "RO:0002092",
+                "RO:0002084",
                 "GOREL:0002005",
                 "GOREL:0012006",
                 "HCPCS:mapped_to",
@@ -980,12 +998,12 @@
                 "OBO:envo#has_increased_levels_of",
                 "OBO:has_role",
                 "OBO:nbo#is_about",
-                "OBOREL:0000053",
-                "PATO:decreased_in_magnitude_relative_to",
-                "PATO:has_cross_section",
-                "PATO:has_relative_magnitude",
-                "PATO:increased_in_magnitude_relative_to",
-                "PATO:reciprocal_of",
+                "RO:0000053",
+                "PATO-PROPERTY:decreased_in_magnitude_relative_to",
+                "PATO-PROPERTY:has_cross_section",
+                "PATO-PROPERTY:has_relative_magnitude",
+                "PATO-PROPERTY:increased_in_magnitude_relative_to",
+                "PATO-PROPERTY:reciprocal_of",
                 "RO:0000052",
                 "RO:0002001",
                 "RO:0002002",
@@ -1089,7 +1107,6 @@
                 "translator_minimal"
             ],
             "inverse": "superclass of",
-            "slot_uri": "rdfs:subClassOf",
             "close_mappings": [
                 "LOINC:class_of",
                 "LOINC:has_class"
@@ -1112,12 +1129,12 @@
                 "LOINC:has_parent_group",
                 "LOINC:is_presence_guidance_for",
                 "NCIT:gene_product_has_chemical_classification",
-                "NCIT:gene_is_biomarker_type",
-                "NCIT:gene_product_is_biomarker_type",
-                "NCIT:has_inc_parent",
-                "NCIT:has_nichd_parent",
-                "NCIT:neoplasm_has_special_category",
-                "NCIT:role_has_parent",
+                "NCIT:R36",
+                "NCIT:R42",
+                "NCIT:A16",
+                "NCIT:A11",
+                "NCIT:A14",
+                "NCIT:A3",
                 "NDDF:has_dose_form",
                 "OBO:intersection_of",
                 "RXNORM:has_dose_form",
@@ -1207,6 +1224,18 @@
                 "WIKIDATA:Q39893967"
             ]
         },
+        "opposite of": {
+            "description": "x is the opposite of y if there exists some distance metric M, and there exists no z such as M(x,z) <= M(x,y) or M(y,z) <= M(y,x). (This description is from RO. Needs to be rephrased).",
+            "is_a": "related to",
+            "symmetric": true,
+            "exact_mappings": [
+                "RO:0002604"
+            ],
+            "see_also": [
+                "https://doi.org/10.1101/108977",
+                "https://github.com/biolink/biolink-model/issues/657"
+            ]
+        },
         "contributor": {
             "is_a": "related to",
             "domain": "information content entity",
@@ -1293,7 +1322,7 @@
                 "SEMMEDDB:interacts_with",
                 "DRUGBANK:drug-interaction",
                 "FMA:adheres_to",
-                "NCIT:has_target",
+                "NCIT:A7",
                 "PR:non-covalently_bound_to"
             ]
         },
@@ -1349,24 +1378,24 @@
                 "GOREL:0001006",
                 "CTD:inferred",
                 "UPHENO:0000001",
-                "GO:acts_upstream_of",
-                "GO:acts_upstream_of_or_within",
-                "NCIT:allele_plays_altered_role_in_process",
-                "NCIT:allele_plays_role_in_metabolism_of_chemical_or_drug",
-                "NCIT:biological_process_has_associated_location",
-                "NCIT:chemical_or_drug_affects_abnormal_cell",
-                "NCIT:chemical_or_drug_affects_cell_type_or_tissue",
-                "NCIT:chemical_or_drug_affects_gene_product",
-                "NCIT:chemical_or_drug_has_mechanism_of_action",
-                "NCIT:cytogenetic_abnormality_involves_chromosome",
-                "NCIT:disease_has_associated_anatomic_site",
-                "NCIT:disease_has_metastatic_anatomic_site",
-                "NCIT:disease_has_primary_anatomic_site",
-                "NCIT:disease_may_have_abnormal_cell",
-                "NCIT:eo_disease_has_associated_cell_type",
-                "NCIT:eo_disease_has_associated_eo_anatomy",
+                "RO:0002263",
+                "RO:0002264",
+                "NCIT:R158",
+                "NCIT:R160",
+                "NCIT:R30",
+                "NCIT:R150",
+                "NCIT:R72",
+                "NCIT:R146",
+                "NCIT:R124",
+                "NCIT:R173",
+                "NCIT:R100",
+                "NCIT:R102",
+                "NCIT:R101",
+                "NCIT:R113",
+                "NCIT:R23",
+                "NCIT:R25",
                 "NCIT:gene_mapped_to_disease",
-                "NCIT:gene_product_has_abnormality",
+                "NCIT:R133",
                 "RO:0002343",
                 "RO:0002355",
                 "RO:0002591",
@@ -1563,6 +1592,7 @@
                 "CHEMBL.MECHANISM:releasing_agent"
             ],
             "exact_mappings": [
+                "RO:0003003",
                 "CTD:increases_expression_of"
             ]
         },
@@ -1579,6 +1609,7 @@
                 "DGIdb:antisense_oligonucleotide"
             ],
             "exact_mappings": [
+                "RO:0003002",
                 "CTD:decreases_expression_of"
             ],
             "narrow_mappings": [
@@ -2252,11 +2283,10 @@
             "range": "physical essence or occurrent",
             "inverse": "regulated by",
             "close_mappings": [
-                "GO:regulated_by",
                 "RO:0002334"
             ],
             "exact_mappings": [
-                "GO:regulates"
+                "RO:0002211"
             ],
             "narrow_mappings": [
                 "WIKIDATA_PROPERTY:P128",
@@ -2282,17 +2312,16 @@
             "inverse": "positively regulated by",
             "mixin": true,
             "close_mappings": [
-                "GO:positively_regulated_by"
+                "RO:0002336"
             ],
             "exact_mappings": [
-                "RO:0002213",
-                "GO:positively_regulates"
+                "RO:0002213"
             ],
             "narrow_mappings": [
                 "CHEMBL.MECHANISM:activator",
                 "DGIdb:activator",
-                "GO:acts_upstream_of_or_within_positive_effect",
-                "GO:acts_upstream_of_positive_effect",
+                "RO:0004032",
+                "RO:0004034",
                 "RO:0002629",
                 "SEMMEDDB:augments"
             ]
@@ -2310,11 +2339,11 @@
             "inverse": "negatively regulated by",
             "mixin": true,
             "close_mappings": [
-                "GO:negatively_regulated_by"
+                "RO:0002335"
             ],
             "exact_mappings": [
                 "RO:0004035",
-                "GO:negatively_regulates"
+                "RO:0002212"
             ],
             "broad_mappings": [
                 "RO:0004033"
@@ -2324,8 +2353,6 @@
                 "CHEMBL.MECHANISM:inhibitor",
                 "CHEMBL.MECHANISM:negative_allosteric_modulator",
                 "CHEMBL.MECHANISM:negative_modulator",
-                "GO:acts_upstream_of_negative_effect",
-                "GO:acts_upstream_of_or_within_negative_effect",
                 "RO:0002630"
             ]
         },
@@ -2334,53 +2361,53 @@
             "mixin": true,
             "inverse": "negatively regulates"
         },
-        "regulates, process to process": {
+        "process regulates process": {
             "is_a": "affects",
             "mixins": [
                 "regulates"
             ],
             "domain": "occurrent",
             "range": "occurrent",
-            "inverse": "regulated by, process to process",
+            "inverse": "process regulated by process",
             "exact_mappings": [
                 "RO:0002211"
             ]
         },
-        "regulated by, process to process": {
+        "process regulated by process": {
             "is_a": "affected by",
             "domain": "occurrent",
             "range": "occurrent",
-            "inverse": "regulates, process to process"
+            "inverse": "process regulates process"
         },
-        "positively regulates, process to process": {
-            "is_a": "regulates, process to process",
+        "process positively regulates process": {
+            "is_a": "process regulates process",
             "mixins": [
                 "positively regulates"
             ],
-            "inverse": "positively regulated by, process to process",
+            "inverse": "process positively regulated by process",
             "exact_mappings": [
                 "RO:0002213"
             ]
         },
-        "positively regulated by, process to process": {
-            "is_a": "regulated by, process to process",
-            "inverse": "positively regulates, process to process"
+        "process positively regulated by process": {
+            "is_a": "process regulated by process",
+            "inverse": "process positively regulates process"
         },
-        "negatively regulates, process to process": {
-            "is_a": "regulates, process to process",
+        "process negatively regulates process": {
+            "is_a": "process regulates process",
             "mixins": [
                 "negatively regulates"
             ],
-            "inverse": "negatively regulated by, process to process",
+            "inverse": "process negatively regulated by process",
             "exact_mappings": [
                 "RO:0002212"
             ]
         },
-        "negatively regulated by, process to process": {
-            "is_a": "regulated by, process to process",
-            "inverse": "negatively regulates, process to process"
+        "process negatively regulated by process": {
+            "is_a": "process regulated by process",
+            "inverse": "process negatively regulates process"
         },
-        "regulates, entity to entity": {
+        "entity regulates entity": {
             "aliases": [
                 "activity directly regulates activity of"
             ],
@@ -2390,7 +2417,7 @@
             ],
             "domain": "molecular entity",
             "range": "molecular entity",
-            "inverse": "regulated by, entity to entity",
+            "inverse": "entity regulated by entity",
             "local_names": {
                 "translator": "regulates",
                 "ro": "activity directly regulates activity of"
@@ -2405,21 +2432,21 @@
                 "WIKIDATA_PROPERTY:P128"
             ]
         },
-        "regulated by, entity to entity": {
+        "entity regulated by entity": {
             "is_a": "affected by",
             "domain": "molecular entity",
             "range": "molecular entity",
-            "inverse": "regulates, entity to entity"
+            "inverse": "entity regulates entity"
         },
-        "positively regulates, entity to entity": {
+        "entity positively regulates entity": {
             "aliases": [
                 "activity directly positively regulates activity of"
             ],
-            "is_a": "regulates, entity to entity",
+            "is_a": "entity regulates entity",
             "mixins": [
                 "positively regulates"
             ],
-            "inverse": "positively regulated by, entity to entity",
+            "inverse": "entity positively regulated by entity",
             "local_names": {
                 "translator": "positively regulates",
                 "ro": "activity directly positively regulates activity of"
@@ -2440,19 +2467,19 @@
                 "hetio:UPREGULATES_DuG"
             ]
         },
-        "positively regulated by, entity to entity": {
-            "is_a": "regulated by, entity to entity",
-            "inverse": "positively regulates, entity to entity"
+        "entity positively regulated by entity": {
+            "is_a": "entity regulated by entity",
+            "inverse": "entity positively regulates entity"
         },
-        "negatively regulates, entity to entity": {
+        "entity negatively regulates entity": {
             "aliases": [
                 "activity directly negatively regulates activity of"
             ],
-            "is_a": "regulates, entity to entity",
+            "is_a": "entity regulates entity",
             "mixins": [
                 "negatively regulates"
             ],
-            "inverse": "negatively regulated by, entity to entity",
+            "inverse": "entity negatively regulated by entity",
             "local_names": {
                 "translator": "negatively regulates",
                 "ro": "activity directly negatively regulates activity of"
@@ -2470,9 +2497,9 @@
                 "hetio:DOWNREGULATES_DdG"
             ]
         },
-        "negatively regulated by, entity to entity": {
-            "is_a": "regulated by, entity to entity",
-            "inverse": "negatively regulates, entity to entity"
+        "entity negatively regulated by entity": {
+            "is_a": "entity regulated by entity",
+            "inverse": "entity negatively regulates entity"
         },
         "disrupts": {
             "is_a": "affects",
@@ -2497,6 +2524,19 @@
             "description": "describes a relationship where the structure, function, or occurrence of one entity is degraded or interfered with by another.",
             "inverse": "disrupts"
         },
+        "gene product of": {
+            "is_a": "related to",
+            "description": "definition x has gene product of y if and only if y is a gene (SO:0000704) that participates in some gene expression process (GO:0010467) where the output of that process is either y or something that is ribosomally translated from x",
+            "exact_mappings": [
+                "RO:0002204"
+            ],
+            "domain": "gene product mixin",
+            "range": "gene",
+            "inverse": "has gene product",
+            "in_subset": [
+                "translator_minimal"
+            ]
+        },
         "has gene product": {
             "is_a": "related to",
             "description": "holds between a gene and a transcribed and/or translated product generated from it",
@@ -2505,6 +2545,7 @@
             "in_subset": [
                 "translator_minimal"
             ],
+            "inverse": "gene product of",
             "close_mappings": [
                 "PR:has_gene_template"
             ],
@@ -2514,7 +2555,51 @@
                 "NCIT:gene_encodes_gene_product"
             ],
             "narrow_mappings": [
-                "NCIT:gene_mutant_encodes_gene_product_sequence_variation"
+                "NCIT:R178"
+            ]
+        },
+        "transcribed to": {
+            "is_a": "related to",
+            "domain": "gene",
+            "range": "transcript",
+            "description": "inverse of transcribed from",
+            "inverse": "transcribed from",
+            "exact_mappings": [
+                "RO:0002511",
+                "SIO:010080"
+            ]
+        },
+        "transcribed from": {
+            "is_a": "related to",
+            "domain": "transcript",
+            "range": "gene",
+            "inverse": "transcribed to",
+            "description": "x is transcribed from y if and only if x is synthesized from template y",
+            "exact_mappings": [
+                "RO:0002510",
+                "SIO:010081"
+            ]
+        },
+        "translates to": {
+            "is_a": "related to",
+            "domain": "transcript",
+            "range": "protein",
+            "description": "x (amino acid chain/polypeptide) is the ribosomal translation of y (transcript) if and only if a ribosome reads y (transcript) through a series of triplet codon-amino acid adaptor activities (GO:0030533) and produces x (amino acid chain/polypeptide)",
+            "inverse": "translation of",
+            "close_mappings": [
+                "RO:0002513",
+                "SIO:010082"
+            ]
+        },
+        "translation of": {
+            "is_a": "related to",
+            "domain": "protein",
+            "range": "transcript",
+            "description": "inverse of translates to",
+            "inverse": "translates to",
+            "close_mappings": [
+                "RO:0002512",
+                "SIO:010083"
             ]
         },
         "homologous to": {
@@ -2799,8 +2884,7 @@
             ],
             "symmetric": true,
             "exact_mappings": [
-                "RO:00002325",
-                "GO:colocalizes_with"
+                "RO:00002325"
             ]
         },
         "genetic association": {
@@ -2813,7 +2897,7 @@
         },
         "gene associated with condition": {
             "is_a": "genetic association",
-            "description": "holds between a gene and a disease or phenotypic feature that the gene or its alleles/proday influence, contribute to, or correlate with",
+            "description": "holds between a gene and a disease or phenotypic feature that the gene or its alleles/products may influence, contribute to, or correlate with",
             "domain": "gene",
             "range": "disease or phenotypic feature",
             "in_subset": [
@@ -2828,9 +2912,9 @@
                 "GENO:0000841"
             ],
             "narrow_mappings": [
-                "NCIT:gene_associated_with_disease",
-                "NCIT:gene_involved_in_pathogenesis_of_disease",
-                "NCIT:gene_product_malfunction_associated_with_disease"
+                "NCIT:R38",
+                "NCIT:R175",
+                "NCIT:R48"
             ]
         },
         "condition associated with gene": {
@@ -2875,8 +2959,7 @@
                 "IDO:0000664"
             ],
             "exact_mappings": [
-                "RO:0002326",
-                "GO:contributes_to"
+                "RO:0002326"
             ],
             "narrow_mappings": [
                 "CTD:marker_mechanism",
@@ -2960,7 +3043,8 @@
             "domain": "biological entity",
             "range": "disease or phenotypic feature",
             "exact_mappings": [
-                "RO:0003307"
+                "RO:0003307",
+                "CTD:therapeutic"
             ]
         },
         "exacerbates": {
@@ -2969,8 +3053,7 @@
             "domain": "biological entity",
             "range": "disease or phenotypic feature",
             "exact_mappings": [
-                "RO:0003309",
-                "CTD:therapeutic"
+                "RO:0003309"
             ]
         },
         "treats": {
@@ -2979,7 +3062,7 @@
             ],
             "is_a": "ameliorates",
             "description": "holds between a therapeutic procedure or chemical substance and a disease or phenotypic feature that it is used to treat",
-            "domain": "treatment",
+            "domain": "chemical or drug or treatement",
             "range": "disease or phenotypic feature",
             "in_subset": [
                 "translator_minimal"
@@ -2989,6 +3072,7 @@
                 "MONDO:disease_responds_to"
             ],
             "exact_mappings": [
+                "DRUGBANK:treats",
                 "SEMMEDDB:TREATS",
                 "SEMMEDDB:treats",
                 "WIKIDATA_PROPERTY:P2175"
@@ -3130,7 +3214,7 @@
             ],
             "symmetric": true,
             "exact_mappings": [
-                "CTD:positivecorrelation"
+                "CTD:positive_correlation"
             ]
         },
         "negatively correlated with": {
@@ -3143,7 +3227,7 @@
             ],
             "symmetric": true,
             "exact_mappings": [
-                "CTD:negativecorrelation"
+                "CTD:negative_correlation"
             ]
         },
         "coexpressed with": {
@@ -3178,13 +3262,13 @@
             ],
             "inverse": "has biomarker",
             "exact_mappings": [
-                "NCIT:gene_is_biomarker_of"
+                "NCIT:R39"
             ],
             "broad_mappings": [
                 "RO:0002607"
             ],
             "narrow_mappings": [
-                "NCIT:gene_product_is_biomarker_of",
+                "NCIT:R47",
                 "NCIT:genetic_biomarker_related_to",
                 "NCIT:is_molecular_abnormality_of_disease",
                 "ORPHA:465410",
@@ -3204,8 +3288,8 @@
                 "RO:0002206"
             ],
             "narrow_mappings": [
-                "NCIT:gene_product_expressed_in_tissue",
-                "NCIT:gene_product_has_associated_anatomy",
+                "NCIT:R49",
+                "NCIT:R46",
                 "RTXKG1:expressed_in"
             ]
         },
@@ -3228,6 +3312,7 @@
             "description": "holds between a biological entity and a phenotype, where a phenotype is construed broadly as any kind of quality of an organism part, a collection of these qualities, or a change in quality or qualities (e.g. abnormally increased temperature).",
             "domain": "biological entity",
             "range": "phenotypic feature",
+            "inverse": "phenotype of",
             "notes": [
                 "check the range"
             ],
@@ -3244,13 +3329,26 @@
             ],
             "broad_mappings": [
                 "hetio:PRESENTS_DpS",
-                "NCIT:disease_may_have_finding",
+                "NCIT:R115",
                 "OMIM:has_phenotype"
             ],
             "narrow_mappings": [
-                "NCIT:disease_may_have_molecular_abnormality",
+                "NCIT:R89",
                 "OBO:doid#has_symptom",
                 "RO:0004022"
+            ]
+        },
+        "phenotype of": {
+            "is_a": "related to",
+            "description": "holds between a phenotype and a biological entity, where a phenotype is construed broadly as any kind of quality of an organism part, a collection of these qualities, or a change in quality or qualities (e.g. abnormally increased temperature).",
+            "domain": "phenotypic feature",
+            "range": "biological entity",
+            "inverse": "has phenotype",
+            "notes": [
+                "check the domain"
+            ],
+            "in_subset": [
+                "translator_minimal"
             ]
         },
         "occurs in": {
@@ -3266,7 +3364,6 @@
             ],
             "exact_mappings": [
                 "BFO:0000066",
-                "GO:occurs_in",
                 "PathWhiz:has_location",
                 "SNOMED:occurs_in"
             ],
@@ -3323,18 +3420,18 @@
                 "HMDB:at_tissue",
                 "HMDB:in_biospecimen",
                 "LOINC:has_imaging_focus",
-                "NCIT:allele_absent_from_wild-type_chromosomal_location",
-                "NCIT:allele_in_chromosomal_location",
-                "NCIT:gene_has_physical_location",
-                "NCIT:gene_in_chromosomal_location",
+                "NCIT:R156",
+                "NCIT:R155",
+                "NCIT:R145",
+                "NCIT:R40",
                 "NCIT:is_location_of_anatomic_structure",
-                "NCIT:procedure_has_completely_excised_anatomy",
-                "NCIT:procedure_has_excised_anatomy",
-                "NCIT:procedure_has_imaged_anatomy",
-                "NCIT:procedure_has_partially_excised_anatomy",
-                "NCIT:procedure_may_have_completely_excised_anatomy",
-                "NCIT:procedure_may_have_excised_anatomy",
-                "NCIT:procedure_may_have_partially_excised_anatomy",
+                "NCIT:R171",
+                "NCIT:R167",
+                "NCIT:R165",
+                "NCIT:R169",
+                "NCIT:R170",
+                "NCIT:R166",
+                "NCIT:R168",
                 "RO:0002303",
                 "RTXKG1:disease_has_location",
                 "SNOMED:has_finding_site",
@@ -3441,7 +3538,6 @@
                 "BFO:0000051",
                 "BFO:0000055",
                 "WIKIDATA_PROPERTY:P527",
-                "GO:has_part",
                 "RO:0001019",
                 "RTXKG1:has_part",
                 "RXNORM:consists_of",
@@ -3466,7 +3562,7 @@
                 "NCIT:complex_has_physical_part",
                 "NDDF:has_ingredient",
                 "PathWhiz:has_element_in_bound",
-                "NCIT:gene_product_has_structural_domain_or_motif",
+                "NCIT:R50",
                 "PDQ:has_component",
                 "PathWhiz:has_protein_in_complex",
                 "RO:0002104",
@@ -3496,7 +3592,6 @@
                 "SEMMEDDB:part_of",
                 "WIKIDATA_PROPERTY:P361",
                 "FMA:part_of",
-                "GO:part_of",
                 "RXNORM:constitutes",
                 "RXNORM:part_of"
             ],
@@ -3527,8 +3622,8 @@
                 "LOINC:multipart_of",
                 "MEDDRA:member_of",
                 "MONDO:part_of_progression_of_disease",
-                "NCIT:anatomic_structure_is_physical_part_of",
-                "NCIT:conceptual_part_of",
+                "NCIT:R82",
+                "NCIT:R27",
                 "NCIT:is_component_of_chemotherapy_regimen",
                 "NDDF:ingredient_of",
                 "PDQ:component_of",
@@ -3605,7 +3700,7 @@
                 "RO:0002234"
             ],
             "narrow_mappings": [
-                "NCIT:biological_process_has_result_anatomy",
+                "NCIT:R31",
                 "OBI:0000299",
                 "PathWhiz:has_right_element",
                 "RO:0002296",
@@ -3665,19 +3760,17 @@
             "exact_mappings": [
                 "RO:0000056",
                 "BFO:0000056",
-                "GO:involved_in",
-                "RO:participates_in",
                 "RTXKG1:participates_in"
             ],
             "narrow_mappings": [
                 "DRUGBANK:pathway",
                 "HMDB:in_pathway",
                 "LOINC:is_given_pharmaceutical_substance_for",
-                "NCIT:gene_is_element_in_pathway",
-                "NCIT:gene_plays_role_in_process",
-                "NCIT:gene_product_is_element_in_pathway",
-                "NCIT:gene_product_is_physical_part_of",
-                "NCIT:gene_product_plays_role_in_biological_process",
+                "NCIT:R130",
+                "NCIT:R37",
+                "NCIT:R131",
+                "NCIT:R51",
+                "NCIT:R53",
                 "OBI:0000295",
                 "RO:0002216",
                 "RO:0002505",
@@ -3700,7 +3793,7 @@
             ],
             "exact_mappings": [
                 "RO:0002331",
-                "GO:is_active_in"
+                "RO:0002432"
             ],
             "narrow_mappings": [
                 "NCIT:gene_involved_in_molecular_abnormality",
@@ -3708,7 +3801,7 @@
                 "ORPHA:317348",
                 "ORPHA:317349",
                 "ORPHA:327767",
-                "PATO:towards"
+                "RO:0002503"
             ]
         },
         "capable of": {
@@ -3723,8 +3816,7 @@
                 "RTXKG1:capable_of"
             ],
             "narrow_mappings": [
-                "GO:has_occurrence",
-                "NCIT:gene_product_has_biochemical_function",
+                "NCIT:R52",
                 "RO:0002500"
             ]
         },
@@ -3738,8 +3830,7 @@
             ],
             "inverse": "enabled by",
             "exact_mappings": [
-                "RO:0002327",
-                "GO:enables"
+                "RO:0002327"
             ]
         },
         "enabled by": {
@@ -3782,8 +3873,7 @@
             "exact_mappings": [
                 "RO:0001000",
                 "FMA:derives_from",
-                "OBO:doid#derives_from",
-                "RO:derives_from"
+                "OBO:doid#derives_from"
             ],
             "narrow_mappings": [
                 "CHEBI:has_functional_parent",
@@ -3825,8 +3915,8 @@
         "food component of": {
             "is_a": "part of",
             "description": "holds between a one or more chemical substances present in food, irrespective of nutritional value (i.e. could also be a contaminant or additive)",
-            "domain": "food component",
-            "range": "food",
+            "domain": "chemical substance",
+            "range": "chemical substance",
             "in_subset": [
                 "translator_minimal"
             ],
@@ -3835,8 +3925,8 @@
         "has food component": {
             "is_a": "has part",
             "description": "holds between food and one or more chemical substances composing it, irrespective of nutritional value (i.e. could also be a contaminant or additive)",
-            "domain": "food",
-            "range": "food component",
+            "domain": "chemical substance",
+            "range": "chemical substance",
             "in_subset": [
                 "translator_minimal"
             ],
@@ -3845,8 +3935,8 @@
         "nutrient of": {
             "is_a": "food component of",
             "description": "holds between a one or more chemical substances present in food, irrespective of nutritional value (i.e. could also be a contaminant or additive)",
-            "domain": "food component",
-            "range": "food",
+            "domain": "chemical substance",
+            "range": "chemical substance",
             "in_subset": [
                 "translator_minimal"
             ],
@@ -3855,8 +3945,8 @@
         "has nutrient": {
             "is_a": "has food component",
             "description": "one or more nutrients which are growth factors for a living organism",
-            "domain": "food",
-            "range": "nutrient",
+            "domain": "chemical substance",
+            "range": "chemical substance",
             "in_subset": [
                 "translator_minimal"
             ],
@@ -3952,7 +4042,7 @@
                 "SEMMEDDB:produces"
             ],
             "narrow_mappings": [
-                "NCIT:biological_process_has_result_chemical_or_drug",
+                "NCIT:R29",
                 "SNOMED:has_process_output",
                 "SNOMED:specimen_procedure_of"
             ]
@@ -4043,6 +4133,8 @@
         "directly interacts with": {
             "is_a": "interacts with",
             "description": "Holds between molecular entities that physically and directly interact\nwith each other",
+            "domain": "molecular entity",
+            "range": "molecular entity",
             "symmetric": true,
             "related_mappings": [
                 "GAMMA:kd",
@@ -4108,7 +4200,8 @@
             "narrow_mappings": [
                 "NCIT:gene_product_sequence_variation_encoded_by_gene_mutant",
                 "NCIT:gene_product_variant_of_gene_product",
-                "OMIM:allelic_variant_of"
+                "OMIM:allelic_variant_of",
+                "WIKIDATA:P3433"
             ]
         },
         "is missense variant of": {
@@ -4429,6 +4522,15 @@
             },
             "slot_uri": "rdf:predicate"
         },
+        "logical interpretation": {
+            "is_a": "association slot",
+            "required": false,
+            "domain": "association",
+            "range": "logical_interpretation_enum",
+            "exact_mappings": [
+                "os:LogicalInterpretation"
+            ]
+        },
         "relation": {
             "is_a": "association slot",
             "description": "The relation which describes an association between a subject and an object in a more granular manner. Usually this is a term from Relation Ontology, but it can be any edge CURIE.",
@@ -4470,7 +4572,7 @@
         },
         "association type": {
             "is_a": "association slot",
-            "range": "ontology class",
+            "range": "category type",
             "deprecated": "This slot is deprecated in favor of 'category' slot.",
             "deprecated_element_has_exact_replacement": "category",
             "description": "connects an association to the category of association (e.g. gene to phenotype)"
@@ -4601,6 +4703,10 @@
             "multivalued": true,
             "range": "publication"
         },
+        "associated environmental context": {
+            "is_a": "association slot",
+            "description": "An attribute that can be applied to an association where the association holds between two entities located or occurring in a particular environment. For example, two microbial taxa may interact in the context of a human gut; a disease may give rise to a particular phenotype in a particular environmental exposure."
+        },
         "sequence localization attribute": {
             "is_a": "association slot",
             "domain": "genomic sequence localization",
@@ -4634,6 +4740,32 @@
         }
     },
     "classes": {
+        "ontology class": {
+            "mixin": true,
+            "description": "a concept or class in an ontology, vocabulary or thesaurus. Note that nodes in a biolink compatible KG can be considered both instances of biolink classes, and OWL classes in their own right. In general you should not need to use this class directly. Instead, use the appropriate biolink class. For example, for the GO concept of endocytosis (GO:0006897), use bl:BiologicalProcess as the type.",
+            "exact_mappings": [
+                "owl:Class",
+                "schema:Class"
+            ],
+            "comments": [
+                "This is modeled as a mixin. 'ontology class' should not be the primary type of a node in the KG. Instead you should use an informative bioloink category, such as AnatomicalEntity (for Uberon classes), ChemicalSubstance (for CHEBI or CHEMBL), etc",
+                "Note that formally this is a metaclass. Instances of this class are instances in the graph, but can be the object of 'type' edges. For example, if we had a node in the graph representing a specific brain of a specific patient (e.g brain001), this could have  a category of bl:Sample, and by typed more specifically with an ontology class UBERON:nnn, which has as category bl:AnatomicalEntity"
+            ],
+            "see_also": [
+                "https://github.com/biolink/biolink-model/issues/486"
+            ],
+            "examples": [
+                {
+                    "value": "UBERON:0000955",
+                    "description": "the class 'brain' from the Uberon anatomy ontology"
+                }
+            ],
+            "id_prefixes": [
+                "MESH",
+                "UMLS",
+                "KEGG.BRITE"
+            ]
+        },
         "annotation": {
             "description": "Biolink Model root class for entity annotations.",
             "abstract": true
@@ -4648,6 +4780,9 @@
         },
         "attribute": {
             "is_a": "annotation",
+            "mixins": [
+                "ontology class"
+            ],
             "description": "A property or characteristic of an entity. For example, an apple may have properties such as color, shape, age, crispiness. An environmental sample may have attributes such as depth, lat, long, material.",
             "slots": [
                 "name",
@@ -4699,10 +4834,6 @@
             "is_a": "attribute",
             "description": "describes the severity of a phenotypic feature or disease"
         },
-        "frequency value": {
-            "is_a": "attribute",
-            "description": "describes the frequency of occurrence of an event or condition"
-        },
         "relationship quantifier": {
             "mixin": true
         },
@@ -4728,6 +4859,9 @@
                 "has quotient",
                 "has percentage"
             ]
+        },
+        "chemical or drug or treatement": {
+            "mixin": true
         },
         "entity": {
             "description": "Root Biolink Model class for all things and informational relationships, real or imagined.",
@@ -4761,20 +4895,21 @@
                 "UMLSST:enty"
             ]
         },
-        "ontology class": {
-            "is_a": "named thing",
-            "description": "a concept or class in an ontology, vocabulary or thesaurus",
-            "id_prefixes": [
-                "MESH",
-                "KEGG.BRITE"
-            ]
-        },
         "relationship type": {
             "is_a": "ontology class",
             "description": "An OWL property used as an edge label"
         },
         "gene ontology class": {
+            "mixin": true,
             "description": "an ontology class that describes a functional aspect of a gene, gene prodoct or complex",
+            "is_a": "ontology class",
+            "in_subset": [
+                "testing"
+            ]
+        },
+        "unclassified ontology class": {
+            "mixin": true,
+            "description": "this is used for nodes that are taken from an ontology but are not typed using an existing biolink class",
             "is_a": "ontology class",
             "in_subset": [
                 "testing"
@@ -4796,7 +4931,7 @@
                 "taxonomic classification"
             ],
             "description": "A classification of a set of organisms. Example instances: NCBITaxon:9606 (Homo sapiens), NCBITaxon:2 (Bacteria). Can also be used to represent strains or subspecies.",
-            "is_a": "ontology class",
+            "is_a": "named thing",
             "slot_usage": {
                 "has taxonomic rank": {
                     "range": "taxonomic rank",
@@ -5382,7 +5517,8 @@
             "is_a": "biological entity",
             "mixins": [
                 "thing with taxon",
-                "physical essence"
+                "physical essence",
+                "ontology class"
             ],
             "aliases": [
                 "bioentity"
@@ -5413,7 +5549,8 @@
             "description": "Either an individual molecular activity, or a collection of causally connected molecular activities in a biological system.",
             "is_a": "biological entity",
             "mixins": [
-                "occurrent"
+                "occurrent",
+                "ontology class"
             ],
             "id_prefixes": [
                 "GO",
@@ -5434,7 +5571,8 @@
                 "reaction"
             ],
             "mixins": [
-                "occurrent"
+                "occurrent",
+                "ontology class"
             ],
             "slot_usage": {
                 "has input": {
@@ -5470,13 +5608,17 @@
         "biological process": {
             "is_a": "biological process or activity",
             "mixins": [
-                "occurrent"
+                "occurrent",
+                "ontology class"
             ],
             "description": "One or more causally connected executions of molecular functions",
             "exact_mappings": [
                 "GO:0008150",
                 "SIO:000006",
                 "WIKIDATA:Q2996394"
+            ],
+            "broad_mappings": [
+                "WIKIDATA:P682"
             ],
             "id_prefixes": [
                 "GO",
@@ -5487,6 +5629,9 @@
         },
         "pathway": {
             "is_a": "biological process",
+            "mixins": [
+                "ontology class"
+            ],
             "exact_mappings": [
                 "PW:0000001",
                 "WIKIDATA:Q4915012"
@@ -5512,6 +5657,9 @@
                 "physiology"
             ],
             "is_a": "biological process",
+            "mixins": [
+                "ontology class"
+            ],
             "close_mappings": [
                 "UMLSSG:PHYS"
             ],
@@ -5537,6 +5685,9 @@
         },
         "behavior": {
             "is_a": "biological process",
+            "mixins": [
+                "ontology class"
+            ],
             "exact_mappings": [
                 "GO:0007610",
                 "UMLSSC:T053",
@@ -5566,6 +5717,9 @@
         },
         "chemical substance": {
             "is_a": "molecular entity",
+            "mixins": [
+                "ontology class"
+            ],
             "description": "May be a chemical entity or a formulation with a chemical entity as active ingredient, or a complex material with multiple chemical entities as part",
             "slots": [
                 "is metabolite"
@@ -5641,7 +5795,8 @@
         "processed material": {
             "is_a": "chemical substance",
             "mixins": [
-                "mixture"
+                "mixture",
+                "ontology class"
             ],
             "description": "A chemical substance (often a mixture) processed for consumption for nutritional, medical or technical use.",
             "exact_mappings": [
@@ -5651,7 +5806,9 @@
         "drug": {
             "is_a": "molecular entity",
             "mixins": [
-                "mixture"
+                "mixture",
+                "chemical or drug or treatement",
+                "ontology class"
             ],
             "description": "A substance intended for use in the diagnosis, cure, mitigation, treatment, or prevention of disease",
             "comments": [
@@ -5678,25 +5835,26 @@
             ]
         },
         "food component": {
+            "deprecated": "Food component is replaced by a slot/role of chemical substance and will be removed from the Biolink model.",
             "is_a": "chemical substance",
             "related_mappings": [
                 "CHEBI:78295"
             ]
         },
         "environmental food contaminant": {
-            "is_a": "food component",
+            "is_a": "chemical substance",
             "related_mappings": [
                 "CHEBI:78299"
             ]
         },
         "food additive": {
-            "is_a": "food component",
+            "is_a": "chemical substance",
             "related_mappings": [
                 "CHEBI:64047"
             ]
         },
         "nutrient": {
-            "is_a": "food component",
+            "is_a": "chemical substance",
             "related_mappings": [
                 "CHEBI:33284"
             ]
@@ -6023,6 +6181,9 @@
                 "UMLSSC:T026",
                 "UMLSST:celc"
             ],
+            "broad_mappings": [
+                "WIKIDATA:P681"
+            ],
             "id_prefixes": [
                 "GO",
                 "MESH",
@@ -6132,7 +6293,7 @@
                 "WIKIDATA:Q7187"
             ],
             "id_prefixes": [
-                "NCBIGENE",
+                "NCBIGene",
                 "ENSEMBL",
                 "HGNC",
                 "UniProtKB",
@@ -6336,7 +6497,7 @@
             "is_a": "RNA product",
             "id_prefixes": [
                 "RNACENTRAL",
-                "NCBIGENE",
+                "NCBIGene",
                 "ENSEMBL"
             ],
             "exact_mappings": [
@@ -6792,7 +6953,8 @@
             ],
             "is_a": "named thing",
             "mixins": [
-                "exposure event"
+                "exposure event",
+                "chemical or drug or treatement"
             ],
             "description": "A treatment is targeted at a disease or phenotype and may involve multiple drug 'exposures', medical devices and/or procedures",
             "slots": [
@@ -6933,7 +7095,7 @@
                     "description": "rdf:type of biolink:Association should be fixed at rdf:Statement"
                 },
                 "category": {
-                    "range": "association",
+                    "range": "category type",
                     "required": false
                 }
             },
@@ -8532,9 +8694,25 @@
                 }
             }
         },
+        "organism taxon to entity association": {
+            "mixin": true,
+            "description": "An association between an organism taxon and another entity",
+            "defining_slots": [
+                "subject"
+            ],
+            "slot_usage": {
+                "subject": {
+                    "range": "organism taxon",
+                    "description": "organism taxon that is the subject of the association"
+                }
+            }
+        },
         "organism taxon to organism taxon association": {
             "is_a": "association",
             "abstract": true,
+            "mixins": [
+                "organism taxon to entity association"
+            ],
             "description": "A relationship between two organism taxon nodes",
             "defining_slots": [
                 "subject",
@@ -8577,6 +8755,9 @@
             "defining_slots": [
                 "predicate"
             ],
+            "slots": [
+                "associated environmental context"
+            ],
             "slot_usage": {
                 "subject": {
                     "range": "organism taxon",
@@ -8590,6 +8771,30 @@
                 },
                 "predicate": {
                     "subproperty_of": "interacts with"
+                },
+                "associated environmental context": {
+                    "description": "the environment in which the two taxa interact"
+                }
+            }
+        },
+        "organism taxon to environment association": {
+            "is_a": "association",
+            "abstract": true,
+            "mixins": [
+                "organism taxon to entity association"
+            ],
+            "slot_usage": {
+                "subject": {
+                    "range": "organism taxon",
+                    "role": "interactor taxon",
+                    "description": "the taxon that is the subject of the association"
+                },
+                "object": {
+                    "role": "environmental context",
+                    "description": "the environment in which the organism occurs"
+                },
+                "predicate": {
+                    "description": "predicate describing the relationship between the taxon and the environment"
                 }
             }
         }
