@@ -14,16 +14,17 @@ const Graph = require('./graph/graph');
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 
 exports.TRAPIQueryHandler = class TRAPIQueryHandler {
-  constructor(options = {}, smartAPIPath = undefined) {
+  constructor(options = {}, smartAPIPath = undefined, predicatesPath = undefined) {
     this.logs = [];
     this.options = options;
     this.resolveOutputIDs =
       typeof this.options.enableIDResolution === 'undefined' ? true : this.options.enableIDResolution;
     this.path = smartAPIPath || path.resolve(__dirname, './smartapi_specs.json');
+    this.predicatePath = smartAPIPath || path.resolve(__dirname, './predicates.json');
   }
 
   _loadMetaKG() {
-    const kg = new meta_kg.default(this.path);
+    const kg = new meta_kg.default(this.path, this.predicatePath);
     debug(`Query options are: ${JSON.stringify(this.options)}`);
     debug(`SmartAPI Specs read from path: ${this.path}`);
     kg.constructMetaKGSync(this.options);
