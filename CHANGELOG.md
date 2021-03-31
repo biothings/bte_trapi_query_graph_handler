@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.4.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.3.1...v1.4.0) (2021-03-31)
+
+
+### Features
+
+* :sparkles: include TRAPI APIs when constructing meta-kg ([07688cb](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/07688cb93ebe13be61dd041d2c155a478dac5d5b))
+* :sparkles: restrict to a list of APIs to use in BTE ([defdd65](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/defdd656f30a04af85e37ef525d05ec247cc659b))
+* :sparkles: support constructing TRAPI based bte edge ([02afc54](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/02afc54bb71492cba9c0a311aef27a416798a8fa))
+* :sparkles: support trapi quer ([1658ad2](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/1658ad2f77cbb8c41dba72c871bca595a4495d2f))
+
 ### [1.3.1](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.3.0...v1.3.1) (2021-03-29)
 
 ## [1.3.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.2.2...v1.3.0) (2021-03-29)
