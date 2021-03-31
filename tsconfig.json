@@ -14,7 +14,8 @@
     "include": [
         "./src/**/*",
         "./src/biolink.json",
-        "./src/smartapi_specs.json"
+        "./src/smartapi_specs.json",
+        "./src/predicates.json"
     ],
     "exclude": [
         "node_modules",
