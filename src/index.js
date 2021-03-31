@@ -27,7 +27,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     const kg = new meta_kg.default(this.path, this.predicatePath);
     debug(`Query options are: ${JSON.stringify(this.options)}`);
     debug(`SmartAPI Specs read from path: ${this.path}`);
-    kg.constructMetaKGSync(this.options);
+    kg.constructMetaKGSync(true, this.options);
     return kg;
   }
 
