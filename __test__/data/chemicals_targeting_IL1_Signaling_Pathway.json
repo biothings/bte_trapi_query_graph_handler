@@ -1,0 +1,28 @@
+{
+    "message": {
+        "query_graph": {
+            "nodes": {
+                "n0": {
+                    "id": "WIKIPATHWAYS:WP195",
+                    "category": "biolink:Pathway"
+                },
+                "n1": {
+                    "category": "biolink:Gene"
+                },
+                "n2": {
+                    "category": "biolink:ChemicalSubstance"
+                }
+            },
+            "edges": {
+                "e01": {
+                    "subject": "n0",
+                    "object": "n1"
+                },
+                "e02": {
+                    "subject": "n1",
+                    "object": "n2"
+                }
+            }
+        }
+    }
+}
