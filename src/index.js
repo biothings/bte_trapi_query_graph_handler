@@ -20,7 +20,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     this.resolveOutputIDs =
       typeof this.options.enableIDResolution === 'undefined' ? true : this.options.enableIDResolution;
     this.path = smartAPIPath || path.resolve(__dirname, './smartapi_specs.json');
-    this.predicatePath = smartAPIPath || path.resolve(__dirname, './predicates.json');
+    this.predicatePath = predicatesPath || path.resolve(__dirname, './predicates.json');
   }
 
   _loadMetaKG() {
