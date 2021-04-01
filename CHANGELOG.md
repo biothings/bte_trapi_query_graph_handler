@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.5.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.4.0...v1.5.0) (2021-04-01)
+
+
+### Bug Fixes
+
+* :bug: should check for predidcatesPath param instead of smartapiPath ([ac413e6](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/ac413e6185cff37ed80eb76a5de1ae7cc1352d12))
+
 ## [1.4.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.3.1...v1.4.0) (2021-03-31)
 
 
