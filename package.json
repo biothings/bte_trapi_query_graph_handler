@@ -51,7 +51,7 @@
     },
     "dependencies": {
         "@biothings-explorer/call-apis": "^1.17.1",
-        "@biothings-explorer/smartapi-kg": "^3.4.0",
+        "@biothings-explorer/smartapi-kg": "^3.5.0",
         "biolink-model": "^0.3.0",
         "biomedical_id_resolver": "^3.5.0",
         "debug": "^4.3.1",
