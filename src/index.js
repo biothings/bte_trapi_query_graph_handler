@@ -14,7 +14,7 @@ const Graph = require('./graph/graph');
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 
 exports.TRAPIQueryHandler = class TRAPIQueryHandler {
-  constructor(options = {}, smartAPIPath = undefined, predicatesPath = undefined, includeReasoner = false) {
+  constructor(options = {}, smartAPIPath = undefined, predicatesPath = undefined, includeReasoner = true) {
     this.logs = [];
     this.options = options;
     this.includeReasoner = includeReasoner;
