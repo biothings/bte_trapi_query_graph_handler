@@ -1,6 +1,7 @@
 const kg_edge = require('./kg_edge');
 const kg_node = require('./kg_node');
 const helper = require('../helper');
+const debug = require('debug')('biothings-explorer-trapi:Graph');
 
 module.exports = class Graph {
   constructor() {
@@ -12,6 +13,7 @@ module.exports = class Graph {
   }
 
   update(queryResult) {
+    debug(`Updating BTE Graph now.`)
     const bteAttributes = ['name', 'label', 'id', 'api', 'provided_by', 'publications'];
     queryResult.map((record) => {
       const inputPrimaryID = this.helper._getInputID(record);
