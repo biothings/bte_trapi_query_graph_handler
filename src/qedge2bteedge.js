@@ -40,8 +40,7 @@ module.exports = class QEdge2BTEEdgeHandler {
     let filterCriteria = {
       input_type: qEdge.getSubject().getCategories(),
       output_type: qEdge.getObject().getCategories(),
-      predicate: qEdge.getPredicate(),
-      api_name: config.API_LIST,
+      predicate: qEdge.getPredicate()
     };
     debug(`Filter criteria is: ${JSON.stringify(filterCriteria)}`);
     let smartapi_edges = kg.filter(filterCriteria);
@@ -59,10 +58,8 @@ module.exports = class QEdge2BTEEdgeHandler {
         new LogEntry(
           'DEBUG',
           null,
-          `BTE found ${
-            smartapi_edges.length
-          } smartapi edges corresponding to ${qEdge.getID()}. These smartaip edges comes from ${
-            new Set(this._findAPIsFromSmartAPIEdges(smartapi_edges)).size
+          `BTE found ${smartapi_edges.length
+          } smartapi edges corresponding to ${qEdge.getID()}. These smartaip edges comes from ${new Set(this._findAPIsFromSmartAPIEdges(smartapi_edges)).size
           } unique APIs. They are ${Array.from(new Set(this._findAPIsFromSmartAPIEdges(smartapi_edges))).join(',')}`,
         ).getLog(),
       );
