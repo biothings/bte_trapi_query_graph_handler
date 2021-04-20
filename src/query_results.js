@@ -37,7 +37,7 @@ module.exports = class QueryResult {
   }
 
   update(queryResult) {
-    debug(`Updating query results now!`)
+    debug(`Updating query results now!`);
     queryResult.map((record) => {
       this.results.push({
         node_bindings: this._createNodeBindings(record),

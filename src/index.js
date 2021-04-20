@@ -106,7 +106,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       if (res.length === 0) {
         return;
       }
-      debug('Start to notify subscribers now.')
+      debug('Start to notify subscribers now.');
       handlers[i].notify(res);
       debug(`Updated TRAPI knowledge graph using query results for depth ${i + 1}`);
     }
