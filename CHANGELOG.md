@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.8.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.7.0...v1.8.0) (2021-04-20)
+
+
+### Features
+
+* :sparkles: set a 3s timeout for all TRAPI APIs ([87f412e](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/87f412eae73ef53f2ef118badad20daef5c9c615))
+* :sparkles: set a 3s timeout for all TRAPI APIs ([4d1c3d4](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/4d1c3d49e61a446ff76cf7106671dbda794ea0a3))
+
 ## [1.7.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.6.0...v1.7.0) (2021-04-02)
 
 
