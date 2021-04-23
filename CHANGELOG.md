@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.9.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.8.0...v1.9.0) (2021-04-23)
+
+
+### Features
+
+* :sparkles: support biocarta pathway id ([011134c](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/011134c188ccddfff2b0c5054fc2a769d424308f))
+
 ## [1.8.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.7.0...v1.8.0) (2021-04-20)
 
 
