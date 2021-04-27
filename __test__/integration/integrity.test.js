@@ -20,7 +20,7 @@ describe("Testing TRAPIQueryHandler Module", () => {
         queryHandler.setQueryGraph(query.message.query_graph);
         await queryHandler.query();
         const res = queryHandler.getResponse();
-        expect(res.message.knowledge_graph.nodes).toHaveProperty('NCBIGENE:111');
+        expect(res.message.knowledge_graph.nodes).toHaveProperty('NCBIGene:111');
     })
 
     test("When looking for chemicals targeting IL1 Signaling patway, curcumin should pop up", async () => {
