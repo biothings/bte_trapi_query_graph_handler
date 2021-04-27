@@ -71,14 +71,14 @@ console.log(queryHandler.getResponse())
         },
         "knowledge_graph": {
             "nodes": {
-                "NCBIGENE:1017": {
+                "NCBIGene:1017": {
                     "category": "biolink:Gene",
                     "name": "CDK2",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:1017",
+                                "NCBIGene:1017",
                                 "name:cyclin dependent kinase 2",
                                 "SYMBOL:CDK2",
                                 "UMLS:C1332733",
@@ -402,9 +402,9 @@ console.log(queryHandler.getResponse())
                 }
             },
             "edges": {
-                "NCBIGENE:1017-GO:0000082-MyGene.info API-entrez": {
+                "NCBIGene:1017-GO:0000082-MyGene.info API-entrez": {
                     "predicate": "biolink:enables",
-                    "subject": "NCBIGENE:1017",
+                    "subject": "NCBIGene:1017",
                     "object": "GO:0000082",
                     "attributes": [
                         {
@@ -436,9 +436,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1017-GO:0000086-MyGene.info API-entrez": {
+                "NCBIGene:1017-GO:0000086-MyGene.info API-entrez": {
                     "predicate": "biolink:enables",
-                    "subject": "NCBIGENE:1017",
+                    "subject": "NCBIGene:1017",
                     "object": "GO:0000086",
                     "attributes": [
                         {
@@ -470,9 +470,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1017-GO:0006260-MyGene.info API-entrez": {
+                "NCBIGene:1017-GO:0006260-MyGene.info API-entrez": {
                     "predicate": "biolink:enables",
-                    "subject": "NCBIGENE:1017",
+                    "subject": "NCBIGene:1017",
                     "object": "GO:0006260",
                     "attributes": [
                         {
@@ -504,9 +504,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1017-GO:0006281-MyGene.info API-entrez": {
+                "NCBIGene:1017-GO:0006281-MyGene.info API-entrez": {
                     "predicate": "biolink:enables",
-                    "subject": "NCBIGENE:1017",
+                    "subject": "NCBIGene:1017",
                     "object": "GO:0006281",
                     "attributes": [
                         {
@@ -531,9 +531,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1017-GO:0006468-MyGene.info API-entrez": {
+                "NCBIGene:1017-GO:0006468-MyGene.info API-entrez": {
                     "predicate": "biolink:enables",
-                    "subject": "NCBIGENE:1017",
+                    "subject": "NCBIGene:1017",
                     "object": "GO:0006468",
                     "attributes": [
                         {
@@ -565,9 +565,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1017-GO:0006977-MyGene.info API-entrez": {
+                "NCBIGene:1017-GO:0006977-MyGene.info API-entrez": {
                     "predicate": "biolink:enables",
-                    "subject": "NCBIGENE:1017",
+                    "subject": "NCBIGene:1017",
                     "object": "GO:0006977",
                     "attributes": [
                         {
@@ -592,9 +592,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1017-GO:0007099-MyGene.info API-entrez": {
+                "NCBIGene:1017-GO:0007099-MyGene.info API-entrez": {
                     "predicate": "biolink:enables",
-                    "subject": "NCBIGENE:1017",
+                    "subject": "NCBIGene:1017",
                     "object": "GO:0007099",
                     "attributes": [
                         {
@@ -626,9 +626,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1017-GO:0007165-MyGene.info API-entrez": {
+                "NCBIGene:1017-GO:0007165-MyGene.info API-entrez": {
                     "predicate": "biolink:enables",
-                    "subject": "NCBIGENE:1017",
+                    "subject": "NCBIGene:1017",
                     "object": "GO:0007165",
                     "attributes": [
                         {
@@ -660,9 +660,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1017-GO:0007265-MyGene.info API-entrez": {
+                "NCBIGene:1017-GO:0007265-MyGene.info API-entrez": {
                     "predicate": "biolink:enables",
-                    "subject": "NCBIGENE:1017",
+                    "subject": "NCBIGene:1017",
                     "object": "GO:0007265",
                     "attributes": [
                         {
@@ -694,9 +694,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1017-GO:0008284-MyGene.info API-entrez": {
+                "NCBIGene:1017-GO:0008284-MyGene.info API-entrez": {
                     "predicate": "biolink:enables",
-                    "subject": "NCBIGENE:1017",
+                    "subject": "NCBIGene:1017",
                     "object": "GO:0008284",
                     "attributes": [
                         {
@@ -728,9 +728,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1017-GO:0010389-MyGene.info API-entrez": {
+                "NCBIGene:1017-GO:0010389-MyGene.info API-entrez": {
                     "predicate": "biolink:enables",
-                    "subject": "NCBIGENE:1017",
+                    "subject": "NCBIGene:1017",
                     "object": "GO:0010389",
                     "attributes": [
                         {
@@ -762,9 +762,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1017-GO:0010468-MyGene.info API-entrez": {
+                "NCBIGene:1017-GO:0010468-MyGene.info API-entrez": {
                     "predicate": "biolink:enables",
-                    "subject": "NCBIGENE:1017",
+                    "subject": "NCBIGene:1017",
                     "object": "GO:0010468",
                     "attributes": [
                         {
@@ -796,9 +796,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1017-GO:0016572-MyGene.info API-entrez": {
+                "NCBIGene:1017-GO:0016572-MyGene.info API-entrez": {
                     "predicate": "biolink:enables",
-                    "subject": "NCBIGENE:1017",
+                    "subject": "NCBIGene:1017",
                     "object": "GO:0016572",
                     "attributes": [
                         {
@@ -830,9 +830,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1017-GO:0018105-MyGene.info API-entrez": {
+                "NCBIGene:1017-GO:0018105-MyGene.info API-entrez": {
                     "predicate": "biolink:enables",
-                    "subject": "NCBIGENE:1017",
+                    "subject": "NCBIGene:1017",
                     "object": "GO:0018105",
                     "attributes": [
                         {
@@ -864,9 +864,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1017-GO:0031145-MyGene.info API-entrez": {
+                "NCBIGene:1017-GO:0031145-MyGene.info API-entrez": {
                     "predicate": "biolink:enables",
-                    "subject": "NCBIGENE:1017",
+                    "subject": "NCBIGene:1017",
                     "object": "GO:0031145",
                     "attributes": [
                         {
@@ -891,9 +891,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1017-GO:0031571-MyGene.info API-entrez": {
+                "NCBIGene:1017-GO:0031571-MyGene.info API-entrez": {
                     "predicate": "biolink:enables",
-                    "subject": "NCBIGENE:1017",
+                    "subject": "NCBIGene:1017",
                     "object": "GO:0031571",
                     "attributes": [
                         {
@@ -925,9 +925,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1017-GO:0051298-MyGene.info API-entrez": {
+                "NCBIGene:1017-GO:0051298-MyGene.info API-entrez": {
                     "predicate": "biolink:enables",
-                    "subject": "NCBIGENE:1017",
+                    "subject": "NCBIGene:1017",
                     "object": "GO:0051298",
                     "attributes": [
                         {
@@ -959,9 +959,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1017-GO:0051301-MyGene.info API-entrez": {
+                "NCBIGene:1017-GO:0051301-MyGene.info API-entrez": {
                     "predicate": "biolink:enables",
-                    "subject": "NCBIGENE:1017",
+                    "subject": "NCBIGene:1017",
                     "object": "GO:0051301",
                     "attributes": [
                         {
@@ -986,9 +986,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1017-GO:0051321-MyGene.info API-entrez": {
+                "NCBIGene:1017-GO:0051321-MyGene.info API-entrez": {
                     "predicate": "biolink:enables",
-                    "subject": "NCBIGENE:1017",
+                    "subject": "NCBIGene:1017",
                     "object": "GO:0051321",
                     "attributes": [
                         {
@@ -1020,9 +1020,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1017-GO:0060968-MyGene.info API-entrez": {
+                "NCBIGene:1017-GO:0060968-MyGene.info API-entrez": {
                     "predicate": "biolink:enables",
-                    "subject": "NCBIGENE:1017",
+                    "subject": "NCBIGene:1017",
                     "object": "GO:0060968",
                     "attributes": [
                         {
@@ -1054,9 +1054,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1017-GO:0071732-MyGene.info API-entrez": {
+                "NCBIGene:1017-GO:0071732-MyGene.info API-entrez": {
                     "predicate": "biolink:enables",
-                    "subject": "NCBIGENE:1017",
+                    "subject": "NCBIGene:1017",
                     "object": "GO:0071732",
                     "attributes": [
                         {
@@ -1088,9 +1088,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1017-GO:1901796-MyGene.info API-entrez": {
+                "NCBIGene:1017-GO:1901796-MyGene.info API-entrez": {
                     "predicate": "biolink:enables",
-                    "subject": "NCBIGENE:1017",
+                    "subject": "NCBIGene:1017",
                     "object": "GO:1901796",
                     "attributes": [
                         {
@@ -1122,7 +1122,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1134,7 +1134,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0000082-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0000082-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1143,7 +1143,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1155,7 +1155,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0000082-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0000082-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1164,7 +1164,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1176,7 +1176,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0000086-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0000086-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1185,7 +1185,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1197,7 +1197,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0000086-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0000086-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1206,7 +1206,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1218,7 +1218,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0006260-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0006260-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1227,7 +1227,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1239,7 +1239,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0006281-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0006281-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1248,7 +1248,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1260,7 +1260,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0006468-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0006468-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1269,7 +1269,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1281,7 +1281,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0006468-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0006468-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1290,7 +1290,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1302,7 +1302,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0006468-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0006468-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1311,7 +1311,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1323,7 +1323,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0006977-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0006977-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1332,7 +1332,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1344,7 +1344,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0007099-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0007099-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1353,7 +1353,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1365,7 +1365,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0007165-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0007165-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1374,7 +1374,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1386,7 +1386,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0007265-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0007265-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1395,7 +1395,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1407,7 +1407,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0008284-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0008284-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1416,7 +1416,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1428,7 +1428,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0008284-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0008284-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1437,7 +1437,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1449,7 +1449,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0010389-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0010389-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1458,7 +1458,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1470,7 +1470,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0010468-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0010468-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1479,7 +1479,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1491,7 +1491,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0016572-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0016572-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1500,7 +1500,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1512,7 +1512,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0018105-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0018105-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1521,7 +1521,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1533,7 +1533,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0031145-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0031145-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1542,7 +1542,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1554,7 +1554,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0031571-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0031571-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1563,7 +1563,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1575,7 +1575,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0051298-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0051298-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1584,7 +1584,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1596,7 +1596,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0051301-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0051301-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1605,7 +1605,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1617,7 +1617,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0051321-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0051321-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1626,7 +1626,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1638,7 +1638,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0060968-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0060968-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1647,7 +1647,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1659,7 +1659,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:0071732-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:0071732-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1668,7 +1668,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n00": [
                         {
-                            "id": "NCBIGENE:1017"
+                            "id": "NCBIGene:1017"
                         }
                     ],
                     "n01": [
@@ -1680,7 +1680,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e00": [
                         {
-                            "id": "NCBIGENE:1017-GO:1901796-MyGene.info API-entrez"
+                            "id": "NCBIGene:1017-GO:1901796-MyGene.info API-entrez"
                         }
                     ]
                 }
@@ -1856,14 +1856,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:116534309": {
+                "NCBIGene:116534309": {
                     "category": "biolink:Gene",
                     "name": "CD4",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:116534309",
+                                "NCBIGene:116534309",
                                 "name:CD4 molecule",
                                 "SYMBOL:CD4"
                             ],
@@ -1871,14 +1871,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:539109": {
+                "NCBIGene:539109": {
                     "category": "biolink:Gene",
                     "name": "MMP11",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:539109",
+                                "NCBIGene:539109",
                                 "name:matrix metallopeptidase 11",
                                 "SYMBOL:MMP11",
                                 "ENSEMBL:ENSBTAG00000006108"
@@ -1887,14 +1887,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:102448557": {
+                "NCBIGene:102448557": {
                     "category": "biolink:Gene",
                     "name": "GTPBP1",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:102448557",
+                                "NCBIGene:102448557",
                                 "name:GTP binding protein 1",
                                 "SYMBOL:GTPBP1",
                                 "ENSEMBL:ENSPSIG00000004300"
@@ -1903,14 +1903,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:103074707": {
+                "NCBIGene:103074707": {
                     "category": "biolink:Gene",
                     "name": "CCL2",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:103074707",
+                                "NCBIGene:103074707",
                                 "name:C-C motif chemokine ligand 2",
                                 "SYMBOL:CCL2"
                             ],
@@ -1933,14 +1933,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:115865406": {
+                "NCBIGene:115865406": {
                     "category": "biolink:Gene",
                     "name": "BST2",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:115865406",
+                                "NCBIGene:115865406",
                                 "name:bone marrow stromal cell antigen 2",
                                 "SYMBOL:BST2"
                             ],
@@ -1948,14 +1948,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:110132571": {
+                "NCBIGene:110132571": {
                     "category": "biolink:Gene",
                     "name": "IL1B",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:110132571",
+                                "NCBIGene:110132571",
                                 "name:interleukin 1 beta",
                                 "SYMBOL:IL1B"
                             ],
@@ -1963,14 +1963,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:101571570": {
+                "NCBIGene:101571570": {
                     "category": "biolink:Gene",
                     "name": "Ifih1",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:101571570",
+                                "NCBIGene:101571570",
                                 "name:interferon induced with helicase C domain 1",
                                 "SYMBOL:Ifih1",
                                 "ENSEMBL:ENSODEG00000013586"
@@ -1994,14 +1994,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:397686": {
+                "NCBIGene:397686": {
                     "category": "biolink:Gene",
                     "name": "IFNA1",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:397686",
+                                "NCBIGene:397686",
                                 "name:interferon, alpha 1",
                                 "SYMBOL:IFNA1",
                                 "ENSEMBL:ENSSSCG00000050619"
@@ -2010,14 +2010,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:102892030": {
+                "NCBIGene:102892030": {
                     "category": "biolink:Gene",
                     "name": "ALB",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:102892030",
+                                "NCBIGene:102892030",
                                 "name:albumin",
                                 "SYMBOL:ALB"
                             ],
@@ -2025,14 +2025,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:104045425": {
+                "NCBIGene:104045425": {
                     "category": "biolink:Gene",
                     "name": "HDX",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:104045425",
+                                "NCBIGene:104045425",
                                 "name:highly divergent homeobox",
                                 "SYMBOL:HDX"
                             ],
@@ -2040,14 +2040,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:110137949": {
+                "NCBIGene:110137949": {
                     "category": "biolink:Gene",
                     "name": "CXCL10",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:110137949",
+                                "NCBIGene:110137949",
                                 "name:C-X-C motif chemokine ligand 10",
                                 "SYMBOL:CXCL10"
                             ],
@@ -2055,14 +2055,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:105822820": {
+                "NCBIGene:105822820": {
                     "category": "biolink:Gene",
                     "name": "CXCL8",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:105822820",
+                                "NCBIGene:105822820",
                                 "name:C-X-C motif chemokine ligand 8",
                                 "SYMBOL:CXCL8",
                                 "ENSEMBL:ENSPCOG00000024593"
@@ -2071,14 +2071,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:116479423": {
+                "NCBIGene:116479423": {
                     "category": "biolink:Gene",
                     "name": "CLEC4M",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:116479423",
+                                "NCBIGene:116479423",
                                 "name:C-type lectin domain family 4 member M",
                                 "SYMBOL:CLEC4M"
                             ],
@@ -2086,14 +2086,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:103814882": {
+                "NCBIGene:103814882": {
                     "category": "biolink:Gene",
                     "name": "F3",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:103814882",
+                                "NCBIGene:103814882",
                                 "name:coagulation factor III, tissue factor",
                                 "SYMBOL:F3",
                                 "ENSEMBL:ENSSCAG00000012591"
@@ -2102,14 +2102,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:101142722": {
+                "NCBIGene:101142722": {
                     "category": "biolink:Gene",
                     "name": "KPNA1",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:101142722",
+                                "NCBIGene:101142722",
                                 "name:karyopherin subunit alpha 1",
                                 "SYMBOL:KPNA1"
                             ],
@@ -2117,14 +2117,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:104673720": {
+                "NCBIGene:104673720": {
                     "category": "biolink:Gene",
                     "name": "CTSL",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:104673720",
+                                "NCBIGene:104673720",
                                 "name:cathepsin L",
                                 "SYMBOL:CTSL",
                                 "ENSEMBL:ENSRROG00000038398"
@@ -2133,14 +2133,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:116543050": {
+                "NCBIGene:116543050": {
                     "category": "biolink:Gene",
                     "name": "CTSB",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:116543050",
+                                "NCBIGene:116543050",
                                 "name:cathepsin B",
                                 "SYMBOL:CTSB"
                             ],
@@ -2148,14 +2148,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:29798": {
+                "NCBIGene:29798": {
                     "category": "biolink:Gene",
                     "name": "C2orf27A",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:29798",
+                                "NCBIGene:29798",
                                 "name:chromosome 2 open reading frame 27A",
                                 "SYMBOL:C2orf27A",
                                 "UMLS:C2681192",
@@ -2166,14 +2166,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:118012204": {
+                "NCBIGene:118012204": {
                     "category": "biolink:Gene",
                     "name": "STAT1",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:118012204",
+                                "NCBIGene:118012204",
                                 "name:signal transducer and activator of transcription 1",
                                 "SYMBOL:STAT1"
                             ],
@@ -2181,14 +2181,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:103531663": {
+                "NCBIGene:103531663": {
                     "category": "biolink:Gene",
                     "name": "KPNA5",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:103531663",
+                                "NCBIGene:103531663",
                                 "name:karyopherin subunit alpha 5",
                                 "SYMBOL:KPNA5"
                             ],
@@ -2211,14 +2211,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:104395366": {
+                "NCBIGene:104395366": {
                     "category": "biolink:Gene",
                     "name": "THBD",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:104395366",
+                                "NCBIGene:104395366",
                                 "name:thrombomodulin",
                                 "SYMBOL:THBD"
                             ],
@@ -2226,14 +2226,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:100731608": {
+                "NCBIGene:100731608": {
                     "category": "biolink:Gene",
                     "name": "Isg15",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:100731608",
+                                "NCBIGene:100731608",
                                 "name:ISG15 ubiquitin like modifier",
                                 "SYMBOL:Isg15"
                             ],
@@ -2241,14 +2241,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:108529797": {
+                "NCBIGene:108529797": {
                     "category": "biolink:Gene",
                     "name": "DDX58",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:108529797",
+                                "NCBIGene:108529797",
                                 "name:DExD/H-box helicase 58",
                                 "SYMBOL:DDX58",
                                 "ENSEMBL:ENSRBIG00000040257"
@@ -2257,14 +2257,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:106971145": {
+                "NCBIGene:106971145": {
                     "category": "biolink:Gene",
                     "name": "IFNB1",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:106971145",
+                                "NCBIGene:106971145",
                                 "name:interferon beta 1",
                                 "SYMBOL:IFNB1"
                             ],
@@ -2286,14 +2286,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:101443464": {
+                "NCBIGene:101443464": {
                     "category": "biolink:Gene",
                     "name": "GPT",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:101443464",
+                                "NCBIGene:101443464",
                                 "name:glutamic--pyruvic transaminase",
                                 "SYMBOL:GPT"
                             ],
@@ -2301,14 +2301,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:102387082": {
+                "NCBIGene:102387082": {
                     "category": "biolink:Gene",
                     "name": "IRF7",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:102387082",
+                                "NCBIGene:102387082",
                                 "name:interferon regulatory factor 7",
                                 "SYMBOL:IRF7"
                             ],
@@ -2316,14 +2316,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:109055884": {
+                "NCBIGene:109055884": {
                     "category": "biolink:Gene",
                     "name": "il6",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:109055884",
+                                "NCBIGene:109055884",
                                 "name:interleukin 6 (interferon, beta 2)",
                                 "SYMBOL:il6",
                                 "ENSEMBL:ENSCCRG00000034667"
@@ -2347,14 +2347,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:117759282": {
+                "NCBIGene:117759282": {
                     "category": "biolink:Gene",
                     "name": "ace2",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:117759282",
+                                "NCBIGene:117759282",
                                 "name:angiotensin I converting enzyme 2",
                                 "SYMBOL:ace2"
                             ],
@@ -2362,14 +2362,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:103562469": {
+                "NCBIGene:103562469": {
                     "category": "biolink:Gene",
                     "name": "TNF",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:103562469",
+                                "NCBIGene:103562469",
                                 "name:tumor necrosis factor",
                                 "SYMBOL:TNF"
                             ],
@@ -2377,14 +2377,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:112648300": {
+                "NCBIGene:112648300": {
                     "category": "biolink:Gene",
                     "name": "IL10",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:112648300",
+                                "NCBIGene:112648300",
                                 "name:interleukin 10",
                                 "SYMBOL:IL10",
                                 "ENSEMBL:ENSCAFG00020012434"
@@ -2393,14 +2393,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:105221759": {
+                "NCBIGene:105221759": {
                     "category": "biolink:Gene",
                     "name": "ERVW-1",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:105221759",
+                                "NCBIGene:105221759",
                                 "name:endogenous retrovirus group W member 1, envelope",
                                 "SYMBOL:ERVW-1"
                             ],
@@ -2408,14 +2408,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:118335909": {
+                "NCBIGene:118335909": {
                     "category": "biolink:Gene",
                     "name": "irf3",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:118335909",
+                                "NCBIGene:118335909",
                                 "name:interferon regulatory factor 3",
                                 "SYMBOL:irf3"
                             ],
@@ -2423,14 +2423,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:101674197": {
+                "NCBIGene:101674197": {
                     "category": "biolink:Gene",
                     "name": "CCL5",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:101674197",
+                                "NCBIGene:101674197",
                                 "name:C-C motif chemokine ligand 5",
                                 "SYMBOL:CCL5"
                             ],
@@ -2438,14 +2438,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:103089296": {
+                "NCBIGene:103089296": {
                     "category": "biolink:Gene",
                     "name": "CCL3",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:103089296",
+                                "NCBIGene:103089296",
                                 "name:C-C motif chemokine ligand 3",
                                 "SYMBOL:CCL3"
                             ],
@@ -2453,14 +2453,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:100136221": {
+                "NCBIGene:100136221": {
                     "category": "biolink:Gene",
                     "name": "ccl4",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:100136221",
+                                "NCBIGene:100136221",
                                 "name:CCL4 protein",
                                 "SYMBOL:ccl4",
                                 "ENSEMBL:ENSOMYG00000026069"
@@ -2469,14 +2469,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:118023076": {
+                "NCBIGene:118023076": {
                     "category": "biolink:Gene",
                     "name": "FURIN",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:118023076",
+                                "NCBIGene:118023076",
                                 "name:furin, paired basic amino acid cleaving enzyme",
                                 "SYMBOL:FURIN"
                             ],
@@ -2484,14 +2484,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:574217": {
+                "NCBIGene:574217": {
                     "category": "biolink:Gene",
                     "name": "CCL4L1",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:574217",
+                                "NCBIGene:574217",
                                 "name:chemokine (C-C motif) ligand 4-like 1",
                                 "SYMBOL:CCL4L1",
                                 "UniProtKB:Q8HYQ2",
@@ -2527,14 +2527,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:3601": {
+                "NCBIGene:3601": {
                     "category": "biolink:Gene",
                     "name": "IL15RA",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:3601",
+                                "NCBIGene:3601",
                                 "name:interleukin 15 receptor subunit alpha",
                                 "SYMBOL:IL15RA",
                                 "UMLS:C1416387",
@@ -2547,14 +2547,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:5788": {
+                "NCBIGene:5788": {
                     "category": "biolink:Gene",
                     "name": "PTPRC",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:5788",
+                                "NCBIGene:5788",
                                 "name:protein tyrosine phosphatase receptor type C",
                                 "SYMBOL:PTPRC",
                                 "UMLS:C1335285",
@@ -2568,14 +2568,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:8030": {
+                "NCBIGene:8030": {
                     "category": "biolink:Gene",
                     "name": "CCDC6",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:8030",
+                                "NCBIGene:8030",
                                 "name:coiled-coil domain containing 6",
                                 "SYMBOL:CCDC6",
                                 "UMLS:C1425774",
@@ -2588,14 +2588,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:920": {
+                "NCBIGene:920": {
                     "category": "biolink:Gene",
                     "name": "CD4",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:920",
+                                "NCBIGene:920",
                                 "name:CD4 molecule",
                                 "SYMBOL:CD4",
                                 "UMLS:C1332714",
@@ -2608,14 +2608,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1514": {
+                "NCBIGene:1514": {
                     "category": "biolink:Gene",
                     "name": "CTSL",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:1514",
+                                "NCBIGene:1514",
                                 "name:cathepsin L",
                                 "SYMBOL:CTSL",
                                 "UMLS:C1332807",
@@ -2655,14 +2655,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:3439": {
+                "NCBIGene:3439": {
                     "category": "biolink:Gene",
                     "name": "IFNA1",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:3439",
+                                "NCBIGene:3439",
                                 "name:interferon alpha 1",
                                 "SYMBOL:IFNA1",
                                 "UMLS:C1415900",
@@ -2714,14 +2714,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:3557": {
+                "NCBIGene:3557": {
                     "category": "biolink:Gene",
                     "name": "IL1RN",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:3557",
+                                "NCBIGene:3557",
                                 "name:interleukin 1 receptor antagonist",
                                 "SYMBOL:IL1RN",
                                 "UMLS:C1416402",
@@ -2747,14 +2747,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1520": {
+                "NCBIGene:1520": {
                     "category": "biolink:Gene",
                     "name": "CTSS",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:1520",
+                                "NCBIGene:1520",
                                 "name:cathepsin S",
                                 "SYMBOL:CTSS",
                                 "UMLS:C1413821",
@@ -2767,14 +2767,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:3806": {
+                "NCBIGene:3806": {
                     "category": "biolink:Gene",
                     "name": "KIR2DS1",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:3806",
+                                "NCBIGene:3806",
                                 "name:killer cell immunoglobulin like receptor, two Ig domains and short cytoplasmic tail 1",
                                 "SYMBOL:KIR2DS1",
                                 "UMLS:C1416647",
@@ -2792,14 +2792,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:3808": {
+                "NCBIGene:3808": {
                     "category": "biolink:Gene",
                     "name": "KIR2DS3",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:3808",
+                                "NCBIGene:3808",
                                 "name:killer cell immunoglobulin like receptor, two Ig domains and short cytoplasmic tail 3",
                                 "SYMBOL:KIR2DS3",
                                 "UMLS:C1416649",
@@ -2827,14 +2827,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:558": {
+                "NCBIGene:558": {
                     "category": "biolink:Gene",
                     "name": "AXL",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:558",
+                                "NCBIGene:558",
                                 "name:AXL receptor tyrosine kinase",
                                 "SYMBOL:AXL",
                                 "UMLS:C0812237",
@@ -2977,14 +2977,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:4864": {
+                "NCBIGene:4864": {
                     "category": "biolink:Gene",
                     "name": "NPC1",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:4864",
+                                "NCBIGene:4864",
                                 "name:NPC intracellular cholesterol transporter 1",
                                 "SYMBOL:NPC1",
                                 "UMLS:C1417776",
@@ -3062,14 +3062,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:324": {
+                "NCBIGene:324": {
                     "category": "biolink:Gene",
                     "name": "APC",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:324",
+                                "NCBIGene:324",
                                 "name:APC regulator of WNT signaling pathway",
                                 "SYMBOL:APC",
                                 "UMLS:C0162832",
@@ -3159,10 +3159,10 @@ console.log(queryHandler.getResponse())
                 }
             },
             "edges": {
-                "MONDO:0005737-NCBIGENE:116534309-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:116534309-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:116534309",
+                    "object": "NCBIGene:116534309",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3181,10 +3181,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:539109-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:539109-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:539109",
+                    "object": "NCBIGene:539109",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3203,10 +3203,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:102448557-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:102448557-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:102448557",
+                    "object": "NCBIGene:102448557",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3225,10 +3225,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:103074707-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:103074707-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:103074707",
+                    "object": "NCBIGene:103074707",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3269,10 +3269,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:115865406-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:115865406-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:115865406",
+                    "object": "NCBIGene:115865406",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3291,10 +3291,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:110132571-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:110132571-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:110132571",
+                    "object": "NCBIGene:110132571",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3313,10 +3313,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:101571570-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:101571570-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:101571570",
+                    "object": "NCBIGene:101571570",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3357,10 +3357,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:397686-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:397686-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:397686",
+                    "object": "NCBIGene:397686",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3379,10 +3379,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:102892030-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:102892030-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:102892030",
+                    "object": "NCBIGene:102892030",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3401,10 +3401,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:104045425-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:104045425-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:104045425",
+                    "object": "NCBIGene:104045425",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3423,10 +3423,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:110137949-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:110137949-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:110137949",
+                    "object": "NCBIGene:110137949",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3445,10 +3445,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:105822820-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:105822820-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:105822820",
+                    "object": "NCBIGene:105822820",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3467,10 +3467,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:116479423-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:116479423-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:116479423",
+                    "object": "NCBIGene:116479423",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3489,10 +3489,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:103814882-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:103814882-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:103814882",
+                    "object": "NCBIGene:103814882",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3511,10 +3511,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:101142722-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:101142722-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:101142722",
+                    "object": "NCBIGene:101142722",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3533,10 +3533,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:104673720-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:104673720-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:104673720",
+                    "object": "NCBIGene:104673720",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3555,10 +3555,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:116543050-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:116543050-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:116543050",
+                    "object": "NCBIGene:116543050",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3577,10 +3577,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:29798-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:29798-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:29798",
+                    "object": "NCBIGene:29798",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3599,10 +3599,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:118012204-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:118012204-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:118012204",
+                    "object": "NCBIGene:118012204",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3621,10 +3621,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:103531663-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:103531663-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:103531663",
+                    "object": "NCBIGene:103531663",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3665,10 +3665,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:104395366-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:104395366-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:104395366",
+                    "object": "NCBIGene:104395366",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3687,10 +3687,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:100731608-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:100731608-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:100731608",
+                    "object": "NCBIGene:100731608",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3709,10 +3709,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:108529797-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:108529797-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:108529797",
+                    "object": "NCBIGene:108529797",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3731,10 +3731,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:106971145-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:106971145-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:106971145",
+                    "object": "NCBIGene:106971145",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3775,10 +3775,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:101443464-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:101443464-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:101443464",
+                    "object": "NCBIGene:101443464",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3797,10 +3797,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:102387082-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:102387082-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:102387082",
+                    "object": "NCBIGene:102387082",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3819,10 +3819,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:109055884-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:109055884-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:109055884",
+                    "object": "NCBIGene:109055884",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3863,10 +3863,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:117759282-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:117759282-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:117759282",
+                    "object": "NCBIGene:117759282",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3885,10 +3885,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:103562469-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:103562469-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:103562469",
+                    "object": "NCBIGene:103562469",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3907,10 +3907,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:112648300-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:112648300-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:112648300",
+                    "object": "NCBIGene:112648300",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3929,10 +3929,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:105221759-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:105221759-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:105221759",
+                    "object": "NCBIGene:105221759",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3951,10 +3951,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:118335909-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:118335909-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:118335909",
+                    "object": "NCBIGene:118335909",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3973,10 +3973,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:101674197-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:101674197-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:101674197",
+                    "object": "NCBIGene:101674197",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -3995,10 +3995,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:103089296-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:103089296-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:103089296",
+                    "object": "NCBIGene:103089296",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -4017,10 +4017,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:100136221-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:100136221-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:100136221",
+                    "object": "NCBIGene:100136221",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -4039,10 +4039,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:118023076-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:118023076-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:118023076",
+                    "object": "NCBIGene:118023076",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -4061,10 +4061,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:574217-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:574217-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:574217",
+                    "object": "NCBIGene:574217",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -4131,10 +4131,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:3601-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:3601-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:affected_by",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:3601",
+                    "object": "NCBIGene:3601",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -4155,10 +4155,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:5788-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:5788-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:affected_by",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:5788",
+                    "object": "NCBIGene:5788",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -4179,10 +4179,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:8030-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:8030-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:affected_by",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:8030",
+                    "object": "NCBIGene:8030",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -4203,10 +4203,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:920-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:920-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:affected_by",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:920",
+                    "object": "NCBIGene:920",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -4227,10 +4227,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:1514-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:1514-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:affected_by",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:1514",
+                    "object": "NCBIGene:1514",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -4299,10 +4299,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:3439-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:3439-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:disrupted_by",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:3439",
+                    "object": "NCBIGene:3439",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -4395,10 +4395,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:3557-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:3557-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:prevented_by",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:3557",
+                    "object": "NCBIGene:3557",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -4443,10 +4443,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:1520-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:1520-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:1520",
+                    "object": "NCBIGene:1520",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -4467,10 +4467,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:3806-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:3806-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:3806",
+                    "object": "NCBIGene:3806",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -4491,10 +4491,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:3808-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:3808-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:3808",
+                    "object": "NCBIGene:3808",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -4539,10 +4539,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:558-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:558-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:558",
+                    "object": "NCBIGene:558",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -4803,10 +4803,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:4864-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:4864-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:treated_by",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:4864",
+                    "object": "NCBIGene:4864",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -4947,10 +4947,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:324-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:324-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:treated_by",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:324",
+                    "object": "NCBIGene:324",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -5019,9 +5019,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:116534309-DRUGBANK:DB06241-MyChem.info API-drugbank": {
+                "NCBIGene:116534309-DRUGBANK:DB06241-MyChem.info API-drugbank": {
                     "predicate": "biolink:physically_interacts_with",
-                    "subject": "NCBIGENE:116534309",
+                    "subject": "NCBIGene:116534309",
                     "object": "DRUGBANK:DB06241",
                     "attributes": [
                         {
@@ -5036,9 +5036,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:116534309-DRUGBANK:DB12698-MyChem.info API-drugbank": {
+                "NCBIGene:116534309-DRUGBANK:DB12698-MyChem.info API-drugbank": {
                     "predicate": "biolink:physically_interacts_with",
-                    "subject": "NCBIGENE:116534309",
+                    "subject": "NCBIGene:116534309",
                     "object": "DRUGBANK:DB12698",
                     "attributes": [
                         {
@@ -5053,9 +5053,9 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:116534309-DRUGBANK:DB00098-MyChem.info API-drugbank": {
+                "NCBIGene:116534309-DRUGBANK:DB00098-MyChem.info API-drugbank": {
                     "predicate": "biolink:physically_interacts_with",
-                    "subject": "NCBIGENE:116534309",
+                    "subject": "NCBIGene:116534309",
                     "object": "DRUGBANK:DB00098",
                     "attributes": [
                         {
@@ -5082,14 +5082,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:116534309"
+                            "id": "NCBIGene:116534309"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:116534309-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:116534309-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5103,14 +5103,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:539109"
+                            "id": "NCBIGene:539109"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:539109-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:539109-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5124,14 +5124,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:102448557"
+                            "id": "NCBIGene:102448557"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:102448557-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:102448557-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5145,14 +5145,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:103074707"
+                            "id": "NCBIGene:103074707"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:103074707-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:103074707-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5187,14 +5187,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:115865406"
+                            "id": "NCBIGene:115865406"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:115865406-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:115865406-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5208,14 +5208,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:110132571"
+                            "id": "NCBIGene:110132571"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:110132571-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:110132571-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5229,14 +5229,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:101571570"
+                            "id": "NCBIGene:101571570"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:101571570-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:101571570-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5271,14 +5271,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:397686"
+                            "id": "NCBIGene:397686"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:397686-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:397686-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5292,14 +5292,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:102892030"
+                            "id": "NCBIGene:102892030"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:102892030-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:102892030-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5313,14 +5313,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:104045425"
+                            "id": "NCBIGene:104045425"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:104045425-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:104045425-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5334,14 +5334,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:110137949"
+                            "id": "NCBIGene:110137949"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:110137949-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:110137949-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5355,14 +5355,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:105822820"
+                            "id": "NCBIGene:105822820"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:105822820-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:105822820-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5376,14 +5376,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:116479423"
+                            "id": "NCBIGene:116479423"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:116479423-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:116479423-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5397,14 +5397,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:103814882"
+                            "id": "NCBIGene:103814882"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:103814882-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:103814882-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5418,14 +5418,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:101142722"
+                            "id": "NCBIGene:101142722"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:101142722-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:101142722-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5439,14 +5439,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:104673720"
+                            "id": "NCBIGene:104673720"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:104673720-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:104673720-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5460,14 +5460,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:116543050"
+                            "id": "NCBIGene:116543050"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:116543050-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:116543050-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5481,14 +5481,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:29798"
+                            "id": "NCBIGene:29798"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:29798-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:29798-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5502,14 +5502,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:118012204"
+                            "id": "NCBIGene:118012204"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:118012204-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:118012204-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5523,14 +5523,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:103531663"
+                            "id": "NCBIGene:103531663"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:103531663-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:103531663-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5565,14 +5565,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:104395366"
+                            "id": "NCBIGene:104395366"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:104395366-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:104395366-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5586,14 +5586,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:100731608"
+                            "id": "NCBIGene:100731608"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:100731608-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:100731608-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5607,14 +5607,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:108529797"
+                            "id": "NCBIGene:108529797"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:108529797-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:108529797-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5628,14 +5628,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:106971145"
+                            "id": "NCBIGene:106971145"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:106971145-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:106971145-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5670,14 +5670,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:101443464"
+                            "id": "NCBIGene:101443464"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:101443464-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:101443464-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5691,14 +5691,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:102387082"
+                            "id": "NCBIGene:102387082"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:102387082-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:102387082-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5712,14 +5712,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:109055884"
+                            "id": "NCBIGene:109055884"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:109055884-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:109055884-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5754,14 +5754,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:117759282"
+                            "id": "NCBIGene:117759282"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:117759282-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:117759282-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5775,14 +5775,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:103562469"
+                            "id": "NCBIGene:103562469"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:103562469-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:103562469-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5796,14 +5796,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:112648300"
+                            "id": "NCBIGene:112648300"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:112648300-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:112648300-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5817,14 +5817,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:105221759"
+                            "id": "NCBIGene:105221759"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:105221759-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:105221759-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5838,14 +5838,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:118335909"
+                            "id": "NCBIGene:118335909"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:118335909-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:118335909-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5859,14 +5859,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:101674197"
+                            "id": "NCBIGene:101674197"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:101674197-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:101674197-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5880,14 +5880,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:103089296"
+                            "id": "NCBIGene:103089296"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:103089296-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:103089296-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5901,14 +5901,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:100136221"
+                            "id": "NCBIGene:100136221"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:100136221-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:100136221-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5922,14 +5922,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:118023076"
+                            "id": "NCBIGene:118023076"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:118023076-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:118023076-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -5943,14 +5943,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:574217"
+                            "id": "NCBIGene:574217"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:574217-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:574217-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -6006,14 +6006,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:3601"
+                            "id": "NCBIGene:3601"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:3601-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:3601-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -6027,14 +6027,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:5788"
+                            "id": "NCBIGene:5788"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:5788-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:5788-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -6048,14 +6048,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:8030"
+                            "id": "NCBIGene:8030"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:8030-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:8030-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -6069,14 +6069,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:920"
+                            "id": "NCBIGene:920"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:920-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:920-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -6090,14 +6090,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:1514"
+                            "id": "NCBIGene:1514"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:1514-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:1514-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -6153,14 +6153,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:3439"
+                            "id": "NCBIGene:3439"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:3439-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:3439-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -6237,14 +6237,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:3557"
+                            "id": "NCBIGene:3557"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:3557-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:3557-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -6300,14 +6300,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:1520"
+                            "id": "NCBIGene:1520"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:1520-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:1520-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -6321,14 +6321,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:3439"
+                            "id": "NCBIGene:3439"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:3439-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:3439-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -6342,14 +6342,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:3557"
+                            "id": "NCBIGene:3557"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:3557-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:3557-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -6363,14 +6363,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:3806"
+                            "id": "NCBIGene:3806"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:3806-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:3806-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -6384,14 +6384,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:3808"
+                            "id": "NCBIGene:3808"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:3808-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:3808-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -6426,14 +6426,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:558"
+                            "id": "NCBIGene:558"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:558-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:558-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -6531,14 +6531,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:1514"
+                            "id": "NCBIGene:1514"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:1514-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:1514-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -6678,14 +6678,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:4864"
+                            "id": "NCBIGene:4864"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:4864-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:4864-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -6846,14 +6846,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:324"
+                            "id": "NCBIGene:324"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:324-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:324-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -6925,7 +6925,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n1": [
                         {
-                            "id": "NCBIGENE:116534309"
+                            "id": "NCBIGene:116534309"
                         }
                     ],
                     "n2": [
@@ -6937,7 +6937,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e02": [
                         {
-                            "id": "NCBIGENE:116534309-DRUGBANK:DB06241-MyChem.info API-drugbank"
+                            "id": "NCBIGene:116534309-DRUGBANK:DB06241-MyChem.info API-drugbank"
                         }
                     ]
                 }
@@ -6946,7 +6946,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n1": [
                         {
-                            "id": "NCBIGENE:116534309"
+                            "id": "NCBIGene:116534309"
                         }
                     ],
                     "n2": [
@@ -6958,7 +6958,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e02": [
                         {
-                            "id": "NCBIGENE:116534309-DRUGBANK:DB12698-MyChem.info API-drugbank"
+                            "id": "NCBIGene:116534309-DRUGBANK:DB12698-MyChem.info API-drugbank"
                         }
                     ]
                 }
@@ -6967,7 +6967,7 @@ console.log(queryHandler.getResponse())
                 "node_bindings": {
                     "n1": [
                         {
-                            "id": "NCBIGENE:116534309"
+                            "id": "NCBIGene:116534309"
                         }
                     ],
                     "n2": [
@@ -6979,7 +6979,7 @@ console.log(queryHandler.getResponse())
                 "edge_bindings": {
                     "e02": [
                         {
-                            "id": "NCBIGENE:116534309-DRUGBANK:DB00098-MyChem.info API-drugbank"
+                            "id": "NCBIGene:116534309-DRUGBANK:DB00098-MyChem.info API-drugbank"
                         }
                     ]
                 }
@@ -7356,7 +7356,7 @@ console.log(queryHandler.getResponse())
         {
             "timestamp": "2021-03-15T22:54:02.102Z",
             "level": "DEBUG",
-            "message": "call-apis: Succesfully made the following query: {\"url\":\"https://biothings.ncats.io/text_mining_co_occurrence_kp/query\",\"params\":{\"fields\":\"subject,association\",\"q\":\"object.NCBIGENE:\\\"116534309\\\" AND subject.type:ChemicalSubstance\",\"size\":1000},\"method\":\"get\",\"timeout\":50000}",
+            "message": "call-apis: Succesfully made the following query: {\"url\":\"https://biothings.ncats.io/text_mining_co_occurrence_kp/query\",\"params\":{\"fields\":\"subject,association\",\"q\":\"object.NCBIGene:\\\"116534309\\\" AND subject.type:ChemicalSubstance\",\"size\":1000},\"method\":\"get\",\"timeout\":50000}",
             "code": null
         },
         {
@@ -7368,7 +7368,7 @@ console.log(queryHandler.getResponse())
         {
             "timestamp": "2021-03-15T22:54:02.103Z",
             "level": "DEBUG",
-            "message": "call-apis: Succesfully made the following query: {\"url\":\"https://biothings.ncats.io/text_mining_co_occurrence_kp/query\",\"params\":{\"fields\":\"object,association\",\"q\":\"subject.NCBIGENE:\\\"116534309\\\" AND object.type:ChemicalSubstance\",\"size\":1000},\"method\":\"get\",\"timeout\":50000}",
+            "message": "call-apis: Succesfully made the following query: {\"url\":\"https://biothings.ncats.io/text_mining_co_occurrence_kp/query\",\"params\":{\"fields\":\"object,association\",\"q\":\"subject.NCBIGene:\\\"116534309\\\" AND object.type:ChemicalSubstance\",\"size\":1000},\"method\":\"get\",\"timeout\":50000}",
             "code": null
         },
         {
@@ -7380,7 +7380,7 @@ console.log(queryHandler.getResponse())
         {
             "timestamp": "2021-03-15T22:54:02.104Z",
             "level": "DEBUG",
-            "message": "call-apis: Succesfully made the following query: {\"url\":\"https://biothings.ncats.io/dgidb/query\",\"params\":{\"fields\":\"object.CHEMBL_COMPOUND,association.provided_by,association.pubmed\",\"size\":1000},\"data\":\"q=116534309&scopes=subject.NCBIGENE\",\"method\":\"post\",\"timeout\":50000}",
+            "message": "call-apis: Succesfully made the following query: {\"url\":\"https://biothings.ncats.io/dgidb/query\",\"params\":{\"fields\":\"object.CHEMBL_COMPOUND,association.provided_by,association.pubmed\",\"size\":1000},\"data\":\"q=116534309&scopes=subject.NCBIGene\",\"method\":\"post\",\"timeout\":50000}",
             "code": null
         },
         {
@@ -7392,7 +7392,7 @@ console.log(queryHandler.getResponse())
         {
             "timestamp": "2021-03-15T22:54:02.104Z",
             "level": "DEBUG",
-            "message": "call-apis: Succesfully made the following query: {\"url\":\"https://biothings.ncats.io/drug_response_kp/query\",\"params\":{\"fields\":\"association.context.disease.mondo,object.PUBCHEM,association.effect_size,association.pvalue\",\"q\":\"subject.NCBIGENE:116534309 AND association.effect_size:<0 AND association.pvalue:<0.05\",\"size\":\"1000\",\"sort\":\"association.pvalue\"},\"method\":\"get\",\"timeout\":50000}",
+            "message": "call-apis: Succesfully made the following query: {\"url\":\"https://biothings.ncats.io/drug_response_kp/query\",\"params\":{\"fields\":\"association.context.disease.mondo,object.PUBCHEM,association.effect_size,association.pvalue\",\"q\":\"subject.NCBIGene:116534309 AND association.effect_size:<0 AND association.pvalue:<0.05\",\"size\":\"1000\",\"sort\":\"association.pvalue\"},\"method\":\"get\",\"timeout\":50000}",
             "code": null
         },
         {
@@ -7545,14 +7545,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:116534309": {
+                "NCBIGene:116534309": {
                     "category": "biolink:Gene",
                     "name": "CD4",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:116534309",
+                                "NCBIGene:116534309",
                                 "name:CD4 molecule",
                                 "SYMBOL:CD4"
                             ],
@@ -7560,14 +7560,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:539109": {
+                "NCBIGene:539109": {
                     "category": "biolink:Gene",
                     "name": "MMP11",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:539109",
+                                "NCBIGene:539109",
                                 "name:matrix metallopeptidase 11",
                                 "SYMBOL:MMP11",
                                 "ENSEMBL:ENSBTAG00000006108"
@@ -7576,14 +7576,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:102448557": {
+                "NCBIGene:102448557": {
                     "category": "biolink:Gene",
                     "name": "GTPBP1",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:102448557",
+                                "NCBIGene:102448557",
                                 "name:GTP binding protein 1",
                                 "SYMBOL:GTPBP1",
                                 "ENSEMBL:ENSPSIG00000004300"
@@ -7592,14 +7592,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:103074707": {
+                "NCBIGene:103074707": {
                     "category": "biolink:Gene",
                     "name": "CCL2",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:103074707",
+                                "NCBIGene:103074707",
                                 "name:C-C motif chemokine ligand 2",
                                 "SYMBOL:CCL2"
                             ],
@@ -7622,14 +7622,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:115865406": {
+                "NCBIGene:115865406": {
                     "category": "biolink:Gene",
                     "name": "BST2",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:115865406",
+                                "NCBIGene:115865406",
                                 "name:bone marrow stromal cell antigen 2",
                                 "SYMBOL:BST2"
                             ],
@@ -7637,14 +7637,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:110132571": {
+                "NCBIGene:110132571": {
                     "category": "biolink:Gene",
                     "name": "IL1B",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:110132571",
+                                "NCBIGene:110132571",
                                 "name:interleukin 1 beta",
                                 "SYMBOL:IL1B"
                             ],
@@ -7652,14 +7652,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:101571570": {
+                "NCBIGene:101571570": {
                     "category": "biolink:Gene",
                     "name": "Ifih1",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:101571570",
+                                "NCBIGene:101571570",
                                 "name:interferon induced with helicase C domain 1",
                                 "SYMBOL:Ifih1",
                                 "ENSEMBL:ENSODEG00000013586"
@@ -7683,14 +7683,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:397686": {
+                "NCBIGene:397686": {
                     "category": "biolink:Gene",
                     "name": "IFNA1",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:397686",
+                                "NCBIGene:397686",
                                 "name:interferon, alpha 1",
                                 "SYMBOL:IFNA1",
                                 "ENSEMBL:ENSSSCG00000050619"
@@ -7699,14 +7699,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:102892030": {
+                "NCBIGene:102892030": {
                     "category": "biolink:Gene",
                     "name": "ALB",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:102892030",
+                                "NCBIGene:102892030",
                                 "name:albumin",
                                 "SYMBOL:ALB"
                             ],
@@ -7714,14 +7714,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:104045425": {
+                "NCBIGene:104045425": {
                     "category": "biolink:Gene",
                     "name": "HDX",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:104045425",
+                                "NCBIGene:104045425",
                                 "name:highly divergent homeobox",
                                 "SYMBOL:HDX"
                             ],
@@ -7729,14 +7729,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:110137949": {
+                "NCBIGene:110137949": {
                     "category": "biolink:Gene",
                     "name": "CXCL10",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:110137949",
+                                "NCBIGene:110137949",
                                 "name:C-X-C motif chemokine ligand 10",
                                 "SYMBOL:CXCL10"
                             ],
@@ -7744,14 +7744,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:105822820": {
+                "NCBIGene:105822820": {
                     "category": "biolink:Gene",
                     "name": "CXCL8",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:105822820",
+                                "NCBIGene:105822820",
                                 "name:C-X-C motif chemokine ligand 8",
                                 "SYMBOL:CXCL8",
                                 "ENSEMBL:ENSPCOG00000024593"
@@ -7760,14 +7760,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:116479423": {
+                "NCBIGene:116479423": {
                     "category": "biolink:Gene",
                     "name": "CLEC4M",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:116479423",
+                                "NCBIGene:116479423",
                                 "name:C-type lectin domain family 4 member M",
                                 "SYMBOL:CLEC4M"
                             ],
@@ -7775,14 +7775,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:103814882": {
+                "NCBIGene:103814882": {
                     "category": "biolink:Gene",
                     "name": "F3",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:103814882",
+                                "NCBIGene:103814882",
                                 "name:coagulation factor III, tissue factor",
                                 "SYMBOL:F3",
                                 "ENSEMBL:ENSSCAG00000012591"
@@ -7791,14 +7791,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:101142722": {
+                "NCBIGene:101142722": {
                     "category": "biolink:Gene",
                     "name": "KPNA1",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:101142722",
+                                "NCBIGene:101142722",
                                 "name:karyopherin subunit alpha 1",
                                 "SYMBOL:KPNA1"
                             ],
@@ -7806,14 +7806,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:104673720": {
+                "NCBIGene:104673720": {
                     "category": "biolink:Gene",
                     "name": "CTSL",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:104673720",
+                                "NCBIGene:104673720",
                                 "name:cathepsin L",
                                 "SYMBOL:CTSL",
                                 "ENSEMBL:ENSRROG00000038398"
@@ -7822,14 +7822,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:116543050": {
+                "NCBIGene:116543050": {
                     "category": "biolink:Gene",
                     "name": "CTSB",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:116543050",
+                                "NCBIGene:116543050",
                                 "name:cathepsin B",
                                 "SYMBOL:CTSB"
                             ],
@@ -7837,14 +7837,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:29798": {
+                "NCBIGene:29798": {
                     "category": "biolink:Gene",
                     "name": "C2orf27A",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:29798",
+                                "NCBIGene:29798",
                                 "name:chromosome 2 open reading frame 27A",
                                 "SYMBOL:C2orf27A",
                                 "UMLS:C2681192",
@@ -7855,14 +7855,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:118012204": {
+                "NCBIGene:118012204": {
                     "category": "biolink:Gene",
                     "name": "STAT1",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:118012204",
+                                "NCBIGene:118012204",
                                 "name:signal transducer and activator of transcription 1",
                                 "SYMBOL:STAT1"
                             ],
@@ -7870,14 +7870,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:101937382": {
+                "NCBIGene:101937382": {
                     "category": "biolink:Gene",
                     "name": "KPNA5",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:101937382",
+                                "NCBIGene:101937382",
                                 "name:karyopherin subunit alpha 5",
                                 "SYMBOL:KPNA5"
                             ],
@@ -7900,14 +7900,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:104395366": {
+                "NCBIGene:104395366": {
                     "category": "biolink:Gene",
                     "name": "THBD",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:104395366",
+                                "NCBIGene:104395366",
                                 "name:thrombomodulin",
                                 "SYMBOL:THBD"
                             ],
@@ -7915,14 +7915,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:100731608": {
+                "NCBIGene:100731608": {
                     "category": "biolink:Gene",
                     "name": "Isg15",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:100731608",
+                                "NCBIGene:100731608",
                                 "name:ISG15 ubiquitin like modifier",
                                 "SYMBOL:Isg15"
                             ],
@@ -7930,14 +7930,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:108529797": {
+                "NCBIGene:108529797": {
                     "category": "biolink:Gene",
                     "name": "DDX58",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:108529797",
+                                "NCBIGene:108529797",
                                 "name:DExD/H-box helicase 58",
                                 "SYMBOL:DDX58",
                                 "ENSEMBL:ENSRBIG00000040257"
@@ -7946,14 +7946,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:106971145": {
+                "NCBIGene:106971145": {
                     "category": "biolink:Gene",
                     "name": "IFNB1",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:106971145",
+                                "NCBIGene:106971145",
                                 "name:interferon beta 1",
                                 "SYMBOL:IFNB1"
                             ],
@@ -7976,14 +7976,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:101443464": {
+                "NCBIGene:101443464": {
                     "category": "biolink:Gene",
                     "name": "GPT",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:101443464",
+                                "NCBIGene:101443464",
                                 "name:glutamic--pyruvic transaminase",
                                 "SYMBOL:GPT"
                             ],
@@ -7991,14 +7991,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:102387082": {
+                "NCBIGene:102387082": {
                     "category": "biolink:Gene",
                     "name": "IRF7",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:102387082",
+                                "NCBIGene:102387082",
                                 "name:interferon regulatory factor 7",
                                 "SYMBOL:IRF7"
                             ],
@@ -8006,14 +8006,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:109055884": {
+                "NCBIGene:109055884": {
                     "category": "biolink:Gene",
                     "name": "il6",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:109055884",
+                                "NCBIGene:109055884",
                                 "name:interleukin 6 (interferon, beta 2)",
                                 "SYMBOL:il6",
                                 "ENSEMBL:ENSCCRG00000034667"
@@ -8037,14 +8037,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:117759282": {
+                "NCBIGene:117759282": {
                     "category": "biolink:Gene",
                     "name": "ace2",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:117759282",
+                                "NCBIGene:117759282",
                                 "name:angiotensin I converting enzyme 2",
                                 "SYMBOL:ace2"
                             ],
@@ -8052,14 +8052,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:103562469": {
+                "NCBIGene:103562469": {
                     "category": "biolink:Gene",
                     "name": "TNF",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:103562469",
+                                "NCBIGene:103562469",
                                 "name:tumor necrosis factor",
                                 "SYMBOL:TNF"
                             ],
@@ -8067,14 +8067,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:112648300": {
+                "NCBIGene:112648300": {
                     "category": "biolink:Gene",
                     "name": "IL10",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:112648300",
+                                "NCBIGene:112648300",
                                 "name:interleukin 10",
                                 "SYMBOL:IL10",
                                 "ENSEMBL:ENSCAFG00020012434"
@@ -8083,14 +8083,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:106483620": {
+                "NCBIGene:106483620": {
                     "category": "biolink:Gene",
                     "name": "ERVW-1",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:106483620",
+                                "NCBIGene:106483620",
                                 "name:endogenous retrovirus group W member 1, envelope",
                                 "SYMBOL:ERVW-1"
                             ],
@@ -8098,14 +8098,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:118335909": {
+                "NCBIGene:118335909": {
                     "category": "biolink:Gene",
                     "name": "irf3",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:118335909",
+                                "NCBIGene:118335909",
                                 "name:interferon regulatory factor 3",
                                 "SYMBOL:irf3"
                             ],
@@ -8113,14 +8113,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:101674197": {
+                "NCBIGene:101674197": {
                     "category": "biolink:Gene",
                     "name": "CCL5",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:101674197",
+                                "NCBIGene:101674197",
                                 "name:C-C motif chemokine ligand 5",
                                 "SYMBOL:CCL5"
                             ],
@@ -8128,14 +8128,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:103089296": {
+                "NCBIGene:103089296": {
                     "category": "biolink:Gene",
                     "name": "CCL3",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:103089296",
+                                "NCBIGene:103089296",
                                 "name:C-C motif chemokine ligand 3",
                                 "SYMBOL:CCL3"
                             ],
@@ -8158,14 +8158,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:101998427": {
+                "NCBIGene:101998427": {
                     "category": "biolink:Gene",
                     "name": "Furin",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:101998427",
+                                "NCBIGene:101998427",
                                 "name:furin, paired basic amino acid cleaving enzyme",
                                 "SYMBOL:Furin",
                                 "ENSEMBL:ENSMOCG00000010449"
@@ -8174,14 +8174,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:574217": {
+                "NCBIGene:574217": {
                     "category": "biolink:Gene",
                     "name": "CCL4L1",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:574217",
+                                "NCBIGene:574217",
                                 "name:chemokine (C-C motif) ligand 4-like 1",
                                 "SYMBOL:CCL4L1",
                                 "UniProtKB:Q8HYQ2",
@@ -8217,14 +8217,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:3601": {
+                "NCBIGene:3601": {
                     "category": "biolink:Gene",
                     "name": "IL15RA",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:3601",
+                                "NCBIGene:3601",
                                 "name:interleukin 15 receptor subunit alpha",
                                 "SYMBOL:IL15RA",
                                 "UMLS:C1416387",
@@ -8237,14 +8237,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:5788": {
+                "NCBIGene:5788": {
                     "category": "biolink:Gene",
                     "name": "PTPRC",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:5788",
+                                "NCBIGene:5788",
                                 "name:protein tyrosine phosphatase receptor type C",
                                 "SYMBOL:PTPRC",
                                 "UMLS:C1335285",
@@ -8258,14 +8258,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:8030": {
+                "NCBIGene:8030": {
                     "category": "biolink:Gene",
                     "name": "CCDC6",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:8030",
+                                "NCBIGene:8030",
                                 "name:coiled-coil domain containing 6",
                                 "SYMBOL:CCDC6",
                                 "UMLS:C1425774",
@@ -8278,14 +8278,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:920": {
+                "NCBIGene:920": {
                     "category": "biolink:Gene",
                     "name": "CD4",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:920",
+                                "NCBIGene:920",
                                 "name:CD4 molecule",
                                 "SYMBOL:CD4",
                                 "UMLS:C1332714",
@@ -8298,14 +8298,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1514": {
+                "NCBIGene:1514": {
                     "category": "biolink:Gene",
                     "name": "CTSL",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:1514",
+                                "NCBIGene:1514",
                                 "name:cathepsin L",
                                 "SYMBOL:CTSL",
                                 "UMLS:C1332807",
@@ -8452,14 +8452,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:3439": {
+                "NCBIGene:3439": {
                     "category": "biolink:Gene",
                     "name": "IFNA1",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:3439",
+                                "NCBIGene:3439",
                                 "name:interferon alpha 1",
                                 "SYMBOL:IFNA1",
                                 "UMLS:C1415900",
@@ -26702,14 +26702,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:3557": {
+                "NCBIGene:3557": {
                     "category": "biolink:Gene",
                     "name": "IL1RN",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:3557",
+                                "NCBIGene:3557",
                                 "name:interleukin 1 receptor antagonist",
                                 "SYMBOL:IL1RN",
                                 "UMLS:C1416402",
@@ -26735,14 +26735,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:1520": {
+                "NCBIGene:1520": {
                     "category": "biolink:Gene",
                     "name": "CTSS",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:1520",
+                                "NCBIGene:1520",
                                 "name:cathepsin S",
                                 "SYMBOL:CTSS",
                                 "UMLS:C1413821",
@@ -26755,14 +26755,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:3806": {
+                "NCBIGene:3806": {
                     "category": "biolink:Gene",
                     "name": "KIR2DS1",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:3806",
+                                "NCBIGene:3806",
                                 "name:killer cell immunoglobulin like receptor, two Ig domains and short cytoplasmic tail 1",
                                 "SYMBOL:KIR2DS1",
                                 "UMLS:C1416647",
@@ -26780,14 +26780,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:3808": {
+                "NCBIGene:3808": {
                     "category": "biolink:Gene",
                     "name": "KIR2DS3",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:3808",
+                                "NCBIGene:3808",
                                 "name:killer cell immunoglobulin like receptor, two Ig domains and short cytoplasmic tail 3",
                                 "SYMBOL:KIR2DS3",
                                 "UMLS:C1416649",
@@ -26815,14 +26815,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:558": {
+                "NCBIGene:558": {
                     "category": "biolink:Gene",
                     "name": "AXL",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:558",
+                                "NCBIGene:558",
                                 "name:AXL receptor tyrosine kinase",
                                 "SYMBOL:AXL",
                                 "UMLS:C0812237",
@@ -26965,14 +26965,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:4864": {
+                "NCBIGene:4864": {
                     "category": "biolink:Gene",
                     "name": "NPC1",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:4864",
+                                "NCBIGene:4864",
                                 "name:NPC intracellular cholesterol transporter 1",
                                 "SYMBOL:NPC1",
                                 "UMLS:C1417776",
@@ -27050,14 +27050,14 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "NCBIGENE:324": {
+                "NCBIGene:324": {
                     "category": "biolink:Gene",
                     "name": "APC",
                     "attributes": [
                         {
                             "name": "equivalent_identifiers",
                             "value": [
-                                "NCBIGENE:324",
+                                "NCBIGene:324",
                                 "name:APC regulator of WNT signaling pathway",
                                 "SYMBOL:APC",
                                 "UMLS:C0162832",
@@ -27766,10 +27766,10 @@ console.log(queryHandler.getResponse())
                 }
             },
             "edges": {
-                "MONDO:0005737-NCBIGENE:116534309-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:116534309-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:116534309",
+                    "object": "NCBIGene:116534309",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -27788,10 +27788,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:539109-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:539109-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:539109",
+                    "object": "NCBIGene:539109",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -27810,10 +27810,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:102448557-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:102448557-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:102448557",
+                    "object": "NCBIGene:102448557",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -27832,10 +27832,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:103074707-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:103074707-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:103074707",
+                    "object": "NCBIGene:103074707",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -27876,10 +27876,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:115865406-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:115865406-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:115865406",
+                    "object": "NCBIGene:115865406",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -27898,10 +27898,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:110132571-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:110132571-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:110132571",
+                    "object": "NCBIGene:110132571",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -27920,10 +27920,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:101571570-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:101571570-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:101571570",
+                    "object": "NCBIGene:101571570",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -27964,10 +27964,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:397686-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:397686-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:397686",
+                    "object": "NCBIGene:397686",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -27986,10 +27986,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:102892030-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:102892030-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:102892030",
+                    "object": "NCBIGene:102892030",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28008,10 +28008,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:104045425-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:104045425-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:104045425",
+                    "object": "NCBIGene:104045425",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28030,10 +28030,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:110137949-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:110137949-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:110137949",
+                    "object": "NCBIGene:110137949",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28052,10 +28052,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:105822820-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:105822820-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:105822820",
+                    "object": "NCBIGene:105822820",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28074,10 +28074,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:116479423-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:116479423-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:116479423",
+                    "object": "NCBIGene:116479423",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28096,10 +28096,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:103814882-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:103814882-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:103814882",
+                    "object": "NCBIGene:103814882",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28118,10 +28118,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:101142722-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:101142722-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:101142722",
+                    "object": "NCBIGene:101142722",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28140,10 +28140,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:104673720-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:104673720-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:104673720",
+                    "object": "NCBIGene:104673720",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28162,10 +28162,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:116543050-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:116543050-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:116543050",
+                    "object": "NCBIGene:116543050",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28184,10 +28184,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:29798-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:29798-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:29798",
+                    "object": "NCBIGene:29798",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28206,10 +28206,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:118012204-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:118012204-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:118012204",
+                    "object": "NCBIGene:118012204",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28228,10 +28228,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:101937382-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:101937382-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:101937382",
+                    "object": "NCBIGene:101937382",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28272,10 +28272,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:104395366-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:104395366-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:104395366",
+                    "object": "NCBIGene:104395366",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28294,10 +28294,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:100731608-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:100731608-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:100731608",
+                    "object": "NCBIGene:100731608",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28316,10 +28316,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:108529797-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:108529797-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:108529797",
+                    "object": "NCBIGene:108529797",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28338,10 +28338,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:106971145-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:106971145-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:106971145",
+                    "object": "NCBIGene:106971145",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28382,10 +28382,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:101443464-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:101443464-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:101443464",
+                    "object": "NCBIGene:101443464",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28404,10 +28404,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:102387082-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:102387082-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:102387082",
+                    "object": "NCBIGene:102387082",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28426,10 +28426,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:109055884-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:109055884-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:109055884",
+                    "object": "NCBIGene:109055884",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28470,10 +28470,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:117759282-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:117759282-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:117759282",
+                    "object": "NCBIGene:117759282",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28492,10 +28492,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:103562469-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:103562469-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:103562469",
+                    "object": "NCBIGene:103562469",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28514,10 +28514,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:112648300-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:112648300-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:112648300",
+                    "object": "NCBIGene:112648300",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28536,10 +28536,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:106483620-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:106483620-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:106483620",
+                    "object": "NCBIGene:106483620",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28558,10 +28558,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:118335909-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:118335909-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:118335909",
+                    "object": "NCBIGene:118335909",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28580,10 +28580,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:101674197-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:101674197-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:101674197",
+                    "object": "NCBIGene:101674197",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28602,10 +28602,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:103089296-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:103089296-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:103089296",
+                    "object": "NCBIGene:103089296",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28646,10 +28646,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:101998427-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:101998427-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:101998427",
+                    "object": "NCBIGene:101998427",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28668,10 +28668,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:574217-DISEASES API-DISEASES": {
+                "MONDO:0005737-NCBIGene:574217-DISEASES API-DISEASES": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:574217",
+                    "object": "NCBIGene:574217",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28738,10 +28738,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:3601-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:3601-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:affected_by",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:3601",
+                    "object": "NCBIGene:3601",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28762,10 +28762,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:5788-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:5788-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:affected_by",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:5788",
+                    "object": "NCBIGene:5788",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28786,10 +28786,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:8030-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:8030-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:affected_by",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:8030",
+                    "object": "NCBIGene:8030",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28810,10 +28810,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:920-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:920-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:affected_by",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:920",
+                    "object": "NCBIGene:920",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -28834,10 +28834,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:1514-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:1514-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:affected_by",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:1514",
+                    "object": "NCBIGene:1514",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -29082,10 +29082,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:3439-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:3439-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:disrupted_by",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:3439",
+                    "object": "NCBIGene:3439",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -56194,10 +56194,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:3557-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:3557-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:prevented_by",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:3557",
+                    "object": "NCBIGene:3557",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -56242,10 +56242,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:1520-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:1520-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:1520",
+                    "object": "NCBIGene:1520",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -56266,10 +56266,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:3806-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:3806-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:3806",
+                    "object": "NCBIGene:3806",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -56290,10 +56290,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:3808-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:3808-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:3808",
+                    "object": "NCBIGene:3808",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -56338,10 +56338,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:558-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:558-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:related_to",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:558",
+                    "object": "NCBIGene:558",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -56602,10 +56602,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:4864-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:4864-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:treated_by",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:4864",
+                    "object": "NCBIGene:4864",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -56746,10 +56746,10 @@ console.log(queryHandler.getResponse())
                         }
                     ]
                 },
-                "MONDO:0005737-NCBIGENE:324-SEMMED Disease API-SEMMED": {
+                "MONDO:0005737-NCBIGene:324-SEMMED Disease API-SEMMED": {
                     "predicate": "biolink:treated_by",
                     "subject": "MONDO:0005737",
-                    "object": "NCBIGENE:324",
+                    "object": "NCBIGene:324",
                     "attributes": [
                         {
                             "name": "provided_by",
@@ -57868,14 +57868,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:116534309"
+                            "id": "NCBIGene:116534309"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:116534309-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:116534309-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -57889,14 +57889,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:539109"
+                            "id": "NCBIGene:539109"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:539109-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:539109-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -57910,14 +57910,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:102448557"
+                            "id": "NCBIGene:102448557"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:102448557-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:102448557-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -57931,14 +57931,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:103074707"
+                            "id": "NCBIGene:103074707"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:103074707-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:103074707-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -57973,14 +57973,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:115865406"
+                            "id": "NCBIGene:115865406"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:115865406-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:115865406-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -57994,14 +57994,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:110132571"
+                            "id": "NCBIGene:110132571"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:110132571-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:110132571-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58015,14 +58015,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:101571570"
+                            "id": "NCBIGene:101571570"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:101571570-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:101571570-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58057,14 +58057,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:397686"
+                            "id": "NCBIGene:397686"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:397686-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:397686-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58078,14 +58078,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:102892030"
+                            "id": "NCBIGene:102892030"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:102892030-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:102892030-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58099,14 +58099,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:104045425"
+                            "id": "NCBIGene:104045425"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:104045425-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:104045425-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58120,14 +58120,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:110137949"
+                            "id": "NCBIGene:110137949"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:110137949-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:110137949-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58141,14 +58141,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:105822820"
+                            "id": "NCBIGene:105822820"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:105822820-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:105822820-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58162,14 +58162,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:116479423"
+                            "id": "NCBIGene:116479423"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:116479423-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:116479423-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58183,14 +58183,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:103814882"
+                            "id": "NCBIGene:103814882"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:103814882-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:103814882-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58204,14 +58204,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:101142722"
+                            "id": "NCBIGene:101142722"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:101142722-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:101142722-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58225,14 +58225,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:104673720"
+                            "id": "NCBIGene:104673720"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:104673720-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:104673720-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58246,14 +58246,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:116543050"
+                            "id": "NCBIGene:116543050"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:116543050-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:116543050-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58267,14 +58267,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:29798"
+                            "id": "NCBIGene:29798"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:29798-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:29798-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58288,14 +58288,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:118012204"
+                            "id": "NCBIGene:118012204"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:118012204-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:118012204-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58309,14 +58309,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:101937382"
+                            "id": "NCBIGene:101937382"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:101937382-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:101937382-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58351,14 +58351,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:104395366"
+                            "id": "NCBIGene:104395366"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:104395366-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:104395366-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58372,14 +58372,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:100731608"
+                            "id": "NCBIGene:100731608"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:100731608-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:100731608-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58393,14 +58393,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:108529797"
+                            "id": "NCBIGene:108529797"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:108529797-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:108529797-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58414,14 +58414,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:106971145"
+                            "id": "NCBIGene:106971145"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:106971145-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:106971145-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58456,14 +58456,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:101443464"
+                            "id": "NCBIGene:101443464"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:101443464-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:101443464-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58477,14 +58477,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:102387082"
+                            "id": "NCBIGene:102387082"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:102387082-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:102387082-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58498,14 +58498,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:109055884"
+                            "id": "NCBIGene:109055884"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:109055884-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:109055884-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58540,14 +58540,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:117759282"
+                            "id": "NCBIGene:117759282"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:117759282-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:117759282-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58561,14 +58561,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:103562469"
+                            "id": "NCBIGene:103562469"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:103562469-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:103562469-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58582,14 +58582,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:112648300"
+                            "id": "NCBIGene:112648300"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:112648300-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:112648300-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58603,14 +58603,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:106483620"
+                            "id": "NCBIGene:106483620"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:106483620-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:106483620-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58624,14 +58624,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:118335909"
+                            "id": "NCBIGene:118335909"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:118335909-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:118335909-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58645,14 +58645,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:101674197"
+                            "id": "NCBIGene:101674197"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:101674197-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:101674197-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58666,14 +58666,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:103089296"
+                            "id": "NCBIGene:103089296"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:103089296-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:103089296-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58708,14 +58708,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:101998427"
+                            "id": "NCBIGene:101998427"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:101998427-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:101998427-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58729,14 +58729,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:574217"
+                            "id": "NCBIGene:574217"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:574217-DISEASES API-DISEASES"
+                            "id": "MONDO:0005737-NCBIGene:574217-DISEASES API-DISEASES"
                         }
                     ]
                 }
@@ -58792,14 +58792,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:3601"
+                            "id": "NCBIGene:3601"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:3601-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:3601-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -58813,14 +58813,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:5788"
+                            "id": "NCBIGene:5788"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:5788-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:5788-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -58834,14 +58834,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:8030"
+                            "id": "NCBIGene:8030"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:8030-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:8030-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -58855,14 +58855,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:920"
+                            "id": "NCBIGene:920"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:920-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:920-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -58876,14 +58876,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:1514"
+                            "id": "NCBIGene:1514"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:1514-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:1514-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -59065,14 +59065,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:3439"
+                            "id": "NCBIGene:3439"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:3439-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:3439-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -85000,14 +85000,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:3557"
+                            "id": "NCBIGene:3557"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:3557-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:3557-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -85063,14 +85063,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:1520"
+                            "id": "NCBIGene:1520"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:1520-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:1520-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -85084,14 +85084,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:3439"
+                            "id": "NCBIGene:3439"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:3439-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:3439-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -85105,14 +85105,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:3557"
+                            "id": "NCBIGene:3557"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:3557-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:3557-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -85126,14 +85126,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:3806"
+                            "id": "NCBIGene:3806"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:3806-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:3806-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -85147,14 +85147,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:3808"
+                            "id": "NCBIGene:3808"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:3808-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:3808-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -85189,14 +85189,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:558"
+                            "id": "NCBIGene:558"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:558-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:558-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -85294,14 +85294,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:1514"
+                            "id": "NCBIGene:1514"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:1514-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:1514-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -85441,14 +85441,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:4864"
+                            "id": "NCBIGene:4864"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:4864-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:4864-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
@@ -85609,14 +85609,14 @@ console.log(queryHandler.getResponse())
                     ],
                     "n1": [
                         {
-                            "id": "NCBIGENE:324"
+                            "id": "NCBIGene:324"
                         }
                     ]
                 },
                 "edge_bindings": {
                     "e01": [
                         {
-                            "id": "MONDO:0005737-NCBIGENE:324-SEMMED Disease API-SEMMED"
+                            "id": "MONDO:0005737-NCBIGene:324-SEMMED Disease API-SEMMED"
                         }
                     ]
                 }
