@@ -35,7 +35,7 @@ module.exports = class QEdge {
     if (this.predicate === undefined) {
       return undefined;
     }
-    const predicates = utils.toArray(this.predicate).map(item => utils.removeBioLinkPrefix(item));
+    const predicates = utils.toArray(this.predicate).map((item) => utils.removeBioLinkPrefix(item));
     const expandedPredicates = this.expandPredicates(predicates);
     return expandedPredicates
       .map((predicate) => {
