@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.13.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.12.1...v1.13.0) (2021-04-28)
+
+
+### Features
+
+* :sparkles: expand predicate based on biolink model ([c26b317](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/c26b317d5b70dbe2ffc18dd1a7c324a2e13f581e))
+
 ### [1.12.1](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.12.0...v1.12.1) (2021-04-27)
 
 ## [1.12.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.11.0...v1.12.0) (2021-04-27)
