@@ -50,4 +50,24 @@ describe("Test BioLinkModel class", () => {
         })
 
     })
+
+    describe("Test getDescendantPredicates function", () => {
+        test("if input is in biolink model, return all its desendants and itself", () => {
+            const res = biolink.getDescendantPredicates('related_to');
+            expect(res).toContain("subclass_of");
+            expect(res).toContain("superclass_of");
+            expect(res).toContain("related_to");
+        })
+
+        test("if input is in biolink model but doesn't have descendants, return itself", () => {
+            const res = biolink.getDescendantPredicates('subclass_of');
+            expect(res).toEqual(["subclass_of"])
+        })
+
+        test("if input is not in biolink, return itself", () => {
+            const res = biolink.getDescendantPredicates('Gene1');
+            expect(res).toEqual(["Gene1"])
+        })
+
+    })
 })
