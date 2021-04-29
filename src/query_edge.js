@@ -37,6 +37,7 @@ module.exports = class QEdge {
     }
     const predicates = utils.toArray(this.predicate).map((item) => utils.removeBioLinkPrefix(item));
     const expandedPredicates = this.expandPredicates(predicates);
+    debug(`Expanded edges: ${expandedPredicates}`);
     return expandedPredicates
       .map((predicate) => {
         return this.isReversed() === true ? reverse.reverse(predicate) : predicate;
