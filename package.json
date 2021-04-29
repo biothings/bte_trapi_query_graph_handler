@@ -1,6 +1,6 @@
 {
     "name": "@biothings-explorer/query_graph_handler",
-    "version": "1.13.1",
+    "version": "1.14.0",
     "description": "A nodejs module to query TRAPI Query Graph",
     "main": "built/index.js",
     "scripts": {
