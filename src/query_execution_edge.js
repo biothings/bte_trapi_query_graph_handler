@@ -27,15 +27,21 @@ module.exports = class QExeEdge {
     return new helper()._generateHash(toBeHashed);
   }
 
+  expandPredicates(predicates) {
+    const reducer = (acc, cur) => [...acc, ...reverse.getDescendantPredicates(cur)];
+    return Array.from(new Set(predicates.reduce(reducer, [])));
+  }
+
   getPredicate() {
-    if (this.qEdge.predicate === undefined) {
+    if (this.predicate === undefined) {
       return undefined;
     }
-    const predicates = utils.toArray(this.qEdge.predicate);
-    return predicates
+    const predicates = utils.toArray(this.predicate).map((item) => utils.removeBioLinkPrefix(item));
+    const expandedPredicates = this.expandPredicates(predicates);
+    debug(`Expanded edges: ${expandedPredicates}`);
+    return expandedPredicates
       .map((predicate) => {
-        const predicateWithOutPrefix = utils.removeBioLinkPrefix(predicate);
-        return this.reverse === true ? reverse.reverse(predicateWithOutPrefix) : predicateWithOutPrefix;
+        return this.isReversed() === true ? reverse.reverse(predicate) : predicate;
       })
       .filter((item) => !(typeof item === 'undefined'));
   }

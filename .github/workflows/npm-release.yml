@@ -1,4 +1,4 @@
-name: Publish @biothings-explorer/smartapi-kg Node.js Package to NPM registry
+name: Publish @biothings-explorer/query_graph_handler Node.js Package to NPM registry
 
 on:
   push:

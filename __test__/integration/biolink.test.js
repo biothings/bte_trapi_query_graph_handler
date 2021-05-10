@@ -18,7 +18,7 @@ describe("Test BioLinkModel class", () => {
 
     test("test predicate with no inverse property and symmetric not equal to true", () => {
         const res = biolink.reverse('has_phenotype');
-        expect(res).toBeUndefined();
+        expect(res).toBe("phenotype_of");
     })
 
     test("test predicate not exist in biolink model", () => {
@@ -47,6 +47,26 @@ describe("Test BioLinkModel class", () => {
         test("if input is not in biolink, return itself", () => {
             const res = biolink.getDescendantClasses('Gene1');
             expect(res).toEqual("Gene1")
+        })
+
+    })
+
+    describe("Test getDescendantPredicates function", () => {
+        test("if input is in biolink model, return all its desendants and itself", () => {
+            const res = biolink.getDescendantPredicates('related_to');
+            expect(res).toContain("subclass_of");
+            expect(res).toContain("superclass_of");
+            expect(res).toContain("related_to");
+        })
+
+        test("if input is in biolink model but doesn't have descendants, return itself", () => {
+            const res = biolink.getDescendantPredicates('subclass_of');
+            expect(res).toEqual(["subclass_of"])
+        })
+
+        test("if input is not in biolink, return itself", () => {
+            const res = biolink.getDescendantPredicates('Gene1');
+            expect(res).toEqual(["Gene1"])
         })
 
     })

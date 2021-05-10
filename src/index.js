@@ -14,19 +14,21 @@ const Graph = require('./graph/graph');
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 
 exports.TRAPIQueryHandler = class TRAPIQueryHandler {
-  constructor(options = {}, smartAPIPath = undefined) {
+  constructor(options = {}, smartAPIPath = undefined, predicatesPath = undefined, includeReasoner = true) {
     this.logs = [];
     this.options = options;
+    this.includeReasoner = includeReasoner;
     this.resolveOutputIDs =
       typeof this.options.enableIDResolution === 'undefined' ? true : this.options.enableIDResolution;
     this.path = smartAPIPath || path.resolve(__dirname, './smartapi_specs.json');
+    this.predicatePath = predicatesPath || path.resolve(__dirname, './predicates.json');
   }
 
   _loadMetaKG() {
-    const kg = new meta_kg.default(this.path);
+    const kg = new meta_kg.default(this.path, this.predicatePath);
     debug(`Query options are: ${JSON.stringify(this.options)}`);
     debug(`SmartAPI Specs read from path: ${this.path}`);
-    kg.constructMetaKGSync(this.options);
+    kg.constructMetaKGSync(this.includeReasoner, this.options);
     return kg;
   }
 
@@ -104,6 +106,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       if (res.length === 0) {
         return;
       }
+      debug('Start to notify subscribers now.');
       handlers[i].notify(res);
       debug(`Updated TRAPI knowledge graph using query results for depth ${i + 1}`);
     }

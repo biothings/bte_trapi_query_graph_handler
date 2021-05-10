@@ -19,7 +19,7 @@ describe("Test QEdge class", () => {
                 }
             })
             const res = edge.getPredicate();
-            expect(res).toEqual(['treats']);
+            expect(res).toContain("treats");
         })
 
         test("Undefined predicate should return itself", () => {
@@ -44,7 +44,8 @@ describe("Test QEdge class", () => {
                 }
             })
             const res = edge.getPredicate();
-            expect(res).toEqual(['treats', 'targets']);
+            expect(res).toContain("treats");
+            expect(res).toContain("targets");
         })
 
         test("An array of non-undefined predicates with reverse edge should exclude return value if undefined", () => {
@@ -63,7 +64,7 @@ describe("Test QEdge class", () => {
                 }
             })
             const res = edge.getPredicate();
-            expect(res).toEqual(['treated_by']);
+            expect(res).toContain("treated_by")
         })
 
         test("An array of non-undefined predicates with reverse edge should return reversed predicates if not undefined", () => {
@@ -81,7 +82,7 @@ describe("Test QEdge class", () => {
                 }
             })
             const res = edge.getPredicate();
-            expect(res).toEqual(['treated_by']);
+            expect(res).toContain("treated_by");
         })
     })
 

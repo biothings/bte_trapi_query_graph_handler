@@ -10,7 +10,7 @@ describe("Testing QueryGraphHandler Module", () => {
     };
     const gene_entity_node = {
         category: "biolink:Gene",
-        id: "NCBIGENE:1017"
+        id: "NCBIGene:1017"
     };
     const gene_class_node = {
         category: "biolink:Gene"

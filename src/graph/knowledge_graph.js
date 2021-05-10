@@ -31,9 +31,9 @@ module.exports = class KnowledgeGraph {
           type: 'biolink:id',
         },
         {
-          name: 'num_soure_nodes',
+          name: 'num_source_nodes',
           value: kgNode._sourceNodes.size,
-          type: 'bts:num_target_nodes',
+          type: 'bts:num_source_nodes',
         },
         {
           name: 'num_target_nodes',

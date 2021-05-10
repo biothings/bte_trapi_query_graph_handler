@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const LogEntry = require('./log_entry');
+const config = require('./config');
 const ID_WITH_PREFIXES = ['MONDO', 'DOID', 'UBERON', 'EFO', 'HP', 'CHEBI', 'CL', 'MGI', 'NCIT'];
 const debug = require('debug')('biothings-explorer-trapi:qedge2btedge');
 
@@ -123,7 +124,13 @@ module.exports = class QEdge2BTEEdgeHandler {
     debug(`Input id: ${inputID}`);
     for (const curie in resolvedIDs) {
       resolvedIDs[curie].map((entity) => {
-        if (entity.semanticType === inputType && inputID in entity.dbIDs) {
+        if (smartAPIEdge.tags.includes('bte-trapi')) {
+          if (entity.semanticType === inputType) {
+            input_resolved_identifiers[curie] = [entity];
+            inputs.push(entity.primaryID);
+            id_mapping[entity.primaryID] = curie;
+          }
+        } else if (entity.semanticType === inputType && inputID in entity.dbIDs) {
           entity.dbIDs[inputID].map((id) => {
             if (ID_WITH_PREFIXES.includes(inputID) || id.includes(':')) {
               id_mapping[id] = curie;
