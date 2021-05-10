@@ -10,8 +10,8 @@ module.exports = class QNode {
    */
   constructor(id, info) {
     this.id = id;
-    this.category = info.category || 'NamedThing';
-    this.curie = info.id;
+    this.category = info.categories || 'NamedThing';
+    this.curie = info.ids;
   }
 
   getID() {
