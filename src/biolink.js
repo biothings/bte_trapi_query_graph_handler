@@ -34,6 +34,14 @@ class BioLinkModel {
     }
     return className;
   }
+
+  getDescendantPredicates(predicate) {
+    if (predicate in this.biolink.slotTree.objects) {
+      const descendants = this.biolink.slotTree.getDescendants(predicate).map((entity) => entity.name);
+      return [...descendants, ...[predicate]];
+    }
+    return [predicate];
+  }
 }
 
 const BioLinkModelInstance = new BioLinkModel();

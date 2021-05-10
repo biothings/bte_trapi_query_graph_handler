@@ -1,5 +1,6 @@
 const GraphHelper = require('./helper');
 const helper = new GraphHelper();
+const debug = require('debug')('biothings-explorer-trapi:QueryResult');
 
 module.exports = class QueryResult {
   constructor() {
@@ -36,6 +37,7 @@ module.exports = class QueryResult {
   }
 
   update(queryResult) {
+    debug(`Updating query results now!`);
     queryResult.map((record) => {
       this.results.push({
         node_bindings: this._createNodeBindings(record),

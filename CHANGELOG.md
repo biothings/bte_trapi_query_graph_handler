@@ -2,6 +2,128 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.15.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.14.0...v1.15.0) (2021-05-04)
+
+## [1.14.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.13.1...v1.14.0) (2021-04-29)
+
+
+### Features
+
+* :sparkles: support expanding predicates based on biolink hierarchy ([6345571](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/6345571e60998a403c946aabed2fc4a07d8ebbdd))
+
+### [1.13.1](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.13.0...v1.13.1) (2021-04-29)
+
+## [1.13.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.12.1...v1.13.0) (2021-04-28)
+
+
+### Features
+
+* :sparkles: expand predicate based on biolink model ([c26b317](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/c26b317d5b70dbe2ffc18dd1a7c324a2e13f581e))
+
+### [1.12.1](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.12.0...v1.12.1) (2021-04-27)
+
+## [1.12.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.11.0...v1.12.0) (2021-04-27)
+
+## [1.11.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.10.0...v1.11.0) (2021-04-27)
+
+
+### Bug Fixes
+
+* :bug: change NCBIGENE to NCBIGene, add RHEA ([fbe4735](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/fbe473580e5a2a2611a9b723eac661bf6e1bb60b))
+
+## [1.10.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.9.0...v1.10.0) (2021-04-23)
+
+## [1.9.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.8.0...v1.9.0) (2021-04-23)
+
+
+### Features
+
+* :sparkles: support biocarta pathway id ([011134c](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/011134c188ccddfff2b0c5054fc2a769d424308f))
+
+## [1.8.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.7.0...v1.8.0) (2021-04-20)
+
+
+### Features
+
+* :sparkles: set a 3s timeout for all TRAPI APIs ([87f412e](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/87f412eae73ef53f2ef118badad20daef5c9c615))
+* :sparkles: set a 3s timeout for all TRAPI APIs ([4d1c3d4](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/4d1c3d49e61a446ff76cf7106671dbda794ea0a3))
+
+## [1.7.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.6.0...v1.7.0) (2021-04-02)
+
+
+### Features
+
+* :sparkles: support limiting ops from /predicates to user specified api names ([437321e](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/437321e6f654627043a677e7d1268d169706b9b5))
+
+## [1.6.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.5.1...v1.6.0) (2021-04-02)
+
+
+### Features
+
+* support using providing a list of APIs to include ([24d4531](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/24d45319dbe2eb12496d129517e0c3f977d8fad2))
+
+### [1.5.1](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.5.0...v1.5.1) (2021-04-01)
+
+
+### Features
+
+* :sparkles: allow user to specify if they want to include reasoner apis ([b89c288](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/b89c288e0b6f72523d2f6e1c81af0468523b06d6))
+
+## [1.5.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.4.0...v1.5.0) (2021-04-01)
+
+
+### Bug Fixes
+
+* :bug: should check for predidcatesPath param instead of smartapiPath ([ac413e6](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/ac413e6185cff37ed80eb76a5de1ae7cc1352d12))
+
+## [1.4.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.3.1...v1.4.0) (2021-03-31)
+
+
+### Features
+
+* :sparkles: include TRAPI APIs when constructing meta-kg ([07688cb](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/07688cb93ebe13be61dd041d2c155a478dac5d5b))
+* :sparkles: restrict to a list of APIs to use in BTE ([defdd65](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/defdd656f30a04af85e37ef525d05ec247cc659b))
+* :sparkles: support constructing TRAPI based bte edge ([02afc54](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/02afc54bb71492cba9c0a311aef27a416798a8fa))
+* :sparkles: support trapi quer ([1658ad2](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/1658ad2f77cbb8c41dba72c871bca595a4495d2f))
+
+### [1.3.1](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.3.0...v1.3.1) (2021-03-29)
+
+## [1.3.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.2.2...v1.3.0) (2021-03-29)
+
+
+### Features
+
+* :sparkles: upgrade to biolink 1.7.0 ([db58226](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/db58226e602e68f1eb638bc3221035a0c873b4e2))
+
+### [1.2.2](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.2.1...v1.2.2) (2021-03-29)
+
+### [1.2.1](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.2.0...v1.2.1) (2021-03-26)
+
+
+### Bug Fixes
+
+* :bug: fix edge_metadata deepcopy issue ([9e34876](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/9e3487693abd220f0f453ccc6d60c500a44e3caf))
+
+## [1.2.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.1.10...v1.2.0) (2021-03-26)
+
+
+### Bug Fixes
+
+* :bug: fix typo in npm release script ([2b80cd3](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/2b80cd330032bc3539e2c494e69f238bf2e71eca))
+
+### [1.1.10](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.1.9...v1.1.10) (2021-03-26)
+
+### [1.1.9](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.1.8...v1.1.9) (2021-03-26)
+
+
+### Bug Fixes
+
+* :bug: fix wrong attribute type ([2b8d57b](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/2b8d57b70df62aad2cbb7d79d9108bfe1f828234))
+
+### [1.1.8](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.1.7...v1.1.8) (2021-03-26)
+
+### [1.1.7](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.1.6...v1.1.7) (2021-03-25)
+
 ### [1.1.6](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.1.5...v1.1.6) (2021-03-25)
 
 ### [1.1.5](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.1.4...v1.1.5) (2021-03-25)
