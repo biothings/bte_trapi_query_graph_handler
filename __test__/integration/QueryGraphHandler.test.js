@@ -5,24 +5,24 @@ const InvalidQueryGraphError = require("../../src/exceptions/invalid_query_graph
 
 describe("Testing QueryGraphHandler Module", () => {
     const disease_entity_node = {
-        category: "biolink:Disease",
-        id: "MONDO:0005737"
+        categories: "biolink:Disease",
+        ids: "MONDO:0005737"
     };
     const gene_entity_node = {
-        category: "biolink:Gene",
-        id: "NCBIGene:1017"
+        categories: "biolink:Gene",
+        ids: "NCBIGene:1017"
     };
     const gene_class_node = {
-        category: "biolink:Gene"
+        categories: "biolink:Gene"
     };
     const chemical_class_node = {
-        category: "biolink:ChemicalSubstance"
+        categories: "biolink:ChemicalSubstance"
     };
     const pathway_class_node = {
-        category: "biolink:Pathways"
+        categories: "biolink:Pathways"
     };
     const phenotype_class_node = {
-        category: "biolink:Phenotype"
+        categories: "biolink:Phenotype"
     };
     const OneHopQuery = {
         nodes: {

@@ -4,11 +4,11 @@ const TRAPIQueryHandler = require("../../src/index");
 
 describe("Testing TRAPIQueryHandler Module", () => {
     const disease_entity_node = {
-        category: "Disease",
-        id: "MONDO:0005737"
+        categories: "Disease",
+        ids: "MONDO:0005737"
     };
     const gene_class_node = {
-        category: "Gene"
+        categories: "Gene"
     };
     const OneHopQuery = {
         nodes: {

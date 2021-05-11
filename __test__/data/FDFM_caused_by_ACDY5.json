@@ -3,11 +3,11 @@
         "query_graph": {
             "nodes": {
                 "n0": {
-                    "id": "OMIM:606703",
-                    "category": "biolink:Disease"
+                    "ids": "OMIM:606703",
+                    "categories": "biolink:Disease"
                 },
                 "n1": {
-                    "category": "biolink:Gene"
+                    "categories": "biolink:Gene"
                 }
             },
             "edges": {

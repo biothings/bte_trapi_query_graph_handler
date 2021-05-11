@@ -11,7 +11,7 @@ module.exports = class QEdge {
    */
   constructor(id, info) {
     this.id = id;
-    this.predicate = info.predicate;
+    this.predicate = info.predicates;
     this.subject = info.subject;
     this.object = info.object;
   }

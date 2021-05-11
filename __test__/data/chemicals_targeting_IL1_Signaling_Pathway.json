@@ -3,14 +3,14 @@
         "query_graph": {
             "nodes": {
                 "n0": {
-                    "id": "WIKIPATHWAYS:WP195",
-                    "category": "biolink:Pathway"
+                    "ids": "WIKIPATHWAYS:WP195",
+                    "categories": "biolink:Pathway"
                 },
                 "n1": {
-                    "category": "biolink:Gene"
+                    "categories": "biolink:Gene"
                 },
                 "n2": {
-                    "category": "biolink:ChemicalSubstance"
+                    "categories": "biolink:ChemicalSubstance"
                 }
             },
             "edges": {
