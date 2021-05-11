@@ -3,8 +3,8 @@ const QEdge = require("../../src/query_edge");
 const QueryResult = require("../../src/query_results");
 
 describe("Testing QueryResults Module", () => {
-    const gene_node1 = new QNode("n1", { category: "Gene", id: "NCBIGene:1017" });
-    const chemical_node1 = new QNode("n3", { category: "ChemicalSubstance" });
+    const gene_node1 = new QNode("n1", { categories: "Gene", ids: "NCBIGene:1017" });
+    const chemical_node1 = new QNode("n3", { categories: "ChemicalSubstance" });
     const edge1 = new QEdge("e01", { subject: gene_node1, object: chemical_node1 });
     const record = {
         "$edge_metadata": {

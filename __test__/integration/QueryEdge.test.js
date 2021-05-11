@@ -131,7 +131,7 @@ describe("Testing QueryEdge Module", () => {
         });
 
         test("test get reverse predicate if query is reversed and expanded", () => {
-            const edge = new QEdge("e01", { subject: type_node, object: disease1_node, predicate: "biolink:affects" });
+            const edge = new QEdge("e01", { subject: type_node, object: disease1_node, predicates: "biolink:affects" });
             const res = edge.getPredicate();
             expect(res).toContain("affected_by");
             expect(res).toContain("disrupted_by");
@@ -140,14 +140,14 @@ describe("Testing QueryEdge Module", () => {
 
     describe("Testing expandPredicates function", () => {
         test("All predicates are correctly expanded if in biolink model", () => {
-            const edge = new QEdge("e01", { subject: type_node, object: disease1_node, predicate: "biolink:contributes_to" });
+            const edge = new QEdge("e01", { subject: type_node, object: disease1_node, predicates: "biolink:contributes_to" });
             const res = edge.expandPredicates(["contributes_to"])
             expect(res).toContain("contributes_to");
             expect(res).toContain("causes");
         });
 
         test("Multiple predicates can be resolved", () => {
-            const edge = new QEdge("e01", { subject: type_node, object: disease1_node, predicate: "biolink:contributes_to" });
+            const edge = new QEdge("e01", { subject: type_node, object: disease1_node, predicates: "biolink:contributes_to" });
             const res = edge.expandPredicates(["contributes_to", "ameliorates"])
             expect(res).toContain("contributes_to");
             expect(res).toContain("causes");
@@ -156,7 +156,7 @@ describe("Testing QueryEdge Module", () => {
         });
 
         test("Predicates not in biolink model should return itself", () => {
-            const edge = new QEdge("e01", { subject: type_node, object: disease1_node, predicate: "biolink:contributes_to" });
+            const edge = new QEdge("e01", { subject: type_node, object: disease1_node, predicates: "biolink:contributes_to" });
             const res = edge.expandPredicates(["contributes_to", "amelio"])
             expect(res).toContain("contributes_to");
             expect(res).toContain("causes");

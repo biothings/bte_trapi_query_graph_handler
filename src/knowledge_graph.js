@@ -23,7 +23,7 @@ module.exports = class KnowledgeGraph {
 
   _createInputNode(record) {
     const res = {
-      category: 'biolink:' + helper._getInputCategory(record),
+      categories: 'biolink:' + helper._getInputCategory(record),
       name: helper._getInputLabel(record),
       attributes: [
         {
@@ -48,7 +48,7 @@ module.exports = class KnowledgeGraph {
 
   _createOutputNode(record) {
     const res = {
-      category: 'biolink:' + helper._getOutputCategory(record),
+      categories: 'biolink:' + helper._getOutputCategory(record),
       name: helper._getOutputLabel(record),
       attributes: [
         {
