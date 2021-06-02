@@ -26,27 +26,27 @@ module.exports = class KnowledgeGraph {
       name: kgNode._label,
       attributes: [
         {
-          name: 'equivalent_identifiers',
+          attribute_type_id: 'equivalent_identifiers',
           value: kgNode._curies,
           type: 'biolink:id',
         },
         {
-          name: 'num_source_nodes',
+          attribute_type_id: 'num_source_nodes',
           value: kgNode._sourceNodes.size,
           type: 'bts:num_source_nodes',
         },
         {
-          name: 'num_target_nodes',
+          attribute_type_id: 'num_target_nodes',
           value: kgNode._targetNodes.size,
           type: 'bts:num_target_nodes',
         },
         {
-          name: 'source_qg_nodes',
+          attribute_type_id: 'source_qg_nodes',
           value: Array.from(kgNode._sourceQGNodes),
           type: 'bts:source_qg_nodes',
         },
         {
-          name: 'target_qg_nodes',
+          attribute_type_id: 'target_qg_nodes',
           value: Array.from(kgNode._targetQGNodes),
           type: 'bts:target_qg_nodes',
         },
@@ -54,7 +54,7 @@ module.exports = class KnowledgeGraph {
     };
     for (const key in kgNode._nodeAttributes) {
       res.attributes.push({
-        name: key,
+        attribute_type_id: key,
         value: kgNode._nodeAttributes[key],
         type: 'bts:' + key,
       });
@@ -65,24 +65,24 @@ module.exports = class KnowledgeGraph {
   _createAttributes(kgEdge) {
     const attributes = [
       {
-        name: 'provided_by',
+        attribute_type_id: 'provided_by',
         value: Array.from(kgEdge.sources),
         type: 'biolink:provided_by',
       },
       {
-        name: 'api',
+        attribute_type_id: 'api',
         value: Array.from(kgEdge.apis),
         type: 'bts:api',
       },
       {
-        name: 'publications',
+        attribute_type_id: 'publications',
         value: Array.from(kgEdge.publications),
         type: 'biolink:publication',
       },
     ];
     for (const key in kgEdge.attributes) {
       attributes.push({
-        name: key,
+        attribute_type_id: key,
         value: kgEdge.attributes[key],
         type: 'bts:' + key,
       });
