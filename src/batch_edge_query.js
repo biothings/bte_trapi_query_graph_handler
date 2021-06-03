@@ -3,6 +3,7 @@ const QEdge2BTEEdgeHandler = require('./qedge2bteedge');
 const NodesUpdateHandler = require('./update_nodes');
 const debug = require('debug')('biothings-explorer-trapi:batch_edge_query');
 const CacheHandler = require('./cache_handler');
+const utils = require('./utils');
 
 module.exports = class BatchEdgeQueryHandler {
   constructor(kg, resolveOutputIDs = true) {
@@ -30,6 +31,7 @@ module.exports = class BatchEdgeQueryHandler {
    * @private
    */
   _expandBTEEdges(bteEdges) {
+    debug(`BTE EDGE ${JSON.stringify(this.qEdges)}`)
     return bteEdges;
   }
 
@@ -47,7 +49,23 @@ module.exports = class BatchEdgeQueryHandler {
    * @private
    */
   async _postQueryFilter(response) {
-    return response;
+    try {
+      const filtered = response.filter(item => {
+        let edge_predicate = item['$edge_metadata']['predicate']
+        let predicate_filters = item['$edge_metadata']['trapi_qEdge_obj']['qEdge']['predicate']
+        //remove prefix from filter list to match predicate name format
+        predicate_filters = predicate_filters.map(item => utils.removeBioLinkPrefix(item))
+        //compare edge predicate to filter list
+        if (predicate_filters.includes(edge_predicate)) {
+          return item
+        }
+      });
+      debug(`Filtered results from ${response.length} down to ${filtered.length} results`);
+      return filtered
+    } catch (error) {
+      debug(`Failed to filter ${response.length} results due to ${error}`);
+      return response
+    }
   }
 
   async query(qEdges) {

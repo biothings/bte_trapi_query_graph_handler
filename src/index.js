@@ -95,7 +95,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     const kg = this._loadMetaKG(this.smartapiID, this.team);
     debug('metakg successfully loaded');
     let queryPaths = this._processQueryGraph(this.queryGraph);
-    debug(`query paths constructed: ${queryPaths}`);
+    debug(`query paths constructed: ${JSON.stringify(queryPaths)}`);
     const handlers = this._createBatchEdgeQueryHandlers(queryPaths, kg);
     debug(`Query depth is ${Object.keys(handlers).length}`);
     for (let i = 0; i < Object.keys(handlers).length; i++) {
