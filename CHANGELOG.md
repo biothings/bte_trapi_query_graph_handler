@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.17.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.16.2...v1.17.0) (2021-06-04)
+
 ### [1.16.2](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.16.1...v1.16.2) (2021-06-04)
 
 
