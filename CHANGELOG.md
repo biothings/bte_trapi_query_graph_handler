@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.16.2](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.16.1...v1.16.2) (2021-06-04)
+
+
+### Features
+
+* edge class includes expanded_predicates attribute ([774e4f9](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/774e4f956f521f4cd725322be6bcc50034168494))
+* post query filter by predicates ([7d0e2c7](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/7d0e2c709fdda09bb333dc5a867be67f6a65eeb3))
+
+
+### Bug Fixes
+
+* :bug: add attribute_type_id in output nodes and edges ([0ff6c0b](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/0ff6c0b4e03177d3032ec703f03bd5f9bcbad272))
+
 ### [1.16.1](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.16.0...v1.16.1) (2021-05-12)
 
 ## [1.16.0](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.15.0...v1.16.0) (2021-05-11)
