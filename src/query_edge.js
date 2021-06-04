@@ -14,6 +14,12 @@ module.exports = class QEdge {
     this.predicate = info.predicates;
     this.subject = info.subject;
     this.object = info.object;
+    this.expanded_predicates = []
+    this.init()
+  }
+
+  init() {
+    this.expanded_predicates = this.getPredicate()
   }
 
   getID() {
