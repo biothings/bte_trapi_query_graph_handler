@@ -21,7 +21,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/kevinxin90/bte_trapi_query_graph_handler.git"
+        "url": "git+https://github.com/biothings/bte_trapi_query_graph_handler.git"
     },
     "keywords": [
         "id",
@@ -31,9 +31,9 @@
     "author": "jiwen xin",
     "license": "ISC",
     "bugs": {
-        "url": "https://github.com/kevinxin90/bte_trapi_query_graph_handler/issues"
+        "url": "https://github.com/biothings/bte_trapi_query_graph_handler/issues"
     },
-    "homepage": "https://github.com/kevinxin90/bte_trapi_query_graph_handler#readme",
+    "homepage": "https://github.com/biothings/bte_trapi_query_graph_handler#readme",
     "devDependencies": {
         "@types/debug": "^4.1.5",
         "@types/jest": "^26.0.22",
