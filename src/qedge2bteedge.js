@@ -32,9 +32,9 @@ module.exports = class QEdge2BTEEdgeHandler {
       new LogEntry(
         'DEBUG',
         null,
-        `BTE is trying to find SmartAPI edges connecting from ${qEdge
-          .getSubject()
-          .getCategories()} to ${qEdge.getObject().getCategories()} with predicate ${qEdge.getPredicate()}`,
+        `BTE is trying to find SmartAPI edges connecting from ${qEdge.getSubject().getCategories()} to ${qEdge
+          .getObject()
+          .getCategories()} with predicate ${qEdge.getPredicate()}`,
       ).getLog(),
     );
     let filterCriteria = {
