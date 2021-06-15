@@ -22,7 +22,7 @@ module.exports = class KnowledgeGraph {
 
   _createNode(kgNode) {
     const res = {
-      category: 'biolink:' + kgNode._semanticType,
+      categories: ['biolink:' + kgNode._semanticType],
       name: kgNode._label,
       attributes: [
         {
