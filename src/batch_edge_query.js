@@ -32,7 +32,7 @@ module.exports = class BatchEdgeQueryHandler {
    * @private
    */
   _expandBTEEdges(bteEdges) {
-    debug(`BTE EDGE ${JSON.stringify(this.qEdges)}`)
+    debug(`BTE EDGE ${JSON.stringify(this.qEdges)}`);
     return bteEdges;
   }
 
@@ -57,13 +57,13 @@ module.exports = class BatchEdgeQueryHandler {
         //add query predicate to the expanded list
         predicate_filters.concat(item['$edge_metadata']['trapi_qEdge_obj']['qEdge']['predicate'])
         //remove prefix from filter list to match predicate name format
-        predicate_filters = predicate_filters.map(item => utils.removeBioLinkPrefix(item))
+        predicate_filters = predicate_filters.map((item) => utils.removeBioLinkPrefix(item));
         //compare edge predicate to filter list
         this.logs.push(
           new LogEntry('DEBUG', null, `query_graph_handler: Current edge post-query predicate restriction includes: ${JSON.stringify(predicate_filters)}`).getLog()
         );
         if (predicate_filters.includes(edge_predicate)) {
-          return item
+          return item;
         }
       });
       debug(`Filtered results from ${response.length} down to ${filtered.length} results`);
@@ -76,7 +76,7 @@ module.exports = class BatchEdgeQueryHandler {
       return filtered
     } catch (error) {
       debug(`Failed to filter ${response.length} results due to ${error}`);
-      return response
+      return response;
     }
   }
 

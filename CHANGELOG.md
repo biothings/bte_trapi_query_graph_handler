@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.17.2](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.17.1...v1.17.2) (2021-06-15)
+
+
+### Bug Fixes
+
+* :bug: change type to value_type_id in TRAPI response ([4f34d5f](https://github.com/kevinxin90/bte_trapi_query_graph_handler/commit/4f34d5f922c1914d550a1a9a22662f73282424fd))
+
 ### [1.17.1](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.17.0...v1.17.1) (2021-06-04)
 
 

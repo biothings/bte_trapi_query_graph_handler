@@ -107,7 +107,7 @@ module.exports = class QueryGraphHandler {
         `BTE identified your query graph as a ${Object.keys(paths).length}-depth query graph`,
       ).getLog(),
     );
-    debug(`ALL PATHS ${JSON.stringify(paths)}`)
+    debug(`ALL PATHS ${JSON.stringify(paths)}`);
     return paths;
   }
 
