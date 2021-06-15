@@ -52,20 +52,36 @@ module.exports = class BatchEdgeQueryHandler {
   async _postQueryFilter(response) {
     try {
       const filtered = response.filter(item => {
-        let edge_predicate = item['$edge_metadata']['predicate']
-        let predicate_filters = item['$edge_metadata']['trapi_qEdge_obj']['qEdge']['expanded_predicates']
-        //add query predicate to the expanded list
-        predicate_filters.concat(item['$edge_metadata']['trapi_qEdge_obj']['qEdge']['predicate'])
-        //remove prefix from filter list to match predicate name format
-        predicate_filters = predicate_filters.map((item) => utils.removeBioLinkPrefix(item));
-        //compare edge predicate to filter list
-        this.logs.push(
-          new LogEntry('DEBUG', null, `query_graph_handler: Current edge post-query predicate restriction includes: ${JSON.stringify(predicate_filters)}`).getLog()
-        );
-        if (predicate_filters.includes(edge_predicate)) {
+        debug(`ITEM ${JSON.stringify(item)}`);
+        if (
+          'predicate' in item['$edge_metadata']['trapi_qEdge_obj']['qEdge']&&
+          'expanded_predicates' in item['$edge_metadata']['trapi_qEdge_obj']['qEdge']
+        ) {
+          let edge_predicate = item['$edge_metadata']['predicate'];
+          let predicate_filters = [];
+          predicate_filters = item['$edge_metadata']['trapi_qEdge_obj']['qEdge']['expanded_predicates'];
+          if (predicate_filters) {
+            //add query predicate to the expanded list
+            predicate_filters.concat(edge_predicate);
+            //remove prefix from filter list to match predicate name format
+            predicate_filters = predicate_filters.map((item) => utils.removeBioLinkPrefix(item));
+            //compare edge predicate to filter list
+            this.logs.push(
+              new LogEntry('DEBUG', null, `query_graph_handler: Current edge post-query predicate restriction includes: ${JSON.stringify(predicate_filters)}`).getLog()
+            );
+            if (predicate_filters.includes(edge_predicate)) {
+              return item;
+            }
+          }else{
+            // No predicate restriction on this edge, just add to results
+            return item
+          }
+        }else{
+          // No predicate restriction on this edge, just add to results
           return item;
         }
       });
+      // filter result
       debug(`Filtered results from ${response.length} down to ${filtered.length} results`);
       this.logs.push(
         new LogEntry('DEBUG', null, `query_graph_handler: Total number of results returned for this query is ${response.length}.`).getLog()
@@ -75,6 +91,7 @@ module.exports = class BatchEdgeQueryHandler {
       );
       return filtered
     } catch (error) {
+      // in case of rare failure return all
       debug(`Failed to filter ${response.length} results due to ${error}`);
       return response;
     }
