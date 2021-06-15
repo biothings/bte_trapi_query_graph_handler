@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.17.3](https://github.com/biothings/bte_trapi_query_graph_handler/compare/v1.17.2...v1.17.3) (2021-06-15)
+
+
+### Bug Fixes
+
+* :bug: post query filter assumed predicate edge metadata would always be present, fix to resume normally if not found ([a922134](https://github.com/biothings/bte_trapi_query_graph_handler/commit/a922134a184e54a9554e51027719767252d1dc61))
+* :bug: TRAPI 1.1 response validation fix ([ef2ac87](https://github.com/biothings/bte_trapi_query_graph_handler/commit/ef2ac87612dd663045668a7a37d2239d163601f9))
+* Add check for meta_knowledge_graph paths conatining 1.1 prefix, add default score of 1 to all queries temporarily, add post query logs to results ([56382e3](https://github.com/biothings/bte_trapi_query_graph_handler/commit/56382e37fdada35094b1541f51d76ed34e1aefba))
+* fix conflict ([6cb4767](https://github.com/biothings/bte_trapi_query_graph_handler/commit/6cb4767ac630ea16e3727be8e28cacddee3363f1))
+* update repo owner in package specs ([85cce99](https://github.com/biothings/bte_trapi_query_graph_handler/commit/85cce9917e6b8bef78a01876f3157e535d95df4a))
+
 ### [1.17.2](https://github.com/kevinxin90/bte_trapi_query_graph_handler/compare/v1.17.1...v1.17.2) (2021-06-15)
 
 
