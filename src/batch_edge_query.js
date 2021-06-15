@@ -51,10 +51,10 @@ module.exports = class BatchEdgeQueryHandler {
    */
   async _postQueryFilter(response) {
     try {
-      const filtered = response.filter(item => {
+      const filtered = response.filter((item) => {
         debug(`ITEM ${JSON.stringify(item)}`);
         if (
-          'predicate' in item['$edge_metadata']['trapi_qEdge_obj']['qEdge']&&
+          'predicate' in item['$edge_metadata']['trapi_qEdge_obj']['qEdge'] &&
           'expanded_predicates' in item['$edge_metadata']['trapi_qEdge_obj']['qEdge']
         ) {
           let edge_predicate = item['$edge_metadata']['predicate'];
@@ -67,16 +67,22 @@ module.exports = class BatchEdgeQueryHandler {
             predicate_filters = predicate_filters.map((item) => utils.removeBioLinkPrefix(item));
             //compare edge predicate to filter list
             this.logs.push(
-              new LogEntry('DEBUG', null, `query_graph_handler: Current edge post-query predicate restriction includes: ${JSON.stringify(predicate_filters)}`).getLog()
+              new LogEntry(
+                'DEBUG',
+                null,
+                `query_graph_handler: Current edge post-query predicate restriction includes: ${JSON.stringify(
+                  predicate_filters,
+                )}`,
+              ).getLog(),
             );
             if (predicate_filters.includes(edge_predicate)) {
               return item;
             }
-          }else{
+          } else {
             // No predicate restriction on this edge, just add to results
-            return item
+            return item;
           }
-        }else{
+        } else {
           // No predicate restriction on this edge, just add to results
           return item;
         }
@@ -84,12 +90,20 @@ module.exports = class BatchEdgeQueryHandler {
       // filter result
       debug(`Filtered results from ${response.length} down to ${filtered.length} results`);
       this.logs.push(
-        new LogEntry('DEBUG', null, `query_graph_handler: Total number of results returned for this query is ${response.length}.`).getLog()
+        new LogEntry(
+          'DEBUG',
+          null,
+          `query_graph_handler: Total number of results returned for this query is ${response.length}.`,
+        ).getLog(),
       );
       this.logs.push(
-        new LogEntry('DEBUG', null, `query_graph_handler: Successfully applied post-query predicate restriction with ${filtered.length} results.`).getLog()
+        new LogEntry(
+          'DEBUG',
+          null,
+          `query_graph_handler: Successfully applied post-query predicate restriction with ${filtered.length} results.`,
+        ).getLog(),
       );
-      return filtered
+      return filtered;
     } catch (error) {
       // in case of rare failure return all
       debug(`Failed to filter ${response.length} results due to ${error}`);

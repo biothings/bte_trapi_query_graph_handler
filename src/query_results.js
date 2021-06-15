@@ -43,7 +43,7 @@ module.exports = class QueryResult {
         node_bindings: this._createNodeBindings(record),
         edge_bindings: this._createEdgeBindings(record),
         //default score issue #200 - TODO: turn to evaluating module eventually
-        score: "1.0"
+        score: '1.0',
       });
     });
   }
