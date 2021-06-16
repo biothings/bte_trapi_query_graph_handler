@@ -65,15 +65,6 @@ module.exports = class BatchEdgeQueryHandler {
             //remove prefix from filter list to match predicate name format
             predicate_filters = predicate_filters.map((item) => utils.removeBioLinkPrefix(item));
             //compare edge predicate to filter list
-            this.logs.push(
-              new LogEntry(
-                'DEBUG',
-                null,
-                `query_graph_handler: Current edge post-query predicate restriction includes: ${JSON.stringify(
-                  predicate_filters,
-                )}`,
-              ).getLog(),
-            );
             if (predicate_filters.includes(edge_predicate)) {
               return item;
             }
