@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.17.4](https://github.com/biothings/bte_trapi_query_graph_handler/compare/v1.17.3...v1.17.4) (2021-06-16)
+
+
+### Bug Fixes
+
+* fix small syntax req ([8787893](https://github.com/biothings/bte_trapi_query_graph_handler/commit/87878936ce00b4bd3893243e65e0bdeb778660a2))
+* remove long log ([742871e](https://github.com/biothings/bte_trapi_query_graph_handler/commit/742871ecea670795d133270f31b1b68ad86b3d01))
+* remove repeating output log ([49f25ee](https://github.com/biothings/bte_trapi_query_graph_handler/commit/49f25eeeffb24f73c5d9fc81bb0a400ff5cc02f4))
+
 ### [1.17.3](https://github.com/biothings/bte_trapi_query_graph_handler/compare/v1.17.2...v1.17.3) (2021-06-15)
 
 
