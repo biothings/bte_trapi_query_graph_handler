@@ -52,7 +52,6 @@ module.exports = class BatchEdgeQueryHandler {
   async _postQueryFilter(response) {
     try {
       const filtered = response.filter((item) => {
-        debug(`ITEM ${JSON.stringify(item)}`);
         if (
           'predicate' in item['$edge_metadata']['trapi_qEdge_obj']['qEdge'] &&
           'expanded_predicates' in item['$edge_metadata']['trapi_qEdge_obj']['qEdge']
