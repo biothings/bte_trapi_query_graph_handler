@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.17.5](https://github.com/biothings/bte_trapi_query_graph_handler/compare/v1.17.4...v1.17.5) (2021-06-17)
+
 ### [1.17.4](https://github.com/biothings/bte_trapi_query_graph_handler/compare/v1.17.3...v1.17.4) (2021-06-16)
 
 
