@@ -50,6 +50,7 @@ module.exports = class BatchEdgeQueryHandler {
    * @private
    */
   async _postQueryFilter(response) {
+    let filters_applied = new Set();
     try {
       const filtered = response.filter((item) => {
         if (
@@ -62,6 +63,7 @@ module.exports = class BatchEdgeQueryHandler {
           if (predicate_filters) {
             //add query predicate to the expanded list
             predicate_filters.concat(edge_predicate);
+            predicate_filters.forEach((f) => filters_applied.add(f));
             //remove prefix from filter list to match predicate name format
             predicate_filters = predicate_filters.map((item) => utils.removeBioLinkPrefix(item));
             //compare edge predicate to filter list
@@ -78,19 +80,21 @@ module.exports = class BatchEdgeQueryHandler {
         }
       });
       // filter result
+      debug(`Filters applied to search: ${JSON.stringify([...filters_applied])}`);
+      this.logs.push(
+        new LogEntry(
+          'DEBUG',
+          null,
+          `query_graph_handler: Post-query predicate restrictions: ${JSON.stringify([...filters_applied])}.`,
+        ).getLog(),
+      );
+      // filter result
       debug(`Filtered results from ${response.length} down to ${filtered.length} results`);
       this.logs.push(
         new LogEntry(
           'DEBUG',
           null,
-          `query_graph_handler: Total number of results returned for this query is ${response.length}.`,
-        ).getLog(),
-      );
-      this.logs.push(
-        new LogEntry(
-          'DEBUG',
-          null,
-          `query_graph_handler: Successfully applied post-query predicate restriction with ${filtered.length} results.`,
+          `query_graph_handler: Successfully applied post-query predicate restriction: ${response.length} down to ${filtered.length} results.`,
         ).getLog(),
       );
       return filtered;
