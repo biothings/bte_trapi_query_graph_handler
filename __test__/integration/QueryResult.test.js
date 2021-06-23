@@ -311,7 +311,7 @@ describe('Testing QueryResults Module', () => {
     };
 
     describe('Testing update function', () => {
-      test('should get a single-hop followed by a split second hop', () => {
+      test('should get a single-hop followed by a forked second hop', () => {
         const queryResult = new QueryResult();
 
         queryResult.update([record1]);
