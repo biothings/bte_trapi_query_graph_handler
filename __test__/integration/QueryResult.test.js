@@ -4,8 +4,8 @@ const QueryResult = require('../../src/query_results');
 
 describe('Testing QueryResults Module', () => {
   describe('Single Record', () => {
-    const gene_node1 = new QNode('n1', { categories: 'Gene', ids: 'NCBIGene:1017' });
-    const chemical_node1 = new QNode('n3', { categories: 'ChemicalSubstance' });
+    const gene_node1 = new QNode('n1', { categories: 'Gene', ids: 'NCBIGene:632' });
+    const chemical_node1 = new QNode('n2', { categories: 'ChemicalSubstance' });
     const edge1 = new QEdge('e01', { subject: gene_node1, object: chemical_node1 });
     const record = {
       $edge_metadata: {
@@ -13,34 +13,36 @@ describe('Testing QueryResults Module', () => {
         source: 'DGIdb',
         api_name: 'BioThings DGIDB API',
       },
-      publications: ['PMID:123', 'PMID:1234'],
-      interactionType: 'inhibitor',
+      publications: ['PMID:8366144', 'PMID:8381250'],
+      relation: 'antagonist',
+      source: 'DrugBank',
+      score: '0.9',
       $input: {
-        original: 'SYMBOL:CDK2',
+        original: 'SYMBOL:BGLAP',
         obj: [
           {
-            primaryID: 'NCBIGene:1017',
-            label: 'CDK2',
+            primaryID: 'NCBIGene:632',
+            label: 'BGLAP',
             dbIDs: {
-              SYMBOL: 'CDK2',
-              NCBIGene: '1017',
+              SYMBOL: 'BGLAP',
+              NCBIGene: '632',
             },
-            curies: ['SYMBOL:CDK2', 'NCBIGene:1017'],
+            curies: ['SYMBOL:BGLAP', 'NCBIGene:632'],
           },
         ],
       },
       $output: {
-        original: 'CHEMBL.COMPOUND:CHEMBL744',
+        original: 'CHEMBL.COMPOUND:CHEMBL1200983',
         obj: [
           {
-            primaryID: 'CHEMBL.COMPOUND:CHEMBL744',
-            label: 'RILUZOLE',
+            primaryID: 'CHEMBL.COMPOUND:CHEMBL1200983',
+            label: 'GALLIUM NITRATE',
             dbIDs: {
-              'CHEMBL.COMPOUND': 'CHEMBL744',
-              PUBCHEM: '1234',
-              name: 'RILUZOLE',
+              'CHEMBL.COMPOUND': 'CHEMBL1200983',
+              'PUBCHEM.COMPOUND': '5282394',
+              name: 'GALLIUM NITRATE',
             },
-            curies: ['CHEMBL.COMPOUND:CHEMBL744', 'PUBCHEM:1234', 'name:RILUZOLE'],
+            curies: ['CHEMBL.COMPOUND:CHEMBL1200983', 'PUBCHEM.COMPOUND:5282394', 'name:GALLIUM NITRATE'],
           },
         ],
       },
@@ -50,9 +52,9 @@ describe('Testing QueryResults Module', () => {
         const queryResult = new QueryResult();
         const res = queryResult._createNodeBindings(record);
         expect(res).toHaveProperty('n1');
-        expect(res).toHaveProperty('n3');
-        expect(res.n1[0].id).toEqual('NCBIGene:1017');
-        expect(res.n3[0].id).toEqual('CHEMBL.COMPOUND:CHEMBL744');
+        expect(res).toHaveProperty('n2');
+        expect(res.n1[0].id).toEqual('NCBIGene:632');
+        expect(res.n2[0].id).toEqual('CHEMBL.COMPOUND:CHEMBL1200983');
       });
     });
 
