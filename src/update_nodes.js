@@ -87,7 +87,7 @@ module.exports = class NodesUpdateHandler {
     //     );
     // })
     queryResult.map((record) => {
-      if (!(record.$output.obj[0].primaryID in record.$edge_metadata.trapi_qEdge_obj.output_equivalent_identifiers)) {
+      if (record && !(record.$output.obj[0].primaryID in record.$edge_metadata.trapi_qEdge_obj.output_equivalent_identifiers)) {
         record.$edge_metadata.trapi_qEdge_obj.output_equivalent_identifiers[record.$output.obj[0].primaryID] =
           record.$output.obj;
       }
