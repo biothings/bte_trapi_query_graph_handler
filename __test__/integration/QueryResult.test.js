@@ -72,9 +72,9 @@ describe('Testing QueryResults Module', () => {
       test('test when input with string, should output a hash of 40 characters', () => {
         const queryResult = new QueryResult();
         queryResult.update([record]);
-        expect(queryResult.results.length).toEqual(1);
-        expect(queryResult.results[0].node_bindings).toHaveProperty('n1');
-        expect(queryResult.results[0].edge_bindings).toHaveProperty('e01');
+        expect(queryResult.getResults().length).toEqual(1);
+        expect(queryResult.getResults()[0].node_bindings).toHaveProperty('n1');
+        expect(queryResult.getResults()[0].edge_bindings).toHaveProperty('e01');
       });
     });
   });
@@ -170,21 +170,23 @@ describe('Testing QueryResults Module', () => {
         queryResult.update([record1]);
         queryResult.update([record2]);
 
-        expect(queryResult.results.length).toEqual(1);
+        const results = queryResult.getResults();
 
-        expect(Object.keys(queryResult.results[0].node_bindings).length).toEqual(3);
-        expect(queryResult.results[0].node_bindings).toHaveProperty('n1');
-        expect(queryResult.results[0].node_bindings).toHaveProperty('n2');
-        expect(queryResult.results[0].node_bindings).toHaveProperty('n3');
+        expect(results.length).toEqual(1);
 
-        expect(Object.keys(queryResult.results[0].edge_bindings).length).toEqual(2);
-        expect(queryResult.results[0].edge_bindings).toHaveProperty('e01');
-        expect(queryResult.results[0].edge_bindings).toHaveProperty('e02');
+        expect(Object.keys(results[0].node_bindings).length).toEqual(3);
+        expect(results[0].node_bindings).toHaveProperty('n1');
+        expect(results[0].node_bindings).toHaveProperty('n2');
+        expect(results[0].node_bindings).toHaveProperty('n3');
+
+        expect(Object.keys(results[0].edge_bindings).length).toEqual(2);
+        expect(results[0].edge_bindings).toHaveProperty('e01');
+        expect(results[0].edge_bindings).toHaveProperty('e02');
       });
     });
   });
 
-  describe('Three Records (Y)', () => {
+  describe('Three Records', () => {
     const gene_node_start = new QNode('n1', { categories: 'Gene', ids: 'NCBIGene:3778' });
     const disease_node = new QNode('n2', { categories: 'Disease' });
     const gene_node_end1 = new QNode('n3', { categories: 'Gene' });
@@ -313,28 +315,29 @@ describe('Testing QueryResults Module', () => {
         const queryResult = new QueryResult();
 
         queryResult.update([record1]);
-        queryResult.update([record2]);
-        queryResult.update([record3]);
+        queryResult.update([record2, record3]);
 
-        expect(queryResult.results.length).toEqual(2);
+        const results = queryResult.getResults();
 
-        expect(Object.keys(queryResult.results[0].node_bindings).length).toEqual(3);
-        expect(queryResult.results[0].node_bindings).toHaveProperty('n1');
-        expect(queryResult.results[0].node_bindings).toHaveProperty('n2');
-        expect(queryResult.results[0].node_bindings).toHaveProperty('n3');
+        expect(results.length).toEqual(2);
 
-        expect(Object.keys(queryResult.results[1].edge_bindings).length).toEqual(2);
-        expect(queryResult.results[1].edge_bindings).toHaveProperty('e01');
-        expect(queryResult.results[1].edge_bindings).toHaveProperty('e02');
+        expect(Object.keys(results[0].node_bindings).length).toEqual(3);
+        expect(results[0].node_bindings).toHaveProperty('n1');
+        expect(results[0].node_bindings).toHaveProperty('n2');
+        expect(results[0].node_bindings).toHaveProperty('n3');
 
-        expect(Object.keys(queryResult.results[1].node_bindings).length).toEqual(3);
-        expect(queryResult.results[1].node_bindings).toHaveProperty('n1');
-        expect(queryResult.results[1].node_bindings).toHaveProperty('n2');
-        expect(queryResult.results[1].node_bindings).toHaveProperty('n4');
+        expect(Object.keys(results[0].edge_bindings).length).toEqual(2);
+        expect(results[0].edge_bindings).toHaveProperty('e01');
+        expect(results[0].edge_bindings).toHaveProperty('e02');
 
-        expect(Object.keys(queryResult.results[1].edge_bindings).length).toEqual(2);
-        expect(queryResult.results[1].edge_bindings).toHaveProperty('e01');
-        expect(queryResult.results[1].edge_bindings).toHaveProperty('e03');
+        expect(Object.keys(results[1].node_bindings).length).toEqual(3);
+        expect(results[1].node_bindings).toHaveProperty('n1');
+        expect(results[1].node_bindings).toHaveProperty('n2');
+        expect(results[1].node_bindings).toHaveProperty('n4');
+
+        expect(Object.keys(results[1].edge_bindings).length).toEqual(2);
+        expect(results[1].edge_bindings).toHaveProperty('e01');
+        expect(results[1].edge_bindings).toHaveProperty('e03');
       });
     });
   });
