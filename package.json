@@ -50,10 +50,10 @@
     "typescript": "^4.2.3"
   },
   "dependencies": {
-    "@biothings-explorer/call-apis": "^1.23.2",
+    "@biothings-explorer/call-apis": "^1.23.3",
     "@biothings-explorer/smartapi-kg": "^3.8.1",
     "biolink-model": "^0.3.1",
-    "biomedical_id_resolver": "^3.9.0",
+    "biomedical_id_resolver": "^3.9.1",
     "debug": "^4.3.1",
     "lodash": "^4.17.21",
     "ms": "^2.1.3",
