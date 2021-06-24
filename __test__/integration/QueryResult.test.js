@@ -4,43 +4,46 @@ const QueryResult = require('../../src/query_results');
 
 describe('Testing QueryResults Module', () => {
   describe('Single Record', () => {
-    const gene_node1 = new QNode('n1', { categories: 'Gene', ids: 'NCBIGene:1017' });
-    const chemical_node1 = new QNode('n3', { categories: 'ChemicalSubstance' });
+    const gene_node1 = new QNode('n1', { categories: 'Gene', ids: 'NCBIGene:632' });
+    const chemical_node1 = new QNode('n2', { categories: 'ChemicalSubstance' });
     const edge1 = new QEdge('e01', { subject: gene_node1, object: chemical_node1 });
     const record = {
       $edge_metadata: {
         trapi_qEdge_obj: edge1,
+        predicate: 'biolink:physically_interacts_with',
         source: 'DGIdb',
         api_name: 'BioThings DGIDB API',
       },
-      publications: ['PMID:123', 'PMID:1234'],
-      interactionType: 'inhibitor',
+      publications: ['PMID:8366144', 'PMID:8381250'],
+      relation: 'antagonist',
+      source: 'DrugBank',
+      score: '0.9',
       $input: {
-        original: 'SYMBOL:CDK2',
+        original: 'SYMBOL:BGLAP',
         obj: [
           {
-            primaryID: 'NCBIGene:1017',
-            label: 'CDK2',
+            primaryID: 'NCBIGene:632',
+            label: 'BGLAP',
             dbIDs: {
-              SYMBOL: 'CDK2',
-              NCBIGene: '1017',
+              SYMBOL: 'BGLAP',
+              NCBIGene: '632',
             },
-            curies: ['SYMBOL:CDK2', 'NCBIGene:1017'],
+            curies: ['SYMBOL:BGLAP', 'NCBIGene:632'],
           },
         ],
       },
       $output: {
-        original: 'CHEMBL.COMPOUND:CHEMBL744',
+        original: 'CHEMBL.COMPOUND:CHEMBL1200983',
         obj: [
           {
-            primaryID: 'CHEMBL.COMPOUND:CHEMBL744',
-            label: 'RILUZOLE',
+            primaryID: 'CHEMBL.COMPOUND:CHEMBL1200983',
+            label: 'GALLIUM NITRATE',
             dbIDs: {
-              'CHEMBL.COMPOUND': 'CHEMBL744',
-              PUBCHEM: '1234',
-              name: 'RILUZOLE',
+              'CHEMBL.COMPOUND': 'CHEMBL1200983',
+              'PUBCHEM.COMPOUND': '5282394',
+              name: 'GALLIUM NITRATE',
             },
-            curies: ['CHEMBL.COMPOUND:CHEMBL744', 'PUBCHEM:1234', 'name:RILUZOLE'],
+            curies: ['CHEMBL.COMPOUND:CHEMBL1200983', 'PUBCHEM.COMPOUND:5282394', 'name:GALLIUM NITRATE'],
           },
         ],
       },
@@ -50,9 +53,9 @@ describe('Testing QueryResults Module', () => {
         const queryResult = new QueryResult();
         const res = queryResult._createNodeBindings(record);
         expect(res).toHaveProperty('n1');
-        expect(res).toHaveProperty('n3');
-        expect(res.n1[0].id).toEqual('NCBIGene:1017');
-        expect(res.n3[0].id).toEqual('CHEMBL.COMPOUND:CHEMBL744');
+        expect(res).toHaveProperty('n2');
+        expect(res.n1[0].id).toEqual('NCBIGene:632');
+        expect(res.n2[0].id).toEqual('CHEMBL.COMPOUND:CHEMBL1200983');
       });
     });
 
@@ -79,7 +82,7 @@ describe('Testing QueryResults Module', () => {
   describe('Two Records', () => {
     const gene_node_start = new QNode('n1', { categories: 'Gene', ids: 'NCBIGene:3778' });
     const disease_node = new QNode('n2', { categories: 'Disease' });
-    const gene_node_end = new QNode('n3', { categories: 'Gene', ids: 'NCBIGene:7289' });
+    const gene_node_end = new QNode('n3', { categories: 'Gene' });
 
     const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
     const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
@@ -87,37 +90,36 @@ describe('Testing QueryResults Module', () => {
     const record1 = {
       $edge_metadata: {
         trapi_qEdge_obj: edge1,
-        source: 'DGIdb',
-        api_name: 'BioThings DGIDB API',
+        predicate: 'biolink:gene_associated_with_condition',
+        api_name: 'Automat Pharos',
       },
       publications: ['PMID:123', 'PMID:1234'],
-      interactionType: 'inhibitor',
       $input: {
-        original: 'SYMBOL:CDK2',
+        original: 'SYMBOL:KCNMA1',
         obj: [
           {
-            primaryID: 'NCBIGene:1017',
-            label: 'CDK2',
+            primaryID: 'NCBIGene:3778',
+            label: 'KCNMA1',
             dbIDs: {
-              SYMBOL: 'CDK2',
-              NCBIGene: '1017',
+              SYMBOL: 'KCNMA1',
+              NCBIGene: '3778',
             },
-            curies: ['SYMBOL:CDK2', 'NCBIGene:1017'],
+            curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
           },
         ],
       },
       $output: {
-        original: 'CHEMBL.COMPOUND:CHEMBL744',
+        original: 'MONDO:0011122',
         obj: [
           {
-            primaryID: 'CHEMBL.COMPOUND:CHEMBL744',
-            label: 'RILUZOLE',
+            primaryID: 'MONDO:0011122',
+            label: 'obesity disorder',
             dbIDs: {
-              'CHEMBL.COMPOUND': 'CHEMBL744',
-              PUBCHEM: '1234',
-              name: 'RILUZOLE',
+              MONDO: '0011122',
+              MESH: 'D009765',
+              name: 'obesity disorder',
             },
-            curies: ['CHEMBL.COMPOUND:CHEMBL744', 'PUBCHEM:1234', 'name:RILUZOLE'],
+            curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
           },
         ],
       },
@@ -126,37 +128,36 @@ describe('Testing QueryResults Module', () => {
     const record2 = {
       $edge_metadata: {
         trapi_qEdge_obj: edge2,
-        source: 'DGIdb',
-        api_name: 'BioThings DGIDB API',
+        predicate: 'biolink:condition_associated_with_gene',
+        api_name: 'Automat Hetio',
       },
-      publications: ['PMID:123', 'PMID:1234'],
-      interactionType: 'inhibitor',
+      publications: ['PMID:345', 'PMID:456'],
       $input: {
-        original: 'SYMBOL:CDK2',
+        original: 'MONDO:0011122',
         obj: [
           {
-            primaryID: 'NCBIGene:1017',
-            label: 'CDK2',
+            primaryID: 'MONDO:0011122',
+            label: 'obesity disorder',
             dbIDs: {
-              SYMBOL: 'CDK2',
-              NCBIGene: '1017',
+              MONDO: '0011122',
+              MESH: 'D009765',
+              name: 'obesity disorder',
             },
-            curies: ['SYMBOL:CDK2', 'NCBIGene:1017'],
+            curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
           },
         ],
       },
       $output: {
-        original: 'CHEMBL.COMPOUND:CHEMBL744',
+        original: 'SYMBOL:TULP3',
         obj: [
           {
-            primaryID: 'CHEMBL.COMPOUND:CHEMBL744',
-            label: 'RILUZOLE',
+            primaryID: 'NCBIGene:7289',
+            label: 'TULP3',
             dbIDs: {
-              'CHEMBL.COMPOUND': 'CHEMBL744',
-              PUBCHEM: '1234',
-              name: 'RILUZOLE',
+              SYMBOL: 'TULP3',
+              NCBIGene: '7289',
             },
-            curies: ['CHEMBL.COMPOUND:CHEMBL744', 'PUBCHEM:1234', 'name:RILUZOLE'],
+            curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
           },
         ],
       },
@@ -186,8 +187,8 @@ describe('Testing QueryResults Module', () => {
   describe('Three Records (Y)', () => {
     const gene_node_start = new QNode('n1', { categories: 'Gene', ids: 'NCBIGene:3778' });
     const disease_node = new QNode('n2', { categories: 'Disease' });
-    const gene_node_end1 = new QNode('n3', { categories: 'Gene', ids: 'NCBIGene:7289' });
-    const gene_node_end2 = new QNode('n4', { categories: 'Gene', ids: 'NCBIGene:1234' });
+    const gene_node_end1 = new QNode('n3', { categories: 'Gene' });
+    const gene_node_end2 = new QNode('n4', { categories: 'Gene' });
 
     const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
     const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end1 });
@@ -196,37 +197,36 @@ describe('Testing QueryResults Module', () => {
     const record1 = {
       $edge_metadata: {
         trapi_qEdge_obj: edge1,
-        source: 'DGIdb',
-        api_name: 'BioThings DGIDB API',
+        predicate: 'biolink:gene_associated_with_condition',
+        api_name: 'Automat Pharos',
       },
       publications: ['PMID:123', 'PMID:1234'],
-      interactionType: 'inhibitor',
       $input: {
-        original: 'SYMBOL:CDK2',
+        original: 'SYMBOL:KCNMA1',
         obj: [
           {
-            primaryID: 'NCBIGene:1017',
-            label: 'CDK2',
+            primaryID: 'NCBIGene:3778',
+            label: 'KCNMA1',
             dbIDs: {
-              SYMBOL: 'CDK2',
-              NCBIGene: '1017',
+              SYMBOL: 'KCNMA1',
+              NCBIGene: '3778',
             },
-            curies: ['SYMBOL:CDK2', 'NCBIGene:1017'],
+            curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
           },
         ],
       },
       $output: {
-        original: 'CHEMBL.COMPOUND:CHEMBL744',
+        original: 'MONDO:0011122',
         obj: [
           {
-            primaryID: 'CHEMBL.COMPOUND:CHEMBL744',
-            label: 'RILUZOLE',
+            primaryID: 'MONDO:0011122',
+            label: 'obesity disorder',
             dbIDs: {
-              'CHEMBL.COMPOUND': 'CHEMBL744',
-              PUBCHEM: '1234',
-              name: 'RILUZOLE',
+              MONDO: '0011122',
+              MESH: 'D009765',
+              name: 'obesity disorder',
             },
-            curies: ['CHEMBL.COMPOUND:CHEMBL744', 'PUBCHEM:1234', 'name:RILUZOLE'],
+            curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
           },
         ],
       },
@@ -235,37 +235,36 @@ describe('Testing QueryResults Module', () => {
     const record2 = {
       $edge_metadata: {
         trapi_qEdge_obj: edge2,
-        source: 'DGIdb',
-        api_name: 'BioThings DGIDB API',
+        predicate: 'biolink:condition_associated_with_gene',
+        api_name: 'Automat Hetio',
       },
-      publications: ['PMID:123', 'PMID:1234'],
-      interactionType: 'inhibitor',
+      publications: ['PMID:345', 'PMID:456'],
       $input: {
-        original: 'SYMBOL:CDK2',
+        original: 'MONDO:0011122',
         obj: [
           {
-            primaryID: 'NCBIGene:1017',
-            label: 'CDK2',
+            primaryID: 'MONDO:0011122',
+            label: 'obesity disorder',
             dbIDs: {
-              SYMBOL: 'CDK2',
-              NCBIGene: '1017',
+              MONDO: '0011122',
+              MESH: 'D009765',
+              name: 'obesity disorder',
             },
-            curies: ['SYMBOL:CDK2', 'NCBIGene:1017'],
+            curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
           },
         ],
       },
       $output: {
-        original: 'CHEMBL.COMPOUND:CHEMBL744',
+        original: 'SYMBOL:TULP3',
         obj: [
           {
-            primaryID: 'CHEMBL.COMPOUND:CHEMBL744',
-            label: 'RILUZOLE',
+            primaryID: 'NCBIGene:7289',
+            label: 'TULP3',
             dbIDs: {
-              'CHEMBL.COMPOUND': 'CHEMBL744',
-              PUBCHEM: '1234',
-              name: 'RILUZOLE',
+              SYMBOL: 'TULP3',
+              NCBIGene: '7289',
             },
-            curies: ['CHEMBL.COMPOUND:CHEMBL744', 'PUBCHEM:1234', 'name:RILUZOLE'],
+            curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
           },
         ],
       },
@@ -274,37 +273,36 @@ describe('Testing QueryResults Module', () => {
     const record3 = {
       $edge_metadata: {
         trapi_qEdge_obj: edge3,
-        source: 'DGIdb',
-        api_name: 'BioThings DGIDB API',
+        predicate: 'biolink:condition_associated_with_gene',
+        api_name: 'Automat Hetio',
       },
-      publications: ['PMID:123', 'PMID:1234'],
-      interactionType: 'inhibitor',
+      publications: ['PMID:987', 'PMID:876'],
       $input: {
-        original: 'SYMBOL:CDK2',
+        original: 'MONDO:0011122',
         obj: [
           {
-            primaryID: 'NCBIGene:1017',
-            label: 'CDK2',
+            primaryID: 'MONDO:0011122',
+            label: 'obesity disorder',
             dbIDs: {
-              SYMBOL: 'CDK2',
-              NCBIGene: '1017',
+              MONDO: '0011122',
+              MESH: 'D009765',
+              name: 'obesity disorder',
             },
-            curies: ['SYMBOL:CDK2', 'NCBIGene:1017'],
+            curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
           },
         ],
       },
       $output: {
-        original: 'CHEMBL.COMPOUND:CHEMBL744',
+        original: 'SYMBOL:TECR',
         obj: [
           {
-            primaryID: 'CHEMBL.COMPOUND:CHEMBL744',
-            label: 'RILUZOLE',
+            primaryID: 'NCBIGene:9524',
+            label: 'TECR',
             dbIDs: {
-              'CHEMBL.COMPOUND': 'CHEMBL744',
-              PUBCHEM: '1234',
-              name: 'RILUZOLE',
+              SYMBOL: 'TECR',
+              NCBIGene: '9524',
             },
-            curies: ['CHEMBL.COMPOUND:CHEMBL744', 'PUBCHEM:1234', 'name:RILUZOLE'],
+            curies: ['SYMBOL:TECR', 'NCBIGene:9524'],
           },
         ],
       },
