@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.17.6](https://github.com/biothings/bte_trapi_query_graph_handler/compare/v1.17.5...v1.17.6) (2021-06-24)
+
+
+### Bug Fixes
+
+* :bug: fix test query ([00f84b0](https://github.com/biothings/bte_trapi_query_graph_handler/commit/00f84b05611667a2ad282087589865314cf13f83))
+* :bug: fix tests array value, check item exists error fix, skip test returning with 0 results temp ([ef1e1a9](https://github.com/biothings/bte_trapi_query_graph_handler/commit/ef1e1a97dd4c8051ccc9611d2b89b4d92b22ab1a))
+* :sparkles: fix repeating predicate restriction logs ([4b10df0](https://github.com/biothings/bte_trapi_query_graph_handler/commit/4b10df0a4f0af169b4cefe5435b2a0d0f9dd5f43))
+* check record exists before adding to results ([b0ec67c](https://github.com/biothings/bte_trapi_query_graph_handler/commit/b0ec67cf73202050856be01f6024863dc618f6df))
+* revert last, not issue ([636ac1a](https://github.com/biothings/bte_trapi_query_graph_handler/commit/636ac1ab5a4843d3d1aa44223115a4962288faa6))
+
 ### [1.17.5](https://github.com/biothings/bte_trapi_query_graph_handler/compare/v1.17.4...v1.17.5) (2021-06-17)
 
 ### [1.17.4](https://github.com/biothings/bte_trapi_query_graph_handler/compare/v1.17.3...v1.17.4) (2021-06-16)
