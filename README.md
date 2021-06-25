@@ -2,8 +2,8 @@
 
 A on-the-fly query engine for BioThings Explorer based on TRAPI Query Graph.
 
-[![Test Coveralls](https://github.com/kevinxin90/bte_trapi_query_graph_handler/actions/workflows/coverage.yml/badge.svg)](https://github.com/kevinxin90/bte_trapi_query_graph_handler/actions/workflows/coverage.yml)
-[![Coverage Status](https://coveralls.io/repos/github/kevinxin90/bte_trapi_query_graph_handler/badge.svg?branch=main)](https://coveralls.io/github/kevinxin90/bte_trapi_query_graph_handler?branch=main)
+[![Test Coveralls](https://github.com/biothings/bte_trapi_query_graph_handler/actions/workflows/coverage.yml/badge.svg)](https://github.com/biothings/bte_trapi_query_graph_handler/actions/workflows/coverage.yml)
+[![Coverage Status](https://coveralls.io/repos/github/biothings/bte_trapi_query_graph_handler/badge.svg?branch=main)](https://coveralls.io/github/biothings/bte_trapi_query_graph_handler?branch=main)
 
 ## Install
 
