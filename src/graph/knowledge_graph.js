@@ -1,5 +1,5 @@
 const GraphHelper = require('../helper');
-const debug = require('debug')('biothings-explorer-trapi:KnowledgeGraph');
+const debug = require('debug')('bte:biothings-explorer-trapi:KnowledgeGraph');
 const helper = new GraphHelper();
 
 module.exports = class KnowledgeGraph {

@@ -1,5 +1,5 @@
 const helper = require('./helper');
-const debug = require('debug')('biothings-explorer-trapi:QEdge');
+const debug = require('debug')('bte:biothings-explorer-trapi:QEdge');
 const utils = require('./utils');
 const reverse = require('./biolink');
 

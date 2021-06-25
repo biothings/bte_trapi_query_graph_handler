@@ -1,7 +1,7 @@
 const kg_edge = require('./kg_edge');
 const kg_node = require('./kg_node');
 const helper = require('../helper');
-const debug = require('debug')('biothings-explorer-trapi:Graph');
+const debug = require('debug')('bte:biothings-explorer-trapi:Graph');
 
 module.exports = class Graph {
   constructor() {

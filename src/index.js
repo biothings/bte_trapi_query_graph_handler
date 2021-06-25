@@ -8,7 +8,7 @@ const QueryGraph = require('./query_graph');
 const KnowledgeGraph = require('./graph/knowledge_graph');
 const QueryResults = require('./query_results');
 const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error');
-const debug = require('debug')('biothings-explorer-trapi:main');
+const debug = require('debug')('bte:biothings-explorer-trapi:main');
 const Graph = require('./graph/graph');
 
 exports.InvalidQueryGraphError = InvalidQueryGraphError;

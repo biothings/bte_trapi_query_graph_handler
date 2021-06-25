@@ -1,6 +1,6 @@
 const GraphHelper = require('./helper');
 const helper = new GraphHelper();
-const debug = require('debug')('biothings-explorer-trapi:QueryResult');
+const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
 
 module.exports = class QueryResult {
   constructor() {

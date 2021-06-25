@@ -1,6 +1,6 @@
 const bl = require('biolink-model');
 var path = require('path');
-const debug = require('debug')('biothings-explorer-trapi:EdgeReverse');
+const debug = require('debug')('bte:biothings-explorer-trapi:EdgeReverse');
 
 class BioLinkModel {
   constructor() {

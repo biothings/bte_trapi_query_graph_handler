@@ -5,7 +5,7 @@ const _ = require('lodash');
 const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error');
 const LogEntry = require('./log_entry');
 const MAX_DEPTH = 3;
-const debug = require('debug')('biothings-explorer-trapi:query_graph');
+const debug = require('debug')('bte:biothings-explorer-trapi:query_graph');
 
 module.exports = class QueryGraphHandler {
   constructor(queryGraph) {

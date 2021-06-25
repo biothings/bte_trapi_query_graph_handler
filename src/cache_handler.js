@@ -1,5 +1,5 @@
 const redisClient = require('./redis-client');
-const debug = require('debug')('biothings-explorer-trapi:cache_handler');
+const debug = require('debug')('bte:biothings-explorer-trapi:cache_handler');
 const LogEntry = require('./log_entry');
 
 module.exports = class {

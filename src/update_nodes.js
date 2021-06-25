@@ -1,6 +1,6 @@
 const id_resolver = require('biomedical_id_resolver');
 const _ = require('lodash');
-const debug = require('debug')('biothings-explorer-trapi:nodeUpdateHandler');
+const debug = require('debug')('bte:biothings-explorer-trapi:nodeUpdateHandler');
 
 module.exports = class NodesUpdateHandler {
   constructor(qEdges) {

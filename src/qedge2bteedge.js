@@ -2,7 +2,7 @@ const _ = require('lodash');
 const LogEntry = require('./log_entry');
 const config = require('./config');
 const ID_WITH_PREFIXES = ['MONDO', 'DOID', 'UBERON', 'EFO', 'HP', 'CHEBI', 'CL', 'MGI', 'NCIT'];
-const debug = require('debug')('biothings-explorer-trapi:qedge2btedge');
+const debug = require('debug')('bte:biothings-explorer-trapi:qedge2btedge');
 
 module.exports = class QEdge2BTEEdgeHandler {
   constructor(qEdges, kg) {
