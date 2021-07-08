@@ -10,6 +10,8 @@ const QueryResults = require('./query_results');
 const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error');
 const debug = require('debug')('bte:biothings-explorer-trapi:main');
 const Graph = require('./graph/graph');
+// const KGFilter = require('./kg_filter');
+const HopFilter = require('./hop_filter');
 
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 
@@ -32,15 +34,19 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     return kg;
   }
 
-  getResponse() {
+  async getResponse() {
     this.bteGraph.notify();
+    // let kgf = new KGFilter(this.knowledgeGraph.kg, this.queryGraph);
+    // let filtered_KG = await kgf.applyFilter();
     return {
       message: {
         query_graph: this.queryGraph,
+        // knowledge_graph: filtered_KG,
         knowledge_graph: this.knowledgeGraph.kg,
         results: this.queryResults.getResults(),
       },
-      logs: this.logs,
+      // logs: [...this.logs, ...kgf.logs],
+      logs: this.logs
     };
   }
 
@@ -100,15 +106,31 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     debug(`Query depth is ${Object.keys(handlers).length}`);
     for (let i = 0; i < Object.keys(handlers).length; i++) {
       debug(`Start to query depth ${i + 1}`);
+      // debug(`handlers ${JSON.stringify(handlers[i].qEdges)}`);
       let res = await handlers[i].query(handlers[i].qEdges);
-      debug(`Query for depth ${i + 1} completes.`);
-      this.logs = [...this.logs, ...handlers[i].logs];
+      //Filter each hop based on current edge
+      let hopFilter = new HopFilter(res, handlers[i].qEdges);
+      res = await hopFilter.applyFilter();
+      //Filter end
+      debug(`RES ${res}`);
+      debug(`Query for depth ${i + 1} completes. ${res.length}`);
+      this.logs = [...this.logs, ...handlers[i].logs, ...hopFilter.logs];
       if (res.length === 0) {
         return;
       }
       debug('Start to notify subscribers now.');
       handlers[i].notify(res);
       debug(`Updated TRAPI knowledge graph using query results for depth ${i + 1}`);
+
+      // let res = await handlers[i].query(handlers[i].qEdges);
+      // debug(`Query for depth ${i + 1} completes.`);
+      // this.logs = [...this.logs, ...handlers[i].logs];
+      // if (res.length === 0) {
+      //   return;
+      // }
+      // debug('Start to notify subscribers now.');
+      // handlers[i].notify(res);
+      // debug(`Updated TRAPI knowledge graph using query results for depth ${i + 1}`);
     }
   }
 };

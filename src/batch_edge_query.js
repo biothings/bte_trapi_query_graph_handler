@@ -158,7 +158,7 @@ module.exports = class BatchEdgeQueryHandler {
   }
 
   /**
-   * Nofity all listeners
+   * Notify all listeners
    */
   notify(res) {
     this.subscribers.map((subscriber) => {
