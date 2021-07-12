@@ -43,8 +43,8 @@ module.exports = class HopFilter {
         debug(`node info ${JSON.stringify(nodeInfo)}`);
         //look in original query for node ids
         try {
-            let resolvableItem = this._createResolvableItem(nodeInfo);
-            debug(`KGF getting equivalent IDs of ${JSON.stringify(resolvableItem)}`);
+            let resolvableItem = await this._createResolvableItem(nodeInfo);
+            debug(`(3) KGF getting equivalent IDs of ${JSON.stringify(resolvableItem)}`);
             //add results to lis tof filters
             let res = await this._getEquivalentIDs(resolvableItem);
             return this._getIDsFromRes(res);
@@ -108,37 +108,9 @@ module.exports = class HopFilter {
      async _collectEquivalentIDs(qeInfo) {
         let input_e_ids = [];
         let output_e_ids = [];
-        // let allowed_inputs = qeInfo['qEdge']['subject']['curie'];
-        // let allowed_outputs = qeInfo['qEdge']['object']['curie'];
-        // debug(`Allowed I ${JSON.stringify(allowed_inputs)}`);
-        // debug(`Allowed O ${JSON.stringify(allowed_outputs)}`);
 
         input_e_ids = await this._createFiltersFromNode(qeInfo['qEdge']['subject']);
         output_e_ids = await this._createFiltersFromNode(qeInfo['qEdge']['object']);
-
-        // allowed_inputs.forEach((input) => {
-        //     // debug(`INPUT KEYS ${JSON.stringify(Object.keys(qeInfo['input_equivalent_identifiers']))}`);
-        //     for (const i_key in qeInfo['input_equivalent_identifiers']) {
-        //         qeInfo['input_equivalent_identifiers'][i_key].forEach((item) => {
-        //             if (i_key == input && item && item['_dbIDs']) {   
-        //                 debug(`Adding aliases of ${input}`);
-        //                 input_e_ids = input_e_ids.concat(this._getIDs(item['_dbIDs']))
-        //             }
-        //         })
-        //     }
-        // });
-
-        // allowed_outputs.forEach((output) => {
-        //     // debug(`OUTPUT KEYS ${JSON.stringify(Object.keys(qeInfo['output_equivalent_identifiers']))}`);
-        //     for (const o_key in qeInfo['output_equivalent_identifiers']) {
-        //         qeInfo['output_equivalent_identifiers'][o_key].forEach((item) => {
-        //             if (o_key == output && item && item['_dbIDs']) {   
-        //                 debug(`Adding aliases of ${output}`);
-        //                 output_e_ids = output_e_ids.concat(this._getIDs(item['_dbIDs']))
-        //             }
-        //         })
-        //     }
-        // });
         
         this.logs.push(
             new LogEntry(
@@ -156,7 +128,7 @@ module.exports = class HopFilter {
     */
     async _filterRes(qeInfo) {
         let equivalentIds = await this._collectEquivalentIDs(qeInfo);
-        debug(`Hop filters ${JSON.stringify(equivalentIds)}`);
+        debug(`(4) Hop filters ${JSON.stringify(equivalentIds)}`);
         this.original_res.forEach((result) => {
             if (
                 //check source and target exist in restriction filters
@@ -167,7 +139,7 @@ module.exports = class HopFilter {
             }
         })
         debug(
-            `Filtered response from ${this.original_res.length} ` + 
+            `(5) Filtered response from ${this.original_res.length} ` + 
             `down to ${this.filtered_res.length}`
             );
         this.logs.push(
@@ -180,7 +152,7 @@ module.exports = class HopFilter {
                 `down to ${this.filtered_res.length} results.`
                 ).getLog(),
         );
-        return;
+        return this.filtered_res;
     }
 
 
@@ -192,7 +164,7 @@ module.exports = class HopFilter {
         // check object curie
         let object_curie = qeInfo['qEdge']['object']['curie'] || false;
         let subject_curie = qeInfo['qEdge']['subject']['curie'] || false;
-        debug(`Hop goes from "${subject_curie}" to "${object_curie}"`);
+        debug(`(1) Hop goes from "${subject_curie}" to "${object_curie}"`);
         return (object_curie && subject_curie) ? true : false;
     }
 
@@ -200,22 +172,25 @@ module.exports = class HopFilter {
         //this prevents reversed edges from being
         //processed twice since order does not matter
         let processed = new Set();
-        await this.query_edges.forEach( async (queryEdge) => {
+        this.query_edges.forEach( async (queryEdge) => {
             if (!processed.has(queryEdge.qEdge.id)) {
                 //examine and filter res based on each edge
-                let should_filter = this._shouldFilter(queryEdge);
-                debug(`Should Hop "${queryEdge.qEdge.id}" be filtered? ${should_filter}`);
+                let should_filter = await this._shouldFilter(queryEdge);
                 if (should_filter) {
+                    debug(`(2) Hop "${queryEdge.qEdge.id}" is being filtered...`);
                     processed.add(queryEdge.qEdge.id);
                     await this._filterRes(queryEdge);
+                }else{
+                    // if any one edge is missing curies just return original res
+                    // means hop should not be restricted
+                    debug(`(5) No filter returned original`);
+                    return this.original_res;
                 }
-                // if any one edge is missing curies just return original res
-                // means hop should not be restricted
-                return this.original_res;
             }else{
-                debug(`Hop "${queryEdge.qEdge.id}" already processed`);
+                debug(`(2) Hop "${queryEdge.qEdge.id}" already processed`);
             }
         });
+        debug(`(5) Filtering complete.`);
         return this.filtered_res;
     }
 };

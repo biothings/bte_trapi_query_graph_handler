@@ -107,7 +107,6 @@ module.exports = class QueryGraphHandler {
         `BTE identified your query graph as a ${Object.keys(paths).length}-depth query graph`,
       ).getLog(),
     );
-    debug(`ALL PATHS ${JSON.stringify(paths)}`);
     return paths;
   }
 
@@ -119,9 +118,12 @@ module.exports = class QueryGraphHandler {
       this.edges = this._storeEdges();
     }
     const result = [];
+    debug(`EDGES ${JSON.stringify(this.edges)}`);
     for (const edge_id in this.edges) {
       const subjectNode = this.edges[edge_id].subject;
       const objectNode = this.edges[edge_id].object;
+      debug(`SUBJECT Node ${JSON.stringify(subjectNode)} ${JSON.stringify(subjectNode.hasInput())}`);
+      debug(`OBJECT Node ${JSON.stringify(objectNode)} ${JSON.stringify(objectNode.hasInput())}`);
       if (subjectNode.hasInput()) {
         result.push({
           current_node: objectNode,
@@ -137,6 +139,7 @@ module.exports = class QueryGraphHandler {
         });
       }
     }
+    debug(`FIRST LEVEL ${JSON.stringify(result)} >>> ${JSON.stringify(result.length)}`);
     return result;
   }
 
@@ -164,6 +167,7 @@ module.exports = class QueryGraphHandler {
         }
       }
     }
+    debug(`NEXT LEVEL ${JSON.stringify(result)} >>> ${JSON.stringify(result.length)}`);
     return result;
   }
 };

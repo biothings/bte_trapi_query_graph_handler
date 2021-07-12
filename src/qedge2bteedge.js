@@ -26,8 +26,8 @@ module.exports = class QEdge2BTEEdgeHandler {
    * @param {object} qEdge - TRAPI Query Edge Object
    */
   _getSmartAPIEdges(qEdge, kg = this.kg) {
-    debug(`Subject node is ${qEdge.getSubject().id}`);
-    debug(`Object node is ${qEdge.getObject().id}`);
+    // debug(`Subject node is ${qEdge.getSubject().id}`);
+    // debug(`Object node is ${qEdge.getObject().id}`);
     this.logs.push(
       new LogEntry(
         'DEBUG',
@@ -120,7 +120,7 @@ module.exports = class QEdge2BTEEdgeHandler {
     const inputID = smartAPIEdge.association.input_id;
     const inputType = smartAPIEdge.association.input_type;
     let resolvedIDs = smartAPIEdge.reasoner_edge.input_equivalent_identifiers;
-    debug(`Resolved ids: ${JSON.stringify(resolvedIDs)}`);
+    // debug(`Resolved ids: ${JSON.stringify(resolvedIDs)}`);
     debug(`Input id: ${inputID}`);
     for (const curie in resolvedIDs) {
       resolvedIDs[curie].map((entity) => {
@@ -176,7 +176,7 @@ module.exports = class QEdge2BTEEdgeHandler {
       debug(`${smartapi_edges.length} SmartAPI edges are retrieved....`);
       smartapi_edges.map((item) => {
         let newEdges = this._createBTEEdges(item);
-        debug(`${newEdges.length} BTEEdges are created....`);
+        // debug(`${newEdges.length} BTEEdges are created....`);
         newEdges = newEdges.map((e) => {
           e.filter = edge.filter;
           return e;
@@ -184,6 +184,7 @@ module.exports = class QEdge2BTEEdgeHandler {
         bteEdges = [...bteEdges, ...newEdges];
       });
     });
+    debug(`${bteEdges.length} BTEEdges were created....`);
     if (bteEdges.length === 0) {
       debug(`No bte edge found for this query batch.`);
       this.logs.push(

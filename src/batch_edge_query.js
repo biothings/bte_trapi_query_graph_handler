@@ -32,7 +32,6 @@ module.exports = class BatchEdgeQueryHandler {
    * @private
    */
   _expandBTEEdges(bteEdges) {
-    debug(`BTE EDGE ${JSON.stringify(this.qEdges)}`);
     return bteEdges;
   }
 
@@ -40,6 +39,8 @@ module.exports = class BatchEdgeQueryHandler {
    * @private
    */
   async _queryBTEEdges(bteEdges) {
+    debug(`BEFORE CALL APIS ${bteEdges.length} `);
+    // debug(`BEFORE CALL APIS ${JSON.stringify(bteEdges[0])} `);
     let executor = new call_api(bteEdges);
     const res = await executor.query(this.resolveOutputIDs);
     this.logs = [...this.logs, ...executor.logs];
