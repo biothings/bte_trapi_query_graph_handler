@@ -10,6 +10,7 @@ const QueryResults = require('./query_results');
 const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error');
 const debug = require('debug')('bte:biothings-explorer-trapi:main');
 const Graph = require('./graph/graph');
+const EdgeManager = require('./edge_manager');
 
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 
@@ -66,7 +67,8 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   _processQueryGraph(queryGraph) {
     try {
       let queryGraphHandler = new QueryGraph(queryGraph);
-      let res = queryGraphHandler.createQueryPaths();
+      // let res = queryGraphHandler.createQueryPaths();
+      let res = queryGraphHandler.calculateEdges();
       this.logs = [...this.logs, ...queryGraphHandler.logs];
       return res;
     } catch (err) {
@@ -111,4 +113,41 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       debug(`Updated TRAPI knowledge graph using query results for depth ${i + 1}`);
     }
   }
+
+  _createBatchEdgeQueryHandlersForCurrent(currentEdge, kg) {
+    let handlers = {};
+    handlers[0] = new BatchEdgeQueryHandler(kg, this.resolveOutputIDs);
+    handlers[0].setEdges(currentEdge);
+    handlers[0].subscribe(this.queryResults);
+    handlers[0].subscribe(this.bteGraph);
+    return handlers;
+  }
+
+  async query_2() {
+    this._initializeResponse();
+    debug('start to load metakg.');
+    const kg = this._loadMetaKG(this.smartapiID, this.team);
+    debug('metakg successfully loaded');
+    let queryEdges = this._processQueryGraph(this.queryGraph);
+    debug(`(3) All edges created ${JSON.stringify(queryEdges)}`);
+    let manager = new EdgeManager(queryEdges, kg);
+    while (manager.getNotExecuted()) {
+      let current_edge = manager.getNext();
+      let handlers = this._createBatchEdgeQueryHandlersForCurrent(current_edge, kg);
+      debug(`HANDLERS ${JSON.stringify(handlers[0][0])}`);
+      for (let i = 0; i < Object.keys(handlers).length; i++) {
+        debug(`(5) Executing current edge ${JSON.stringify(handlers[i].constructor.name)}`);
+        let res = await handlers[i].query([handlers[i].qEdges]);
+        this.logs = [...this.logs, ...handlers[i].logs];
+        if (res.length === 0) {
+          return;
+        }
+        debug(`(5) Successfully queried ${JSON.stringify(Object.keys(res[0]))}`);
+        current_edge.executed = true;
+        handlers[i].notify(res);
+      }
+    };
+    // let res = await manager.start();
+    debug(`FINISHED`);
+    }
 };
