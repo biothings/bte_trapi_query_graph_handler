@@ -50,7 +50,7 @@ module.exports = class QueryResult {
 
     const results = [];
 
-    this.cachedQueryResults[0].forEach((cachedRecords, outputNodeID) => {
+    this.cachedQueryResults[0] && this.cachedQueryResults[0].forEach((cachedRecords, outputNodeID) => {
       cachedRecords.forEach((cachedRecord) => {
         const result = {
           node_bindings: {
