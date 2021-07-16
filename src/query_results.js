@@ -12,7 +12,7 @@ module.exports = class QueryResult {
     this.cachedQueryResults = [];
   }
 
-  _addRemainingCachedQueryResults(previousInputNodeID, results, result, cachedQueryResultIndex=1) {
+  _addRemainingCachedQueryResults(previousInputNodeID, results, result, cachedQueryResultIndex = 1) {
     if (cachedQueryResultIndex >= this.cachedQueryResults.length) {
       return results;
     }
@@ -50,7 +50,7 @@ module.exports = class QueryResult {
 
     const results = [];
 
-    this.cachedQueryResults[0].forEach((cachedRecords, outputNodeID) => {
+    this.cachedQueryResults[0] && this.cachedQueryResults[0].forEach((cachedRecords, outputNodeID) => {
       cachedRecords.forEach((cachedRecord) => {
         const result = {
           node_bindings: {
@@ -70,8 +70,10 @@ module.exports = class QueryResult {
               {
                 id: cachedRecord.kgEdgeID,
               },
-            ]
+            ],
           },
+          //default score issue #200 - TODO: turn to evaluating module eventually
+          score: '1.0',
         };
 
         results.push(result);
@@ -81,33 +83,6 @@ module.exports = class QueryResult {
     });
 
     return results;
-  }
-
-  // TODO: can I get rid of this?
-  _createEdgeBindings(record) {
-    return {
-      [record.$edge_metadata.trapi_qEdge_obj.getID()]: [
-        {
-          id: helper._getKGEdgeID(record),
-        },
-      ],
-    };
-  }
-
-  // TODO: can I get rid of this?
-  _createNodeBindings(record) {
-    return {
-      [helper._getInputQueryNodeID(record)]: [
-        {
-          id: helper._getInputID(record),
-        },
-      ],
-      [helper._getOutputQueryNodeID(record)]: [
-        {
-          id: helper._getOutputID(record),
-        },
-      ],
-    };
   }
 
   update(queryResult) {

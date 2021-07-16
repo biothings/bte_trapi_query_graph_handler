@@ -105,7 +105,7 @@ module.exports = class {
         hashedEdgeIDs[i],
         JSON.stringify(groupedQueryResult[hashedEdgeIDs[i]]),
         'EX',
-        process.env.REDIS_KEY_EXPIRE_TIME,
+        process.env.REDIS_KEY_EXPIRE_TIME || 600,
       );
     }
     debug('Successfully cached all query results.');

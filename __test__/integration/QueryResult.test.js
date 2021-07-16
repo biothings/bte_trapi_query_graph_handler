@@ -48,25 +48,6 @@ describe('Testing QueryResults Module', () => {
         ],
       },
     };
-    describe('Testing _createNodeBindings function', () => {
-      test('test when input with string, should output a hash of 40 characters', () => {
-        const queryResult = new QueryResult();
-        const res = queryResult._createNodeBindings(record);
-        expect(res).toHaveProperty('n1');
-        expect(res).toHaveProperty('n2');
-        expect(res.n1[0].id).toEqual('NCBIGene:632');
-        expect(res.n2[0].id).toEqual('CHEMBL.COMPOUND:CHEMBL1200983');
-      });
-    });
-
-    describe('Testing _createEdgeBindings function', () => {
-      test('test when input with string, should output a hash of 40 characters', () => {
-        const queryResult = new QueryResult();
-        const res = queryResult._createEdgeBindings(record);
-        expect(res).toHaveProperty('e01');
-        expect(res.e01.length).toEqual(1);
-      });
-    });
 
     describe('Testing update function', () => {
       test('test when input with string, should output a hash of 40 characters', () => {
@@ -75,6 +56,7 @@ describe('Testing QueryResults Module', () => {
         expect(queryResult.getResults().length).toEqual(1);
         expect(queryResult.getResults()[0].node_bindings).toHaveProperty('n1');
         expect(queryResult.getResults()[0].edge_bindings).toHaveProperty('e01');
+        expect(queryResult.getResults()[0]).toHaveProperty('score');
       });
     });
   });
@@ -182,6 +164,8 @@ describe('Testing QueryResults Module', () => {
         expect(Object.keys(results[0].edge_bindings).length).toEqual(2);
         expect(results[0].edge_bindings).toHaveProperty('e01');
         expect(results[0].edge_bindings).toHaveProperty('e02');
+
+        expect(results[0]).toHaveProperty('score');
       });
     });
   });
@@ -330,6 +314,8 @@ describe('Testing QueryResults Module', () => {
         expect(results[0].edge_bindings).toHaveProperty('e01');
         expect(results[0].edge_bindings).toHaveProperty('e02');
 
+        expect(results[0]).toHaveProperty('score');
+
         expect(Object.keys(results[1].node_bindings).length).toEqual(3);
         expect(results[1].node_bindings).toHaveProperty('n1');
         expect(results[1].node_bindings).toHaveProperty('n2');
@@ -338,6 +324,8 @@ describe('Testing QueryResults Module', () => {
         expect(Object.keys(results[1].edge_bindings).length).toEqual(2);
         expect(results[1].edge_bindings).toHaveProperty('e01');
         expect(results[1].edge_bindings).toHaveProperty('e03');
+
+        expect(results[1]).toHaveProperty('score');
       });
     });
   });
