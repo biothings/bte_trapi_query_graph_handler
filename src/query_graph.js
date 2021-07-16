@@ -4,7 +4,7 @@ const QExecEdge = require('./query_execution_edge');
 const _ = require('lodash');
 const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error');
 const LogEntry = require('./log_entry');
-const SmartExeEdge = require('./smart_edge');
+const NewExeEdge = require('./query_execution_edge_2');
 const MAX_DEPTH = 3;
 const debug = require('debug')('bte:biothings-explorer-trapi:query_graph');
 
@@ -125,7 +125,12 @@ module.exports = class QueryGraphHandler {
     let edge_index = 0;
     //create a smart query edge per edge in query
     for (const edge_id in this.edges) {
-      edges[edge_index] = new SmartExeEdge(this.edges[edge_id]);
+      edges[edge_index] = [
+        // () ----> ()
+        new NewExeEdge(this.edges[edge_id], false, undefined),
+        // () <---- ()
+        // new NewExeEdge(this.edges[edge_id], true, undefined)
+      ];
       edge_index++;
     }
     return edges;

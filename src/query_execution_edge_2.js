@@ -14,15 +14,17 @@ module.exports = class SmartExeEdge {
     this.qEdge = qEdge;
     this.reverse = reverse;
     this.prev_edge = prev_edge;
-    //source and target aliases
+    //object and subject aliases
     this.input_equivalent_identifiers = {};
     this.output_equivalent_identifiers = {};
     //instances of query_node
-    this.source = qEdge.subject;
-    this.target = qEdge.object;
+    this.object = qEdge.subject;
+    this.subject = qEdge.object;
     //entity counts
-    this.source_entity_count = undefined;
-    this.target_entity_count = undefined;
+    // (object #) ----> ()
+    this.object_entity_count = null;
+    // () ----> (subject #)
+    this.subject_entity_count = null;
     //edge has been fully executed
     this.executed = false;
     //run initial checks
@@ -31,20 +33,20 @@ module.exports = class SmartExeEdge {
   }
 
   init() {
-    debug(`(2) Created Smart Edge ${JSON.stringify(this.qEdge)}`)
+    debug(`(2) Created Smart Edge ${JSON.stringify(this.qEdge.getID())}`)
     this.checkInitialEntityCount();
   }
 
   checkInitialEntityCount() {
     //if ids found set entity count to number of ids
     //eg. we expect curie: ["PUBCHEM.COMPOUND:2662"]
-    //source
+    //object
     debug(`(2) Updated Initial Entity Counts`)
-    this.source_entity_count = this.source.hasInput() ? 
-    this.source.curie.length : undefined;
-    //target
-    this.target_entity_count = this.target.hasInput() ? 
-    this.target.curie.length : undefined;
+    this.object_entity_count = this.object.hasInput() ? 
+    this.object.curie.length : null;
+    //subject
+    this.subject_entity_count = this.subject.hasInput() ? 
+    this.subject.curie.length : null;
   }
 
   getID() {

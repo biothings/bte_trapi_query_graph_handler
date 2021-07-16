@@ -120,7 +120,7 @@ module.exports = class QEdge2BTEEdgeHandler {
     const inputID = smartAPIEdge.association.input_id;
     const inputType = smartAPIEdge.association.input_type;
     let resolvedIDs = smartAPIEdge.reasoner_edge.input_equivalent_identifiers;
-    debug(`Resolved ids: ${JSON.stringify(resolvedIDs)}`);
+    // debug(`Resolved ids: ${JSON.stringify(resolvedIDs)}`);
     debug(`Input id: ${inputID}`);
     for (const curie in resolvedIDs) {
       resolvedIDs[curie].map((entity) => {

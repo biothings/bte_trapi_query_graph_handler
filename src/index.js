@@ -131,20 +131,20 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     let queryEdges = this._processQueryGraph(this.queryGraph);
     debug(`(3) All edges created ${JSON.stringify(queryEdges)}`);
     let manager = new EdgeManager(queryEdges, kg);
-    while (manager.getNotExecuted()) {
+    while (manager.getEdgesNotExecuted()) {
       let current_edge = manager.getNext();
       let handlers = this._createBatchEdgeQueryHandlersForCurrent(current_edge, kg);
-      debug(`HANDLERS ${JSON.stringify(handlers[0][0])}`);
       for (let i = 0; i < Object.keys(handlers).length; i++) {
-        debug(`(5) Executing current edge ${JSON.stringify(handlers[i].constructor.name)}`);
-        let res = await handlers[i].query([handlers[i].qEdges]);
+        debug(`(5) Executing current edge...`);
+        let res = await handlers[i].query(handlers[i].qEdges);
         this.logs = [...this.logs, ...handlers[i].logs];
         if (res.length === 0) {
           return;
         }
-        debug(`(5) Successfully queried ${JSON.stringify(Object.keys(res[0]))}`);
+        manager.processAndUpdateEdgeEntityCount(res, handlers[i].qEdges);
+        debug(`(5) Successfully queried ${JSON.stringify(res[0]['$output'])}`);
         current_edge.executed = true;
-        handlers[i].notify(res);
+        handlers[i].notify([]);
       }
     };
     // let res = await manager.start();

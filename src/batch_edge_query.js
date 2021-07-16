@@ -32,7 +32,7 @@ module.exports = class BatchEdgeQueryHandler {
    * @private
    */
   _expandBTEEdges(bteEdges) {
-    debug(`BTE EDGE ${JSON.stringify(this.qEdges)}`);
+    // debug(`BTE EDGE ${JSON.stringify(this.qEdges)}`);
     return bteEdges;
   }
 
@@ -106,8 +106,12 @@ module.exports = class BatchEdgeQueryHandler {
   }
 
   async query(qEdges) {
+    debug('Node Update Start');
+    qEdges = Array.isArray(qEdges) ? qEdges : [qEdges];
     const nodeUpdate = new NodesUpdateHandler(qEdges);
-    await nodeUpdate.setEquivalentIDs(qEdges);
+    //difference is there is no previous edge info anymore
+    await nodeUpdate.setEquivalentIDs_2(qEdges);
+    debug('Node Update Success');
     const cacheHandler = new CacheHandler(qEdges);
     const { cachedResults, nonCachedEdges } = await cacheHandler.categorizeEdges(qEdges);
     this.logs = [...this.logs, ...cacheHandler.logs];
