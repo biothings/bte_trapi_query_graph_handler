@@ -67,6 +67,7 @@ module.exports = class NodesUpdateHandler {
   }
 
   async setEquivalentIDs_2(qEdges) {
+    debug(`(TEST) setEquivalentIDs_2 start`);
     const curies = this._getCuries(this.qEdges);
     // if (Object.keys(curies).length === 0) {
     //   debug(`update nodes based on previous query results!`);

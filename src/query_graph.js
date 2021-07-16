@@ -127,7 +127,9 @@ module.exports = class QueryGraphHandler {
     for (const edge_id in this.edges) {
       edges[edge_index] = [
         // () ----> ()
-        new NewExeEdge(this.edges[edge_id], false, undefined),
+        Object.hasOwnProperty.call(this.edges[edge_id]['subject'], 'curie') ? 
+        new NewExeEdge(this.edges[edge_id], true, undefined) :
+        new NewExeEdge(this.edges[edge_id], false, undefined)
         // () <---- ()
         // new NewExeEdge(this.edges[edge_id], true, undefined)
       ];

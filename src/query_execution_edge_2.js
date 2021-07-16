@@ -1,10 +1,10 @@
 const helper = require('./helper');
-const debug = require('debug')('bte:biothings-explorer-trapi:SmartExeEdge');
+const debug = require('debug')('bte:biothings-explorer-trapi:UpdatedExeEdge');
 const utils = require('./utils');
 const reverse = require('./biolink');
 
 //This is an edge class based on QExeEdge with more features
-module.exports = class SmartExeEdge {
+module.exports = class UpdatedExeEdge {
   /**
    *
    * @param {string} id - QEdge ID

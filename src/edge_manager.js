@@ -6,7 +6,7 @@ module.exports = class EdgeManager {
     constructor(edges, kg) {
         // flatten list of all edges available
         this.edges = _.flatten(Object.values(edges));;
-        debug(`(5) Edge manager will manage ${this.edges.length} edges.`);
+        debug(`(3) Edge manager will manage ${this.edges.length} edges.`);
         this.kg = kg;
         this.resolveOutputIDs = true;
         this.logs = [];
@@ -16,8 +16,8 @@ module.exports = class EdgeManager {
         //read results from current edge and
         //update matching edges entity count before the 
         //next edge is selected
-        debug(`(6) Processing ${res.length} results.`);
-        debug(`(6) Processing from edge ${JSON.stringify(edges)}.`);
+        debug(`(6) Processing ${res.length} results from edge ${JSON.stringify(edges.qEdge.id)}.`);
+        debug(`(6) RES SAMPLE ${JSON.stringify(res[0])}.`);
     }
 
     getNext() {
