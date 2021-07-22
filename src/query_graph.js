@@ -117,7 +117,7 @@ module.exports = class QueryGraphHandler {
    */
   calculateEdges() {
     //populate edge and node info
-    debug(`(1) Creating smart edges...`);
+    debug(`(1) Creating edges for manager...`);
     if (this.edges === undefined) {
       this.edges = this._storeEdges();
     }
@@ -127,11 +127,10 @@ module.exports = class QueryGraphHandler {
     for (const edge_id in this.edges) {
       edges[edge_index] = [
         // () ----> ()
-        Object.hasOwnProperty.call(this.edges[edge_id]['subject'], 'curie') ? 
+        !this.edges[edge_id].subject.curie ? 
         new NewExeEdge(this.edges[edge_id], true, undefined) :
         new NewExeEdge(this.edges[edge_id], false, undefined)
-        // () <---- ()
-        // new NewExeEdge(this.edges[edge_id], true, undefined)
+        // reversed () <---- ()
       ];
       edge_index++;
     }

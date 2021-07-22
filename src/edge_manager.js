@@ -1,6 +1,7 @@
 const _ = require('lodash');
 const LogEntry = require('./log_entry');
 const debug = require('debug')('bte:biothings-explorer-trapi:edge-manager');
+const BatchEdgeQueryHandler = require('./batch_edge_query');
 
 module.exports = class EdgeManager {
     constructor(edges, kg) {
@@ -10,14 +11,7 @@ module.exports = class EdgeManager {
         this.kg = kg;
         this.resolveOutputIDs = true;
         this.logs = [];
-    }
-
-    processAndUpdateEdgeEntityCount(res, edges) {
-        //read results from current edge and
-        //update matching edges entity count before the 
-        //next edge is selected
-        debug(`(6) Processing ${res.length} results from edge ${JSON.stringify(edges.qEdge.id)}.`);
-        debug(`(6) RES SAMPLE ${JSON.stringify(res[0])}.`);
+        this.results = [];
     }
 
     getNext() {
@@ -93,95 +87,49 @@ module.exports = class EdgeManager {
             debug(`(5) Sending next edge '${all_empty[0].getID()}' with NO entity count.`);
             return all_empty[0];
         }
-        debug(`(5) Sending next edge '${next.getID()}' WITH entity count...`);
+        debug(`(5) Sending next edge '${next.getID()}' ` +
+        `WITH entity count...(${next.subject_entity_count || next.object_entity_count})`);
         return next;
     }
 
-    //old implementation
-    getNext_2() {
-        // available not yet executed
-        let available_edges = this.edges
-        .filter(edge => !edge.executed);
-        if (available_edges.length == 0) {
-            debug(`(5) Error: ${available_edges} available edges found.`);
-            this.logs.push(
-                new LogEntry(
-                    'DEBUG',
-                    null,
-                    `Cannot get next edge, ${available_edges} available edges found.`,
-                ).getLog(),
-            );
-        }
-        // check edges with lowest object entity counts
-        // (1) ----> ()
-        let with_object_entity_counts = available_edges
-        .filter(edge => {
-            if(edge.object_entity_count && !edge.subject_entity_count){
-                return true;
-            }else {
-                return false;
+    updateEdgesEntityCounts(results, current_edge) {
+        //looks through all edges and updates entity counts
+        //of all matching nodes using the edge passed
+        //and the results as the entity count
+
+        //ENTITY COUNT
+        debug(`Manager will update edges using ${results.length} results.`);
+        let entities = new Set();
+        results.forEach((res) => {
+            //each key in output_equivalent_identifiers
+            //represents an entity connected to the original
+            //input
+            if (Object.hasOwnProperty
+            .call(res.$output, 'original') && !Array.isArray(res.$output)) {
+                if (!Array.isArray(res.$output.original)) {
+                    entities.add(res.$output.original);
+                }
             }
         });
-        if (with_object_entity_counts.length) {
-            let found_s = with_object_entity_counts.reduce(function(prev, curr) {
-                return prev.object_entity_count < curr.object_entity_count ? prev : curr;
-            });
-            debug(`(5) Edge with lowest SOURCE entities is next ${JSON.stringify(found_s)}`);
-            return found_s;
-        }else{
-            // check edges with lowest subject entity counts
-            // () ----> (1)
-            let with_subject_entity_counts = available_edges
-            .filter(edge => {
-                if(edge.subject_entity_count && !edge.object_entity_count){
-                    return true;
-                }else{
-                    return false;
+        entities = [...entities];
+        debug(`Found entities of type "${results[0].$edge_metadata.output_type}": ${JSON.stringify(entities)}`);
+        
+        //EDGE
+        let current_node_ids = [current_edge.object.id, current_edge.subject.id];
+        debug(`Will update connecting neighbors of ${JSON.stringify(current_node_ids)}`);
+
+        //UPDATE NEIGHBOR EDGES
+        current_node_ids.forEach((node_id) => {
+            this.edges.forEach((edge) => {
+                //if current node id is found in neighbor node ids
+                //and edge is not current edge
+                if (edge.connecting_nodes.includes(node_id) && 
+                    edge.getID() !== current_edge.getID()) {
+                    //tell edge to update its entity count and corresponding node ids
+                    edge.updateEntityCountByID(node_id, entities);
                 }
             });
-            if (with_subject_entity_counts.length) {
-                let found_t = with_subject_entity_counts.reduce(function(prev, curr) {
-                    return prev.subject_entity_count < curr.subject_entity_count ? prev : curr;
-                });
-                debug(`(5) Edge with lowest TARGET entities is next ${JSON.stringify(found_t)}`);
-                return found_t;
-            }else{
-                // check edges with both object and subject entity counts
-                // (2) ----> (3)
-                let with_both= available_edges
-                .filter(edge => {
-                    if(edge.subject_entity_count && edge.object_entity_count){
-                        return true;
-                    }else{
-                        return false;
-                    }
-                });
-                if (with_both.length) {
-                    let found_b = with_both.reduce(function(prev, curr) {
-                        return prev.object_entity_count < curr.object_entity_count ? prev : curr;
-                    });
-                    debug(`(5) Edge with BOTH object and subject entities is next ${JSON.stringify(found_b)}`);
-                    return found_b;
-                }else{
-                    // check edges with no counts and pick first found
-                    // () ----> ()
-                    //NOTE. this should not happen as each time
-                    //all nodes are updated and should have a count
-                    let left = available_edges
-                    .filter(edge => {
-                        if(!edge.object_entity_count && !edge.subject_entity_count ){
-                            return true;
-                        }else{
-                            return false;
-                        }
-                    });
-                    if (left.length) {
-                        debug(`(5) Edge with no entity counts is next ${JSON.stringify(left[0])}`);
-                        return left[0];
-                    }
-                }
-            }
-        }
+        });
     }
 
     getEdgesNotExecuted() {
@@ -190,5 +138,81 @@ module.exports = class EdgeManager {
         let not_executed = found.length;
         if(not_executed) debug(`(4) Edges not yet executed = ${not_executed}`);
         return not_executed;
+    }
+
+    _reduceEdgeResultsWithNeighborEdge(edge, neighbor) {
+        let first = edge.results;
+        let second = neighbor.results;
+        debug(`(9) Received (${first.length}) & (${second.length}) results...`);
+        let results = [];
+        let dropped = 0;
+        //find semantic type of one edge in the other edge
+        //it can be output or input
+        //that's the entity connecting them, then compare
+        //(G)---((CS)) and ((G))----(D)
+        //CS is output in first edge and input on second
+        //FIRST
+        first.forEach((f) => {
+        let first_semantic_types = f.$input.obj;
+        first_semantic_types = first_semantic_types.concat(f.$output.obj);
+
+        first_semantic_types.forEach((f_type) => {
+            //SECOND
+            second.forEach((s) => {
+            let second_semantic_types = s.$input.obj;
+            second_semantic_types = second_semantic_types.concat(s.$output.obj);
+
+            second_semantic_types.forEach((s_type) => {
+                //compare types
+                if (f_type._leafSemanticType == s_type._leafSemanticType) {
+                    //type match 
+
+                    //collect first ids
+                    let f_ids = new Set();
+                    for (const prefix in f_type._dbIDs) {
+                        f_ids.add(prefix + ':' + f_type._dbIDs[prefix])
+                    }
+                    f_ids = [...f_ids];
+                    //collect second ids
+                    let s_ids = new Set();
+                    for (const prefix in s_type._dbIDs) {
+                        s_ids.add(prefix + ':' + s_type._dbIDs[prefix])
+                    }
+                    s_ids = [...s_ids];
+                    //compare ids and keep if match in both
+                    let sharesID = _.intersection(f_ids, s_ids).length
+                    if (sharesID) {
+                        results.push(f);
+                    }
+                }
+            });
+            });
+        });
+        });
+        dropped = first.length - results.length;
+        debug(`(9) "${edge.getID()}" Kept (${results.length}) / Dropped (${dropped})`);
+        return results;
+    }
+
+    gatherResults() {
+        //go through edges and collect all results
+        debug(`Collecting results...`);
+        this.edges.forEach((edge, index, array) => {
+            let neighbor = array[index + 1];
+            if ( neighbor !== undefined) {
+                let current = this._reduceEdgeResultsWithNeighborEdge(edge, neighbor);
+                edge.storeResults(current);
+                let next = this._reduceEdgeResultsWithNeighborEdge(neighbor, edge);
+                neighbor.storeResults(next);
+                debug(`"${edge.getID()}" keeps (${current.length}) results!`);
+                debug(`"${neighbor.getID()}" keeps (${next.length}) results!`);
+            }
+        });
+        this.edges.forEach((edge) => {
+            edge.results.forEach((r) => {
+                this.results.push(r);
+            });
+        });
+        debug(`Collected (${this.results.length}) results!`);
     }
 };
