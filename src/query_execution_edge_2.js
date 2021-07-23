@@ -33,8 +33,8 @@ module.exports = class UpdatedExeEdge {
     this.logs = [];
     //this edges results
     this.results = [];
-    //edge needs to perform intersection
-    this.requires_intersection = false;
+    //will need to pick lower value to use for q
+    this.requires_entity_count_choice = false;
     //init state
     this.init();
   }
@@ -86,7 +86,7 @@ module.exports = class UpdatedExeEdge {
   checkIFResultsNeedIntersection() {
     //if both ends of edge have entity counts this edge will
     //require an extra step when saving results
-    this.requires_intersection = this.object_entity_count && this.subject_entity_count ?
+    this.requires_entity_count_choice = this.object_entity_count && this.subject_entity_count ?
     true : false;
   }
 

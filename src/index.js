@@ -129,15 +129,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     debug('metakg successfully loaded');
     let queryEdges = this._processQueryGraph(this.queryGraph);
     debug(`(3) All edges created ${JSON.stringify(queryEdges)}`);
-    const manager = new EdgeManager(queryEdges, kg);
+    const manager = new EdgeManager(queryEdges);
     while (manager.getEdgesNotExecuted()) {
       let current_edge = manager.getNext();
-      //if at the time of being queried the edge has both
-      //obj and sub entity counts
-      if (current_edge.requires_intersection){
-        //chose obj/suj lower entity count for query
-        current_edge.chooseLowerEntityValue();
-      }
       let handler = this._createBatchEdgeQueryHandlersForCurrent(current_edge, kg);
       debug(`(5) Executing current edge >> "${current_edge.getID()}"`);
       //execute current edge query
@@ -147,14 +141,6 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         return;
       }
       current_edge.storeResults(res);
-      // if (current_edge.requires_intersection) {
-      //   // debug(`Current edge requires intersection.`);
-      //   //edge needs to intersect results with connecting edges
-      //   current_edge.intersectAndSaveResults(res, manager.edges);
-      // }else {
-      //   //results do not have to be cleaned up
-      //   current_edge.storeResults(res);
-      // }
       //look through edges and update matching and 
       //neighbor edges entity counts using this res
       manager.updateEdgesEntityCounts(res, current_edge);
@@ -163,6 +149,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     };
     //after all edges have been executed collect all results
     manager.gatherResults();
+    this.logs = [...this.logs, ...manager.logs];
     //mock handler created only to update query graph and results
     let mockHandler = this._createBatchEdgeQueryHandlersForCurrent([], kg);
     mockHandler.notify(manager.results);

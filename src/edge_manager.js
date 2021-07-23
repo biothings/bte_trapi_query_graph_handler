@@ -4,14 +4,23 @@ const debug = require('debug')('bte:biothings-explorer-trapi:edge-manager');
 const BatchEdgeQueryHandler = require('./batch_edge_query');
 
 module.exports = class EdgeManager {
-    constructor(edges, kg) {
+    constructor(edges) {
         // flatten list of all edges available
         this.edges = _.flatten(Object.values(edges));;
-        debug(`(3) Edge manager will manage ${this.edges.length} edges.`);
-        this.kg = kg;
-        this.resolveOutputIDs = true;
         this.logs = [];
         this.results = [];
+        this.init();
+    }
+
+    init() {
+        debug(`(3) Edge manager will manage ${this.edges.length} edges.`);
+        this.logs.push(
+            new LogEntry(
+                'DEBUG',
+                null,
+                `Edge manager will manage ${this.edges.length} edges.`,
+            ).getLog(),
+        );
     }
 
     getNext() {
@@ -29,7 +38,8 @@ module.exports = class EdgeManager {
                 new LogEntry(
                     'DEBUG',
                     null,
-                    `Cannot get next edge, ${available_edges} available edges found.`,
+                    `Edge manager cannot get next edge, ` +
+                    `(${available_edges} )available edges found.`,
                 ).getLog(),
             );
         }
@@ -85,10 +95,30 @@ module.exports = class EdgeManager {
                 );
             }
             debug(`(5) Sending next edge '${all_empty[0].getID()}' with NO entity count.`);
-            return all_empty[0];
+            return this.preSendOffCheck(all_empty[0]);
         }
         debug(`(5) Sending next edge '${next.getID()}' ` +
         `WITH entity count...(${next.subject_entity_count || next.object_entity_count})`);
+        return this.preSendOffCheck(next);
+    }
+
+    preSendOffCheck(next) {
+        //if at the time of being queried the edge has both
+        //obj and sub entity counts
+        if (next.requires_entity_count_choice) {
+             //chose obj/suj lower entity count for query
+            next.chooseLowerEntityValue();
+            this.logs.push(
+                new LogEntry('DEBUG', 
+                null, 
+                `Next edge will pick lower entity value to use for query.`).getLog(),
+            );
+        }
+        this.logs.push(
+            new LogEntry('DEBUG', 
+            null, 
+            `Edge manager is sending next edge ${next.getID()} for execution.`).getLog(),
+        );
         return next;
     }
 
@@ -144,6 +174,14 @@ module.exports = class EdgeManager {
         let first = edge.results;
         let second = neighbor.results;
         debug(`(9) Received (${first.length}) & (${second.length}) results...`);
+        this.logs.push(
+            new LogEntry(
+                'DEBUG',
+                null,
+                `Edge manager will try to intersect ` +
+                `(${first.length}) & (${second.length}) results`,
+            ).getLog(),
+        );
         let results = [];
         let dropped = 0;
         //find semantic type of one edge in the other edge
@@ -191,6 +229,24 @@ module.exports = class EdgeManager {
         });
         dropped = first.length - results.length;
         debug(`(9) "${edge.getID()}" Kept (${results.length}) / Dropped (${dropped})`);
+        this.logs.push(
+            new LogEntry(
+                'DEBUG',
+                null,
+                `Edge manager is intersecting results for ` +
+                `"${edge.getID()}" Kept (${results.length}) / Dropped (${dropped})`,
+            ).getLog(),
+        );
+        if (results.length === 0) {
+            this.logs.push(
+                new LogEntry(
+                    'DEBUG',
+                    null,
+                    `After intersection of "${edge.getID()}" and` +
+                    ` "${neighbor.getID()}" edge manager got 0 results.`,
+                ).getLog(),
+            );
+        }
         return results;
     }
 
@@ -206,6 +262,14 @@ module.exports = class EdgeManager {
                 neighbor.storeResults(next);
                 debug(`"${edge.getID()}" keeps (${current.length}) results!`);
                 debug(`"${neighbor.getID()}" keeps (${next.length}) results!`);
+                this.logs.push(
+                    new LogEntry(
+                        'DEBUG',
+                        null,
+                        `"${edge.getID()}" keeps (${current.length}) results and` +
+                        `"${neighbor.getID()}" keeps (${next.length}) results!`,
+                    ).getLog(),
+                );
             }
         });
         this.edges.forEach((edge) => {
@@ -214,5 +278,12 @@ module.exports = class EdgeManager {
             });
         });
         debug(`Collected (${this.results.length}) results!`);
+        this.logs.push(
+            new LogEntry(
+                'DEBUG',
+                null,
+                `Edge manager collected (${this.results.length}) results!`
+            ).getLog(),
+        );
     }
 };
