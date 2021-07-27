@@ -1,7 +1,6 @@
 const _ = require('lodash');
 const LogEntry = require('./log_entry');
 const debug = require('debug')('bte:biothings-explorer-trapi:edge-manager');
-const BatchEdgeQueryHandler = require('./batch_edge_query');
 
 module.exports = class EdgeManager {
     constructor(edges) {
@@ -26,7 +25,7 @@ module.exports = class EdgeManager {
     getNext() {
         //returns next edge with lowest entity count on
         //either object or subject OR no count last
-
+        
         // available not yet executed
         let available_edges = this.edges
         .filter(edge => !edge.executed);
@@ -102,6 +101,22 @@ module.exports = class EdgeManager {
         return this.preSendOffCheck(next);
     }
 
+    logEntityCounts() {
+        this.edges.forEach((edge) => {
+            debug(`"${edge.getID()}"` +
+            ` : (${edge.subject_entity_count || 0}) ` +
+            `${edge.reverse ? '<--' : '-->'}` +
+            ` (${edge.object_entity_count || 0})`);
+        });
+    }
+
+    refreshEdges() {
+        //this can be used to trigger a refresh of class attrs
+        debug(`(9) Refreshing edges...`);
+        //update edges entity counts
+        this.edges.forEach(edge => edge.updateEntityCounts());
+    }
+
     preSendOffCheck(next) {
         //if at the time of being queried the edge has both
         //obj and sub entity counts
@@ -119,47 +134,8 @@ module.exports = class EdgeManager {
             null, 
             `Edge manager is sending next edge ${next.getID()} for execution.`).getLog(),
         );
+        this.logEntityCounts();
         return next;
-    }
-
-    updateEdgesEntityCounts(results, current_edge) {
-        //looks through all edges and updates entity counts
-        //of all matching nodes using the edge passed
-        //and the results as the entity count
-
-        //ENTITY COUNT
-        debug(`Manager will update edges using ${results.length} results.`);
-        let entities = new Set();
-        results.forEach((res) => {
-            //each key in output_equivalent_identifiers
-            //represents an entity connected to the original
-            //input
-            if (Object.hasOwnProperty
-            .call(res.$output, 'original') && !Array.isArray(res.$output)) {
-                if (!Array.isArray(res.$output.original)) {
-                    entities.add(res.$output.original);
-                }
-            }
-        });
-        entities = [...entities];
-        debug(`Found entities of type "${results[0].$edge_metadata.output_type}": ${JSON.stringify(entities)}`);
-        
-        //EDGE
-        let current_node_ids = [current_edge.object.id, current_edge.subject.id];
-        debug(`Will update connecting neighbors of ${JSON.stringify(current_node_ids)}`);
-
-        //UPDATE NEIGHBOR EDGES
-        current_node_ids.forEach((node_id) => {
-            this.edges.forEach((edge) => {
-                //if current node id is found in neighbor node ids
-                //and edge is not current edge
-                if (edge.connecting_nodes.includes(node_id) && 
-                    edge.getID() !== current_edge.getID()) {
-                    //tell edge to update its entity count and corresponding node ids
-                    edge.updateEntityCountByID(node_id, entities);
-                }
-            });
-        });
     }
 
     getEdgesNotExecuted() {
@@ -218,7 +194,7 @@ module.exports = class EdgeManager {
                     }
                     s_ids = [...s_ids];
                     //compare ids and keep if match in both
-                    let sharesID = _.intersection(f_ids, s_ids).length
+                    let sharesID = _.intersection(f_ids, s_ids).length;
                     if (sharesID) {
                         results.push(f);
                     }
@@ -250,7 +226,7 @@ module.exports = class EdgeManager {
         return results;
     }
 
-    gatherResults() {
+    gatherResults_OLD() {
         //go through edges and collect all results
         debug(`Collecting results...`);
         this.edges.forEach((edge, index, array) => {
@@ -278,6 +254,76 @@ module.exports = class EdgeManager {
             });
         });
         debug(`Collected (${this.results.length}) results!`);
+        this.logs.push(
+            new LogEntry(
+                'DEBUG',
+                null,
+                `Edge manager collected (${this.results.length}) results!`
+            ).getLog(),
+        );
+    }
+
+    _filterEdgeResults(edge) {
+        let keep = [];
+        let results = edge.results;
+        let sub_curies = edge.subject.curie;
+        let obj_curies = edge.object.curie;
+        debug(`"${edge.getID()}" R(${edge.reverse}) (${results.length}) results`);
+        debug(`"${edge.getID()}" (${sub_curies.length}) sub curies`);
+        debug(`"${edge.getID()}" (${obj_curies.length}) obj curies`);
+
+        let objs = edge.reverse ? sub_curies : obj_curies;
+        let subs = edge.reverse ? obj_curies : sub_curies;
+
+        results.forEach((res) => {
+            //check sub curies against $input ids
+            let ids = new Set();
+            let outputMatch = false;
+            let inputMatch = false;
+            res.$input.obj.forEach((o) => {
+                for (const prefix in o._dbIDs) {
+                    ids.add(prefix + ':' + o._dbIDs[prefix])
+                }
+                //check ids
+                // debug(`CHECKING INPUTS ${JSON.stringify([...ids])}`);
+                // debug(`AGAINST ${JSON.stringify(subs)}`);
+                inputMatch = _.intersection([...ids], subs).length;
+            });
+            //check obj curies against $output ids
+            let o_ids = new Set();
+            res.$output.obj.forEach((o) => {
+                for (const prefix in o._dbIDs) {
+                    o_ids.add(prefix + ':' + o._dbIDs[prefix])
+                }
+                //check ids
+                // debug(`CHECKING OUTPUTS ${JSON.stringify([...o_ids])}`);
+                // debug(`AGAINST ${JSON.stringify(objs)}`);
+                outputMatch = _.intersection([...o_ids], objs).length;
+            });
+            if (inputMatch && outputMatch) {
+                keep.push(res);
+            }
+        });
+        debug(`"${edge.getID()}" dropped (${results.length - keep.length}) results.`);
+        return keep;
+    }
+
+    gatherResults() {
+        //go through edges and collect all results
+        this.refreshEdges
+        debug(`(11) Collecting results...`);
+        this.edges.forEach((edge) => {
+            let current = this._filterEdgeResults(edge);
+            edge.results = current;
+            debug(`(11) "${edge.getID()}" keeps (${current.length}) results!`);
+            debug(`----------`);
+        });
+        this.edges.forEach((edge) => {
+            edge.results.forEach((r) => {
+                this.results.push(r);
+            });
+        });
+        debug(`(12) Collected (${this.results.length}) results!`);
         this.logs.push(
             new LogEntry(
                 'DEBUG',

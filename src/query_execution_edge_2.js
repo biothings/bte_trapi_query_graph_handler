@@ -13,20 +13,21 @@ module.exports = class UpdatedExeEdge {
   constructor(qEdge, reverse = false, prev_edge = undefined) {
     this.qEdge = qEdge;
     //nodes that make up this edge
-    this.connecting_nodes = [];
+    // this.connecting_nodes = [];
     this.reverse = reverse;
     this.prev_edge = prev_edge;
     //object and subject aliases
     this.input_equivalent_identifiers = {};
     this.output_equivalent_identifiers = {};
     //instances of query_node
+    //this.object/subject are instances of QNode
     this.object = qEdge.object;
     this.subject = qEdge.subject;
     //entity counts
     // (object #) ----> ()
-    this.object_entity_count = null;
+    this.object_entity_count = this.object.entity_count;
     // () ----> (subject #)
-    this.subject_entity_count = null;
+    this.subject_entity_count = this.subject.entity_count;
     //edge has been fully executed
     this.executed = false;
     //run initial checks
@@ -42,48 +43,12 @@ module.exports = class UpdatedExeEdge {
   init() {
     debug(`(2) Created Edge` +
     ` ${JSON.stringify(this.qEdge.getID())} Reverse = ${this.reverse}`)
-    this.checkInitialEntityCount();
-    this.checkConnectingNodes();
-    this.checkIFResultsNeedIntersection();
+    // this.checkInitialEntityCount();
+    // this.checkConnectingNodes();
+    this.checkEdgeEntityCounts();
   }
 
-  checkConnectingNodes() {
-    this.connecting_nodes.push(this.subject.id);
-    this.connecting_nodes.push(this.object.id);
-    debug(`(2) Connecting nodes -> ${JSON.stringify(this.connecting_nodes)}`);
-  }
-
-  checkInitialEntityCount() {
-    //if ids found set entity count to number of ids
-    //eg. we expect curie: ["PUBCHEM.COMPOUND:2662"]
-    //object
-    debug(`(2) Updated Edge Initial Entity Counts`);
-    this.object_entity_count = this.object.hasInput() ? 
-    this.object.curie.length : null;
-    //subject
-    this.subject_entity_count = this.subject.hasInput() ? 
-    this.subject.curie.length : null;
-  }
-
-  updateEntityCountByID(node_id, entities) {
-    //check subject
-    if (this.subject.id == node_id) {
-      this.qEdge.subject.curie = entities;
-      this.subject_entity_count = entities.length;
-      debug(`(7) Updated ${this.qEdge.getID()}` +
-      ` Subject entity count from node "${node_id}" = ${entities.length}`);
-    }
-    //check object
-    else if (this.object.id == node_id) {
-      this.qEdge.object.curie = entities;
-      this.object_entity_count = entities.length;
-      debug(`(7) Updated ${this.qEdge.getID()}` +
-      ` Object entity count from node "${node_id}" = ${entities.length}`);
-    }
-    this.checkIFResultsNeedIntersection();
-  }
-
-  checkIFResultsNeedIntersection() {
+  checkEdgeEntityCounts() {
     //if both ends of edge have entity counts this edge will
     //require an extra step when saving results
     this.requires_entity_count_choice = this.object_entity_count && this.subject_entity_count ?
@@ -193,8 +158,112 @@ module.exports = class UpdatedExeEdge {
     return results
   }
 
+  extractCuriesFromResponse(res) {
+    //will give you all curies found by semantic type, each type will have
+    //a main ID and all of it's aliases
+    debug(`(7) Before Updating "${this.qEdge.getID()}" (${this.subject.entity_count})---(${this.object.entity_count})`);
+    debug(`(7) Updating entity counts for current edge and nodes.`);
+    let all = {};
+    res.forEach((result) => {
+      //INPUTS
+      result.$input.obj.forEach((o) => {
+        //create semantic type if not included
+        let type = o._leafSemanticType;
+        if (!Object.hasOwnProperty.call(all, type)) {
+          all[type] = {};
+        }
+        //get original and aliases
+        let original = result.$input.original;
+        let original_aliases = new Set();
+        for (const prefix in o._dbIDs) {
+          original_aliases.add(prefix + ':' + o._dbIDs[prefix]);
+        }
+        original_aliases = [...original_aliases];
+        //check and add only unique
+        let was_found = false;
+        original_aliases.forEach((alias) => {
+          if (Object.hasOwnProperty.call(all[type], alias)) {
+            was_found = true;
+          }
+        });
+        if (!was_found) {
+          all[type][original] = original_aliases;
+        }
+      });
+      //INPUTS
+      result.$output.obj.forEach((o) => {
+        //create semantic type if not included
+        let type = o._leafSemanticType;
+        if (!Object.hasOwnProperty.call(all, type)) {
+          all[type] = {};
+        }
+        //get original and aliases
+        let original = result.$output.original;
+        let original_aliases = new Set();
+        for (const prefix in o._dbIDs) {
+          original_aliases.add(prefix + ':' + o._dbIDs[prefix]);
+        }
+        original_aliases = [...original_aliases];
+        //check and add only unique
+        let was_found = false;
+        original_aliases.forEach((alias) => {
+          if (Object.hasOwnProperty.call(all[type], alias)) {
+            was_found = true;
+          }
+        });
+        if (!was_found) {
+          all[type][original] = original_aliases;
+        }
+      });
+    });
+    // {Gene:{'id': ['alias']}}
+    // debug(`ALL ${JSON.stringify(all)}`);
+    return all;
+  }
+
+  updateNodesCuries(res) {
+    let curies_by_semantic_type = this.extractCuriesFromResponse(res);
+    this.processCuries(curies_by_semantic_type);
+  }
+
+  processCuries(curies) {
+    // {Gene:{'id': ['alias']}}
+    for (const semantic_type in curies) {
+      this.findNodeAndAddCurie(curies[semantic_type], semantic_type);
+    }
+    debug(`(7) Updated "${this.qEdge.getID()}" (${this.subject.entity_count})---(${this.object.entity_count})`);
+  }
+
+  findNodeAndAddCurie(curies, semanticType) {
+    //check and update object
+    debug(`Updating this edge's "${semanticType}" node curies`);
+    let sub_cat = this.qEdge.subject.category.toString();
+    let obj_cat = this.qEdge.object.category.toString();
+    //match node by semantic type in category
+    if (sub_cat.includes(semanticType)) {
+      this.qEdge.subject.updateCuries(curies);
+    }
+    //check and update subject
+    else if (obj_cat.includes(semanticType)) {
+      this.qEdge.object.updateCuries(curies);
+    }else{
+      debug(`Error: No match, did not update node entity counts.`);
+    }
+  }
+
+  updateEntityCounts() {
+    //update counts
+    this.object_entity_count = this.object.entity_count;
+    this.subject_entity_count = this.subject.entity_count;
+    this.checkEdgeEntityCounts();
+  }
+
   storeResults(res) {
+    debug(`(6) Storing results...`);
     this.results = res;
+    debug(`(7) Updating nodes based on edge results...`);
+    this.updateNodesCuries(res);
+    this.checkEdgeEntityCounts();
   }
 
   getID() {

@@ -7,6 +7,7 @@ const LogEntry = require('./log_entry');
 const NewExeEdge = require('./query_execution_edge_2');
 const MAX_DEPTH = 3;
 const debug = require('debug')('bte:biothings-explorer-trapi:query_graph');
+const QNode2 = require('./query_node_2');
 
 module.exports = class QueryGraphHandler {
   constructor(queryGraph) {
@@ -57,12 +58,50 @@ module.exports = class QueryGraphHandler {
     return nodes;
   }
 
+   /**
+   * @private
+   */
+    _storeNodes_2() {
+      let nodes = {};
+      for (let node_id in this.queryGraph.nodes) {
+        nodes[node_id] = new QNode2(node_id, this.queryGraph.nodes[node_id]);
+      }
+      this.logs.push(
+        new LogEntry('DEBUG', null, `BTE identified ${Object.keys(nodes).length} QNodes from your query graph`).getLog(),
+      );
+      return nodes;
+    }
+
   /**
    * @private
    */
   _storeEdges() {
     if (this.nodes === undefined) {
       this.nodes = this._storeNodes();
+    }
+    let edges = {};
+    for (let edge_id in this.queryGraph.edges) {
+      let edge_info = {
+        ...this.queryGraph.edges[edge_id],
+        ...{
+          subject: this.nodes[this.queryGraph.edges[edge_id].subject],
+          object: this.nodes[this.queryGraph.edges[edge_id].object],
+        },
+      };
+      edges[edge_id] = new QEdge(edge_id, edge_info);
+    }
+    this.logs.push(
+      new LogEntry('DEBUG', null, `BTE identified ${Object.keys(edges).length} QEdges from your query graph`).getLog(),
+    );
+    return edges;
+  }
+
+  /**
+   * @private
+   */
+   _storeEdges_2() {
+    if (this.nodes === undefined) {
+      this.nodes = this._storeNodes_2();
     }
     let edges = {};
     for (let edge_id in this.queryGraph.edges) {
@@ -119,7 +158,7 @@ module.exports = class QueryGraphHandler {
     //populate edge and node info
     debug(`(1) Creating edges for manager...`);
     if (this.edges === undefined) {
-      this.edges = this._storeEdges();
+      this.edges = this._storeEdges_2();
     }
     let edges = {};
     let edge_index = 0;
@@ -127,7 +166,7 @@ module.exports = class QueryGraphHandler {
     for (const edge_id in this.edges) {
       edges[edge_index] = [
         // () ----> ()
-        !this.edges[edge_id].subject.curie ? 
+        this.edges[edge_id].object.curie ? 
         new NewExeEdge(this.edges[edge_id], true, undefined) :
         new NewExeEdge(this.edges[edge_id], false, undefined)
         // reversed () <---- ()

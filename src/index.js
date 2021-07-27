@@ -140,10 +140,12 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       if (res.length === 0) {
         return;
       }
+      //storing results will trigger
+      //a node entity count update
       current_edge.storeResults(res);
-      //look through edges and update matching and 
-      //neighbor edges entity counts using this res
-      manager.updateEdgesEntityCounts(res, current_edge);
+      //refresh edges node info
+      //so manager has latest entity counts before next is called
+      manager.refreshEdges();
       debug(`(10) Edge successfully queried.`);
       current_edge.executed = true;
     };
