@@ -12,12 +12,12 @@ module.exports = class EdgeManager {
     }
 
     init() {
-        debug(`(3) Edge manager will manage ${this.edges.length} edges.`);
+        debug(`(3) Edge manager is managing ${this.edges.length} edges.`);
         this.logs.push(
             new LogEntry(
                 'DEBUG',
                 null,
-                `Edge manager will manage ${this.edges.length} edges.`,
+                `Edge manager is managing ${this.edges.length} edges.`,
             ).getLog(),
         );
     }
@@ -103,7 +103,7 @@ module.exports = class EdgeManager {
 
     logEntityCounts() {
         this.edges.forEach((edge) => {
-            debug(`"${edge.getID()}"` +
+            debug(`'${edge.getID()}'` +
             ` : (${edge.subject_entity_count || 0}) ` +
             `${edge.reverse ? '<--' : '-->'}` +
             ` (${edge.object_entity_count || 0})`);
@@ -132,7 +132,7 @@ module.exports = class EdgeManager {
         this.logs.push(
             new LogEntry('DEBUG', 
             null, 
-            `Edge manager is sending next edge ${next.getID()} for execution.`).getLog(),
+            `Edge manager is sending next edge '${next.getID()}' for execution.`).getLog(),
         );
         this.logEntityCounts();
         return next;
@@ -204,13 +204,13 @@ module.exports = class EdgeManager {
         });
         });
         dropped = first.length - results.length;
-        debug(`(9) "${edge.getID()}" Kept (${results.length}) / Dropped (${dropped})`);
+        debug(`(9) '${edge.getID()}' Kept (${results.length}) / Dropped (${dropped})`);
         this.logs.push(
             new LogEntry(
                 'DEBUG',
                 null,
                 `Edge manager is intersecting results for ` +
-                `"${edge.getID()}" Kept (${results.length}) / Dropped (${dropped})`,
+                `'${edge.getID()}' Kept (${results.length}) / Dropped (${dropped})`,
             ).getLog(),
         );
         if (results.length === 0) {
@@ -218,7 +218,7 @@ module.exports = class EdgeManager {
                 new LogEntry(
                     'DEBUG',
                     null,
-                    `After intersection of "${edge.getID()}" and` +
+                    `After intersection of '${edge.getID()}' and` +
                     ` "${neighbor.getID()}" edge manager got 0 results.`,
                 ).getLog(),
             );
@@ -236,13 +236,13 @@ module.exports = class EdgeManager {
                 edge.storeResults(current);
                 let next = this._reduceEdgeResultsWithNeighborEdge(neighbor, edge);
                 neighbor.storeResults(next);
-                debug(`"${edge.getID()}" keeps (${current.length}) results!`);
+                debug(`'${edge.getID()}' keeps (${current.length}) results!`);
                 debug(`"${neighbor.getID()}" keeps (${next.length}) results!`);
                 this.logs.push(
                     new LogEntry(
                         'DEBUG',
                         null,
-                        `"${edge.getID()}" keeps (${current.length}) results and` +
+                        `'${edge.getID()}' keeps (${current.length}) results and` +
                         `"${neighbor.getID()}" keeps (${next.length}) results!`,
                     ).getLog(),
                 );
@@ -268,9 +268,9 @@ module.exports = class EdgeManager {
         let results = edge.results;
         let sub_curies = edge.subject.curie;
         let obj_curies = edge.object.curie;
-        debug(`"${edge.getID()}" R(${edge.reverse}) (${results.length}) results`);
-        debug(`"${edge.getID()}" (${sub_curies.length}) sub curies`);
-        debug(`"${edge.getID()}" (${obj_curies.length}) obj curies`);
+        debug(`'${edge.getID()}' R(${edge.reverse}) (${results.length}) results`);
+        debug(`'${edge.getID()}' (${sub_curies.length || 0}) sub curies`);
+        debug(`'${edge.getID()}' (${obj_curies.length || 0}) obj curies`);
 
         let objs = edge.reverse ? sub_curies : obj_curies;
         let subs = edge.reverse ? obj_curies : sub_curies;
@@ -281,8 +281,14 @@ module.exports = class EdgeManager {
             let outputMatch = false;
             let inputMatch = false;
             res.$input.obj.forEach((o) => {
-                for (const prefix in o._dbIDs) {
-                    ids.add(prefix + ':' + o._dbIDs[prefix])
+                if (Object.hasOwnProperty.call(o, '_dbIDs')) {
+                    for (const prefix in o._dbIDs) {
+                        ids.add(prefix + ':' + o._dbIDs[prefix])
+                    }
+                }else if(Object.hasOwnProperty.call(o, 'curie')) {
+                    ids.add(o.curie)
+                }else{
+                    ids.add(res.$input.original)
                 }
                 //check ids
                 // debug(`CHECKING INPUTS ${JSON.stringify([...ids])}`);
@@ -292,8 +298,14 @@ module.exports = class EdgeManager {
             //check obj curies against $output ids
             let o_ids = new Set();
             res.$output.obj.forEach((o) => {
-                for (const prefix in o._dbIDs) {
-                    o_ids.add(prefix + ':' + o._dbIDs[prefix])
+                if (Object.hasOwnProperty.call(o, '_dbIDs')) {
+                    for (const prefix in o._dbIDs) {
+                        o_ids.add(prefix + ':' + o._dbIDs[prefix])
+                    }
+                }else if(Object.hasOwnProperty.call(o, 'curie')) {
+                    o_ids.add(o.curie)
+                }else{
+                    o_ids.add(res.$output.original)
                 }
                 //check ids
                 // debug(`CHECKING OUTPUTS ${JSON.stringify([...o_ids])}`);
@@ -304,25 +316,53 @@ module.exports = class EdgeManager {
                 keep.push(res);
             }
         });
-        debug(`"${edge.getID()}" dropped (${results.length - keep.length}) results.`);
+        debug(`'${edge.getID()}' dropped (${results.length - keep.length}) results.`);
+        this.logs.push(
+            new LogEntry(
+                'DEBUG',
+                null,
+                `'${edge.getID()}' kept (${keep.length}) / dropped (${results.length - keep.length}) results.`
+            ).getLog(),
+        );
         return keep;
     }
 
     gatherResults() {
         //go through edges and collect all results
-        this.refreshEdges
+        let results = [];
+        //refresh to get latest entity counts
+        this.refreshEdges();
         debug(`(11) Collecting results...`);
+        //First: go through edges and filter that each edge is holding
         this.edges.forEach((edge) => {
-            let current = this._filterEdgeResults(edge);
-            edge.results = current;
-            debug(`(11) "${edge.getID()}" keeps (${current.length}) results!`);
+            let filtered_res = this._filterEdgeResults(edge);
+            if (filtered_res.length == 0) {
+                this.logs.push(
+                    new LogEntry(
+                        'DEBUG',
+                        null,
+                        `Warning: Edge '${edge.getID()}' resulted in (0) results.`
+                    ).getLog(),
+                );
+                return false;
+            }
+            this.logs = [...this.logs, ...edge.logs];
+            //store filtered results
+            edge.results = filtered_res;
+            //collect results
+            results = results.concat(filtered_res);
+            debug(`(11) '${edge.getID()}' keeps (${filtered_res.length}) results!`);
+            this.logs.push(
+                new LogEntry(
+                    'DEBUG',
+                    null,
+                    `'${edge.getID()}' keeps (${filtered_res.length}) results!`
+                ).getLog(),
+            );
             debug(`----------`);
         });
-        this.edges.forEach((edge) => {
-            edge.results.forEach((r) => {
-                this.results.push(r);
-            });
-        });
+        //Second: collected results
+        this.results = results;
         debug(`(12) Collected (${this.results.length}) results!`);
         this.logs.push(
             new LogEntry(

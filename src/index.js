@@ -11,6 +11,7 @@ const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error')
 const debug = require('debug')('bte:biothings-explorer-trapi:main');
 const Graph = require('./graph/graph');
 const EdgeManager = require('./edge_manager');
+const LogEntry = require('./log_entry');
 
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 
@@ -123,6 +124,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   }
 
   async query_2() {
+    let edge_exec_order = [];
     this._initializeResponse();
     debug('start to load metakg.');
     const kg = this._loadMetaKG(this.smartapiID, this.team);
@@ -147,11 +149,18 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       //so manager has latest entity counts before next is called
       manager.refreshEdges();
       debug(`(10) Edge successfully queried.`);
+      edge_exec_order.push(current_edge.getID());
       current_edge.executed = true;
     };
     //after all edges have been executed collect all results
     manager.gatherResults();
     this.logs = [...this.logs, ...manager.logs];
+    this.logs.push(
+        new LogEntry('DEBUG', 
+        null, 
+        `Edge manager execution order '${JSON.stringify(edge_exec_order)}'`
+      ).getLog(),
+    );
     //mock handler created only to update query graph and results
     let mockHandler = this._createBatchEdgeQueryHandlersForCurrent([], kg);
     mockHandler.notify(manager.results);

@@ -15,21 +15,17 @@ module.exports = class QNode {
         this.curie = info.ids;
         this.entity_count = info.ids ? info.ids.length : 0;
         debug(`(1) Node "${this.id}" has (${this.entity_count}) entities at start.`);
-        this.results = [];
+        //when choosing a lower entity count
+        //a node with higher count might be told to store its
+        //curies temporarily
+        this.held_curie = [];
     }
 
-    updateCuries(curies) {
-        if (!this.curie) {
-            this.curie = [];
-        }
-        if (this.curie.length) {
-            debug(`(8) Intersecting curies...`);
-            this.curie =  _.intersection(this.curie, curies);
-        }else{
-            debug(`(8) Saving curies...`);
-            this.curie = curies;
-        }
-        this.entity_count = this.curie.length;
+    holdCurie() {
+        //hold curie aside temp
+        debug(`(8) Node "${this.id}" holding ${JSON.stringify(this.curie)} aside.`);
+        this.held_curie = this.curie;
+        this.curie = undefined;
     }
 
     updateCuries(curies) {
@@ -37,30 +33,36 @@ module.exports = class QNode {
         if (!this.curie) {
             this.curie = [];
         }
+        //bring back held curie
+        if (this.held_curie.length && !this.curie.length) {
+            debug(`(8) Node "${this.id}" restored curie.`);
+            this.curie = this.held_curie;
+            this.held_curie = [];
+        }
         if (!this.curie.length) {
-            debug(`Saving curies...`);
+            debug(`Saving (${Object.keys(curies).length}) curies...`);
             this.curie = Object.keys(curies);
         }else{
-            debug(`Intersecting curies...`);
+            debug(`Intersecting (${this.curie.length})/(${Object.keys(curies).length})  curies...`);
             this.curie =  this.intersectCuries(this.curie, curies);
         }
         this.entity_count = this.curie.length;
     }
 
     intersectCuries(curies, newCuries) {
-        let keep = [];
+        let keep = new Set();
         //curies is a list
         // new curies {originalID : [aliases]}
         //goal is to intersect both and only keep the original ID
         //of items that exist in both
         for (const original in newCuries) {
             newCuries[original].forEach((alias) => {
-                if (curies.includes(alias)) {
-                    keep.push(original);
+                if (curies.includes(alias) || curies.includes(original)) {
+                    keep.add(original);
                 }
             });
         }
-        return keep;
+        return [...keep];
     }
 
     getID() {

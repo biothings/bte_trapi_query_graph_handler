@@ -1,4 +1,5 @@
 const helper = require('./helper');
+const LogEntry = require('./log_entry');
 const debug = require('debug')('bte:biothings-explorer-trapi:UpdatedExeEdge');
 const utils = require('./utils');
 const reverse = require('./biolink');
@@ -60,102 +61,43 @@ module.exports = class UpdatedExeEdge {
     //to use in query.
     debug(`(8) Choosing lower entity count in edge...`);
     if (this.object_entity_count && this.subject_entity_count) {
-      if (this.object_entity_count > this.subject_entity_count) {
+      if (this.object_entity_count == this.subject_entity_count) {
+        // //(#) ---> ()
+        // this.reverse = false;
+        // //keep subject curie and delete object curie
+        // this.held_object_curies = this.qEdge.object['curie'];
+        // debug(`(8) Holding "object" ids ${JSON.stringify(this.held_object_curies)}`);
+        // delete this.qEdge.object['curie'];
+        // debug(`(8) Sub - Obj were same but chose subject (${this.subject_entity_count})`);
+
+        //() <--- (#)
+        this.reverse = true;
+        //keep object curie and delete subject curie
+        this.held_subject_curies = this.qEdge.subject['curie'];
+        //tell node to hold curie in a temp field
+        this.qEdge.subject.holdCurie();
+        debug(`(8) Chose lower entity value in object (${this.object_entity_count})`);
+      }
+      else if (this.object_entity_count > this.subject_entity_count) {
         //(#) ---> ()
         this.reverse = false;
         //keep subject curie and delete object curie
-        delete this.qEdge.object['curie']
+        this.held_object_curies = this.qEdge.object['curie'];
+        //tell node to hold curie in a temp field
+        this.qEdge.object.holdCurie();
         debug(`(8) Chose lower entity value in subject (${this.subject_entity_count})`);
       } else {
         //() <--- (#)
         this.reverse = true;
         //keep object curie and delete subject curie
-        delete this.qEdge.subject['curie']
+        this.held_subject_curies = this.qEdge.subject['curie'];
+        //tell node to hold curie in a temp field
+        this.qEdge.subject.holdCurie();
         debug(`(8) Chose lower entity value in object (${this.object_entity_count})`);
       }
     }else{
       debug(`(8) Error: Edge must have both object and subject entity values.`);
     }
-  }
-
-  intersectAndSaveResults(current_results, all_edges) {
-    debug(`(8) Performing intersection of ${current_results.length} results...`);
-    //check to see if this edge has neighbors and
-    //perform intersection with them
-    all_edges.forEach((edge, index, array) => {
-      //find current edge
-      if (edge.getID() == this.qEdge.getID()) {
-        //check if neighbor to the LEFT exists if so intersect results
-        if (array[index - 1] !== undefined) {
-          let neighbor = array[index - 1];
-          debug(`(8) Intersection with PREV neighbor "${neighbor.getID()}"<-(${this.qEdge.getID()})`);
-          let prev_edge_res = this.intersectResults(neighbor.results, current_results);
-        }
-        //check if neighbor to the RIGHT exists if so intersect results
-        if (array[index + 1] !== undefined) {
-          let neighbor = array[index + 1];
-          debug(`(8) Intersection with NEXT neighbor (${this.qEdge.getID()})->"${neighbor.getID()}"`);
-          let next_edge_res = this.intersectResults(current_results, neighbor.results);
-        }
-      }
-    });
-    //save results
-    this.results = current_results;
-    debug(`(9) Intersection done.`);
-  }
-
-  intersectResults(first, second) {
-    debug(`(9) Received (${first.length}) & (${second.length}) results...`);
-    let results = [];
-    let dropped = 0;
-    //find semantic type of one edge in the other edge
-    //it can be output or input
-    //that's the entity connecting them, then compare
-    //(G)---((CS)) and ((G))----(D)
-    //CS is output in first edge and input on second
-    //FIRST
-    first.forEach((f) => {
-      let first_semantic_types = f.$input.obj;
-      first_semantic_types = first_semantic_types.concat(f.$output.obj);
-
-      first_semantic_types.forEach((f_type) => {
-        //SECOND
-        second.forEach((s) => {
-          let second_semantic_types = s.$input.obj;
-          second_semantic_types = second_semantic_types.concat(s.$output.obj);
-
-          second_semantic_types.forEach((s_type) => {
-            //compare types
-            if (f_type._leafSemanticType == s_type._leafSemanticType) {
-              //type match 
-
-              //collect first ids
-              let f_ids = new Set();
-              for (const prefix in f_type._dbIDs) {
-                f_ids.add(prefix + ':' + f_type._dbIDs[prefix])
-              }
-              //collect second ids
-              let s_ids = new Set();
-              for (const prefix in s_type._dbIDs) {
-                s_ids.add(prefix + ':' + s_type._dbIDs[prefix])
-              }
-              //compare ids and keep if match in both
-              f_ids.forEach((f_id) => {
-                s_ids.forEach((s_id) => {
-                  if (f_id == s_id) {
-                    //match, adding to results
-                    results.push(f)
-                  }
-                });
-              });
-            }
-          });
-        });
-      });
-    });
-    dropped = (first.length + second.length) - results.length;
-    debug(`(9) Kept (${results.length}) / Dropped (${dropped}) results`);
-    return results
   }
 
   extractCuriesFromResponse(res) {
@@ -247,7 +189,13 @@ module.exports = class UpdatedExeEdge {
     else if (obj_cat.includes(semanticType)) {
       this.qEdge.object.updateCuries(curies);
     }else{
-      debug(`Error: No match, did not update node entity counts.`);
+      if (sub_cat.includes("NamedThing")) {
+        this.qEdge.subject.updateCuries(curies);
+      }else if(obj_cat.includes("NamedThing")){
+        this.qEdge.object.updateCuries(curies);
+      }else{
+        debug(`Error: No match for "${semanticType}", did not update node entity counts.`);
+      }
     }
   }
 
@@ -260,6 +208,7 @@ module.exports = class UpdatedExeEdge {
 
   storeResults(res) {
     debug(`(6) Storing results...`);
+    //store unfiltered results from edge query in edge
     this.results = res;
     debug(`(7) Updating nodes based on edge results...`);
     this.updateNodesCuries(res);
