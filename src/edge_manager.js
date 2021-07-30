@@ -118,10 +118,10 @@ module.exports = class EdgeManager {
     }
 
     preSendOffCheck(next) {
-        //if at the time of being queried the edge has both
-        //obj and sub entity counts
         if (next.requires_entity_count_choice) {
-             //chose obj/suj lower entity count for query
+            //if at the time of being queried the edge has both
+            //obj and sub entity counts
+            //chose obj/suj lower entity count for query
             next.chooseLowerEntityValue();
             this.logs.push(
                 new LogEntry('DEBUG', 
@@ -146,122 +146,122 @@ module.exports = class EdgeManager {
         return not_executed;
     }
 
-    _reduceEdgeResultsWithNeighborEdge(edge, neighbor) {
-        let first = edge.results;
-        let second = neighbor.results;
-        debug(`(9) Received (${first.length}) & (${second.length}) results...`);
-        this.logs.push(
-            new LogEntry(
-                'DEBUG',
-                null,
-                `Edge manager will try to intersect ` +
-                `(${first.length}) & (${second.length}) results`,
-            ).getLog(),
-        );
-        let results = [];
-        let dropped = 0;
-        //find semantic type of one edge in the other edge
-        //it can be output or input
-        //that's the entity connecting them, then compare
-        //(G)---((CS)) and ((G))----(D)
-        //CS is output in first edge and input on second
-        //FIRST
-        first.forEach((f) => {
-        let first_semantic_types = f.$input.obj;
-        first_semantic_types = first_semantic_types.concat(f.$output.obj);
+    // _reduceEdgeResultsWithNeighborEdge(edge, neighbor) {
+    //     let first = edge.results;
+    //     let second = neighbor.results;
+    //     debug(`(9) Received (${first.length}) & (${second.length}) results...`);
+    //     this.logs.push(
+    //         new LogEntry(
+    //             'DEBUG',
+    //             null,
+    //             `Edge manager will try to intersect ` +
+    //             `(${first.length}) & (${second.length}) results`,
+    //         ).getLog(),
+    //     );
+    //     let results = [];
+    //     let dropped = 0;
+    //     //find semantic type of one edge in the other edge
+    //     //it can be output or input
+    //     //that's the entity connecting them, then compare
+    //     //(G)---((CS)) and ((G))----(D)
+    //     //CS is output in first edge and input on second
+    //     //FIRST
+    //     first.forEach((f) => {
+    //     let first_semantic_types = f.$input.obj;
+    //     first_semantic_types = first_semantic_types.concat(f.$output.obj);
 
-        first_semantic_types.forEach((f_type) => {
-            //SECOND
-            second.forEach((s) => {
-            let second_semantic_types = s.$input.obj;
-            second_semantic_types = second_semantic_types.concat(s.$output.obj);
+    //     first_semantic_types.forEach((f_type) => {
+    //         //SECOND
+    //         second.forEach((s) => {
+    //         let second_semantic_types = s.$input.obj;
+    //         second_semantic_types = second_semantic_types.concat(s.$output.obj);
 
-            second_semantic_types.forEach((s_type) => {
-                //compare types
-                if (f_type._leafSemanticType == s_type._leafSemanticType) {
-                    //type match 
+    //         second_semantic_types.forEach((s_type) => {
+    //             //compare types
+    //             if (f_type._leafSemanticType == s_type._leafSemanticType) {
+    //                 //type match 
 
-                    //collect first ids
-                    let f_ids = new Set();
-                    for (const prefix in f_type._dbIDs) {
-                        f_ids.add(prefix + ':' + f_type._dbIDs[prefix])
-                    }
-                    f_ids = [...f_ids];
-                    //collect second ids
-                    let s_ids = new Set();
-                    for (const prefix in s_type._dbIDs) {
-                        s_ids.add(prefix + ':' + s_type._dbIDs[prefix])
-                    }
-                    s_ids = [...s_ids];
-                    //compare ids and keep if match in both
-                    let sharesID = _.intersection(f_ids, s_ids).length;
-                    if (sharesID) {
-                        results.push(f);
-                    }
-                }
-            });
-            });
-        });
-        });
-        dropped = first.length - results.length;
-        debug(`(9) '${edge.getID()}' Kept (${results.length}) / Dropped (${dropped})`);
-        this.logs.push(
-            new LogEntry(
-                'DEBUG',
-                null,
-                `Edge manager is intersecting results for ` +
-                `'${edge.getID()}' Kept (${results.length}) / Dropped (${dropped})`,
-            ).getLog(),
-        );
-        if (results.length === 0) {
-            this.logs.push(
-                new LogEntry(
-                    'DEBUG',
-                    null,
-                    `After intersection of '${edge.getID()}' and` +
-                    ` "${neighbor.getID()}" edge manager got 0 results.`,
-                ).getLog(),
-            );
-        }
-        return results;
-    }
+    //                 //collect first ids
+    //                 let f_ids = new Set();
+    //                 for (const prefix in f_type._dbIDs) {
+    //                     f_ids.add(prefix + ':' + f_type._dbIDs[prefix])
+    //                 }
+    //                 f_ids = [...f_ids];
+    //                 //collect second ids
+    //                 let s_ids = new Set();
+    //                 for (const prefix in s_type._dbIDs) {
+    //                     s_ids.add(prefix + ':' + s_type._dbIDs[prefix])
+    //                 }
+    //                 s_ids = [...s_ids];
+    //                 //compare ids and keep if match in both
+    //                 let sharesID = _.intersection(f_ids, s_ids).length;
+    //                 if (sharesID) {
+    //                     results.push(f);
+    //                 }
+    //             }
+    //         });
+    //         });
+    //     });
+    //     });
+    //     dropped = first.length - results.length;
+    //     debug(`(9) '${edge.getID()}' Kept (${results.length}) / Dropped (${dropped})`);
+    //     this.logs.push(
+    //         new LogEntry(
+    //             'DEBUG',
+    //             null,
+    //             `Edge manager is intersecting results for ` +
+    //             `'${edge.getID()}' Kept (${results.length}) / Dropped (${dropped})`,
+    //         ).getLog(),
+    //     );
+    //     if (results.length === 0) {
+    //         this.logs.push(
+    //             new LogEntry(
+    //                 'DEBUG',
+    //                 null,
+    //                 `After intersection of '${edge.getID()}' and` +
+    //                 ` "${neighbor.getID()}" edge manager got 0 results.`,
+    //             ).getLog(),
+    //         );
+    //     }
+    //     return results;
+    // }
 
-    gatherResults_OLD() {
-        //go through edges and collect all results
-        debug(`Collecting results...`);
-        this.edges.forEach((edge, index, array) => {
-            let neighbor = array[index + 1];
-            if ( neighbor !== undefined) {
-                let current = this._reduceEdgeResultsWithNeighborEdge(edge, neighbor);
-                edge.storeResults(current);
-                let next = this._reduceEdgeResultsWithNeighborEdge(neighbor, edge);
-                neighbor.storeResults(next);
-                debug(`'${edge.getID()}' keeps (${current.length}) results!`);
-                debug(`"${neighbor.getID()}" keeps (${next.length}) results!`);
-                this.logs.push(
-                    new LogEntry(
-                        'DEBUG',
-                        null,
-                        `'${edge.getID()}' keeps (${current.length}) results and` +
-                        `"${neighbor.getID()}" keeps (${next.length}) results!`,
-                    ).getLog(),
-                );
-            }
-        });
-        this.edges.forEach((edge) => {
-            edge.results.forEach((r) => {
-                this.results.push(r);
-            });
-        });
-        debug(`Collected (${this.results.length}) results!`);
-        this.logs.push(
-            new LogEntry(
-                'DEBUG',
-                null,
-                `Edge manager collected (${this.results.length}) results!`
-            ).getLog(),
-        );
-    }
+    // gatherResults_OLD() {
+    //     //go through edges and collect all results
+    //     debug(`Collecting results...`);
+    //     this.edges.forEach((edge, index, array) => {
+    //         let neighbor = array[index + 1];
+    //         if ( neighbor !== undefined) {
+    //             let current = this._reduceEdgeResultsWithNeighborEdge(edge, neighbor);
+    //             edge.storeResults(current);
+    //             let next = this._reduceEdgeResultsWithNeighborEdge(neighbor, edge);
+    //             neighbor.storeResults(next);
+    //             debug(`'${edge.getID()}' keeps (${current.length}) results!`);
+    //             debug(`"${neighbor.getID()}" keeps (${next.length}) results!`);
+    //             this.logs.push(
+    //                 new LogEntry(
+    //                     'DEBUG',
+    //                     null,
+    //                     `'${edge.getID()}' keeps (${current.length}) results and` +
+    //                     `"${neighbor.getID()}" keeps (${next.length}) results!`,
+    //                 ).getLog(),
+    //             );
+    //         }
+    //     });
+    //     this.edges.forEach((edge) => {
+    //         edge.results.forEach((r) => {
+    //             this.results.push(r);
+    //         });
+    //     });
+    //     debug(`Collected (${this.results.length}) results!`);
+    //     this.logs.push(
+    //         new LogEntry(
+    //             'DEBUG',
+    //             null,
+    //             `Edge manager collected (${this.results.length}) results!`
+    //         ).getLog(),
+    //     );
+    // }
 
     _filterEdgeResults(edge) {
         let keep = [];
@@ -269,8 +269,8 @@ module.exports = class EdgeManager {
         let sub_curies = edge.subject.curie;
         let obj_curies = edge.object.curie;
         debug(`'${edge.getID()}' R(${edge.reverse}) (${results.length}) results`);
-        debug(`'${edge.getID()}' (${sub_curies.length || 0}) sub curies`);
-        debug(`'${edge.getID()}' (${obj_curies.length || 0}) obj curies`);
+        debug(`'${edge.getID()}' (${JSON.stringify(sub_curies || [])}) sub curies`);
+        debug(`'${edge.getID()}' (${JSON.stringify(obj_curies || [])}) obj curies`);
 
         let objs = edge.reverse ? sub_curies : obj_curies;
         let subs = edge.reverse ? obj_curies : sub_curies;
@@ -317,6 +317,7 @@ module.exports = class EdgeManager {
             }
         });
         debug(`'${edge.getID()}' dropped (${results.length - keep.length}) results.`);
+        debug(`---------`);
         this.logs.push(
             new LogEntry(
                 'DEBUG',
