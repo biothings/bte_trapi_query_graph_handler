@@ -5,7 +5,7 @@ const debug = require('debug')('bte:biothings-explorer-trapi:edge-manager');
 module.exports = class EdgeManager {
     constructor(edges) {
         // flatten list of all edges available
-        this.edges = _.flatten(Object.values(edges));;
+        this.edges = _.flatten(Object.values(edges));
         this.logs = [];
         this.results = [];
         this.init();

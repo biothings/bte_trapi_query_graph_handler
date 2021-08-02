@@ -192,7 +192,7 @@ module.exports = class UpdatedExeEdge {
   }
 
   storeResults(res) {
-    debug(`(6) Storing results...`);
+    // debug(`(6) Storing results...${JSON.stringify(res, null, 2)}`);
     //store unfiltered results from edge query in edge
     this.results = res;
     debug(`(7) Updating nodes based on edge results...`);
