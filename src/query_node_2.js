@@ -34,7 +34,7 @@ module.exports = class QNode {
             this.curie = [];
         }
         //bring back held curie
-        if (this.held_curie.length && !this.curie.length) {
+        if (this.held_curie.length) {
             debug(`(8) Node "${this.id}" restored curie.`);
             this.curie = this.held_curie;
             this.held_curie = [];
@@ -44,7 +44,9 @@ module.exports = class QNode {
             this.curie = Object.keys(curies);
         }else{
             debug(`Intersecting (${this.curie.length})/(${Object.keys(curies).length})  curies...`);
-            this.curie =  this.intersectCuries(this.curie, curies);
+            let intersection = this.intersectCuries(this.curie, curies);
+            //if intersection resulted in 0 keep original curie
+            this.curie = intersection.length ? intersection : this.curie;
         }
         this.entity_count = this.curie.length;
     }

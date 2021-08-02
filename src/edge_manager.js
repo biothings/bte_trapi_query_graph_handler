@@ -146,123 +146,6 @@ module.exports = class EdgeManager {
         return not_executed;
     }
 
-    // _reduceEdgeResultsWithNeighborEdge(edge, neighbor) {
-    //     let first = edge.results;
-    //     let second = neighbor.results;
-    //     debug(`(9) Received (${first.length}) & (${second.length}) results...`);
-    //     this.logs.push(
-    //         new LogEntry(
-    //             'DEBUG',
-    //             null,
-    //             `Edge manager will try to intersect ` +
-    //             `(${first.length}) & (${second.length}) results`,
-    //         ).getLog(),
-    //     );
-    //     let results = [];
-    //     let dropped = 0;
-    //     //find semantic type of one edge in the other edge
-    //     //it can be output or input
-    //     //that's the entity connecting them, then compare
-    //     //(G)---((CS)) and ((G))----(D)
-    //     //CS is output in first edge and input on second
-    //     //FIRST
-    //     first.forEach((f) => {
-    //     let first_semantic_types = f.$input.obj;
-    //     first_semantic_types = first_semantic_types.concat(f.$output.obj);
-
-    //     first_semantic_types.forEach((f_type) => {
-    //         //SECOND
-    //         second.forEach((s) => {
-    //         let second_semantic_types = s.$input.obj;
-    //         second_semantic_types = second_semantic_types.concat(s.$output.obj);
-
-    //         second_semantic_types.forEach((s_type) => {
-    //             //compare types
-    //             if (f_type._leafSemanticType == s_type._leafSemanticType) {
-    //                 //type match 
-
-    //                 //collect first ids
-    //                 let f_ids = new Set();
-    //                 for (const prefix in f_type._dbIDs) {
-    //                     f_ids.add(prefix + ':' + f_type._dbIDs[prefix])
-    //                 }
-    //                 f_ids = [...f_ids];
-    //                 //collect second ids
-    //                 let s_ids = new Set();
-    //                 for (const prefix in s_type._dbIDs) {
-    //                     s_ids.add(prefix + ':' + s_type._dbIDs[prefix])
-    //                 }
-    //                 s_ids = [...s_ids];
-    //                 //compare ids and keep if match in both
-    //                 let sharesID = _.intersection(f_ids, s_ids).length;
-    //                 if (sharesID) {
-    //                     results.push(f);
-    //                 }
-    //             }
-    //         });
-    //         });
-    //     });
-    //     });
-    //     dropped = first.length - results.length;
-    //     debug(`(9) '${edge.getID()}' Kept (${results.length}) / Dropped (${dropped})`);
-    //     this.logs.push(
-    //         new LogEntry(
-    //             'DEBUG',
-    //             null,
-    //             `Edge manager is intersecting results for ` +
-    //             `'${edge.getID()}' Kept (${results.length}) / Dropped (${dropped})`,
-    //         ).getLog(),
-    //     );
-    //     if (results.length === 0) {
-    //         this.logs.push(
-    //             new LogEntry(
-    //                 'DEBUG',
-    //                 null,
-    //                 `After intersection of '${edge.getID()}' and` +
-    //                 ` "${neighbor.getID()}" edge manager got 0 results.`,
-    //             ).getLog(),
-    //         );
-    //     }
-    //     return results;
-    // }
-
-    // gatherResults_OLD() {
-    //     //go through edges and collect all results
-    //     debug(`Collecting results...`);
-    //     this.edges.forEach((edge, index, array) => {
-    //         let neighbor = array[index + 1];
-    //         if ( neighbor !== undefined) {
-    //             let current = this._reduceEdgeResultsWithNeighborEdge(edge, neighbor);
-    //             edge.storeResults(current);
-    //             let next = this._reduceEdgeResultsWithNeighborEdge(neighbor, edge);
-    //             neighbor.storeResults(next);
-    //             debug(`'${edge.getID()}' keeps (${current.length}) results!`);
-    //             debug(`"${neighbor.getID()}" keeps (${next.length}) results!`);
-    //             this.logs.push(
-    //                 new LogEntry(
-    //                     'DEBUG',
-    //                     null,
-    //                     `'${edge.getID()}' keeps (${current.length}) results and` +
-    //                     `"${neighbor.getID()}" keeps (${next.length}) results!`,
-    //                 ).getLog(),
-    //             );
-    //         }
-    //     });
-    //     this.edges.forEach((edge) => {
-    //         edge.results.forEach((r) => {
-    //             this.results.push(r);
-    //         });
-    //     });
-    //     debug(`Collected (${this.results.length}) results!`);
-    //     this.logs.push(
-    //         new LogEntry(
-    //             'DEBUG',
-    //             null,
-    //             `Edge manager collected (${this.results.length}) results!`
-    //         ).getLog(),
-    //     );
-    // }
-
     _filterEdgeResults(edge) {
         let keep = [];
         let results = edge.results;
@@ -345,7 +228,6 @@ module.exports = class EdgeManager {
                         `Warning: Edge '${edge.getID()}' resulted in (0) results.`
                     ).getLog(),
                 );
-                return false;
             }
             this.logs = [...this.logs, ...edge.logs];
             //store filtered results

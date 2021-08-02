@@ -63,34 +63,19 @@ module.exports = class UpdatedExeEdge {
     if (this.object_entity_count && this.subject_entity_count) {
       if (this.object_entity_count == this.subject_entity_count) {
         // //(#) ---> ()
-        // this.reverse = false;
-        // //keep subject curie and delete object curie
-        // this.held_object_curies = this.qEdge.object['curie'];
-        // debug(`(8) Holding "object" ids ${JSON.stringify(this.held_object_curies)}`);
-        // delete this.qEdge.object['curie'];
-        // debug(`(8) Sub - Obj were same but chose subject (${this.subject_entity_count})`);
-
-        //() <--- (#)
-        this.reverse = true;
-        //keep object curie and delete subject curie
-        this.held_subject_curies = this.qEdge.subject['curie'];
-        //tell node to hold curie in a temp field
-        this.qEdge.subject.holdCurie();
-        debug(`(8) Chose lower entity value in object (${this.object_entity_count})`);
+        this.reverse = false;
+        delete this.qEdge.object.holdCurie();
+        debug(`(8) Sub - Obj were same but chose subject (${this.subject_entity_count})`);
       }
       else if (this.object_entity_count > this.subject_entity_count) {
         //(#) ---> ()
         this.reverse = false;
-        //keep subject curie and delete object curie
-        this.held_object_curies = this.qEdge.object['curie'];
         //tell node to hold curie in a temp field
         this.qEdge.object.holdCurie();
         debug(`(8) Chose lower entity value in subject (${this.subject_entity_count})`);
       } else {
         //() <--- (#)
         this.reverse = true;
-        //keep object curie and delete subject curie
-        this.held_subject_curies = this.qEdge.subject['curie'];
         //tell node to hold curie in a temp field
         this.qEdge.subject.holdCurie();
         debug(`(8) Chose lower entity value in object (${this.object_entity_count})`);
@@ -159,7 +144,7 @@ module.exports = class UpdatedExeEdge {
       });
     });
     // {Gene:{'id': ['alias']}}
-    // debug(`ALL ${JSON.stringify(all)}`);
+    debug(`ALL ${JSON.stringify(all)}`);
     return all;
   }
 
