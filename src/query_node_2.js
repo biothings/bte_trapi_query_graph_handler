@@ -39,14 +39,23 @@ module.exports = class QNode {
             this.curie = this.held_curie;
             this.held_curie = [];
         }
-        if (!this.curie.length) {
-            debug(`Saving (${Object.keys(curies).length}) curies...`);
-            this.curie = Object.keys(curies);
+        if (this.category.toString().includes('NamedThing')) {
+            //if this nodes category is a broad that that
+            //may include more than one type just collect ids and 
+            // no not intersect
+            debug(`Saving (${Object.keys(curies).length}) curies to broad type node.`);
+            this.curie = this.curie.concat(Object.keys(curies));
         }else{
-            debug(`Intersecting (${this.curie.length})/(${Object.keys(curies).length})  curies...`);
-            let intersection = this.intersectCuries(this.curie, curies);
-            //if intersection resulted in 0 keep original curie
-            this.curie = intersection.length ? intersection : this.curie;
+            //else save/intersect as usual
+            if (!this.curie.length) {
+                debug(`Saving (${Object.keys(curies).length}) curies...`);
+                this.curie = Object.keys(curies);
+            }else{
+                debug(`Intersecting (${this.curie.length})/(${Object.keys(curies).length})  curies...`);
+                let intersection = this.intersectCuries(this.curie, curies);
+                //if intersection resulted in 0 keep original curie
+                this.curie = intersection.length ? intersection : this.curie;
+            }
         }
         this.entity_count = this.curie.length;
     }

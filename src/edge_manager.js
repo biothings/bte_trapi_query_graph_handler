@@ -151,12 +151,14 @@ module.exports = class EdgeManager {
         let results = edge.results;
         let sub_curies = edge.subject.curie;
         let obj_curies = edge.object.curie;
-        debug(`'${edge.getID()}' R(${edge.reverse}) (${results.length}) results`);
-        debug(`'${edge.getID()}' (${JSON.stringify(sub_curies || [])}) sub curies`);
-        debug(`'${edge.getID()}' (${JSON.stringify(obj_curies || [])}) obj curies`);
+        debug(`'${edge.getID()}' Reversed(${edge.reverse}) (${results.length}) results`);
+        debug(`'${edge.getID()}' (${JSON.stringify(sub_curies.length || 0)}) sub curies`);
+        debug(`'${edge.getID()}' (${JSON.stringify(obj_curies.length || 0)}) obj curies`);
+        // debug(`'${edge.getID()}' (${JSON.stringify(sub_curies || [])}) sub curies`);
+        // debug(`'${edge.getID()}' (${JSON.stringify(obj_curies || [])}) obj curies`);
 
-        let objs = edge.reverse ? sub_curies : obj_curies;
-        let subs = edge.reverse ? obj_curies : sub_curies;
+        let object_node_ids = edge.reverse ? sub_curies : obj_curies;
+        let subject_node_ids = edge.reverse ? obj_curies : sub_curies;
 
         results.forEach((res) => {
             //check sub curies against $input ids
@@ -164,37 +166,87 @@ module.exports = class EdgeManager {
             let outputMatch = false;
             let inputMatch = false;
             res.$input.obj.forEach((o) => {
+                //compare result I/O ids against edge node ids
+                //#1 check equivalent ids
                 if (Object.hasOwnProperty.call(o, '_dbIDs')) {
                     for (const prefix in o._dbIDs) {
-                        ids.add(prefix + ':' + o._dbIDs[prefix])
+                        //if key value is an array
+                        //eg MONDO: ['MONDO:0005737']
+                        if (Array.isArray(o._dbIDs[prefix])) {
+                            o._dbIDs[prefix].forEach((v) => {
+                                //check if alias key value already has prefix
+                                //like MONDO: MONDO:0005737
+                                let alias = v.includes(':') ? 
+                                v : prefix + ':' + v;
+                                ids.add(alias)
+                            });
+                        }
+                        //else if simple string 
+                        //eg. //eg MONDO: 'MONDO:0005737'
+                        else{
+                            //check if alias key value already has prefix
+                            //like MONDO: MONDO:0005737
+                            let alias = o._dbIDs[prefix].includes(':') ? 
+                            o._dbIDs[prefix] : prefix + ':' + o._dbIDs[prefix];
+                            ids.add(alias)
+                        }
                     }
-                }else if(Object.hasOwnProperty.call(o, 'curie')) {
+                }
+                //else #2 check curie
+                else if(Object.hasOwnProperty.call(o, 'curie')) {
                     ids.add(o.curie)
-                }else{
+                }
+                //#3 last resort check original
+                else{
                     ids.add(res.$input.original)
                 }
                 //check ids
                 // debug(`CHECKING INPUTS ${JSON.stringify([...ids])}`);
-                // debug(`AGAINST ${JSON.stringify(subs)}`);
-                inputMatch = _.intersection([...ids], subs).length;
+                // debug(`AGAINST ${JSON.stringify(subject_node_ids)}`);
+                inputMatch = _.intersection([...ids], subject_node_ids).length;
             });
             //check obj curies against $output ids
             let o_ids = new Set();
             res.$output.obj.forEach((o) => {
+                //#1 check equivalent ids
                 if (Object.hasOwnProperty.call(o, '_dbIDs')) {
                     for (const prefix in o._dbIDs) {
-                        o_ids.add(prefix + ':' + o._dbIDs[prefix])
+                        //if key value is an array
+                        //eg MONDO: ['MONDO:0005737']
+                        if (Array.isArray(o._dbIDs[prefix])) {
+                            o._dbIDs[prefix].forEach((v) => {
+                                //check if alias key value already has prefix
+                                //like MONDO: MONDO:0005737
+                                let alias = v.includes(':') ? 
+                                v : prefix + ':' + v;
+                                o_ids.add(alias)
+                            });
+                        }
+                        //else if simple string 
+                        //eg. //eg MONDO: 'MONDO:0005737'
+                        else{
+                            //check if alias key value already has prefix
+                            //like MONDO: MONDO:0005737
+                            let alias = o._dbIDs[prefix].includes(':') ? 
+                            o._dbIDs[prefix] : prefix + ':' + o._dbIDs[prefix];
+                            o_ids.add(alias)
+                        }
                     }
-                }else if(Object.hasOwnProperty.call(o, 'curie')) {
+                }
+                //else #2 check curie
+                else if(Object.hasOwnProperty.call(o, 'curie')) {
                     o_ids.add(o.curie)
-                }else{
+                }
+                //#3 last resort check original
+                else{
                     o_ids.add(res.$output.original)
                 }
                 //check ids
                 // debug(`CHECKING OUTPUTS ${JSON.stringify([...o_ids])}`);
-                // debug(`AGAINST ${JSON.stringify(objs)}`);
-                outputMatch = _.intersection([...o_ids], objs).length;
+                // debug(`AGAINST ${JSON.stringify(object_node_ids)}`);
+                outputMatch = _.intersection([...o_ids], object_node_ids).length;
             });
+            //if both ends match then keep result
             if (inputMatch && outputMatch) {
                 keep.push(res);
             }

@@ -144,7 +144,7 @@ module.exports = class UpdatedExeEdge {
       });
     });
     // {Gene:{'id': ['alias']}}
-    debug(`ALL ${JSON.stringify(all)}`);
+    debug(`IDs in Results By Entities: ${JSON.stringify(all)}`);
     return all;
   }
 
