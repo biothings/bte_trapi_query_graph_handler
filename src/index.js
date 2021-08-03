@@ -164,6 +164,6 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     //mock handler created only to update query graph and results
     let mockHandler = this._createBatchEdgeQueryHandlersForCurrent([], kg);
     mockHandler.notify(manager.results);
-    debug(`FINISHED`);
+    debug(`(13) FINISHED`);
     }
 };

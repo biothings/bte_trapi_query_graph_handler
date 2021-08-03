@@ -28,6 +28,22 @@ module.exports = class QNode {
         this.curie = undefined;
     }
 
+    _isBroadType() {
+        //nodes with categories such as NamedThing and Categories
+        //that include the keyword "Or" can be of more than one
+        //type so these are special and should include all the ids given
+        if (this.category.toString().includes('NamedThing')) {
+            debug(`(8) "${JSON.stringify(this.category)}" broad category`);
+            return true;
+        }
+        else if (this.category.toString().includes('Or')) {
+            debug(`(8) "${JSON.stringify(this.category)}" broad category`);
+            return true;
+        }else{
+            return false;
+        }
+    }
+
     updateCuries(curies) {
         // {originalID : [aliases]}
         if (!this.curie) {
@@ -39,8 +55,8 @@ module.exports = class QNode {
             this.curie = this.held_curie;
             this.held_curie = [];
         }
-        if (this.category.toString().includes('NamedThing')) {
-            //if this nodes category is a broad that that
+        if (this._isBroadType()) {
+            //if this nodes category is a broad type that
             //may include more than one type just collect ids and 
             // no not intersect
             debug(`Saving (${Object.keys(curies).length}) curies to broad type node.`);
