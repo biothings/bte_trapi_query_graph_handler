@@ -156,7 +156,7 @@ describe("Testing TRAPI QueryHandler Generalized Query Handling", () => {
     }
 
     describe("Testing query function", () => {
-        test("Three hop has edges connecting end to end", async () => {
+        test("Broad category to known entity with all entities present", async () => {
             const queryHandler = new TRAPIQueryHandler.TRAPIQueryHandler();
             queryHandler.setQueryGraph(BroadCategoryQuery);
             await queryHandler.query_2();
@@ -193,7 +193,7 @@ describe("Testing TRAPI QueryHandler Generalized Query Handling", () => {
     }
 
     describe("Testing query function", () => {
-        test("Three hop has edges connecting end to end", async () => {
+        test("Predict known entity to open category", async () => {
             const queryHandler = new TRAPIQueryHandler.TRAPIQueryHandler();
             queryHandler.setQueryGraph(PredictQuery);
             await queryHandler.query_2();
