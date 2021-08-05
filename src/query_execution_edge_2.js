@@ -117,7 +117,7 @@ module.exports = class UpdatedExeEdge {
           all[type][original] = original_aliases;
         }
       });
-      //INPUTS
+      //OUTPUTS
       result.$output.obj.forEach((o) => {
         //create semantic type if not included
         let type = o._leafSemanticType;
