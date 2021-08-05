@@ -50,9 +50,9 @@ module.exports = class EdgeManager {
         available_edges.forEach((edge) => {
             if (
                 edge && 
-                edge.object_entity_count
+                edge.object.entity_count
                 ) {
-                current_obj_lowest = edge.object_entity_count;
+                current_obj_lowest = edge.object.entity_count;
                 if (!lowest_entity_count) {
                     //set current lowest if none
                     lowest_entity_count = current_obj_lowest;
@@ -64,10 +64,10 @@ module.exports = class EdgeManager {
             }
             if (
                 edge && 
-                edge.subject_entity_count &&
-                edge.subject_entity_count > 0
+                edge.subject.entity_count &&
+                edge.subject.entity_count > 0
                 ) {
-                current_sub_lowest = edge.subject_entity_count;
+                current_sub_lowest = edge.subject.entity_count;
                 if (!lowest_entity_count) {
                     //set current lowest if none
                     lowest_entity_count = current_sub_lowest;
@@ -82,7 +82,7 @@ module.exports = class EdgeManager {
             //if no edge with count found pick the first empty
             //edge available
             let all_empty = available_edges
-            .filter((edge) => !edge.object_entity_count && !edge.subject_entity_count);
+            .filter((edge) => !edge.object.entity_count && !edge.subject.entity_count);
             if (all_empty.length == 0) {
                 debug(`(5) Error: No available edges found.`);
                 this.logs.push(
@@ -97,28 +97,21 @@ module.exports = class EdgeManager {
             return this.preSendOffCheck(all_empty[0]);
         }
         debug(`(5) Sending next edge '${next.getID()}' ` +
-        `WITH entity count...(${next.subject_entity_count || next.object_entity_count})`);
+        `WITH entity count...(${next.subject.entity_count || next.object.entity_count})`);
         return this.preSendOffCheck(next);
     }
 
     logEntityCounts() {
         this.edges.forEach((edge) => {
             debug(`'${edge.getID()}'` +
-            ` : (${edge.subject_entity_count || 0}) ` +
+            ` : (${edge.subject.entity_count || 0}) ` +
             `${edge.reverse ? '<--' : '-->'}` +
-            ` (${edge.object_entity_count || 0})`);
+            ` (${edge.object.entity_count || 0})`);
         });
     }
 
-    refreshEdges() {
-        //this can be used to trigger a refresh of class attrs
-        debug(`(9) Refreshing edges...`);
-        //update edges entity counts
-        this.edges.forEach(edge => edge.updateEntityCounts());
-    }
-
     preSendOffCheck(next) {
-        if (next.requires_entity_count_choice) {
+        if (next.object.entity_count && next.subject.entity_count) {
             //if at the time of being queried the edge has both
             //obj and sub entity counts
             //chose obj/suj lower entity count for query
@@ -266,8 +259,6 @@ module.exports = class EdgeManager {
     gatherResults() {
         //go through edges and collect all results
         let results = [];
-        //refresh to get latest entity counts
-        this.refreshEdges();
         debug(`(11) Collecting results...`);
         //First: go through edges and filter that each edge is holding
         this.edges.forEach((edge) => {

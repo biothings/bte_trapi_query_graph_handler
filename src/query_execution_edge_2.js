@@ -24,61 +24,39 @@ module.exports = class UpdatedExeEdge {
     //this.object/subject are instances of QNode
     this.object = qEdge.object;
     this.subject = qEdge.subject;
-    //entity counts
-    // (object #) ----> ()
-    this.object_entity_count = this.object.entity_count;
-    // () ----> (subject #)
-    this.subject_entity_count = this.subject.entity_count;
     //edge has been fully executed
     this.executed = false;
     //run initial checks
     this.logs = [];
     //this edges results
     this.results = [];
-    //will need to pick lower value to use for q
-    this.requires_entity_count_choice = false;
-    //init state
-    this.init();
-  }
-
-  init() {
     debug(`(2) Created Edge` +
     ` ${JSON.stringify(this.qEdge.getID())} Reverse = ${this.reverse}`)
-    // this.checkInitialEntityCount();
-    // this.checkConnectingNodes();
-    this.checkEdgeEntityCounts();
-  }
-
-  checkEdgeEntityCounts() {
-    //if both ends of edge have entity counts this edge will
-    //require an extra step when saving results
-    this.requires_entity_count_choice = this.object_entity_count && this.subject_entity_count ?
-    true : false;
   }
 
   chooseLowerEntityValue() {
     //edge has both subject and object entity counts and must choose lower value
     //to use in query.
     debug(`(8) Choosing lower entity count in edge...`);
-    if (this.object_entity_count && this.subject_entity_count) {
-      if (this.object_entity_count == this.subject_entity_count) {
+    if (this.qEdge.object.entity_count && this.qEdge.subject.entity_count) {
+      if (this.qEdge.object.entity_count == this.qEdge.subject.entity_count) {
         // //(#) ---> ()
         this.reverse = false;
         delete this.qEdge.object.holdCurie();
-        debug(`(8) Sub - Obj were same but chose subject (${this.subject_entity_count})`);
+        debug(`(8) Sub - Obj were same but chose subject (${this.qEdge.subject.entity_count})`);
       }
-      else if (this.object_entity_count > this.subject_entity_count) {
+      else if (this.qEdge.object.entity_count > this.qEdge.subject.entity_count) {
         //(#) ---> ()
         this.reverse = false;
         //tell node to hold curie in a temp field
         this.qEdge.object.holdCurie();
-        debug(`(8) Chose lower entity value in subject (${this.subject_entity_count})`);
+        debug(`(8) Chose lower entity value in subject (${this.qEdge.subject.entity_count})`);
       } else {
         //() <--- (#)
         this.reverse = true;
         //tell node to hold curie in a temp field
         this.qEdge.subject.holdCurie();
-        debug(`(8) Chose lower entity value in object (${this.object_entity_count})`);
+        debug(`(8) Chose lower entity value in object (${this.qEdge.object.entity_count})`);
       }
     }else{
       debug(`(8) Error: Edge must have both object and subject entity values.`);
@@ -184,20 +162,12 @@ module.exports = class UpdatedExeEdge {
     }
   }
 
-  updateEntityCounts() {
-    //update counts
-    this.object_entity_count = this.object.entity_count;
-    this.subject_entity_count = this.subject.entity_count;
-    this.checkEdgeEntityCounts();
-  }
-
   storeResults(res) {
-    // debug(`(6) Storing results...${JSON.stringify(res, null, 2)}`);
+    debug(`(6) Storing results...`);
     //store unfiltered results from edge query in edge
     this.results = res;
     debug(`(7) Updating nodes based on edge results...`);
     this.updateNodesCuries(res);
-    this.checkEdgeEntityCounts();
   }
 
   getID() {

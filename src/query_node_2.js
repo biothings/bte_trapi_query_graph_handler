@@ -37,6 +37,7 @@ module.exports = class QNode {
             return true;
         }
         else if (this.category.toString().includes('Or')) {
+            //TODO may need to refine check here
             debug(`(8) "${JSON.stringify(this.category)}" broad category`);
             return true;
         }else{
@@ -58,7 +59,7 @@ module.exports = class QNode {
         if (this._isBroadType()) {
             //if this nodes category is a broad type that
             //may include more than one type just collect ids and 
-            // no not intersect
+            //do not intersect because ids from two entities will never intersect
             debug(`Saving (${Object.keys(curies).length}) curies to broad type node.`);
             this.curie = this.curie.concat(Object.keys(curies));
         }else{

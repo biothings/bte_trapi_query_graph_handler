@@ -68,7 +68,25 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   _processQueryGraph(queryGraph) {
     try {
       let queryGraphHandler = new QueryGraph(queryGraph);
-      // let res = queryGraphHandler.createQueryPaths();
+      let res = queryGraphHandler.createQueryPaths();
+      this.logs = [...this.logs, ...queryGraphHandler.logs];
+      return res;
+    } catch (err) {
+      if (err instanceof InvalidQueryGraphError) {
+        throw err;
+      } else {
+        throw new InvalidQueryGraphError();
+      }
+    }
+  }
+
+  /**
+   * @private
+   * @param {object} queryGraph - TRAPI Query Graph Object
+   */
+   _processQueryGraph_2(queryGraph) {
+    try {
+      let queryGraphHandler = new QueryGraph(queryGraph);
       let res = queryGraphHandler.calculateEdges();
       this.logs = [...this.logs, ...queryGraphHandler.logs];
       return res;
@@ -128,7 +146,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     debug('start to load metakg.');
     const kg = this._loadMetaKG(this.smartapiID, this.team);
     debug('metakg successfully loaded');
-    let queryEdges = this._processQueryGraph(this.queryGraph);
+    let queryEdges = this._processQueryGraph_2(this.queryGraph);
     debug(`(3) All edges created ${JSON.stringify(queryEdges)}`);
     const manager = new EdgeManager(queryEdges);
     while (manager.getEdgesNotExecuted()) {
@@ -144,9 +162,6 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       //storing results will trigger
       //a node entity count update
       current_edge.storeResults(res);
-      //refresh edges node info
-      //so manager has latest entity counts before next is called
-      manager.refreshEdges();
       debug(`(10) Edge successfully queried.`);
       current_edge.executed = true;
     };
@@ -154,6 +169,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     manager.gatherResults();
     this.logs = [...this.logs, ...manager.logs];
     //mock handler created only to update query graph and results
+    //TODO find a way to just update these with no mock handler
     let mockHandler = this._createBatchEdgeQueryHandlersForCurrent([], kg);
     mockHandler.notify(manager.results);
     debug(`(13) FINISHED`);
