@@ -144,11 +144,8 @@ module.exports = class EdgeManager {
         let results = edge.results;
         let sub_curies = edge.subject.curie;
         let obj_curies = edge.object.curie;
-        debug(`'${edge.getID()}' Reversed(${edge.reverse}) (${results.length}) results`);
-        debug(`'${edge.getID()}' (${JSON.stringify(sub_curies.length || 0)}) sub curies`);
-        debug(`'${edge.getID()}' (${JSON.stringify(obj_curies.length || 0)}) obj curies`);
-        // debug(`'${edge.getID()}' (${JSON.stringify(sub_curies || [])}) sub curies`);
-        // debug(`'${edge.getID()}' (${JSON.stringify(obj_curies || [])}) obj curies`);
+        debug(`'${edge.getID()}' Reversed[${edge.reverse}] (${JSON.stringify(sub_curies.length || 0)})` +
+        `--(${JSON.stringify(obj_curies.length || 0)}) entities / (${results.length}) results.`);
 
         let object_node_ids = edge.reverse ? sub_curies : obj_curies;
         let subject_node_ids = edge.reverse ? obj_curies : sub_curies;
@@ -245,7 +242,6 @@ module.exports = class EdgeManager {
             }
         });
         debug(`'${edge.getID()}' dropped (${results.length - keep.length}) results.`);
-        debug(`---------`);
         this.logs.push(
             new LogEntry(
                 'DEBUG',

@@ -28,22 +28,22 @@ module.exports = class QNode {
         this.curie = undefined;
     }
 
-    _isBroadType() {
-        //nodes with categories such as NamedThing and Categories
-        //that include the keyword "Or" can be of more than one
-        //type so these are special and should include all the ids given
-        if (this.category.toString().includes('NamedThing')) {
-            debug(`(8) "${JSON.stringify(this.category)}" broad category`);
-            return true;
-        }
-        else if (this.category.toString().includes('Or')) {
-            //TODO may need to refine check here
-            debug(`(8) "${JSON.stringify(this.category)}" broad category`);
-            return true;
-        }else{
-            return false;
-        }
-    }
+    // _isBroadType() {
+    //     //nodes with categories such as NamedThing and Categories
+    //     //that include the keyword "Or" can be of more than one
+    //     //type so these are special and should include all the ids given
+    //     if (this.category.toString().includes('NamedThing')) {
+    //         debug(`(8) "${JSON.stringify(this.category)}" broad category`);
+    //         return true;
+    //     }
+    //     else if (this.category.toString().includes('Or')) {
+    //         //TODO may need to refine check here
+    //         debug(`(8) "${JSON.stringify(this.category)}" broad category`);
+    //         return true;
+    //     }else{
+    //         return false;
+    //     }
+    // }
 
     updateCuries(curies) {
         // {originalID : [aliases]}
@@ -56,24 +56,33 @@ module.exports = class QNode {
             this.curie = this.held_curie;
             this.held_curie = [];
         }
-        if (this._isBroadType()) {
-            //if this nodes category is a broad type that
-            //may include more than one type just collect ids and 
-            //do not intersect because ids from two entities will never intersect
-            debug(`Saving (${Object.keys(curies).length}) curies to broad type node.`);
-            this.curie = this.curie.concat(Object.keys(curies));
+        if (!this.curie.length) {
+            debug(`Node "${this.id}" saving (${Object.keys(curies).length}) curies...`);
+            this.curie = Object.keys(curies);
         }else{
-            //else save/intersect as usual
-            if (!this.curie.length) {
-                debug(`Saving (${Object.keys(curies).length}) curies...`);
-                this.curie = Object.keys(curies);
-            }else{
-                debug(`Intersecting (${this.curie.length})/(${Object.keys(curies).length})  curies...`);
-                let intersection = this.intersectCuries(this.curie, curies);
-                //if intersection resulted in 0 keep original curie
-                this.curie = intersection.length ? intersection : this.curie;
-            }
+            debug(`Node "${this.id}" intersecting (${this.curie.length})/(${Object.keys(curies).length})  curies...`);
+            let intersection = this.intersectCuries(this.curie, curies);
+            //if intersection resulted in 0 keep original curie
+            this.curie = intersection.length ? intersection : this.curie;
         }
+        // if (this._isBroadType()) {
+        //     //if this nodes category is a broad type that
+        //     //may include more than one type just collect ids and 
+        //     //do not intersect because ids from two entities will never intersect
+        //     debug(`Node "${this.id}" saving (${Object.keys(curies).length}) curies to broad type node.`);
+        //     this.curie = this.curie.concat(Object.keys(curies));
+        // }else{
+        //     //else save/intersect as usual
+        //     if (!this.curie.length) {
+        //         debug(`Node "${this.id}" saving (${Object.keys(curies).length}) curies...`);
+        //         this.curie = Object.keys(curies);
+        //     }else{
+        //         debug(`Node "${this.id}" intersecting (${this.curie.length})/(${Object.keys(curies).length})  curies...`);
+        //         let intersection = this.intersectCuries(this.curie, curies);
+        //         //if intersection resulted in 0 keep original curie
+        //         this.curie = intersection.length ? intersection : this.curie;
+        //     }
+        // }
         this.entity_count = this.curie.length;
     }
 

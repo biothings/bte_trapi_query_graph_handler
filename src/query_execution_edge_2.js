@@ -63,14 +63,13 @@ module.exports = class UpdatedExeEdge {
     }
   }
 
-  extractCuriesFromResponse(res) {
+  extractCuriesFromResponse(res, isReversed) {
     //will give you all curies found by semantic type, each type will have
     //a main ID and all of it's aliases
-    debug(`(7) Before Updating "${this.qEdge.getID()}" (${this.subject.entity_count})---(${this.object.entity_count})`);
-    debug(`(7) Updating entity counts for current edge and nodes.`);
+    debug(`(7) Updating Entities in "${this.qEdge.getID()}"`);
     let all = {};
     res.forEach((result) => {
-      //INPUTS
+
       result.$input.obj.forEach((o) => {
         //create semantic type if not included
         let type = o._leafSemanticType;
@@ -95,7 +94,7 @@ module.exports = class UpdatedExeEdge {
           all[type][original] = original_aliases;
         }
       });
-      //OUTPUTS
+
       result.$output.obj.forEach((o) => {
         //create semantic type if not included
         let type = o._leafSemanticType;
@@ -120,54 +119,74 @@ module.exports = class UpdatedExeEdge {
           all[type][original] = original_aliases;
         }
       });
+      
     });
     // {Gene:{'id': ['alias']}}
     debug(`IDs in Results By Entities: ${JSON.stringify(all)}`);
     return all;
   }
 
-  updateNodesCuries(res) {
-    let curies_by_semantic_type = this.extractCuriesFromResponse(res);
-    this.processCuries(curies_by_semantic_type);
-  }
-
-  processCuries(curies) {
-    // {Gene:{'id': ['alias']}}
-    for (const semantic_type in curies) {
-      this.findNodeAndAddCurie(curies[semantic_type], semantic_type);
-    }
-    debug(`(7) Updated "${this.qEdge.getID()}" (${this.subject.entity_count})---(${this.object.entity_count})`);
-  }
-
-  findNodeAndAddCurie(curies, semanticType) {
-    //check and update object
-    debug(`Updating this edge's "${semanticType}" node curies`);
-    let sub_cat = this.qEdge.subject.category.toString();
-    let obj_cat = this.qEdge.object.category.toString();
-    //match node by semantic type in category
-    if (sub_cat.includes(semanticType)) {
-      this.qEdge.subject.updateCuries(curies);
-    }
-    //check and update subject
-    else if (obj_cat.includes(semanticType)) {
-      this.qEdge.object.updateCuries(curies);
-    }else{
-      if (sub_cat.includes("NamedThing")) {
-        this.qEdge.subject.updateCuries(curies);
-      }else if(obj_cat.includes("NamedThing")){
-        this.qEdge.object.updateCuries(curies);
-      }else{
-        debug(`Error: No match for "${semanticType}", did not update node entity counts.`);
+  _combineCuries(curies) {
+    let combined  = {};
+    for (const type in curies) {
+      debug(`Combining ${JSON.stringify(type)}`);
+      for (const original in curies[type]) {
+        combined[original] = curies[type][original];
       }
     }
+    debug(`Combined ${JSON.stringify(combined)}`);
+    return combined;
   }
 
-  storeResults(res) {
+  updateNodesCuries(res, reverse) {
+    let curies_by_semantic_type = this.extractCuriesFromResponse(res, reverse);
+    let combined_curies = this._combineCuries(curies_by_semantic_type);
+    reverse ?
+    this.qEdge.subject.updateCuries(combined_curies) :
+    this.qEdge.object.updateCuries(combined_curies);
+    //old way was to match by semantic type but wont
+    //work with multiple categories
+    // this.processCuries(curies_by_semantic_type);
+  }
+
+  // processCuries(curies) {
+  //   // {Gene:{'id': ['alias']}}
+  //   for (const semantic_type in curies) {
+  //     this.findNodeAndAddCurie(curies[semantic_type], semantic_type);
+  //   }
+  //   debug(`(7) Updated "${this.qEdge.getID()}" (${this.subject.entity_count})---(${this.object.entity_count})`);
+  // }
+
+  // findNodeAndAddCurie(curies, semanticType) {
+  //   //check and update object
+  //   debug(`Updating this edge's "${semanticType}" node curies`);
+  //   let sub_cat = this.qEdge.subject.category.toString();
+  //   let obj_cat = this.qEdge.object.category.toString();
+  //   //match node by semantic type in category
+  //   if (sub_cat.includes(semanticType)) {
+  //     this.qEdge.subject.updateCuries(curies);
+  //   }
+  //   //check and update subject
+  //   else if (obj_cat.includes(semanticType)) {
+  //     this.qEdge.object.updateCuries(curies);
+  //   }else{
+  //     if (sub_cat.includes("NamedThing")) {
+  //       this.qEdge.subject.updateCuries(curies);
+  //     }else if(obj_cat.includes("NamedThing")){
+  //       this.qEdge.object.updateCuries(curies);
+  //     }else{
+  //       debug(`Error: No match for "${semanticType}", did not update node entity counts.`);
+  //     }
+  //   }
+  // }
+
+  storeResults(res, reverse) {
     debug(`(6) Storing results...`);
+    // debug(`(7) Res "${JSON.stringify(res[0])}"`);
     //store unfiltered results from edge query in edge
     this.results = res;
     debug(`(7) Updating nodes based on edge results...`);
-    this.updateNodesCuries(res);
+    this.updateNodesCuries(res, reverse);
   }
 
   getID() {
