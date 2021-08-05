@@ -129,12 +129,10 @@ module.exports = class UpdatedExeEdge {
   _combineCuries(curies) {
     let combined  = {};
     for (const type in curies) {
-      debug(`Combining ${JSON.stringify(type)}`);
       for (const original in curies[type]) {
         combined[original] = curies[type][original];
       }
     }
-    debug(`Combined ${JSON.stringify(combined)}`);
     return combined;
   }
 
