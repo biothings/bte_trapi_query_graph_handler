@@ -1,6 +1,7 @@
 const redisClient = require('./redis-client');
 const debug = require('debug')('bte:biothings-explorer-trapi:cache_handler');
 const LogEntry = require('./log_entry');
+const _ = require('lodash');
 
 module.exports = class {
   constructor(qEdges, caching, logs = []) {
@@ -40,50 +41,36 @@ module.exports = class {
   }
 
   _copyRecord(record) {
-    const new_record = {
-      $edge_metadata: {
-        input_id: record.$edge_metadata.input_id,
-        output_id: record.$edge_metadata.output_id,
-        output_type: record.$edge_metadata.output_type,
-        input_type: record.$edge_metadata.input_type,
-        predicate: record.$edge_metadata.predicate,
-        source: record.$edge_metadata.source,
-        api_name: record.$edge_metadata.api_name,
-      },
-      $input: {
-        original: record.$input.original,
-        obj: [
-          {
-            dbIDs: record.$input.obj[0].dbIDs,
-            curies: record.$input.obj[0].curies,
-            label: record.$input.obj[0].label,
-            primaryID: record.$input.obj[0].primaryID,
-            semanticType: record.$input.obj[0].semanticType,
-            semanticTypes: record.$input.obj[0].semanticTypes,
-            attributes: record.$input.obj[0].attributes,
-          },
-        ],
-      },
-      $output: {
-        original: record.$output.original,
-        obj: [
-          {
-            dbIDs: record.$output.obj[0].dbIDs,
-            curies: record.$output.obj[0].curies,
-            label: record.$output.obj[0].label,
-            primaryID: record.$output.obj[0].primaryID,
-            semanticType: record.$output.obj[0].semanticType,
-            semanticTypes: record.$output.obj[0].semanticTypes,
-            attributes: record.$output.obj[0].attributes,
-          },
-        ],
-      },
+    let new_record = {};
+
+    const freezeClone = (obj, clone) => {
+      // 'freeze' getters on this layer
+      Object.entries(Object.getOwnPropertyDescriptors(Object.getPrototypeOf(obj)))
+        .filter(([key, descriptor]) => typeof descriptor.get === 'function')
+        .map(([key]) => key)
+        .forEach((key) => {
+          clone[key] =
+            typeof obj[key] === 'object' ? (clone[key] = Array.isArray(obj[key]) ? [] : {}) : _.clone(obj[key]);
+        });
+      // look for sublayers
+      Object.keys(obj).forEach((key) => {
+        if (typeof obj[key] === 'object') {
+          clone[key] = Array.isArray(obj[key]) ? [] : {};
+          freezeClone(obj[key], clone[key]);
+        } else {
+          clone[key] = obj[key];
+        }
+      });
+      // check for sublayers of getter returns
+      Object.keys(clone)
+        .filter((key) => typeof Object.getOwnPropertyDescriptor(obj, key) === 'undefined')
+        .forEach((key) => {
+          if (typeof clone[key] === 'object') {
+            freezeClone(obj[key], clone[key]);
+          }
+        });
     };
-    Object.keys(record).map((k) => {
-      if (!['$edge_metadata', '$input', '$output'].includes(k)) {
-        new_record[k] = record[k];
-      }
-    });
+    freezeClone(record, new_record);
     return new_record;
   }
 
