@@ -62,8 +62,10 @@ module.exports = class QNode {
         }else{
             debug(`Node "${this.id}" intersecting (${this.curie.length})/(${Object.keys(curies).length})  curies...`);
             let intersection = this.intersectCuries(this.curie, curies);
-            //if intersection resulted in 0 keep original curie
-            this.curie = intersection.length ? intersection : this.curie;
+            //keep outcome of intersection to make filtering strict even if no results
+            this.curie = intersection;
+            //old way was to keep backup in case intersection failed
+            // this.curie = intersection.length ? intersection : this.curie;
         }
         // if (this._isBroadType()) {
         //     //if this nodes category is a broad type that
