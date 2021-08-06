@@ -6,9 +6,8 @@ module.exports = class {
   constructor(qEdges, caching, logs = []) {
     this.qEdges = qEdges;
     this.logs = logs;
-    this.cacheEnabled = (caching === 'false') ?
-      false : 
-      (!(process.env.REDIS_HOST === undefined) && !(process.env.REDIS_PORT === undefined));
+    this.cacheEnabled =
+      caching === 'false' ? false : !(process.env.REDIS_HOST === undefined) && !(process.env.REDIS_PORT === undefined);
     this.logs.push(
       new LogEntry('DEBUG', null, `REDIS cache is ${this.cacheEnabled === true ? '' : 'not'} enabled.`).getLog(),
     );
@@ -59,6 +58,7 @@ module.exports = class {
             curies: record.$input.obj[0].curies,
             label: record.$input.obj[0].label,
             primaryID: record.$input.obj[0].primaryID,
+            semanticType: record.$input.obj[0].semanticType,
           },
         ],
       },
@@ -70,6 +70,7 @@ module.exports = class {
             curies: record.$output.obj[0].curies,
             label: record.$output.obj[0].label,
             primaryID: record.$output.obj[0].primaryID,
+            semanticType: record.$input.obj[0].semanticType,
           },
         ],
       },
