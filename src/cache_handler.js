@@ -3,10 +3,12 @@ const debug = require('debug')('bte:biothings-explorer-trapi:cache_handler');
 const LogEntry = require('./log_entry');
 
 module.exports = class {
-  constructor(qEdges, logs = []) {
+  constructor(qEdges, caching, logs = []) {
     this.qEdges = qEdges;
     this.logs = logs;
-    this.cacheEnabled = !(process.env.REDIS_HOST === undefined) && !(process.env.REDIS_PORT === undefined);
+    this.cacheEnabled = (caching === 'false') ?
+      false : 
+      (!(process.env.REDIS_HOST === undefined) && !(process.env.REDIS_PORT === undefined));
     this.logs.push(
       new LogEntry('DEBUG', null, `REDIS cache is ${this.cacheEnabled === true ? '' : 'not'} enabled.`).getLog(),
     );

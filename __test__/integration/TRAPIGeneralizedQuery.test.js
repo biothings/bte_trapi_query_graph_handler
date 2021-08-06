@@ -7,7 +7,7 @@ describe("Testing TRAPI QueryHandler Generalized Query Handling", () => {
         nodes: {
             n0: {
                 "ids":["PUBCHEM.COMPOUND:2662"],
-                "categories":["biolink:ChemicalSubstance"]
+                "categories":["biolink:SmallMolcule"]
             },
             n1: {
                 "categories":["biolink:Gene"],
@@ -38,7 +38,7 @@ describe("Testing TRAPI QueryHandler Generalized Query Handling", () => {
         "nodes": {
             "n0": {
                 "ids":["PUBCHEM.COMPOUND:2662"],
-                "categories":["biolink:ChemicalSubstance"]
+                "categories":["biolink:SmallMolcule"]
             },
             "n1": {
                 "categories":["biolink:Disease"]
@@ -81,7 +81,7 @@ describe("Testing TRAPI QueryHandler Generalized Query Handling", () => {
                 "nodes": {
                     "n0": {
                         "ids":["PUBCHEM.COMPOUND:2662"],
-                        "categories":["biolink:ChemicalSubstance"]
+                        "categories":["biolink:SmallMolcule"]
                     },
                     "n1": {
                         "categories":["biolink:Disease"]
@@ -179,7 +179,7 @@ describe("Testing TRAPI QueryHandler Generalized Query Handling", () => {
                         "ids": ["MONDO:0009287"]
                     },
                     "n1": {
-                        "categories": ["biolink:ChemicalSubstance"]
+                        "categories": ["biolink:SmallMolcule"]
                     }
                 },
                 "edges": {

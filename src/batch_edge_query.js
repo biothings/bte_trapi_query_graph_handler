@@ -7,10 +7,11 @@ const utils = require('./utils');
 const LogEntry = require('./log_entry');
 
 module.exports = class BatchEdgeQueryHandler {
-  constructor(kg, resolveOutputIDs = true) {
+  constructor(kg, resolveOutputIDs = true, options) {
     this.kg = kg;
     this.subscribers = [];
     this.logs = [];
+    this.caching = options && options.caching;
     this.resolveOutputIDs = resolveOutputIDs;
   }
 
@@ -110,7 +111,7 @@ module.exports = class BatchEdgeQueryHandler {
     const nodeUpdate = new NodesUpdateHandler(qEdges);
     await nodeUpdate.setEquivalentIDs(qEdges);
     debug('Node Update Success');
-    const cacheHandler = new CacheHandler(qEdges);
+    const cacheHandler = new CacheHandler(qEdges, this.caching);
     const { cachedResults, nonCachedEdges } = await cacheHandler.categorizeEdges(qEdges);
     this.logs = [...this.logs, ...cacheHandler.logs];
     let query_res;
