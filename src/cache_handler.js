@@ -70,7 +70,7 @@ module.exports = class {
             curies: record.$output.obj[0].curies,
             label: record.$output.obj[0].label,
             primaryID: record.$output.obj[0].primaryID,
-            semanticType: record.$input.obj[0].semanticType,
+            semanticType: record.$output.obj[0].semanticType,
           },
         ],
       },
