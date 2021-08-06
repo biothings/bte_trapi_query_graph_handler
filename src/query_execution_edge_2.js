@@ -122,7 +122,7 @@ module.exports = class UpdatedExeEdge {
       
     });
     // {Gene:{'id': ['alias']}}
-    debug(`IDs in Results By Entities: ${JSON.stringify(all)}`);
+    debug(`Entity ids in results: ${JSON.stringify(Object.keys(all))}`);
     return all;
   }
 
