@@ -4,7 +4,7 @@ const KnowledgeGraph = require("../../src/knowledge_graph");
 
 describe("Testing KnowledgeGraph Module", () => {
     const gene_node1 = new QNode("n1", { categories: "Gene", ids: "NCBIGene:1017" });
-    const chemical_node1 = new QNode("n3", { categories: "ChemicalSubstance" });
+    const chemical_node1 = new QNode("n3", { categories: "SmallMolecule" });
     const edge1 = new QEdge("e01", { subject: gene_node1, object: chemical_node1 });
     const record = {
         "$edge_metadata": {
@@ -37,7 +37,7 @@ describe("Testing KnowledgeGraph Module", () => {
                     "PUBCHEM": "1234",
                     "name": "RILUZOLE"
                 },
-                semanticType: "ChemicalSubstance",
+                semanticType: "SmallMolecule",
                 curies: ['CHEMBL.COMPOUND:CHEMBL744', 'PUBCHEM:1234', "name:RILUZOLE"]
             }]
         },
@@ -57,7 +57,7 @@ describe("Testing KnowledgeGraph Module", () => {
         test("test when input with string, should output a hash of 40 characters", () => {
             const kg = new KnowledgeGraph();
             const res = kg._createOutputNode(record);
-            expect(res).toHaveProperty("categories", "biolink:ChemicalSubstance");
+            expect(res).toHaveProperty("categories", "biolink:SmallMolecule");
             expect(res).toHaveProperty("name", "RILUZOLE");
             expect(res.attributes[0]).toHaveProperty("type", "biolink:id");
             expect(res.attributes[0]).toHaveProperty("value", ['CHEMBL.COMPOUND:CHEMBL744', 'PUBCHEM:1234', "name:RILUZOLE"])

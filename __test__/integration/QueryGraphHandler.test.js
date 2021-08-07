@@ -16,7 +16,7 @@ describe("Testing QueryGraphHandler Module", () => {
         categories: "biolink:Gene"
     };
     const chemical_class_node = {
-        categories: "biolink:ChemicalSubstance"
+        categories: "biolink:SmallMolecule"
     };
     const pathway_class_node = {
         categories: "biolink:Pathways"
