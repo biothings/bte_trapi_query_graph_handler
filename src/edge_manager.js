@@ -255,6 +255,7 @@ module.exports = class EdgeManager {
     gatherResults() {
         //go through edges and collect all results
         let results = [];
+        let brokenChain = false;
         debug(`(11) Collecting results...`);
         //First: go through edges and filter that each edge is holding
         this.edges.forEach((edge) => {
@@ -267,6 +268,7 @@ module.exports = class EdgeManager {
                         `Warning: Edge '${edge.getID()}' resulted in (0) results.`
                     ).getLog(),
                 );
+                brokenChain = true;
             }
             this.logs = [...this.logs, ...edge.logs];
             //store filtered results
@@ -283,6 +285,16 @@ module.exports = class EdgeManager {
             );
             debug(`----------`);
         });
+        if (brokenChain) {
+            results = [];
+            this.logs.push(
+                new LogEntry(
+                    'DEBUG',
+                    null,
+                    `One or more edges resulted in (0) results. No complete paths can be formed.`
+                ).getLog(),
+            );
+        }
         //Second: collected results
         this.results = results;
         debug(`(12) Collected (${this.results.length}) results!`);
