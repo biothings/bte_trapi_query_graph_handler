@@ -1,3 +1,4 @@
+const { endsWith } = require('lodash');
 const _ = require('lodash');
 const LogEntry = require('./log_entry');
 const debug = require('debug')('bte:biothings-explorer-trapi:edge-manager');
@@ -170,7 +171,7 @@ module.exports = class EdgeManager {
                                 //like MONDO: MONDO:0005737
                                 let alias = v.includes(':') ? 
                                 v : prefix + ':' + v;
-                                ids.add(alias)
+                                ids.add(alias);
                             });
                         }
                         //else if simple string 
@@ -180,17 +181,17 @@ module.exports = class EdgeManager {
                             //like MONDO: MONDO:0005737
                             let alias = o._dbIDs[prefix].includes(':') ? 
                             o._dbIDs[prefix] : prefix + ':' + o._dbIDs[prefix];
-                            ids.add(alias)
+                            ids.add(alias);
                         }
                     }
                 }
                 //else #2 check curie
                 else if(Object.hasOwnProperty.call(o, 'curie')) {
-                    ids.add(o.curie)
+                    ids.add(o.curie);
                 }
                 //#3 last resort check original
                 else{
-                    ids.add(res.$input.original)
+                    ids.add(res.$input.original);
                 }
                 //check ids
                 // debug(`CHECKING INPUTS ${JSON.stringify([...ids])}`);
@@ -211,7 +212,7 @@ module.exports = class EdgeManager {
                                 //like MONDO: MONDO:0005737
                                 let alias = v.includes(':') ? 
                                 v : prefix + ':' + v;
-                                o_ids.add(alias)
+                                o_ids.add(alias);
                             });
                         }
                         //else if simple string 
@@ -221,17 +222,17 @@ module.exports = class EdgeManager {
                             //like MONDO: MONDO:0005737
                             let alias = o._dbIDs[prefix].includes(':') ? 
                             o._dbIDs[prefix] : prefix + ':' + o._dbIDs[prefix];
-                            o_ids.add(alias)
+                            o_ids.add(alias);
                         }
                     }
                 }
                 //else #2 check curie
                 else if(Object.hasOwnProperty.call(o, 'curie')) {
-                    o_ids.add(o.curie)
+                    o_ids.add(o.curie);
                 }
                 //#3 last resort check original
                 else{
-                    o_ids.add(res.$output.original)
+                    o_ids.add(res.$output.original);
                 }
                 //check ids
                 // debug(`CHECKING OUTPUTS ${JSON.stringify([...o_ids])}`);

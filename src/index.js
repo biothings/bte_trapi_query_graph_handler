@@ -161,7 +161,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       }
       //storing results will trigger
       //a node entity count update
-      current_edge.storeResults(res, current_edge.reverse);
+      current_edge.storeResults(res);
       debug(`(10) Edge successfully queried.`);
       current_edge.executed = true;
     };
