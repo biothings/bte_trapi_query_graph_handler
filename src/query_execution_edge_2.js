@@ -1,5 +1,4 @@
 const helper = require('./helper');
-const LogEntry = require('./log_entry');
 const debug = require('debug')('bte:biothings-explorer-trapi:UpdatedExeEdge');
 const utils = require('./utils');
 const reverse = require('./biolink');
@@ -67,62 +66,74 @@ module.exports = class UpdatedExeEdge {
     //will give you all curies found by semantic type, each type will have
     //a main ID and all of it's aliases
     debug(`(7) Updating Entities in "${this.qEdge.getID()}"`);
+    let typesToInclude = isReversed ?
+    this.qEdge.subject.category.map(category => utils.removeBioLinkPrefix(category)) :
+    this.qEdge.object.category.map(category => utils.removeBioLinkPrefix(category));
+    debug(`(7) Collecting Types: "${JSON.stringify(typesToInclude)}"`);
     let all = {};
     res.forEach((result) => {
 
       result.$input.obj.forEach((o) => {
         //create semantic type if not included
         let type = o._leafSemanticType;
-        if (!Object.hasOwnProperty.call(all, type)) {
-          all[type] = {};
-        }
-        //get original and aliases
-        let original = result.$input.original;
-        let original_aliases = new Set();
-        for (const prefix in o._dbIDs) {
-          original_aliases.add(prefix + ':' + o._dbIDs[prefix]);
-        }
-        original_aliases = [...original_aliases];
-        //check and add only unique
-        let was_found = false;
-        original_aliases.forEach((alias) => {
-          if (Object.hasOwnProperty.call(all[type], alias)) {
-            was_found = true;
+        if (typesToInclude.includes(type) || 
+          typesToInclude.includes('NamedThing') ||
+          typesToInclude.toString().includes(type)) {
+          if (!Object.hasOwnProperty.call(all, type)) {
+            all[type] = {};
           }
-        });
-        if (!was_found) {
-          all[type][original] = original_aliases;
+          //get original and aliases
+          let original = result.$input.original;
+          let original_aliases = new Set();
+          for (const prefix in o._dbIDs) {
+            original_aliases.add(prefix + ':' + o._dbIDs[prefix]);
+          }
+          original_aliases = [...original_aliases];
+          //check and add only unique
+          let was_found = false;
+          original_aliases.forEach((alias) => {
+            if (Object.hasOwnProperty.call(all[type], alias)) {
+              was_found = true;
+            }
+          });
+          if (!was_found) {
+            all[type][original] = original_aliases;
+          }
         }
       });
 
       result.$output.obj.forEach((o) => {
         //create semantic type if not included
         let type = o._leafSemanticType;
-        if (!Object.hasOwnProperty.call(all, type)) {
-          all[type] = {};
-        }
-        //get original and aliases
-        let original = result.$output.original;
-        let original_aliases = new Set();
-        for (const prefix in o._dbIDs) {
-          original_aliases.add(prefix + ':' + o._dbIDs[prefix]);
-        }
-        original_aliases = [...original_aliases];
-        //check and add only unique
-        let was_found = false;
-        original_aliases.forEach((alias) => {
-          if (Object.hasOwnProperty.call(all[type], alias)) {
-            was_found = true;
+        if (typesToInclude.includes(type) || 
+          typesToInclude.includes('NamedThing') ||
+          typesToInclude.toString().includes(type))  {
+          if (!Object.hasOwnProperty.call(all, type)) {
+            all[type] = {};
           }
-        });
-        if (!was_found) {
-          all[type][original] = original_aliases;
+          //get original and aliases
+          let original = result.$output.original;
+          let original_aliases = new Set();
+          for (const prefix in o._dbIDs) {
+            original_aliases.add(prefix + ':' + o._dbIDs[prefix]);
+          }
+          original_aliases = [...original_aliases];
+          //check and add only unique
+          let was_found = false;
+          original_aliases.forEach((alias) => {
+            if (Object.hasOwnProperty.call(all[type], alias)) {
+              was_found = true;
+            }
+          });
+          if (!was_found) {
+            all[type][original] = original_aliases;
+          }
         }
       });
       
     });
     // {Gene:{'id': ['alias']}}
-    debug(`Entity ids in results: ${JSON.stringify(Object.keys(all))}`);
+    debug(`Collected entity ids in results: ${JSON.stringify(Object.keys(all))}`);
     return all;
   }
 
@@ -137,11 +148,19 @@ module.exports = class UpdatedExeEdge {
   }
 
   updateNodesCuries(res, reverse) {
+    //update node queried (1) ---> (update)
     let curies_by_semantic_type = this.extractCuriesFromResponse(res, reverse);
     let combined_curies = this._combineCuries(curies_by_semantic_type);
     reverse ?
     this.qEdge.subject.updateCuries(combined_curies) :
     this.qEdge.object.updateCuries(combined_curies);
+    //update node used as input (1 [update]) ---> ()
+    let curies_by_semantic_type_2 = this.extractCuriesFromResponse(res, !reverse);
+    let combined_curies_2 = this._combineCuries(curies_by_semantic_type_2);
+    !reverse ?
+    this.qEdge.subject.updateCuries(combined_curies_2) :
+    this.qEdge.object.updateCuries(combined_curies_2);
+    
     //old way was to match by semantic type but wont
     //work with multiple categories
     // this.processCuries(curies_by_semantic_type);

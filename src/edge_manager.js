@@ -146,6 +146,8 @@ module.exports = class EdgeManager {
         let obj_curies = edge.object.curie;
         debug(`'${edge.getID()}' Reversed[${edge.reverse}] (${JSON.stringify(sub_curies.length || 0)})` +
         `--(${JSON.stringify(obj_curies.length || 0)}) entities / (${results.length}) results.`);
+        // debug(`IDS SUB ${JSON.stringify(sub_curies)}`)
+        // debug(`IDS OBJ ${JSON.stringify(obj_curies)}`)
 
         let object_node_ids = edge.reverse ? sub_curies : obj_curies;
         let subject_node_ids = edge.reverse ? obj_curies : sub_curies;
