@@ -19,6 +19,9 @@ npm i @biothings-explorer/query_graph_handler
 const handler = require("@biothings-explorer/query_graph_handler");
 const queryHandler = new handler.TRAPIQueryHandler();
 const oneHopQuery = {
+    "workflow": [
+        {"id": "lookup"}
+    ],
     "message": {
         "query_graph": {
             "edges": {
@@ -50,6 +53,9 @@ console.log(queryHandler.getResponse())
 
 ```json
 {
+    "workflow": [
+        {"id": "lookup"}
+    ],
     "message": {
         "query_graph": {
             "edges": {
@@ -1771,6 +1777,9 @@ console.log(queryHandler.getResponse())
 const handler = require("@biothings-explorer/query_graph_handler");
 const queryHandler = new handler.TRAPIQueryHandler();
 const multiHopQuery = {
+    "workflow": [
+        {"id": "lookup"}
+    ],
     "message": {
         "query_graph": {
             "nodes": {
@@ -1809,6 +1818,9 @@ console.log(queryHandler.getResponse())
 
 ```json
 {
+    "workflow": [
+        {"id": "lookup"}
+    ],
     "message": {
         "query_graph": {
             "nodes": {
@@ -7461,6 +7473,9 @@ console.log(queryHandler.getResponse())
 const handler = require("@biothings-explorer/query_graph_handler");
 const queryHandler = new handler.TRAPIQueryHandler();
 const branchedQuery = {
+    "workflow": [
+        {"id": "lookup"}
+    ],
     "message": {
         "query_graph": {
             "nodes": {
@@ -7498,6 +7513,9 @@ console.log(queryHandler.getResponse())
 
 ```json
 {
+    "workflow": [
+        {"id": "lookup"}
+    ],
     "message": {
         "query_graph": {
             "nodes": {
@@ -87547,6 +87565,9 @@ console.log(queryHandler.getResponse())
 const handler = require("@biothings-explorer/query_graph_handler");
 const queryHandler = new handler.TRAPIQueryHandler();
 const multiPredicatesQuery = {
+    "workflow": [
+        {"id": "lookup"}
+    ],
     "message": {
         "query_graph": {
             "nodes": {
@@ -87572,4 +87593,3 @@ queryHandler.setQueryGraph(multiPredicatesQuery);
 await queryHandler.query();
 console.log(queryHandler.getResponse())
 ```
-

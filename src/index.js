@@ -35,6 +35,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   getResponse() {
     this.bteGraph.notify();
     return {
+      workflow: [
+        {id: "lookup"}
+      ],
       message: {
         query_graph: this.queryGraph,
         knowledge_graph: this.knowledgeGraph.kg,
