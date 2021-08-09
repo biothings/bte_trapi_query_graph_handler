@@ -28,16 +28,16 @@ const oneHopQuery = {
                 "e00": {
                     "object": "n01",
                     "subject": "n00",
-                    "predicate": "biolink:functional_association"
+                    "predicates": ["biolink:functional_association"]
                 }
             },
             "nodes": {
                 "n00": {
-                    "category": "biolink:Gene",
-                    "id": "ENSEMBL:ENSG00000123374"
+                    "categories": ["biolink:Gene"],
+                    "ids": ["ENSEMBL:ENSG00000123374"]
                 },
                 "n01": {
-                    "category": "biolink:BiologicalProcess"
+                    "categories": ["biolink:BiologicalProcess"]
                 }
             }
         }
@@ -1784,14 +1784,14 @@ const multiHopQuery = {
         "query_graph": {
             "nodes": {
                 "n0": {
-                    "category": "biolink:Disease",
-                    "id": "MONDO:0005737"
+                    "categories": ["biolink:Disease"],
+                    "ids": ["MONDO:0005737"]
                 },
                 "n1": {
-                    "category": "biolink:Gene"
+                    "categories": ["biolink:Gene"]
                 },
                 "n2": {
-                    "category": "biolink:ChemicalSubstance"
+                    "categories": ["biolink:SmallMolecule"]
                 }
             },
             "edges": {
@@ -7480,14 +7480,14 @@ const branchedQuery = {
         "query_graph": {
             "nodes": {
                 "n0": {
-                    "category": "biolink:Disease",
-                    "id": "MONDO:0005737"
+                    "categories": ["biolink:Disease"],
+                    "ids": ["MONDO:0005737"]
                 },
                 "n1": {
-                    "category": "biolink:Gene"
+                    "categories": ["biolink:Gene"]
                 },
                 "n2": {
-                    "category": "biolink:ChemicalSubstance"
+                    "categories": ["biolink:SmallMolecule"]
                 }
             },
             "edges": {
@@ -87572,18 +87572,18 @@ const multiPredicatesQuery = {
         "query_graph": {
             "nodes": {
                 "n0": {
-                    "category": "biolink:Disease",
-                    "id": "MONDO:0005737"
+                    "categories": ["biolink:Disease"],
+                    "ids": ["MONDO:0005737"]
                 },
                 "n1": {
-                    "category": "biolink:ChemicalSubstance"
+                    "categories": ["biolink:SmallMolecule"]
                 }
             },
             "edges": {
                 "e01": {
                     "subject": "n0",
                     "object": "n1",
-                    "predicate": ["biolink:treated_by", "biolink:affected_by"]
+                    "predicates": ["biolink:treated_by", "biolink:affected_by"]
                 }
             }
         }

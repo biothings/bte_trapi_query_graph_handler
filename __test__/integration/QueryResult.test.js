@@ -5,7 +5,7 @@ const QueryResult = require('../../src/query_results');
 describe('Testing QueryResults Module', () => {
   describe('Single Record', () => {
     const gene_node1 = new QNode('n1', { categories: 'Gene', ids: 'NCBIGene:632' });
-    const chemical_node1 = new QNode('n2', { categories: 'ChemicalSubstance' });
+    const chemical_node1 = new QNode('n2', { categories: 'SmallMolecule' });
     const edge1 = new QEdge('e01', { subject: gene_node1, object: chemical_node1 });
     const record = {
       $edge_metadata: {
