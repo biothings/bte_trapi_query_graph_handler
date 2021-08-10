@@ -67,8 +67,8 @@ module.exports = class UpdatedExeEdge {
     //a main ID and all of it's aliases
     debug(`(7) Updating Entities in "${this.qEdge.getID()}"`);
     let typesToInclude = isReversed ?
-    this.qEdge.subject.category.map(category => utils.removeBioLinkPrefix(category)) :
-    this.qEdge.object.category.map(category => utils.removeBioLinkPrefix(category));
+    this.qEdge.subject.getCategories() :
+    this.qEdge.object.getCategories();
     debug(`(7) Collecting Types: "${JSON.stringify(typesToInclude)}"`);
     let all = {};
     res.forEach((result) => {
