@@ -88,7 +88,26 @@ module.exports = class UpdatedExeEdge {
           if (Object.hasOwnProperty.call(o, '_dbIDs')) {
             let original_aliases = new Set();
             for (const prefix in o._dbIDs) {
-              original_aliases.add(prefix + ':' + o._dbIDs[prefix]);
+              //check if array
+              if (Array.isArray(o._dbIDs[prefix])) {
+                o._dbIDs[prefix].forEach((single_alias) => {
+                  if (single_alias.includes(':')) {
+                    //value already has prefix
+                    original_aliases.add(single_alias);
+                  }else{
+                    //concat with prefix
+                    original_aliases.add(prefix + ':' + single_alias);
+                  }
+                });
+              }else{
+                if (o._dbIDs[prefix].includes(':')) {
+                  //value already has prefix
+                  original_aliases.add(o._dbIDs[prefix]);
+                }else{
+                  //concat with prefix
+                  original_aliases.add(prefix + ':' + o._dbIDs[prefix]);
+                }
+              }
             }
             original_aliases = [...original_aliases];
             //check and add only unique
@@ -119,7 +138,26 @@ module.exports = class UpdatedExeEdge {
           if (Object.hasOwnProperty.call(o, '_dbIDs')){
             let original_aliases = new Set();
             for (const prefix in o._dbIDs) {
-              original_aliases.add(prefix + ':' + o._dbIDs[prefix]);
+              //check if array
+              if (Array.isArray(o._dbIDs[prefix])) {
+                o._dbIDs[prefix].forEach((single_alias) => {
+                  if (single_alias.includes(':')) {
+                    //value already has prefix
+                    original_aliases.add(single_alias);
+                  }else{
+                    //concat with prefix
+                    original_aliases.add(prefix + ':' + single_alias);
+                  }
+                });
+              }else{
+                if (o._dbIDs[prefix].includes(':')) {
+                  //value already has prefix
+                  original_aliases.add(o._dbIDs[prefix]);
+                }else{
+                  //concat with prefix
+                  original_aliases.add(prefix + ':' + o._dbIDs[prefix]);
+                }
+              }
             }
             original_aliases = [...original_aliases];
             //check and add only unique

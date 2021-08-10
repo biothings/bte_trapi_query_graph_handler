@@ -43,6 +43,7 @@ module.exports = class QNode {
             this.curie = Object.keys(curies);
         }else{
             debug(`Node "${this.id}" intersecting (${this.curie.length})/(${Object.keys(curies).length}) curies...`);
+            // debug(`Intersecting (${JSON.stringify(this.curie)})/(${JSON.stringify(curies)})`);
             let intersection = this.intersectCuries(this.curie, curies);
             debug(`Node "${this.id}" kept (${intersection.length}) curies...`);
             //keep outcome of intersection to make filtering strict even if no results
@@ -58,11 +59,21 @@ module.exports = class QNode {
         //goal is to intersect both and only keep the original ID
         //of items that exist in both
         for (const original in newCuries) {
-            newCuries[original].forEach((alias) => {
-                if (curies.includes(alias)) {
+            if (Array.isArray(newCuries[original])) {
+                if (curies.includes(original)) {
+                    keep.add(original);
+                }else{
+                    newCuries[original].forEach((alias) => {
+                        if (curies.includes(alias)) {
+                            keep.add(original);
+                        }
+                    });
+                }
+            }else{
+                if (curies.includes(newCuries[original])) {
                     keep.add(original);
                 }
-            });
+            }
         }
         return [...keep];
     }
