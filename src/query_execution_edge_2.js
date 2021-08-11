@@ -84,7 +84,7 @@ module.exports = class UpdatedExeEdge {
           }
           //get original and aliases
           let original = result.$input.original;
-
+          //#1 prefer equivalent ids
           if (Object.hasOwnProperty.call(o, '_dbIDs')) {
             let original_aliases = new Set();
             for (const prefix in o._dbIDs) {
@@ -121,6 +121,18 @@ module.exports = class UpdatedExeEdge {
               all[type][original] = original_aliases;
             }
           }
+          //else #2 check curie
+          else if(Object.hasOwnProperty.call(o, 'curie')) {
+            if (Array.isArray( o.curie)) {
+              all[type][original] = o.curie;
+            }else{
+              all[type][original] = [o.curie];
+            }
+          }
+          //#3 last resort check original
+          else{
+            all[type][original] = [original];
+          }
         }
       });
 
@@ -135,6 +147,7 @@ module.exports = class UpdatedExeEdge {
           }
           //get original and aliases
           let original = result.$output.original;
+          //#1 prefer equivalent ids
           if (Object.hasOwnProperty.call(o, '_dbIDs')){
             let original_aliases = new Set();
             for (const prefix in o._dbIDs) {
@@ -171,12 +184,24 @@ module.exports = class UpdatedExeEdge {
               all[type][original] = original_aliases;
             }
           }
+          //else #2 check curie
+          else if(Object.hasOwnProperty.call(o, 'curie')) {
+            if (Array.isArray( o.curie)) {
+              all[type][original] = o.curie;
+            }else{
+              all[type][original] = [o.curie];
+            }
+          }
+          //#3 last resort check original
+          else{
+            all[type][original] = [original];
+          }
         }
       });
       
     });
     // {Gene:{'id': ['alias']}}
-    debug(`Collected entity ids in results: ${JSON.stringify(Object.keys(all))}`);
+    debug(`Collected entity ids in results: ${JSON.stringify(all)}`);
     return all;
   }
 

@@ -163,25 +163,25 @@ module.exports = class EdgeManager {
                 //#1 check equivalent ids
                 if (Object.hasOwnProperty.call(o, '_dbIDs')) {
                     for (const prefix in o._dbIDs) {
-                        //if key value is an array
-                        //eg MONDO: ['MONDO:0005737']
+                        //check if array
                         if (Array.isArray(o._dbIDs[prefix])) {
-                            o._dbIDs[prefix].forEach((v) => {
-                                //check if alias key value already has prefix
-                                //like MONDO: MONDO:0005737
-                                let alias = v.includes(':') ? 
-                                v : prefix + ':' + v;
-                                ids.add(alias);
+                            o._dbIDs[prefix].forEach((single_alias) => {
+                            if (single_alias.includes(':')) {
+                                //value already has prefix
+                                ids.add(single_alias);
+                            }else{
+                                //concat with prefix
+                                ids.add(prefix + ':' + single_alias);
+                            }
                             });
-                        }
-                        //else if simple string 
-                        //eg. //eg MONDO: 'MONDO:0005737'
-                        else{
-                            //check if alias key value already has prefix
-                            //like MONDO: MONDO:0005737
-                            let alias = o._dbIDs[prefix].includes(':') ? 
-                            o._dbIDs[prefix] : prefix + ':' + o._dbIDs[prefix];
-                            ids.add(alias);
+                        }else{
+                            if (o._dbIDs[prefix].includes(':')) {
+                                //value already has prefix
+                                ids.add(o._dbIDs[prefix]);
+                            }else{
+                                //concat with prefix
+                                ids.add(prefix + ':' + o._dbIDs[prefix]);
+                            }
                         }
                     }
                 }
@@ -204,25 +204,25 @@ module.exports = class EdgeManager {
                 //#1 check equivalent ids
                 if (Object.hasOwnProperty.call(o, '_dbIDs')) {
                     for (const prefix in o._dbIDs) {
-                        //if key value is an array
-                        //eg MONDO: ['MONDO:0005737']
+                        //check if array
                         if (Array.isArray(o._dbIDs[prefix])) {
-                            o._dbIDs[prefix].forEach((v) => {
-                                //check if alias key value already has prefix
-                                //like MONDO: MONDO:0005737
-                                let alias = v.includes(':') ? 
-                                v : prefix + ':' + v;
-                                o_ids.add(alias);
+                            o._dbIDs[prefix].forEach((single_alias) => {
+                            if (single_alias.includes(':')) {
+                                //value already has prefix
+                                o_ids.add(single_alias);
+                            }else{
+                                //concat with prefix
+                                o_ids.add(prefix + ':' + single_alias);
+                            }
                             });
-                        }
-                        //else if simple string 
-                        //eg. //eg MONDO: 'MONDO:0005737'
-                        else{
-                            //check if alias key value already has prefix
-                            //like MONDO: MONDO:0005737
-                            let alias = o._dbIDs[prefix].includes(':') ? 
-                            o._dbIDs[prefix] : prefix + ':' + o._dbIDs[prefix];
-                            o_ids.add(alias);
+                        }else{
+                            if (o._dbIDs[prefix].includes(':')) {
+                                //value already has prefix
+                                o_ids.add(o._dbIDs[prefix]);
+                            }else{
+                                //concat with prefix
+                                o_ids.add(prefix + ':' + o._dbIDs[prefix]);
+                            }
                         }
                     }
                 }
