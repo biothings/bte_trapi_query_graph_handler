@@ -201,7 +201,7 @@ module.exports = class UpdatedExeEdge {
       
     });
     // {Gene:{'id': ['alias']}}
-    debug(`Collected entity ids in results: ${JSON.stringify(all)}`);
+    debug(`Collected entity ids in results: ${JSON.stringify(Object.keys(all))}`);
     return all;
   }
 
