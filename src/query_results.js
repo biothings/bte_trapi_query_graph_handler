@@ -1,3 +1,4 @@
+const { cloneDeep } = require('lodash');
 const GraphHelper = require('./helper');
 const helper = new GraphHelper();
 const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
@@ -12,6 +13,25 @@ module.exports = class QueryResult {
     this.cachedQueryResults = [];
   }
 
+  /* Trace and record the path(s) backwards for one hop.
+   *
+   *        -> 3
+   *       /
+   * 1 -> 2 -> 4
+   *       \
+   *        -> 5
+   *
+   * getResults calls this method for every node in this.cachedQueryResults[0]
+   * which represents every final node (3, 4, 5 in the example above).
+   *
+   * This method adds the edge and node information for one hop back
+   * towards the initial node(s) (initial node is 1 in this case).
+   * We keep calling this method until we reach the initial node(s).
+   *
+   * A `result` represents one path from initial to final node, e.g.,
+   * 1 -> 2 -> 3 in the example above.
+   *
+   */
   _addRemainingCachedQueryResults(previousInputNodeID, results, result, cachedQueryResultIndex = 1) {
     if (cachedQueryResultIndex >= this.cachedQueryResults.length) {
       return results;
@@ -24,7 +44,28 @@ module.exports = class QueryResult {
         // Clone deep because we're tracing a forked path, so we want to create
         // an additional result that is separate and independent.
         // Previous input node matched multiple output nodes and/or predicates.
-        result = Object.assign({}, result);
+
+        /* TODO: verify this works correctly for all relevant use cases.
+         *
+         * A path can fork as we trace it back, e.g.:
+         *
+         *        -> 4 -> 6
+         *       /
+         *   -> 2
+         *  /    \
+         * 1      -> 5 -> 7
+         *  \
+         *   -> 3 -> 5 -> 7
+         *
+         * In this case, the previous input node 5 matched multiple output nodes and/or predicates.
+         * For our path 5 -> 7, we need to clone deep in order to create an
+         * additional result in order to have two separate and independent
+         * results for 2 and 3:
+         * 2 -> 5 -> 7
+         * 3 -> 5 -> 7
+        // 
+         */
+        result = cloneDeep(result);
         results.push(result);
       }
 
@@ -50,6 +91,10 @@ module.exports = class QueryResult {
 
     const results = [];
 
+    // this.cachedQueryResults[0] represents the final hop.
+    // If there are no hops, we don't have any results and skip this step.
+    // Otherwise, for every final hop, we create a result object and then pass
+    // it to _addRemainingCachedQueryResults for further processing.
     this.cachedQueryResults[0] && this.cachedQueryResults[0].forEach((cachedRecords, outputNodeID) => {
       cachedRecords.forEach((cachedRecord) => {
         const result = {
