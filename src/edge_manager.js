@@ -1,4 +1,3 @@
-const { endsWith } = require('lodash');
 const _ = require('lodash');
 const LogEntry = require('./log_entry');
 const debug = require('debug')('bte:biothings-explorer-trapi:edge-manager');
@@ -149,7 +148,6 @@ module.exports = class EdgeManager {
         `--(${JSON.stringify(obj_curies.length || 0)}) entities / (${results.length}) results.`);
         // debug(`IDS SUB ${JSON.stringify(sub_curies)}`)
         // debug(`IDS OBJ ${JSON.stringify(obj_curies)}`)
-
         let object_node_ids = edge.reverse ? sub_curies : obj_curies;
         let subject_node_ids = edge.reverse ? obj_curies : sub_curies;
 
@@ -194,8 +192,6 @@ module.exports = class EdgeManager {
                     ids.add(res.$input.original);
                 }
                 //check ids
-                // debug(`CHECKING INPUTS ${JSON.stringify([...ids])}`);
-                // debug(`AGAINST ${JSON.stringify(subject_node_ids)}`);
                 inputMatch = _.intersection([...ids], subject_node_ids).length;
             });
             //check obj curies against $output ids
@@ -235,8 +231,6 @@ module.exports = class EdgeManager {
                     o_ids.add(res.$output.original);
                 }
                 //check ids
-                // debug(`CHECKING OUTPUTS ${JSON.stringify([...o_ids])}`);
-                // debug(`AGAINST ${JSON.stringify(object_node_ids)}`);
                 outputMatch = _.intersection([...o_ids], object_node_ids).length;
             });
             //if both ends match then keep result
@@ -313,5 +307,115 @@ module.exports = class EdgeManager {
                 `Edge manager collected (${this.results.length}) results!`
             ).getLog(),
         );
+    }
+
+    collectResults() {
+        //go through edges and collect all results
+        let results = [];
+        let brokenChain = false;
+        let brokenEdges = [];
+        debug(`(11) Collecting results...`);
+        //First: go through edges and filter that each edge is holding
+        this.edges.forEach((edge) => {
+            let filtered_res = edge.results;
+            if (filtered_res.length == 0) {
+                this.logs.push(
+                    new LogEntry(
+                        'DEBUG',
+                        null,
+                        `Warning: Edge '${edge.getID()}' resulted in (0) results.`
+                    ).getLog(),
+                );
+                brokenChain = true;
+                brokenEdges.push(edge.getID());
+            }
+            this.logs = [...this.logs, ...edge.logs];
+            //collect results
+            results = results.concat(filtered_res);
+            debug(`(11) '${edge.getID()}' keeps (${filtered_res.length}) results!`);
+            this.logs.push(
+                new LogEntry(
+                    'DEBUG',
+                    null,
+                    `'${edge.getID()}' keeps (${filtered_res.length}) results!`
+                ).getLog(),
+            );
+            debug(`----------`);
+        });
+        if (brokenChain) {
+            results = [];
+            this.logs.push(
+                new LogEntry(
+                    'DEBUG',
+                    null,
+                    `Edges ${JSON.stringify(brokenEdges)} ` +
+                    `resulted in (0) results. No complete paths can be formed.`
+                ).getLog(),
+            );
+            debug(`(12) Edges ${JSON.stringify(brokenEdges)} ` +
+            `resulted in (0) results. No complete paths can be formed.`);
+        }
+        //Second: collected results
+        this.results = results;
+        debug(`(12) Collected (${this.results.length}) results!`);
+        this.logs.push(
+            new LogEntry(
+                'DEBUG',
+                null,
+                `Edge manager collected (${this.results.length}) results!`
+            ).getLog(),
+        );
+    }
+
+    updateEdgeResults(current_edge) {
+        let filtered_res = this._filterEdgeResults(current_edge);
+        //this triggers node update
+        current_edge.storeResults(filtered_res);
+    }
+
+    updateNeighborsEdgeResults(current_edge) {
+        debug(`Updating neighbors...`);
+        let not_this_edge = current_edge.getID();
+        //get neighbors of this edges subject that are not this edge
+        let left_connections = current_edge.qEdge.subject.getConnections();
+        left_connections = left_connections.filter((edge_id) => edge_id !== not_this_edge);
+        //get neighbors of this edges object that are not this edge
+        let right_connections = current_edge.qEdge.object.getConnections();
+        right_connections = right_connections.filter((edge_id) => edge_id !== not_this_edge);
+        debug(`(${left_connections})<--edge neighbors-->(${right_connections})`);
+        if (left_connections.length) {
+            //find edge by id
+            left_connections.forEach((neighbor_id) => {
+                let edge = this.edges.find((edge) => edge.getID() == neighbor_id);
+                if (edge && edge.results.length) {
+                    debug(`Updating "${edge.getID()}" neighbor edge of ${not_this_edge}`);
+                    debug(`Updating neighbor (X)<----()`);
+                    this.updateEdgeResults(edge);
+                }
+            });
+        }
+
+        if (right_connections.length) {
+            //find edge by id
+            right_connections.forEach((neighbor_id) => {
+                let edge = this.edges.find((edge) => edge.getID() == neighbor_id);
+                if (edge && edge.results.length) {
+                    debug(`Updating "${edge.getID()}" neighbor edge of ${not_this_edge}`);
+                    debug(`Updating neighbor ()---->(X)`);
+                    this.updateEdgeResults(edge);
+                }
+            });
+        }
+    }
+
+    updateAllOtherEdges(current_edge) {
+        debug(`Updating all other edges...`);
+        let not_this_edge = current_edge.getID();
+        this.edges.forEach((edge) => {
+            if (edge.getID() !== not_this_edge && edge.results.length) {
+                debug(`Updating "${edge.getID()}"...`);
+                this.updateEdgeResults(edge);
+            }
+        });
     }
 };

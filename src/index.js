@@ -159,14 +159,18 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       if (res.length === 0) {
         return;
       }
-      //storing results will trigger
-      //a node entity count update
+      //storing results will trigger a node entity count update
       current_edge.storeResults(res);
-      debug(`(10) Edge successfully queried.`);
+      //filter results
+      manager.updateEdgeResults(current_edge);
+      //update and filter neighbors
+      manager.updateNeighborsEdgeResults(current_edge);
+      //edge all done
       current_edge.executed = true;
+      debug(`(10) Edge successfully queried.`);
     };
     //after all edges have been executed collect all results
-    manager.gatherResults();
+    manager.collectResults();
     this.logs = [...this.logs, ...manager.logs];
     //mock handler created only to update query graph and results
     //TODO find a way to just update these with no mock handler

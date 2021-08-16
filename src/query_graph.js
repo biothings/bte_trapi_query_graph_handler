@@ -112,6 +112,10 @@ module.exports = class QueryGraphHandler {
           object: this.nodes[this.queryGraph.edges[edge_id].object],
         },
       };
+      //store in each node ids of edges connected to them
+      this.nodes[this.queryGraph.edges[edge_id].subject].updateConnection(edge_id);
+      this.nodes[this.queryGraph.edges[edge_id].object].updateConnection(edge_id);
+
       edges[edge_id] = new QEdge(edge_id, edge_info);
     }
     this.logs.push(

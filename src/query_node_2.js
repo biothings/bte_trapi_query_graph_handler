@@ -18,6 +18,17 @@ module.exports = class QNode {
         //when choosing a lower entity count a node with higher count
         // might be told to store its curies temporarily
         this.held_curie = [];
+        //list of edge ids that are connected to this node
+        this.connected_to = new Set();
+    }
+
+    updateConnection(edge_id) {
+        this.connected_to.add(edge_id);
+        debug(`"${this.id}" connected to "${[...this.connected_to]}"`);
+    }
+
+    getConnections() {
+        return [...this.connected_to];
     }
 
     holdCurie() {
@@ -52,30 +63,26 @@ module.exports = class QNode {
         this.entity_count = this.curie.length;
     }
 
+    _combineCuriesIntoList(curies) {
+        // curies {originalID : ['aliasID']}
+        //combine all curies into single list for easy intersection
+        let combined  = new Set();
+        for (const original in curies) {
+            !Array.isArray(curies[original]) ?
+            combined.add(curies[original]) :
+            curies[original].forEach((curie) => {
+                combined.add(curie);
+            });
+        }
+        return [...combined];
+    }
+
     intersectCuries(curies, newCuries) {
-        let keep = new Set();
+        // let keep = new Set();
         //curies is a list ['ID']
         // new curies {originalID : ['aliasID']}
-        //goal is to intersect both and only keep the original ID
-        //of items that exist in both
-        for (const original in newCuries) {
-            if (Array.isArray(newCuries[original])) {
-                if (curies.includes(original)) {
-                    keep.add(original);
-                }else{
-                    newCuries[original].forEach((alias) => {
-                        if (curies.includes(alias)) {
-                            keep.add(original);
-                        }
-                    });
-                }
-            }else{
-                if (curies.includes(newCuries[original])) {
-                    keep.add(original);
-                }
-            }
-        }
-        return [...keep];
+        let all_new_curies = this._combineCuriesIntoList(newCuries);
+        return _.intersection(curies, all_new_curies );
     }
 
     getID() {
