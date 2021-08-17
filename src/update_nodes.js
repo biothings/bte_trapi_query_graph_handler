@@ -1,5 +1,4 @@
 const id_resolver = require('biomedical_id_resolver');
-const resolve = require('biomedical-id-resolver-sri');
 const _ = require('lodash');
 const debug = require('debug')('bte:biothings-explorer-trapi:nodeUpdateHandler');
 
@@ -38,7 +37,7 @@ module.exports = class NodesUpdateHandler {
   async _getEquivalentIDs(curies) {
     // const resolver = new id_resolver.Resolver('biolink');
     // const equivalentIDs = await resolver.resolve(curies);
-    const equivalentIDs = await resolve(curies);
+    const equivalentIDs = await id_resolver.resolveSRI(curies);
     return equivalentIDs;
   }
 
