@@ -439,7 +439,7 @@ module.exports = class EdgeManager {
             debug(`----------`);
         });
         if (brokenChain) {
-            results = [];
+            results = {};
             this.logs.push(
                 new LogEntry(
                     'DEBUG',
