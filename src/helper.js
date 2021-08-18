@@ -126,4 +126,32 @@ module.exports = class QueryGraphHelper {
       return null;
     }
   }
+
+  // from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set
+  _intersection(setA, setB) {
+      let _intersection = new Set()
+      for (let elem of setB) {
+          if (setA.has(elem)) {
+              _intersection.add(elem)
+          }
+      }
+      return _intersection
+  }
+
+  // see https://stackoverflow.com/a/29585704
+  _cartesian(a) { // a = array of arrays
+    var i, j, l, m, a1, o = [];
+    if (!a || a.length == 0) return a;
+
+    a1 = a.splice(0, 1)[0]; // the first array of a
+    a = this._cartesian(a);
+    for (i = 0, l = a1.length; i < l; i++) {
+      if (a && a.length)
+        for (j = 0, m = a.length; j < m; j++)
+          o.push([a1[i]].concat(a[j]));
+      else
+        o.push([a1[i]]);
+    }
+    return o;
+  }
 };

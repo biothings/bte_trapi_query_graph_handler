@@ -1,174 +1,156 @@
-const { cloneDeep } = require('lodash');
+const { head, keys, toPairs, zipObject } = require('lodash');
 const GraphHelper = require('./helper');
 const helper = new GraphHelper();
 const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
 
 module.exports = class QueryResult {
   constructor() {
-    // Each cachedQueryResult can have multiple cached records.
-    // Note that the shape of these cached records is nothing
-    // like the shape of queryResult and record. We just cache
-    // the minimum data required to be able to build up results
-    // when this.getResults() is called.
-    this.cachedQueryResults = [];
-  }
-
-  /* Trace and record the path(s) backwards for one hop.
-   *
-   *        -> 3
-   *       /
-   * 1 -> 2 -> 4
-   *       \
-   *        -> 5
-   *
-   * getResults calls this method for every node in this.cachedQueryResults[0]
-   * which represents every final node (3, 4, 5 in the example above).
-   *
-   * This method adds the edge and node information for one hop back
-   * towards the initial node(s) (initial node is 1 in this case).
-   * We keep calling this method until we reach the initial node(s).
-   *
-   * A `result` represents one path from initial to final node, e.g.,
-   * 1 -> 2 -> 3 in the example above.
-   *
-   */
-  _addRemainingCachedQueryResults(previousInputNodeID, results, result, cachedQueryResultIndex = 1) {
-    if (cachedQueryResultIndex >= this.cachedQueryResults.length) {
-      return results;
-    }
-
-    const cachedQueryResult = this.cachedQueryResults[cachedQueryResultIndex];
-
-    cachedQueryResult.get(previousInputNodeID).forEach((cachedRecord, i) => {
-      if (i > 0) {
-        // Clone deep because we're tracing a forked path, so we want to create
-        // an additional result that is separate and independent.
-        // Previous input node matched multiple output nodes and/or predicates.
-
-        /* TODO: verify this works correctly for all relevant use cases.
-         *
-         * A path can fork as we trace it back, e.g.:
-         *
-         *        -> 4 -> 6
-         *       /
-         *   -> 2
-         *  /    \
-         * 1      -> 5 -> 7
-         *  \
-         *   -> 3 -> 5 -> 7
-         *
-         * In this case, the previous input node 5 matched multiple output nodes and/or predicates.
-         * For our path 5 -> 7, we need to clone deep in order to create an
-         * additional result in order to have two separate and independent
-         * results for 2 and 3:
-         * 2 -> 5 -> 7
-         * 3 -> 5 -> 7
-        // 
-         */
-        result = cloneDeep(result);
-        results.push(result);
-      }
-
-      result.node_bindings[cachedRecord.inputQueryNodeID] = [
-        {
-          id: cachedRecord.inputNodeID,
-        },
-      ];
-      result.edge_bindings[cachedRecord.queryEdgeID] = [
-        {
-          id: cachedRecord.kgEdgeID,
-        },
-      ];
-
-      this._addRemainingCachedQueryResults(cachedRecord.inputNodeID, results, result, cachedQueryResultIndex + 1);
-    });
+    this.results = [];
   }
 
   getResults() {
-    // Note that we're working "backwards" here.
-    // For every cached record in the final cached query result, we go
-    // "backwards" to trace every path back to the initial input node(s).
-
-    const results = [];
-
-    // this.cachedQueryResults[0] represents the final hop.
-    // If there are no hops, we don't have any results and skip this step.
-    // Otherwise, for every final hop, we create a result object and then pass
-    // it to _addRemainingCachedQueryResults for further processing.
-    this.cachedQueryResults[0] && this.cachedQueryResults[0].forEach((cachedRecords, outputNodeID) => {
-      cachedRecords.forEach((cachedRecord) => {
-        const result = {
-          node_bindings: {
-            [cachedRecord.inputQueryNodeID]: [
-              {
-                id: cachedRecord.inputNodeID,
-              },
-            ],
-            [cachedRecord.outputQueryNodeID]: [
-              {
-                id: cachedRecord.outputNodeID,
-              },
-            ],
-          },
-          edge_bindings: {
-            [cachedRecord.queryEdgeID]: [
-              {
-                id: cachedRecord.kgEdgeID,
-              },
-            ],
-          },
-          //default score issue #200 - TODO: turn to evaluating module eventually
-          score: '1.0',
-        };
-
-        results.push(result);
-
-        this._addRemainingCachedQueryResults(cachedRecord.inputNodeID, results, result, 1);
-      });
-    });
-
-    return results;
+    return this.results;
   }
 
-  update(queryResult) {
-    // Note we're storing the cachedQueryResults backwards, with the last
-    // cachedQueryResult corresponding to the first update(queryResult) call.
+  _getIntersectingPrimaryIDsByNode(dataByEdge, singleEdgeData, seenEdges=new Set()) {
+    const [queryEdgeID, {connected_to, records}] = singleEdgeData;
+    if (!records || records.length === 0) {
+      debug(`queryResult._getIntersectingPrimaryIDsByNode: records empty`);
+      return;
+    }
+    const {intersectingPrimaryIDsByNode} = this;
 
-    debug(`Updating query results now!`);
-    let previousOutputNodeIDs;
-    if (this.cachedQueryResults.length > 0) {
-      const previousCachedQueryResult = this.cachedQueryResults[0];
-      previousOutputNodeIDs = new Set(previousCachedQueryResult.keys());
+    if (seenEdges.has(queryEdgeID)) {
+      return;
+    }
+    seenEdges.add(queryEdgeID);
+
+    const inputQueryNodeID = helper._getInputQueryNodeID(records[0]);
+    const outputQueryNodeID = helper._getOutputQueryNodeID(records[0]);
+
+    // primary IDs like NCBI:1234
+    const inputPrimaryIDs = new Set(records.map(record => {
+      return helper._getInputID(record);
+    }));
+    const outputPrimaryIDs = new Set(records.map(record => {
+      return helper._getOutputID(record);
+    }));
+
+    if (!intersectingPrimaryIDsByNode[inputQueryNodeID]) {
+      intersectingPrimaryIDsByNode[inputQueryNodeID] = inputPrimaryIDs;
     } else {
-      previousOutputNodeIDs = new Set();
+      intersectingPrimaryIDsByNode[inputQueryNodeID] = helper._intersection(
+        intersectingPrimaryIDsByNode[inputQueryNodeID], inputPrimaryIDs
+      );
     }
 
-    const cachedQueryResult = new Map();
+    if (!intersectingPrimaryIDsByNode[outputQueryNodeID]) {
+      intersectingPrimaryIDsByNode[outputQueryNodeID] = outputPrimaryIDs;
+    } else {
+      intersectingPrimaryIDsByNode[outputQueryNodeID] = helper._intersection(
+        intersectingPrimaryIDsByNode[outputQueryNodeID], outputPrimaryIDs
+      );
+    }
 
-    queryResult.forEach((record) => {
-      const inputNodeID = helper._getInputID(record);
-      const outputNodeID = helper._getOutputID(record);
-
-      if (this.cachedQueryResults.length === 0 || previousOutputNodeIDs.has(inputNodeID)) {
-        let cachedRecordsForOutputNodeID;
-        if (cachedQueryResult.has(outputNodeID)) {
-          cachedRecordsForOutputNodeID = cachedQueryResult.get(outputNodeID);
-        } else {
-          cachedRecordsForOutputNodeID = [];
-          cachedQueryResult.set(outputNodeID, cachedRecordsForOutputNodeID);
-        }
-
-        cachedRecordsForOutputNodeID.push({
-          inputQueryNodeID: helper._getInputQueryNodeID(record),
-          inputNodeID: inputNodeID,
-          queryEdgeID: record.$edge_metadata.trapi_qEdge_obj.getID(),
-          kgEdgeID: helper._getKGEdgeID(record),
-          outputQueryNodeID: helper._getOutputQueryNodeID(record),
-          outputNodeID: outputNodeID,
-        });
-      }
+    connected_to.forEach((adjacentQueryEdgeID) => {
+      this._getIntersectingPrimaryIDsByNode(
+        dataByEdge,
+        [adjacentQueryEdgeID, dataByEdge[adjacentQueryEdgeID]],
+        seenEdges
+      )
     });
+  }
 
-    this.cachedQueryResults.unshift(cachedQueryResult);
+  /* With the new generalized query handling, we can safely assume every
+   * call to update contains all the records.
+   */
+  update(dataByEdge) {
+    debug(`Updating query results now!`);
+    this.intersectingPrimaryIDsByNode = {};
+    this.results = [];
+
+    const firstEdgeData = head(toPairs(dataByEdge));
+    if (!firstEdgeData) {
+      return;
+    }
+
+    this._getIntersectingPrimaryIDsByNode(dataByEdge, firstEdgeData);
+
+    const queryNodeIDs = [];
+    const primaryIDLists = [];
+    toPairs(this.intersectingPrimaryIDsByNode)
+      .forEach(([queryNodeID, primaryNodeIDs]) => {
+        queryNodeIDs.push(queryNodeID);
+        primaryIDLists.push(Array.from(primaryNodeIDs))
+      });
+
+    const edgeCount = keys(dataByEdge).length;
+
+    this.results = helper._cartesian(primaryIDLists)
+      .map(combo => {
+        return zipObject(queryNodeIDs, combo);
+      })
+      .map((labeledCombo) => {
+        const validEdges = toPairs(dataByEdge)
+          .map(([queryEdgeID, {connected_to, records}]) => {
+            const validRecords = records.filter((record) => {
+              const inputQueryNodeID = helper._getInputQueryNodeID(record);
+              const outputQueryNodeID = helper._getOutputQueryNodeID(record);
+
+              const inputPrimaryID = helper._getInputID(record);
+              const outputPrimaryID = helper._getOutputID(record);
+
+              return (labeledCombo[inputQueryNodeID] == inputPrimaryID) &&
+                (labeledCombo[outputQueryNodeID] == outputPrimaryID);
+            });
+
+            return {
+              queryEdgeID,
+              validRecords
+            };
+          })
+          .filter(({queryEdgeID, validRecords}) => {
+            return validRecords.length === 1;
+          })
+          .map(({queryEdgeID, validRecords}) => {
+            return {queryEdgeID, record: validRecords[0]};
+          });
+
+        return validEdges;
+      })
+      .filter(validEdges => {
+        return validEdges.length === edgeCount;
+      })
+      .map(validEdges => {
+        //default score issue #200 - TODO: turn to evaluating module eventually
+        const result = {node_bindings: {}, edge_bindings: {}, score: '1.0'};
+        validEdges.forEach(({queryEdgeID, record}) => {
+          const inputQueryNodeID = helper._getInputQueryNodeID(record);
+          const outputQueryNodeID = helper._getOutputQueryNodeID(record);
+
+          const inputPrimaryID = helper._getInputID(record);
+          const outputPrimaryID = helper._getOutputID(record);
+
+          // NOTE: except for the first time, the following will already be set,
+          //       but it shouldn't matter if we set it again to the same value.
+          result.node_bindings[inputQueryNodeID] = [
+            {
+              id: inputPrimaryID
+            },
+          ];
+
+          result.node_bindings[outputQueryNodeID] = [
+            {
+              id: outputPrimaryID
+            },
+          ];
+          result.edge_bindings[queryEdgeID] = [
+            {
+              id: helper._getKGEdgeID(record)
+            },
+          ];
+        });
+        return result;
+      });
   }
 };
