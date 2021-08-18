@@ -14,12 +14,12 @@ module.exports = class EdgeManager {
     }
 
     getResults() {
-        debug(`(13) Manager reporting combined results...`);
+        debug(`(13) Edge Manager reporting combined results...`);
         return this.results;
     }
 
     getOrganizedResults() {
-        debug(`(13) Manager reporting organized results...${JSON.stringify(this.organized_results, null, 2)}`);
+        debug(`(13) Edge Manager reporting organized results...`);
         return this.organized_results;
     }
 
