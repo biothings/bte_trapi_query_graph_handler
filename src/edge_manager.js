@@ -8,7 +8,19 @@ module.exports = class EdgeManager {
         this.edges = _.flatten(Object.values(edges));
         this.logs = [];
         this.results = [];
+        //organized by edge with refs to connected edges
+        this.organized_results = {};
         this.init();
+    }
+
+    getResults() {
+        debug(`(13) Manager reporting combined results...`);
+        return this.results;
+    }
+
+    getOrganizedResults() {
+        debug(`(13) Manager reporting organized results...${JSON.stringify(this.organized_results, null, 2)}`);
+        return this.organized_results;
     }
 
     init() {
@@ -232,6 +244,25 @@ module.exports = class EdgeManager {
                 }
                 //check ids
                 outputMatch = _.intersection([...o_ids], object_node_ids).length;
+                // debug(`Disease CURIES ${JSON.stringify(object_node_ids)}`);
+                // if (res.$output.original == 'UMLS:C0005695') {
+                //     debug(`FOUND UMLS '${edge.getID()}' ${JSON.stringify(res.$input.original)}--${JSON.stringify(res.$edge_metadata.predicate)}--${JSON.stringify(res.$output.original)}`);
+                //     // debug(`DB IDS ${JSON.stringify(res.$output.obj)}`);
+                //     debug(`WAS IT KEPT? ${inputMatch}/${outputMatch}`);
+                //     debug(`KEPT BECAUSE ${JSON.stringify(_.intersection([...o_ids], object_node_ids))}`);
+                // }
+                // if ([...o_ids].includes('MONDO:0001187')) {
+                //     debug(`FOUND MONDO (1) '${edge.getID()}' ${JSON.stringify(res.$input.original)}--${JSON.stringify(res.$edge_metadata.predicate)}--${JSON.stringify(res.$output.original)}`);
+                //     // debug(`DB IDS ${JSON.stringify(res.$output.obj)}`);
+                //     debug(`WAS IT KEPT? ${inputMatch}/${outputMatch}`);
+                //     debug(`KEPT BECAUSE ${JSON.stringify(_.intersection([...o_ids], object_node_ids))}`);
+                // }
+                // if ([...o_ids].includes('MONDO:0004987')) {
+                //     debug(`FOUND MONDO (2) '${edge.getID()}' ${JSON.stringify(res.$input.original)}--${JSON.stringify(res.$edge_metadata.predicate)}--${JSON.stringify(res.$output.original)}`);
+                //     // debug(`DB IDS ${JSON.stringify(res.$output.obj)}`);
+                //     debug(`WAS IT KEPT? ${inputMatch}/${outputMatch}`);
+                //     debug(`KEPT BECAUSE ${JSON.stringify(_.intersection([...o_ids], object_node_ids))}`);
+                // }
             });
             //if both ends match then keep result
             if (inputMatch && outputMatch) {
@@ -367,6 +398,71 @@ module.exports = class EdgeManager {
         );
     }
 
+    collectOrganizedResults() {
+        //go through edges and collect all results
+        let results = {};
+        let brokenChain = false;
+        let brokenEdges = [];
+        debug(`(11) Collecting results...`);
+        //First: go through edges and filter that each edge is holding
+        this.edges.forEach((edge) => {
+            let edge_ID = edge.getID();
+            let filtered_res = edge.results;
+            if (filtered_res.length == 0) {
+                this.logs.push(
+                    new LogEntry(
+                        'DEBUG',
+                        null,
+                        `Warning: Edge '${edge_ID}' resulted in (0) results.`
+                    ).getLog(),
+                );
+                brokenChain = true;
+                brokenEdges.push(edge_ID);
+            }
+            this.logs = [...this.logs, ...edge.logs];
+            //collect results
+            let connections = edge.qEdge.subject.getConnections().concat(edge.qEdge.object.getConnections());
+            connections = connections.filter(id => id !== edge_ID);
+            connections = new Set(connections);
+            results[edge_ID] = {
+                records: filtered_res,
+                connected_to: [...connections],
+            }
+            debug(`(11) '${edge_ID}' keeps (${filtered_res.length}) results!`);
+            this.logs.push(
+                new LogEntry(
+                    'DEBUG',
+                    null,
+                    `'${edge_ID}' keeps (${filtered_res.length}) results!`
+                ).getLog(),
+            );
+            debug(`----------`);
+        });
+        if (brokenChain) {
+            results = [];
+            this.logs.push(
+                new LogEntry(
+                    'DEBUG',
+                    null,
+                    `Edges ${JSON.stringify(brokenEdges)} ` +
+                    `resulted in (0) results. No complete paths can be formed.`
+                ).getLog(),
+            );
+            debug(`(12) Edges ${JSON.stringify(brokenEdges)} ` +
+            `resulted in (0) results. No complete paths can be formed.`);
+        }
+        //Second: collected results
+        this.organized_results = results;
+        debug(`(12) Collected (${this.results.length}) results!`);
+        this.logs.push(
+            new LogEntry(
+                'DEBUG',
+                null,
+                `Edge manager collected (${this.results.length}) results!`
+            ).getLog(),
+        );
+    }
+
     updateEdgeResults(current_edge) {
         let filtered_res = this._filterEdgeResults(current_edge);
         //this triggers node update
@@ -415,6 +511,7 @@ module.exports = class EdgeManager {
             if (edge.getID() !== not_this_edge && edge.results.length) {
                 debug(`Updating "${edge.getID()}"...`);
                 this.updateEdgeResults(edge);
+                this.updateEdgeResults(current_edge);
             }
         });
     }

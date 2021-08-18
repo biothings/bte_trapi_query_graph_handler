@@ -13,6 +13,7 @@ module.exports = class QNode {
         this.id = id;
         this.category = info.categories || 'NamedThing';
         this.curie = info.ids;
+        this.expanded_curie = {};
         this.entity_count = info.ids ? info.ids.length : 0;
         debug(`(1) Node "${this.id}" has (${this.entity_count}) entities at start.`);
         //when choosing a lower entity count a node with higher count
@@ -39,6 +40,7 @@ module.exports = class QNode {
     }
 
     updateCuries(curies) {
+        // debug(`(8) ALL CURIES "${JSON.stringify(curies)}"`);
         // {originalID : [aliases]}
         if (!this.curie) {
             this.curie = [];
@@ -78,11 +80,26 @@ module.exports = class QNode {
     }
 
     intersectCuries(curies, newCuries) {
-        // let keep = new Set();
         //curies is a list ['ID']
         // new curies {originalID : ['aliasID']}
         let all_new_curies = this._combineCuriesIntoList(newCuries);
         return _.intersection(curies, all_new_curies );
+    }
+
+    intersectCuries_old(curies, newCuries) {
+        let keep = new Set();
+        //curies is a list ['ID']
+        // new curies {originalID : ['aliasID']}
+        //goal is to intersect both and only keep the original ID
+        //of items that exist in both
+        for (const original in newCuries) {
+            newCuries[original].forEach((alias) => {
+                if (curies.includes(alias)) {
+                    keep.add(original);
+                }
+            });
+        }
+        return [...keep];
     }
 
     getID() {
