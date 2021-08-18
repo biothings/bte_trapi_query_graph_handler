@@ -1,8 +1,5 @@
 const meta_kg = require('@biothings-explorer/smartapi-kg');
-const fs = require('fs');
 var path = require('path');
-const util = require('util');
-const readFile = util.promisify(fs.readFile);
 const BatchEdgeQueryHandler = require('./batch_edge_query');
 const QueryGraph = require('./query_graph');
 const KnowledgeGraph = require('./graph/knowledge_graph');
@@ -11,7 +8,6 @@ const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error')
 const debug = require('debug')('bte:biothings-explorer-trapi:main');
 const Graph = require('./graph/graph');
 const EdgeManager = require('./edge_manager');
-const LogEntry = require('./log_entry');
 
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 
@@ -164,18 +160,20 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       //filter results
       manager.updateEdgeResults(current_edge);
       //update and filter neighbors
-      manager.updateNeighborsEdgeResults(current_edge);
+      manager.updateAllOtherEdges(current_edge);
       //edge all done
       current_edge.executed = true;
       debug(`(10) Edge successfully queried.`);
     };
     //after all edges have been executed collect all results
-    manager.collectResults();
+    // manager.collectResults();
+    manager.collectOrganizedResults();
     this.logs = [...this.logs, ...manager.logs];
     //mock handler created only to update query graph and results
     //TODO find a way to just update these with no mock handler
     let mockHandler = this._createBatchEdgeQueryHandlersForCurrent([], kg);
-    mockHandler.notify(manager.results);
+    // mockHandler.notify(manager.getResults());
+    mockHandler.notify(manager.getOrganizedResults());
     debug(`(13) FINISHED`);
     }
 };
