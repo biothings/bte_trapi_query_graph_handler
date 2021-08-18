@@ -130,11 +130,59 @@ module.exports = class QueryResult {
     return results;
   }
 
+  /* With the new generalized query handling, we can safely assume every
+   * call to update contains all the records.
+   */
   update(queryResult) {
     // Note we're storing the cachedQueryResults backwards, with the last
     // cachedQueryResult corresponding to the first update(queryResult) call.
 
     debug(`Updating query results now!`);
+
+    this.cachedQueryResults = [];
+
+    let previousOutputNodeIDs;
+    if (this.cachedQueryResults.length > 0) {
+      const previousCachedQueryResult = this.cachedQueryResults[0];
+      previousOutputNodeIDs = new Set(previousCachedQueryResult.keys());
+    } else {
+      previousOutputNodeIDs = new Set();
+    }
+
+    const cachedQueryResult = new Map();
+
+    queryResult.forEach((record) => {
+      const inputNodeID = helper._getInputID(record);
+      const outputNodeID = helper._getOutputID(record);
+
+      if (this.cachedQueryResults.length === 0 || previousOutputNodeIDs.has(inputNodeID)) {
+        let cachedRecordsForOutputNodeID;
+        if (cachedQueryResult.has(outputNodeID)) {
+          cachedRecordsForOutputNodeID = cachedQueryResult.get(outputNodeID);
+        } else {
+          cachedRecordsForOutputNodeID = [];
+          cachedQueryResult.set(outputNodeID, cachedRecordsForOutputNodeID);
+        }
+
+        cachedRecordsForOutputNodeID.push({
+          inputQueryNodeID: helper._getInputQueryNodeID(record),
+          inputNodeID: inputNodeID,
+          queryEdgeID: record.$edge_metadata.trapi_qEdge_obj.getID(),
+          kgEdgeID: helper._getKGEdgeID(record),
+          outputQueryNodeID: helper._getOutputQueryNodeID(record),
+          outputNodeID: outputNodeID,
+        });
+      }
+    });
+
+    this.cachedQueryResults.unshift(cachedQueryResult);
+  }
+
+  update_old(queryResult) {
+    // Note we're storing the cachedQueryResults backwards, with the last
+    // cachedQueryResult corresponding to the first update(queryResult) call.
+
+    debug(`Updating_old query results now!`);
     let previousOutputNodeIDs;
     if (this.cachedQueryResults.length > 0) {
       const previousCachedQueryResult = this.cachedQueryResults[0];
