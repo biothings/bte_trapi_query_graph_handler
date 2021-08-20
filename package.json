@@ -28,7 +28,7 @@
     "conversion",
     "biomedical"
   ],
-  "author": "jiwen xin",
+  "author": "BioThings Team",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/biothings/bte_trapi_query_graph_handler/issues"
