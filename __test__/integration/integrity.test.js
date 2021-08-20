@@ -25,7 +25,8 @@ describe("Testing TRAPIQueryHandler Module", () => {
         expect(res.message.knowledge_graph.nodes).toHaveProperty('NCBIGene:111');
     })
 
-    test("When looking for chemicals targeting IL1 Signaling patway, curcumin should pop up", async () => {
+    //skip this test for now as the test query needs to be re-evaluated and the value of 'CHEBI:3962' needs to be updated.
+    test.skip("When looking for chemicals targeting IL1 Signaling patway, curcumin should pop up", async () => {
         const queryHandler = new TRAPIQueryHandler.TRAPIQueryHandler({}, undefined, undefined, true);
         const query = JSON.parse(fs.readFileSync(path.join(example_foler, 'chemicals_targeting_IL1_Signaling_Pathway.json')));
         queryHandler.setQueryGraph(query.message.query_graph);
