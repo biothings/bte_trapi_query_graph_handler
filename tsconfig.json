@@ -22,19 +22,5 @@
     "exclude": [
         "node_modules",
         "__tests__/"
-    ],
-    "references": [
-        {
-            "path": "../call-apis"
-        },
-        {
-            "path": "../smartapi-kg"
-        },
-        {
-            "path": "../../biolink-model"
-        },
-        {
-            "path": "../../biomedical_id_resolver"
-        }
     ]
 }
