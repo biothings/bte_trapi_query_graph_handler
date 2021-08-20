@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.18.0](https://github.com/biothings/bte_trapi_query_graph_handler/compare/v1.17.6...v1.18.0) (2021-08-20)
+
+
+### Features
+
+* add caching param in cache handler ([bfaa179](https://github.com/biothings/bte_trapi_query_graph_handler/commit/bfaa17908a0c7ef584b146390659186fe06896dc))
+* add workflow validation for trapi v1.2 ([76a4164](https://github.com/biothings/bte_trapi_query_graph_handler/commit/76a4164bcacfc1a4c9dc74fb5d4024ece7ef0e08))
+
+
+### Bug Fixes
+
+* :bug: check if cachedQueryResults is empty ([062d931](https://github.com/biothings/bte_trapi_query_graph_handler/commit/062d931bcc9d51e966fb65e470bd1897588ee312))
+* :bug: set a default caching expiration ([173f34b](https://github.com/biothings/bte_trapi_query_graph_handler/commit/173f34b51b7a033e4a4a77dae766473ae45d5d6e))
+* biolink v2.1 related fixes ([ff15564](https://github.com/biothings/bte_trapi_query_graph_handler/commit/ff155648163f74ef209ed71666bce860fb5c7f26))
+* cache extra properties just in case ([344aabd](https://github.com/biothings/bte_trapi_query_graph_handler/commit/344aabd2037e172bd3f3970db1e31f0ac7ce00c6))
+* clone records recursively for caching ([b7a71c4](https://github.com/biothings/bte_trapi_query_graph_handler/commit/b7a71c49c7e29f124b87b6b73e2eed747844aa13))
+* code line length reformat ([7000a0b](https://github.com/biothings/bte_trapi_query_graph_handler/commit/7000a0b7eaaa0539648e2d6e231f8e871b941dd6))
+* correctly cache semanticType ([7d21651](https://github.com/biothings/bte_trapi_query_graph_handler/commit/7d21651fc013154d9704e22e89be800f968f3c08))
+* input->output for output node ([aa4a529](https://github.com/biothings/bte_trapi_query_graph_handler/commit/aa4a529a597efc5c33fddbed6796527e2ba7438d))
+* issue [#164](https://github.com/biothings/bte_trapi_query_graph_handler/issues/164). add score. rm unused methods. ([57b4c4b](https://github.com/biothings/bte_trapi_query_graph_handler/commit/57b4c4b756100bcd6faa40c83bc4f637cb752c79))
+* tests pass for issue [#164](https://github.com/biothings/bte_trapi_query_graph_handler/issues/164) ([8dfb3ca](https://github.com/biothings/bte_trapi_query_graph_handler/commit/8dfb3cabdee3e052793d503c7bf4eebddd99601e))
+* WIP for https://github.com/biothings/BioThings_Explorer_TRAPI/issues/164 ([97963b6](https://github.com/biothings/bte_trapi_query_graph_handler/commit/97963b6f3379de4f1ed7ff8e5bedbcd303f34271))
+
 ### [1.17.6](https://github.com/biothings/bte_trapi_query_graph_handler/compare/v1.17.5...v1.17.6) (2021-06-24)
 
 
