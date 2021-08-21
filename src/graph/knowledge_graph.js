@@ -63,16 +63,16 @@ module.exports = class KnowledgeGraph {
   }
 
   _createAttributes(kgEdge) {
-    const attributes = [
+    let attributes = [
       {
-        attribute_type_id: 'provided_by',
+        attribute_type_id: 'biolink:primary_knowledge_source',
         value: Array.from(kgEdge.sources),
-        value_type_id: 'biolink:provided_by',
+        value_type_id: 'biolink:InformationResource',
       },
       {
-        attribute_type_id: 'api',
+        attribute_type_id: 'biolink:aggregator_knowledge_source',
         value: Array.from(kgEdge.apis),
-        value_type_id: 'bts:api',
+        value_type_id: 'biolink:InformationResource',
       },
       {
         attribute_type_id: 'publications',
@@ -80,12 +80,24 @@ module.exports = class KnowledgeGraph {
         value_type_id: 'biolink:publication',
       },
     ];
-    for (const key in kgEdge.attributes) {
-      attributes.push({
-        attribute_type_id: key,
-        value: kgEdge.attributes[key],
-        value_type_id: 'bts:' + key,
-      });
+
+    if (kgEdge.attributes.attributes) {
+      attributes = [
+        {
+          "attribute_type_id": "biolink:aggregator_knowledge_source",
+          "value": "infores:translator-biothings-explorer",
+          "value_type_id": "biolink:InformationResource"
+        }, 
+        ...kgEdge.attributes.attributes
+      ];
+    } else {
+      for (const key in kgEdge.attributes) {
+        attributes.push({
+          attribute_type_id: key,
+          value: kgEdge.attributes[key],
+          value_type_id: 'bts:' + key,
+        });
+      }
     }
     return attributes;
   }
