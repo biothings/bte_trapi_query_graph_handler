@@ -26,9 +26,12 @@ module.exports = class KnowledgeGraph {
       name: kgNode._label,
       attributes: [
         {
-          attribute_type_id: 'equivalent_identifiers',
+          attribute_type_id: 'biolink:xref',
           value: kgNode._curies,
-          value_type_id: 'biolink:id',
+        },
+        {
+          attribute_type_id: 'biolink:synonym',
+          value: kgNode._names,
         },
         {
           attribute_type_id: 'num_source_nodes',
