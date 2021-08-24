@@ -132,8 +132,8 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   _createBatchEdgeQueryHandlersForCurrent(currentEdge, kg) {
     let handler = new BatchEdgeQueryHandler(kg, this.resolveOutputIDs);
     handler.setEdges(currentEdge);
-    handler.subscribe(this.queryResults);
-    handler.subscribe(this.bteGraph);
+    // handler.subscribe(this.queryResults);
+    // handler.subscribe(this.bteGraph);
     return handler;
   }
 
@@ -166,14 +166,13 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       debug(`(10) Edge successfully queried.`);
     };
     //after all edges have been executed collect all results
-    // manager.collectResults();
+    manager.collectResults();
     manager.collectOrganizedResults();
     this.logs = [...this.logs, ...manager.logs];
-    //mock handler created only to update query graph and results
-    //TODO find a way to just update these with no mock handler
-    let mockHandler = this._createBatchEdgeQueryHandlersForCurrent([], kg);
-    // mockHandler.notify(manager.getResults());
-    mockHandler.notify(manager.getOrganizedResults());
-    debug(`(13) FINISHED`);
+    //update query graph
+    this.bteGraph.update(manager.getResults());
+    //update query results
+    this.queryResults.update(manager.getOrganizedResults());
+    debug(`(14) FINISHED`);
     }
 };

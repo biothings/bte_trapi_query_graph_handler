@@ -147,6 +147,7 @@ module.exports = class UpdatedExeEdge {
           }
           //get original and aliases
           let original = result.$output.original;
+          
           //#1 prefer equivalent ids
           if (Object.hasOwnProperty.call(o, '_dbIDs')){
             let original_aliases = new Set();
