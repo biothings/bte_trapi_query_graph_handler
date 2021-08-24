@@ -12,15 +12,31 @@ module.exports = class QNode {
     constructor(id, info) {
         this.id = id;
         this.category = info.categories || 'NamedThing';
+        // mainIDs
         this.curie = info.ids;
+        //mainID : its equivalent ids
         this.expanded_curie = {};
         this.entity_count = info.ids ? info.ids.length : 0;
         debug(`(1) Node "${this.id}" has (${this.entity_count}) entities at start.`);
         //when choosing a lower entity count a node with higher count
         // might be told to store its curies temporarily
         this.held_curie = [];
+        this.held_expanded = {};
         //list of edge ids that are connected to this node
         this.connected_to = new Set();
+        //object-ify array of initial curies
+        this.expandCurie();
+    }
+
+    expandCurie() {
+        if (this.curie && this.curie.length) {
+            this.curie.forEach((id) => {
+                if (!Object.hasOwnProperty.call(id, this.expanded_curie)) {
+                    this.expanded_curie[id] = [id];
+                }
+            });
+            debug(`(1) Node "${this.id}" expanded initial curie. ${JSON.stringify(this.expanded_curie)}`);
+        }
     }
 
     updateConnection(edge_id) {
@@ -36,11 +52,12 @@ module.exports = class QNode {
         //hold curie aside temp
         debug(`(8) Node "${this.id}" holding ${JSON.stringify(this.curie)} aside.`);
         this.held_curie = this.curie;
+        this.held_expanded = this.expanded_curie;
         this.curie = undefined;
+        this.expanded_curie = {};
     }
 
     updateCuries(curies) {
-        // debug(`(8) ALL CURIES "${JSON.stringify(curies)}"`);
         // {originalID : [aliases]}
         if (!this.curie) {
             this.curie = [];
@@ -48,19 +65,23 @@ module.exports = class QNode {
         //bring back held curie
         if (this.held_curie.length) {
             debug(`(8) Node "${this.id}" restored curie.`);
+            //restore
             this.curie = this.held_curie;
+            this.expanded_curie = this.held_expanded;
+            //reset holds
             this.held_curie = [];
+            this.held_expanded = {};
         }
         if (!this.curie.length) {
             debug(`Node "${this.id}" saving (${Object.keys(curies).length}) curies...`);
             this.curie = Object.keys(curies);
+            this.expanded_curie = curies;
         }else{
             debug(`Node "${this.id}" intersecting (${this.curie.length})/(${Object.keys(curies).length}) curies...`);
-            // debug(`Intersecting (${JSON.stringify(this.curie)})/(${JSON.stringify(curies)})`);
-            let intersection = this.intersectCuries(this.curie, curies);
-            debug(`Node "${this.id}" kept (${intersection.length}) curies...`);
-            //keep outcome of intersection to make filtering strict even if no results
-            this.curie = intersection;
+            // let intersection = this.intersectCuries(this.curie, curies);
+            // this.curie = intersection;
+            // debug(`Node "${this.id}" kept (${intersection.length}) curies...`);
+            this.intersectWithExpandedCuries(curies);
         }
         this.entity_count = this.curie.length;
     }
@@ -79,27 +100,32 @@ module.exports = class QNode {
         return [...combined];
     }
 
+    intersectWithExpandedCuries(newCuries) {
+        let keep = {};
+        for (const mainID in newCuries) {
+            let current_list_of_aliases = newCuries[mainID];
+            for (const existingMainID in this.expanded_curie) {
+                let existing_list_of_aliases = this.expanded_curie[existingMainID];
+                let idsMatchFound = _.intersection(current_list_of_aliases, existing_list_of_aliases);
+                if (idsMatchFound.length) {
+                    if (!Object.hasOwnProperty.call(keep, mainID)) {
+                        keep[mainID] = current_list_of_aliases;
+                    }
+                }
+            }
+        }
+        //save expanded curies (main + aliases)
+        this.expanded_curie = keep;
+        //save curies (main ids)
+        this.curie = Object.keys(keep);
+        debug(`Node "${this.id}" kept (${Object.keys(keep).length}) curies...`);
+    }
+
     intersectCuries(curies, newCuries) {
         //curies is a list ['ID']
         // new curies {originalID : ['aliasID']}
         let all_new_curies = this._combineCuriesIntoList(newCuries);
         return _.intersection(curies, all_new_curies );
-    }
-
-    intersectCuries_old(curies, newCuries) {
-        let keep = new Set();
-        //curies is a list ['ID']
-        // new curies {originalID : ['aliasID']}
-        //goal is to intersect both and only keep the original ID
-        //of items that exist in both
-        for (const original in newCuries) {
-            newCuries[original].forEach((alias) => {
-                if (curies.includes(alias)) {
-                    keep.add(original);
-                }
-            });
-        }
-        return [...keep];
     }
 
     getID() {

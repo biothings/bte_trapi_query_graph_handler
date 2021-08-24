@@ -244,25 +244,6 @@ module.exports = class EdgeManager {
                 }
                 //check ids
                 outputMatch = _.intersection([...o_ids], object_node_ids).length;
-                // debug(`Disease CURIES ${JSON.stringify(object_node_ids)}`);
-                // if (res.$output.original == 'UMLS:C0005695') {
-                //     debug(`FOUND UMLS '${edge.getID()}' ${JSON.stringify(res.$input.original)}--${JSON.stringify(res.$edge_metadata.predicate)}--${JSON.stringify(res.$output.original)}`);
-                //     // debug(`DB IDS ${JSON.stringify(res.$output.obj)}`);
-                //     debug(`WAS IT KEPT? ${inputMatch}/${outputMatch}`);
-                //     debug(`KEPT BECAUSE ${JSON.stringify(_.intersection([...o_ids], object_node_ids))}`);
-                // }
-                // if ([...o_ids].includes('MONDO:0001187')) {
-                //     debug(`FOUND MONDO (1) '${edge.getID()}' ${JSON.stringify(res.$input.original)}--${JSON.stringify(res.$edge_metadata.predicate)}--${JSON.stringify(res.$output.original)}`);
-                //     // debug(`DB IDS ${JSON.stringify(res.$output.obj)}`);
-                //     debug(`WAS IT KEPT? ${inputMatch}/${outputMatch}`);
-                //     debug(`KEPT BECAUSE ${JSON.stringify(_.intersection([...o_ids], object_node_ids))}`);
-                // }
-                // if ([...o_ids].includes('MONDO:0004987')) {
-                //     debug(`FOUND MONDO (2) '${edge.getID()}' ${JSON.stringify(res.$input.original)}--${JSON.stringify(res.$edge_metadata.predicate)}--${JSON.stringify(res.$output.original)}`);
-                //     // debug(`DB IDS ${JSON.stringify(res.$output.obj)}`);
-                //     debug(`WAS IT KEPT? ${inputMatch}/${outputMatch}`);
-                //     debug(`KEPT BECAUSE ${JSON.stringify(_.intersection([...o_ids], object_node_ids))}`);
-                // }
             });
             //if both ends match then keep result
             if (inputMatch && outputMatch) {
@@ -281,7 +262,7 @@ module.exports = class EdgeManager {
     }
 
     gatherResults() {
-        //go through edges and collect all results
+        //go through edges filter and collect all results
         let results = [];
         let brokenChain = false;
         let brokenEdges = [];
@@ -341,7 +322,7 @@ module.exports = class EdgeManager {
     }
 
     collectResults() {
-        //go through edges and collect all results
+        //go through edges and collect all results only
         let results = [];
         let brokenChain = false;
         let brokenEdges = [];
@@ -399,7 +380,7 @@ module.exports = class EdgeManager {
     }
 
     collectOrganizedResults() {
-        //go through edges and collect all results
+        //go through edges and collect results organized by edge
         let results = {};
         let brokenChain = false;
         let brokenEdges = [];
