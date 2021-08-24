@@ -307,47 +307,45 @@ describe('Testing QueryResults Module', () => {
         },
       };
 
-      describe('Testing update function', () => {
-        test('should get a single-hop followed by a forked second hop', () => {
-          const queryResult = new QueryResult();
+      test('should get 2 results for query graph -- and records -<', () => {
+        const queryResult = new QueryResult();
 
-          queryResult.update({
-            "e01": {
-              "connected_to": ["e02"],
-              "records": [record1]
-            },
-            "e02": {
-              "connected_to": ["e01"],
-              "records": [record2, record3]
-            }
-          });
-
-          const results = queryResult.getResults();
-
-          expect(results.length).toEqual(2);
-
-          expect(Object.keys(results[0].node_bindings).length).toEqual(3);
-          expect(results[0].node_bindings).toHaveProperty('n1');
-          expect(results[0].node_bindings).toHaveProperty('n2');
-          expect(results[0].node_bindings).toHaveProperty('n3');
-
-          expect(Object.keys(results[0].edge_bindings).length).toEqual(2);
-          expect(results[0].edge_bindings).toHaveProperty('e01');
-          expect(results[0].edge_bindings).toHaveProperty('e02');
-
-          expect(results[0]).toHaveProperty('score');
-
-          expect(Object.keys(results[1].node_bindings).length).toEqual(3);
-          expect(results[1].node_bindings).toHaveProperty('n1');
-          expect(results[1].node_bindings).toHaveProperty('n2');
-          expect(results[1].node_bindings).toHaveProperty('n3');
-
-          expect(Object.keys(results[1].edge_bindings).length).toEqual(2);
-          expect(results[1].edge_bindings).toHaveProperty('e01');
-          expect(results[1].edge_bindings).toHaveProperty('e02');
-
-          expect(results[1]).toHaveProperty('score');
+        queryResult.update({
+          "e01": {
+            "connected_to": ["e02"],
+            "records": [record1]
+          },
+          "e02": {
+            "connected_to": ["e01"],
+            "records": [record2, record3]
+          }
         });
+
+        const results = queryResult.getResults();
+
+        expect(results.length).toEqual(2);
+
+        expect(Object.keys(results[0].node_bindings).length).toEqual(3);
+        expect(results[0].node_bindings).toHaveProperty('n1');
+        expect(results[0].node_bindings).toHaveProperty('n2');
+        expect(results[0].node_bindings).toHaveProperty('n3');
+
+        expect(Object.keys(results[0].edge_bindings).length).toEqual(2);
+        expect(results[0].edge_bindings).toHaveProperty('e01');
+        expect(results[0].edge_bindings).toHaveProperty('e02');
+
+        expect(results[0]).toHaveProperty('score');
+
+        expect(Object.keys(results[1].node_bindings).length).toEqual(3);
+        expect(results[1].node_bindings).toHaveProperty('n1');
+        expect(results[1].node_bindings).toHaveProperty('n2');
+        expect(results[1].node_bindings).toHaveProperty('n3');
+
+        expect(Object.keys(results[1].edge_bindings).length).toEqual(2);
+        expect(results[1].edge_bindings).toHaveProperty('e01');
+        expect(results[1].edge_bindings).toHaveProperty('e02');
+
+        expect(results[1]).toHaveProperty('score');
       });
     });
   });
@@ -513,6 +511,11 @@ describe('Testing QueryResults Module', () => {
         ],
       },
     };
+
+    const record1_n2b_n1a = cloneDeep(record1_n1a_n2b);
+    record1_n2b_n1a.$edge_metadata.trapi_qEdge_obj = e1Reversed;
+    record1_n2b_n1a.$input = cloneDeep(record1_n1a_n2b.$output)
+    record1_n2b_n1a.$output = cloneDeep(record1_n1a_n2b.$input)
 
     const record1_n1b_n2a = {
       $edge_metadata: {
@@ -721,8 +724,10 @@ describe('Testing QueryResults Module', () => {
       },
     };
 
+    // start of synthetic record tests
+
     describe('repeat calls', () => {
-      test('should get no results for update (0) then getResults (1)', () => {
+      test('should get 0 results for update (0) & getResults (1)', () => {
         const queryResultInner = new QueryResult();
         const resultsInner = queryResultInner.getResults();
         expect(JSON.stringify(resultsInner)).toEqual(JSON.stringify([]));
@@ -743,7 +748,7 @@ describe('Testing QueryResults Module', () => {
       });
       const resultsOuter = queryResultOuter.getResults();
 
-      test('should get same result for update (2) then getResults (1)', () => {
+      test('should get same results: update (1) & getResults (1) vs. update (2) & getResults (1)', () => {
         const queryResultInner = new QueryResult();
         queryResultInner.update({
           "e0": {
@@ -769,7 +774,7 @@ describe('Testing QueryResults Module', () => {
         expect(JSON.stringify(resultsOuter)).toEqual(JSON.stringify(resultsInner));
       });
 
-      test('should get same result for update (2) then getResults (2)', () => {
+      test('should get same results: update (1) & getResults (1) vs. update (2) & getResults (2)', () => {
         const queryResultInner = new QueryResult();
         queryResultInner.update({
           "e0": {
@@ -796,7 +801,7 @@ describe('Testing QueryResults Module', () => {
         expect(JSON.stringify(resultsOuter)).toEqual(JSON.stringify(resultsInner));
       });
 
-      test('should get same result for update (1) then getResults (2)', () => {
+      test('should get same results: update (1) & getResults (1) vs. update (1) & getResults (2)', () => {
         const queryResultInner = new QueryResult();
         queryResultInner.update({
           "e0": {
@@ -815,7 +820,7 @@ describe('Testing QueryResults Module', () => {
     });
       
     describe('query graph: →', () => {
-      test('should get one result for this record: →', () => {
+      test('should get 1 result with record: →', () => {
         const queryResult = new QueryResult();
         queryResult.update({
           "e0": {
@@ -836,7 +841,7 @@ describe('Testing QueryResults Module', () => {
         expect(results[0]).toHaveProperty('score');
       });
 
-      test('should get four results for four records per edge: →', () => {
+      test('should get 4 results for 4 records per edge: 𝍬', () => {
         const queryResult = new QueryResult();
         queryResult.update({
           "e0": {
@@ -883,7 +888,7 @@ describe('Testing QueryResults Module', () => {
     });
 
     describe('query graph: →→', () => {
-      test('should get one result with records: →→', () => {
+      test('should get 1 result with records: →→', () => {
         const queryResult = new QueryResult();
         queryResult.update({
           "e0": {
@@ -908,7 +913,7 @@ describe('Testing QueryResults Module', () => {
         expect(results[0]).toHaveProperty('score');
       });
       
-      test('should get two results with records: >→', () => {
+      test('should get 2 results with records: >-', () => {
         const queryResult = new QueryResult();
         queryResult.update({
           "e0": {
@@ -941,7 +946,7 @@ describe('Testing QueryResults Module', () => {
         expect(results[1]).toHaveProperty('score');
       });
       
-      test('should get four results with records: ><', () => {
+      test('should get 4 results with records: ><', () => {
         const queryResult = new QueryResult();
         queryResult.update({
           "e0": {
@@ -990,7 +995,7 @@ describe('Testing QueryResults Module', () => {
         expect(results[3]).toHaveProperty('score');
       });
       
-      test('should get two results with records: ⇉⇉', () => {
+      test('should get 2 results with records: ⇉⇉', () => {
         const queryResult = new QueryResult();
         queryResult.update({
           "e0": {
@@ -1023,7 +1028,7 @@ describe('Testing QueryResults Module', () => {
         expect(results[1]).toHaveProperty('score');
       });
       
-      test('should get two results with records: →<', () => {
+      test('should get 2 results with records: -<', () => {
         const queryResult = new QueryResult();
         queryResult.update({
           "e0": {
@@ -1056,7 +1061,7 @@ describe('Testing QueryResults Module', () => {
         expect(results[1]).toHaveProperty('score');
       });
       
-      test('should get one result for these records: →← (directionality does not match query graph)', () => {
+      test('should get 1 result with records: →← (directionality does not match query graph)', () => {
         const queryResult = new QueryResult();
         queryResult.update({
           "e0": {
@@ -1082,7 +1087,7 @@ describe('Testing QueryResults Module', () => {
       });
 
       // with the new generalized query handling, this case shouldn't happen
-      test('should get no results when missing record0: ?→', () => {
+      test('should get 0 results when 0 records for edge: ⇢̊→', () => {
         const queryResult = new QueryResult();
         queryResult.update({
           "e0": {
@@ -1099,7 +1104,7 @@ describe('Testing QueryResults Module', () => {
       });
 
       // with the new generalized query handling, this case won't happen
-      test('should get no results when missing record1: →?', () => {
+      test('should get 0 results when 0 records for edge: →⇢̊', () => {
         const queryResult = new QueryResult();
         queryResult.update({
           "e0": {
@@ -1117,7 +1122,7 @@ describe('Testing QueryResults Module', () => {
     });
 
     describe('query graph: →←', () => {
-      test('should get two results for these records: →←', () => {
+      test('should get 1 result with records: →←', () => {
         const queryResult = new QueryResult();
         queryResult.update({
           "e0": {
@@ -1142,7 +1147,7 @@ describe('Testing QueryResults Module', () => {
         expect(results[0]).toHaveProperty('score');
       });
 
-      test('should get two results for these records: →→ (directionality does not match query graph)', () => {
+      test('should get 1 result with records: →→ (directionality does not match query graph)', () => {
         const queryResult = new QueryResult();
         queryResult.update({
           "e0": {
@@ -1168,7 +1173,7 @@ describe('Testing QueryResults Module', () => {
       });
 
       // with the new generalized query handling, this case shouldn't happen
-      test('should get no results for these records: ?←', () => {
+      test('should get 0 results when 0 records for edge: ⇢̊←', () => {
         const queryResult = new QueryResult();
         queryResult.update({
           "e0": {
@@ -1185,7 +1190,7 @@ describe('Testing QueryResults Module', () => {
       });
 
       // with the new generalized query handling, this case won't happen
-      test('should get no results with records: →?', () => {
+      test('should get 0 results when 0 records for edge: →⇠̊', () => {
         const queryResult = new QueryResult();
         queryResult.update({
           "e0": {
@@ -1203,7 +1208,7 @@ describe('Testing QueryResults Module', () => {
     });
 
     describe('query graph: ←→', () => {
-      test('should get one result when one record per edge (←→)', () => {
+      test('should get 1 result for 1 record per edge: ←→', () => {
         const queryResult = new QueryResult();
         queryResult.update({
           "e1Reversed": {
@@ -1228,22 +1233,18 @@ describe('Testing QueryResults Module', () => {
         expect(results[0]).toHaveProperty('score');
       });
 
-      test('should get zero results due to a non-matching record (←→)', () => {
+      test('should get 0 results due to unconnected record: ←̽→', () => {
         const queryResult = new QueryResult();
 
         queryResult.update({
-          "e0": {
-            "connected_to": ["e1", "e2"],
-            "records": [record0_n0a_n1a]
+          "e1Reversed": {
+            "connected_to": ["e4"],
+            "records": [record1_n2b_n1a]
           },
-          "e1": {
-            "connected_to": ["e0", "e2"],
-            "records": [record1_n1b_n2a]
-          },
-          "e2": {
-            "connected_to": ["e0", "e1"],
-            "records": [record2_n1a_n3a]
-          },
+          "e4": {
+            "connected_to": ["e1Reversed"],
+            "records": [record4_n2a_n5a]
+          }
         });
 
         const results = queryResult.getResults();
@@ -1252,7 +1253,7 @@ describe('Testing QueryResults Module', () => {
       });
 
       // with the new generalized query handling, this case shouldn't happen
-      test('should get no results when missing a record (?→)', () => {
+      test('should get 0 results when 0 records for edge: ⇠̊→', () => {
         const queryResult = new QueryResult();
         queryResult.update({
           "e0": {
@@ -1269,15 +1270,13 @@ describe('Testing QueryResults Module', () => {
       });
     });
 
-    /* single-hop followed by forked second hop
-     */
     describe('query graph: -<', () => {
       /*
        *               -e1-> n2
        *   n0 -e0-> n1
        *               -e2-> n3
        */
-      test('should get two results (one record per edge)', () => {
+      test('should get 1 result for 1 record per edge: -<', () => {
         const queryResult = new QueryResult();
 
         queryResult.update({
@@ -1310,11 +1309,11 @@ describe('Testing QueryResults Module', () => {
       });
 
       /*
-       *               ?--> n2
+       *               x--> n2
        *   n0 ---> n1
        *               ---> n2
        */
-      test('should get zero results due to a mis-matched edge', () => {
+      test('should get 0 results due to unconnected record: -<̽', () => {
         const queryResult = new QueryResult();
 
         queryResult.update({
@@ -1338,16 +1337,14 @@ describe('Testing QueryResults Module', () => {
       });
     });
 
-    /* single-hop followed by triple fork, all reconnecting to a single node
-     */
-    describe('query graph: -EƎ', () => {
+    describe('query graph: -ᗕᗒ', () => {
       /*
        *               -e1-> n2 -e4->
        *   n0 -e0-> n1 -e2-> n3 -e5-> n5
        *               -e3-> n4 -e6->
        */
 
-      test('should get one result for one record per edge', () => {
+      test('should get 1 result for 1 record per edge', () => {
         const queryResult = new QueryResult();
 
         queryResult.update({
@@ -1394,7 +1391,7 @@ describe('Testing QueryResults Module', () => {
         expect(results[0]).toHaveProperty('score');
       });
 
-      test('should get two results for two at n0', () => {
+      test('should get 2 results for 2 records per edge at n0', () => {
         const queryResult = new QueryResult();
 
         queryResult.update({
@@ -1449,7 +1446,7 @@ describe('Testing QueryResults Module', () => {
         expect(results[1]).toHaveProperty('score');
       });
 
-      test('should get two results for two at n1', () => {
+      test('should get 2 results for 2 records per edge at n1', () => {
         const queryResult = new QueryResult();
 
         queryResult.update({
@@ -1504,7 +1501,22 @@ describe('Testing QueryResults Module', () => {
         expect(results[1]).toHaveProperty('score');
       });
 
-      test('should get three results for two at n0 and two at n1', () => {
+      /*
+       *                 -e1-> n2a -e4->
+       *   n0a -e0-> n1a -e2-> n3a -e5-> n5a
+       *                 -e3-> n4a -e6->
+       *
+       *
+       *                 -e1-> n2a -e4->
+       *   n0a -e0-> n1b -e2-> n3a -e5-> n5a
+       *                 -e3-> n4a -e6->
+       *
+       *
+       *                 -e1-> n2a -e4->
+       *   n0b -e0-> n1a -e2-> n3a -e5-> n5a
+       *                 -e3-> n4a -e6->
+       */
+      test('should get 3 results for n0a→n1a, n0a→n1b, n0b→n1a', () => {
         const queryResult = new QueryResult();
 
         queryResult.update({
@@ -1567,7 +1579,27 @@ describe('Testing QueryResults Module', () => {
         expect(results[2]).toHaveProperty('score');
       });
 
-      test('should get four results for two at n0 and two at n1', () => {
+      /*
+       *                 -e1-> n2a -e4->
+       *   n0a -e0-> n1a -e2-> n3a -e5-> n5a
+       *                 -e3-> n4a -e6->
+       *
+       *
+       *                 -e1-> n2a -e4->
+       *   n0a -e0-> n1b -e2-> n3a -e5-> n5a
+       *                 -e3-> n4a -e6->
+       *
+       *
+       *                 -e1-> n2a -e4->
+       *   n0b -e0-> n1a -e2-> n3a -e5-> n5a
+       *                 -e3-> n4a -e6->
+       *
+       *
+       *                 -e1-> n2a -e4->
+       *   n0b -e0-> n1b -e2-> n3a -e5-> n5a
+       *                 -e3-> n4a -e6->
+       */
+      test('should get 4 results for n0a→n1a, n0a→n1b, n0b→n1a, n0b→n1b', () => {
         const queryResult = new QueryResult();
 
         queryResult.update({
@@ -1638,7 +1670,7 @@ describe('Testing QueryResults Module', () => {
         expect(results[3]).toHaveProperty('score');
       });
 
-      test('should get no results for mis-matched record', () => {
+      test('should get 0 results due to unconnected record at n1 (n1a vs. n1b)', () => {
         const queryResult = new QueryResult();
 
         queryResult.update({
@@ -1677,7 +1709,7 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(0);
       });
 
-      test('should get one result & ignore extra mis-matched record', () => {
+      test('should get 1 result & ignore unconnected record', () => {
         const queryResult = new QueryResult();
 
         queryResult.update({
@@ -1724,7 +1756,7 @@ describe('Testing QueryResults Module', () => {
         expect(results[0]).toHaveProperty('score');
       });
 
-      test('should get one result & ignore extra four mis-matched records', () => {
+      test('should get 1 result & ignore 4 unconnected records', () => {
         const queryResult = new QueryResult();
 
         queryResult.update({
