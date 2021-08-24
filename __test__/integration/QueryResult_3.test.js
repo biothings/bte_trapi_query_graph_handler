@@ -6,8 +6,8 @@ const QueryResult = require('../../src/query_results');
 describe('Testing QueryResults Module', () => {
   describe('"Real" Records', () => {
     describe('Single Record', () => {
-      const gene_node1 = new QNode('n1', { categories: 'Gene', ids: 'NCBIGene:632' });
-      const chemical_node1 = new QNode('n2', { categories: 'ChemicalSubstance' });
+      const gene_node1 = new QNode('n1', { categories: ['Gene'], ids: ['NCBIGene:632'] });
+      const chemical_node1 = new QNode('n2', { categories: ['ChemicalSubstance'] });
       const edge1 = new QEdge('e01', { subject: gene_node1, object: chemical_node1 });
       const record = {
         $edge_metadata: {
@@ -68,9 +68,9 @@ describe('Testing QueryResults Module', () => {
     });
 
     describe('Two Records', () => {
-      const gene_node_start = new QNode('n1', { categories: 'Gene', ids: 'NCBIGene:3778' });
-      const disease_node = new QNode('n2', { categories: 'Disease' });
-      const gene_node_end = new QNode('n3', { categories: 'Gene' });
+      const gene_node_start = new QNode('n1', { categories: ['Gene'], ids: ['NCBIGene:3778'] });
+      const disease_node = new QNode('n2', { categories: ['Disease'] });
+      const gene_node_end = new QNode('n3', { categories: ['Gene'] });
 
       const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
       const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
@@ -186,9 +186,9 @@ describe('Testing QueryResults Module', () => {
     });
 
     describe('Three Records', () => {
-      const gene_node_start = new QNode('n1', { categories: 'Gene', ids: 'NCBIGene:3778' });
-      const disease_node = new QNode('n2', { categories: 'Disease' });
-      const gene_node_end = new QNode('n3', { categories: 'Gene' });
+      const gene_node_start = new QNode('n1', { categories: ['Gene'], ids: ['NCBIGene:3778'] });
+      const disease_node = new QNode('n2', { categories: ['Disease'] });
+      const gene_node_end = new QNode('n3', { categories: ['Gene'] });
 
       const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
       const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
@@ -351,12 +351,12 @@ describe('Testing QueryResults Module', () => {
   });
 
   describe('"Synthetic" Records', () => {
-    const n0 = new QNode('n0', { categories: 'category_n0_n2', ids: 'n0a' });
-    const n1 = new QNode('n1', { categories: 'category_n1' });
-    const n2 = new QNode('n2', { categories: 'category_n0_n2' });
-    const n3 = new QNode('n3', { categories: 'biolink:category_n3' });
-    const n4 = new QNode('n4', { categories: 'category_n4' });
-    const n5 = new QNode('n5', { categories: 'category_n5' });
+    const n0 = new QNode('n0', { categories: ['category_n0_n2'], ids: ['n0a'] });
+    const n1 = new QNode('n1', { categories: ['category_n1'] });
+    const n2 = new QNode('n2', { categories: ['category_n0_n2'] });
+    const n3 = new QNode('n3', { categories: ['biolink:category_n3'] });
+    const n4 = new QNode('n4', { categories: ['category_n4'] });
+    const n5 = new QNode('n5', { categories: ['category_n5'] });
 
     const e0 = new QEdge('e0', { subject: n0, object: n1 });
 
