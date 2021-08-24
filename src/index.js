@@ -166,14 +166,14 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       debug(`(10) Edge successfully queried.`);
     };
     //after all edges have been executed collect all results
-    manager.collectResults();
-    // manager.collectOrganizedResults();
+    // manager.collectResults();
+    manager.collectOrganizedResults();
     this.logs = [...this.logs, ...manager.logs];
     //mock handler created only to update query graph and results
     //TODO find a way to just update these with no mock handler
     let mockHandler = this._createBatchEdgeQueryHandlersForCurrent([], kg);
-    mockHandler.notify(manager.getResults());
-    // mockHandler.notify(manager.getOrganizedResults());
+    // mockHandler.notify(manager.getResults());
+    mockHandler.notify(manager.getOrganizedResults());
     debug(`(13) FINISHED`);
     }
 };
