@@ -58,7 +58,6 @@ module.exports = class QNode {
     }
 
     updateCuries(curies) {
-        // debug(`(8) ALL CURIES "${JSON.stringify(curies)}"`);
         // {originalID : [aliases]}
         if (!this.curie) {
             this.curie = [];
@@ -127,22 +126,6 @@ module.exports = class QNode {
         // new curies {originalID : ['aliasID']}
         let all_new_curies = this._combineCuriesIntoList(newCuries);
         return _.intersection(curies, all_new_curies );
-    }
-
-    intersectCuries_old(curies, newCuries) {
-        let keep = new Set();
-        //curies is a list ['ID']
-        // new curies {originalID : ['aliasID']}
-        //goal is to intersect both and only keep the original ID
-        //of items that exist in both
-        for (const original in newCuries) {
-            newCuries[original].forEach((alias) => {
-                if (curies.includes(alias)) {
-                    keep.add(original);
-                }
-            });
-        }
-        return [...keep];
     }
 
     getID() {
