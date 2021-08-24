@@ -434,7 +434,7 @@ module.exports = class EdgeManager {
         }
         //Second: collected results
         this.organized_results = results;
-        debug(`(12) Collected (${this.results.length}) results!`);
+        debug(`(12) Collected results for: (${JSON.stringify(Object.keys(this.organized_results))})!`);
         this.logs.push(
             new LogEntry(
                 'DEBUG',
