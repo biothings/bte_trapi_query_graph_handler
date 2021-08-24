@@ -170,7 +170,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     manager.collectOrganizedResults();
     this.logs = [...this.logs, ...manager.logs];
     //update query graph
-    this.bteGraph.update(manager.results);
+    this.bteGraph.update(manager.getResults());
     //update query results
     this.queryResults.update(manager.getOrganizedResults());
     debug(`(14) FINISHED`);
