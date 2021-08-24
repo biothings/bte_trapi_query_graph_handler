@@ -281,7 +281,7 @@ module.exports = class EdgeManager {
     }
 
     gatherResults() {
-        //go through edges and collect all results
+        //go through edges filter and collect all results
         let results = [];
         let brokenChain = false;
         let brokenEdges = [];
@@ -341,7 +341,7 @@ module.exports = class EdgeManager {
     }
 
     collectResults() {
-        //go through edges and collect all results
+        //go through edges and collect all results only
         let results = [];
         let brokenChain = false;
         let brokenEdges = [];
@@ -399,7 +399,7 @@ module.exports = class EdgeManager {
     }
 
     collectOrganizedResults() {
-        //go through edges and collect all results
+        //go through edges and collect results organized by edge
         let results = {};
         let brokenChain = false;
         let brokenEdges = [];
@@ -453,7 +453,7 @@ module.exports = class EdgeManager {
         }
         //Second: collected results
         this.organized_results = results;
-        debug(`(12) Collected (${this.results.length}) results!`);
+        debug(`(12) Collected results for: (${JSON.stringify(Object.keys(this.organized_results))})!`);
         this.logs.push(
             new LogEntry(
                 'DEBUG',
