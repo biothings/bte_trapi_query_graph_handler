@@ -127,7 +127,7 @@ module.exports = class QueryGraphHelper {
     }
   }
 
-  // from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set
+  // see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set
   _intersection(setA, setB) {
       let _intersection = new Set()
       for (let elem of setB) {
@@ -146,11 +146,13 @@ module.exports = class QueryGraphHelper {
     a1 = a.splice(0, 1)[0]; // the first array of a
     a = this._cartesian(a);
     for (i = 0, l = a1.length; i < l; i++) {
-      if (a && a.length)
-        for (j = 0, m = a.length; j < m; j++)
+      if (a && a.length) {
+        for (j = 0, m = a.length; j < m; j++) {
           o.push([a1[i]].concat(a[j]));
-      else
+        }
+      } else {
         o.push([a1[i]]);
+      }
     }
     return o;
   }
