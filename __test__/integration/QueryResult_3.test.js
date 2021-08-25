@@ -886,7 +886,7 @@ describe('Testing QueryResults Module', () => {
         expect(results[3]).toHaveProperty('score');
       });
 
-      test('should get 4 results for 4 identical records per edge: 𝍬', () => {
+      test('should get 1 result for 4 identical records per edge: 𝍬', () => {
         const queryResult = new QueryResult();
         queryResult.update({
           "e0": {
