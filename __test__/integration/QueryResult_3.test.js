@@ -841,7 +841,7 @@ describe('Testing QueryResults Module', () => {
         expect(results[0]).toHaveProperty('score');
       });
 
-      test('should get 4 results for 4 records per edge: 𝍬', () => {
+      test('should get 4 results for 4 different records per edge: 𝍬', () => {
         const queryResult = new QueryResult();
         queryResult.update({
           "e0": {
@@ -884,6 +884,27 @@ describe('Testing QueryResults Module', () => {
           'e0'
         ]);
         expect(results[3]).toHaveProperty('score');
+      });
+
+      test('should get 4 results for 4 identical records per edge: 𝍬', () => {
+        const queryResult = new QueryResult();
+        queryResult.update({
+          "e0": {
+            "connected_to": [],
+            "records": [record0_n0a_n1a, record0_n0a_n1a, record0_n0a_n1a, record0_n0a_n1a]
+          }
+        });
+        const results = queryResult.getResults();
+
+        expect(results.length).toEqual(1);
+
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+          'n0', 'n1'
+        ]);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+          'e0'
+        ]);
+        expect(results[0]).toHaveProperty('score');
       });
     });
 
