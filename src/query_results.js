@@ -84,14 +84,15 @@ module.exports = class QueryResult {
         primaryIDLists.push(Array.from(primaryNodeIDs))
       });
 
-    const edgeCount = keys(dataByEdge).length;
+    const edges = keys(dataByEdge);
+    const edgeCount = edges.length;
 
     this.results = helper._cartesian(primaryIDLists)
       .map(combo => {
         return zipObject(queryNodeIDs, combo);
       })
       .map((labeledCombo) => {
-        const validEdges = toPairs(dataByEdge)
+        const validRecordsByEdge = toPairs(dataByEdge)
           .map(([queryEdgeID, {connected_to, records}]) => {
             const validRecords = records.filter((record) => {
               const inputQueryNodeID = helper._getInputQueryNodeID(record);
@@ -110,21 +111,24 @@ module.exports = class QueryResult {
             };
           })
           .filter(({queryEdgeID, validRecords}) => {
-            return validRecords.length === 1;
+            return validRecords.length >= 1;
           })
-          .map(({queryEdgeID, validRecords}) => {
-            return {queryEdgeID, record: validRecords[0]};
-          });
+          .reduce((acc, {queryEdgeID, validRecords}) => {
+            acc[queryEdgeID] = validRecords;
+            return acc;
+          }, {});
 
-        return validEdges;
+        return validRecordsByEdge;
       })
-      .filter(validEdges => {
-        return validEdges.length === edgeCount;
+      .filter(validRecordsByEdge => {
+        return keys(validRecordsByEdge).sort().join("bte_query_graph_handler_sep") === edges.sort().join("bte_query_graph_handler_sep");
       })
-      .map(validEdges => {
+      .map(validRecordsByEdge => {
         //default score issue #200 - TODO: turn to evaluating module eventually
         const result = {node_bindings: {}, edge_bindings: {}, score: '1.0'};
-        validEdges.forEach(({queryEdgeID, record}) => {
+        toPairs(validRecordsByEdge).forEach(([queryEdgeID, validRecords]) => {
+          const record = validRecords[0];
+
           const inputQueryNodeID = helper._getInputQueryNodeID(record);
           const outputQueryNodeID = helper._getOutputQueryNodeID(record);
 
