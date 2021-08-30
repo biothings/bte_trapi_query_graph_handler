@@ -37,7 +37,6 @@ module.exports = class EdgeManager {
     getNext() {
         //returns next edge with lowest entity count on
         //either object or subject OR no count last
-        
         // available not yet executed
         let available_edges = this.edges
         .filter(edge => !edge.executed);
@@ -261,127 +260,11 @@ module.exports = class EdgeManager {
         return keep;
     }
 
-    gatherResults() {
-        //go through edges filter and collect all results
-        let results = [];
-        let brokenChain = false;
-        let brokenEdges = [];
-        debug(`(11) Collecting results...`);
-        //First: go through edges and filter that each edge is holding
-        this.edges.forEach((edge) => {
-            let filtered_res = this._filterEdgeResults(edge);
-            if (filtered_res.length == 0) {
-                this.logs.push(
-                    new LogEntry(
-                        'DEBUG',
-                        null,
-                        `Warning: Edge '${edge.getID()}' resulted in (0) results.`
-                    ).getLog(),
-                );
-                brokenChain = true;
-                brokenEdges.push(edge.getID());
-            }
-            this.logs = [...this.logs, ...edge.logs];
-            //store filtered results
-            edge.results = filtered_res;
-            //collect results
-            results = results.concat(filtered_res);
-            debug(`(11) '${edge.getID()}' keeps (${filtered_res.length}) results!`);
-            this.logs.push(
-                new LogEntry(
-                    'DEBUG',
-                    null,
-                    `'${edge.getID()}' keeps (${filtered_res.length}) results!`
-                ).getLog(),
-            );
-            debug(`----------`);
-        });
-        if (brokenChain) {
-            results = [];
-            this.logs.push(
-                new LogEntry(
-                    'DEBUG',
-                    null,
-                    `Edges ${JSON.stringify(brokenEdges)} ` +
-                    `resulted in (0) results. No complete paths can be formed.`
-                ).getLog(),
-            );
-            debug(`(12) Edges ${JSON.stringify(brokenEdges)} ` +
-            `resulted in (0) results. No complete paths can be formed.`);
-        }
-        //Second: collected results
-        this.results = results;
-        debug(`(12) Collected (${this.results.length}) results!`);
-        this.logs.push(
-            new LogEntry(
-                'DEBUG',
-                null,
-                `Edge manager collected (${this.results.length}) results!`
-            ).getLog(),
-        );
-    }
-
     collectResults() {
-        //go through edges and collect all results only
-        let results = [];
-        let brokenChain = false;
-        let brokenEdges = [];
-        debug(`(11) Collecting results...`);
-        //First: go through edges and filter that each edge is holding
-        this.edges.forEach((edge) => {
-            let filtered_res = edge.results;
-            if (filtered_res.length == 0) {
-                this.logs.push(
-                    new LogEntry(
-                        'DEBUG',
-                        null,
-                        `Warning: Edge '${edge.getID()}' resulted in (0) results.`
-                    ).getLog(),
-                );
-                brokenChain = true;
-                brokenEdges.push(edge.getID());
-            }
-            this.logs = [...this.logs, ...edge.logs];
-            //collect results
-            results = results.concat(filtered_res);
-            debug(`(11) '${edge.getID()}' keeps (${filtered_res.length}) results!`);
-            this.logs.push(
-                new LogEntry(
-                    'DEBUG',
-                    null,
-                    `'${edge.getID()}' keeps (${filtered_res.length}) results!`
-                ).getLog(),
-            );
-            debug(`----------`);
-        });
-        if (brokenChain) {
-            results = [];
-            this.logs.push(
-                new LogEntry(
-                    'DEBUG',
-                    null,
-                    `Edges ${JSON.stringify(brokenEdges)} ` +
-                    `resulted in (0) results. No complete paths can be formed.`
-                ).getLog(),
-            );
-            debug(`(12) Edges ${JSON.stringify(brokenEdges)} ` +
-            `resulted in (0) results. No complete paths can be formed.`);
-        }
-        //Second: collected results
-        this.results = results;
-        debug(`(12) Collected (${this.results.length}) results!`);
-        this.logs.push(
-            new LogEntry(
-                'DEBUG',
-                null,
-                `Edge manager collected (${this.results.length}) results!`
-            ).getLog(),
-        );
-    }
-
-    collectOrganizedResults() {
         //go through edges and collect results organized by edge
         let results = {};
+        //all res merged
+        let combined_results = [];
         let brokenChain = false;
         let brokenEdges = [];
         debug(`(11) Collecting results...`);
@@ -402,6 +285,7 @@ module.exports = class EdgeManager {
             }
             this.logs = [...this.logs, ...edge.logs];
             //collect results
+            combined_results= combined_results.concat(filtered_res);
             let connections = edge.qEdge.subject.getConnections().concat(edge.qEdge.object.getConnections());
             connections = connections.filter(id => id !== edge_ID);
             connections = new Set(connections);
@@ -432,9 +316,12 @@ module.exports = class EdgeManager {
             debug(`(12) Edges ${JSON.stringify(brokenEdges)} ` +
             `resulted in (0) results. No complete paths can be formed.`);
         }
-        //Second: collected results
+        //Organized by edge: update query results
         this.organized_results = results;
-        debug(`(12) Collected results for: (${JSON.stringify(Object.keys(this.organized_results))})!`);
+        debug(`(12) Collected results for: ${JSON.stringify(Object.keys(this.organized_results))}!`);
+        //Combined: update query_graph
+        this.results = combined_results;
+        debug(`(12) Collected (${this.results.length}) results!`);
         this.logs.push(
             new LogEntry(
                 'DEBUG',
@@ -445,12 +332,14 @@ module.exports = class EdgeManager {
     }
 
     updateEdgeResults(current_edge) {
+        //1. filter edge results based on current status
         let filtered_res = this._filterEdgeResults(current_edge);
-        //this triggers node update
+        //2.trigger node update / entity update based on new status
         current_edge.storeResults(filtered_res);
     }
 
     updateNeighborsEdgeResults(current_edge) {
+        //update and filter only immediate neighbors
         debug(`Updating neighbors...`);
         let not_this_edge = current_edge.getID();
         //get neighbors of this edges subject that are not this edge
@@ -486,6 +375,7 @@ module.exports = class EdgeManager {
     }
 
     updateAllOtherEdges(current_edge) {
+        //update and filter all other edges
         debug(`Updating all other edges...`);
         let not_this_edge = current_edge.getID();
         this.edges.forEach((edge) => {

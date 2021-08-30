@@ -7,7 +7,7 @@ describe("Testing TRAPI QueryHandler Generalized Query Handling", () => {
         nodes: {
             n0: {
                 "ids":["PUBCHEM.COMPOUND:2662"],
-                "categories":["biolink:SmallMolcule"]
+                "categories":["biolink:SmallMolecule"]
             },
             n1: {
                 "categories":["biolink:Gene"],
@@ -38,7 +38,7 @@ describe("Testing TRAPI QueryHandler Generalized Query Handling", () => {
         "nodes": {
             "n0": {
                 "ids":["PUBCHEM.COMPOUND:2662"],
-                "categories":["biolink:SmallMolcule"]
+                "categories":["biolink:SmallMolecule"]
             },
             "n1": {
                 "categories":["biolink:Disease"]
@@ -81,7 +81,7 @@ describe("Testing TRAPI QueryHandler Generalized Query Handling", () => {
                 "nodes": {
                     "n0": {
                         "ids":["PUBCHEM.COMPOUND:2662"],
-                        "categories":["biolink:SmallMolcule"]
+                        "categories":["biolink:SmallMolecule"]
                     },
                     "n1": {
                         "categories":["biolink:Disease"]
@@ -134,15 +134,11 @@ describe("Testing TRAPI QueryHandler Generalized Query Handling", () => {
             "query_graph": {
                 "nodes": {
                     "n0": {
-                        "categories": [
-                            "biolink:DiseaseOrPhenotypicFeature"
-                        ]
+                        "categories": ["biolink:DiseaseOrPhenotypicFeature"]
                     },
                     "n1": {
-                        "ids": [
-                            "HGNC:6284"
-                        ],
-                "categories":["biolink:Gene"]
+                        "ids": ["HGNC:6284"],
+                        "categories":["biolink:Gene"]
                     }
                 },
                 "edges": {
@@ -156,17 +152,16 @@ describe("Testing TRAPI QueryHandler Generalized Query Handling", () => {
     }
 
     describe("Testing query function", () => {
-        test("Broad category to known entity with all entities present", async () => {
+        test("Broad category to known entity with all expected branching entities present", async () => {
             const queryHandler = new TRAPIQueryHandler.TRAPIQueryHandler();
             queryHandler.setQueryGraph(BroadCategoryQuery);
             await queryHandler.query_2();
             let res = queryHandler.getResponse();
-            expect(Object.keys(res.message.knowledge_graph.nodes).length).toBeGreaterThan(4);
             expect(res.message.knowledge_graph.nodes).toHaveProperty("NCBIGene:3778");
             expect(res.message.knowledge_graph.nodes).toHaveProperty("MONDO:0005247");
-            expect(res.message.knowledge_graph.nodes).toHaveProperty("UMLS:C0443147");
+            expect(res.message.knowledge_graph.nodes).toHaveProperty("HP:0002465");
             expect(res.message.knowledge_graph.edges).toHaveProperty("MONDO:0005247-biolink:related_to-NCBIGene:3778");
-            expect(res.message.knowledge_graph.edges).toHaveProperty("UMLS:C0443147-biolink:related_to-NCBIGene:3778");
+            expect(res.message.knowledge_graph.edges).toHaveProperty("HP:0002465-biolink:related_to-NCBIGene:3778");
         })
     })
 
@@ -175,11 +170,15 @@ describe("Testing TRAPI QueryHandler Generalized Query Handling", () => {
             "query_graph": {
                 "nodes": {
                     "n0": {
-                        "categories": ["biolink:Disease"],
-                        "ids": ["MONDO:0009287"]
+                        "ids": ["NCBIGene:3778"],
+                        "categories": ["biolink:Gene"]
                     },
                     "n1": {
-                        "categories": ["biolink:SmallMolcule"]
+                        "categories": [
+                            "biolink:Disease",
+                            "biolink:BiologicalProcess",
+                            "biolink:Pathway"
+                        ]
                     }
                 },
                 "edges": {
@@ -193,15 +192,15 @@ describe("Testing TRAPI QueryHandler Generalized Query Handling", () => {
     }
 
     describe("Testing query function", () => {
-        test("Predict known entity to open category", async () => {
+        test("Predict known entity to general category to have all nodes expected", async () => {
             const queryHandler = new TRAPIQueryHandler.TRAPIQueryHandler();
             queryHandler.setQueryGraph(PredictQuery);
             await queryHandler.query_2();
             let res = queryHandler.getResponse();
-            expect(Object.keys(res.message.knowledge_graph.nodes).length).toBeGreaterThan(2);
-            expect(res.message.knowledge_graph.nodes).toHaveProperty("MONDO:0009287");
-            expect(res.message.knowledge_graph.nodes).toHaveProperty("CHEBI:15903");
-            expect(res.message.knowledge_graph.edges).toHaveProperty("MONDO:0009287-biolink:affected_by-CHEBI:15903");
+            expect(res.message.knowledge_graph.nodes).toHaveProperty("MONDO:0005030");
+            expect(res.message.knowledge_graph.nodes).toHaveProperty("NCBIGene:3778");
+            expect(res.message.knowledge_graph.nodes).toHaveProperty("GO:0001666");
+            expect(res.message.knowledge_graph.nodes).toHaveProperty("REACT:R-HSA-109582");
         })
     })
 

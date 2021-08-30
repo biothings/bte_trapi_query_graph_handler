@@ -3,7 +3,7 @@ var path = require('path');
 const BatchEdgeQueryHandler = require('./batch_edge_query');
 const QueryGraph = require('./query_graph');
 const KnowledgeGraph = require('./graph/knowledge_graph');
-const QueryResults = require('./query_results');
+const QueryResults = require('./query_results_2');
 const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error');
 const debug = require('debug')('bte:biothings-explorer-trapi:main');
 const Graph = require('./graph/graph');
@@ -132,27 +132,28 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   _createBatchEdgeQueryHandlersForCurrent(currentEdge, kg) {
     let handler = new BatchEdgeQueryHandler(kg, this.resolveOutputIDs);
     handler.setEdges(currentEdge);
-    // handler.subscribe(this.queryResults);
-    // handler.subscribe(this.bteGraph);
     return handler;
   }
 
   async query_2() {
     this._initializeResponse();
-    debug('start to load metakg.');
+    debug('Start to load metakg.');
     const kg = this._loadMetaKG(this.smartapiID, this.team);
-    debug('metakg successfully loaded');
+    debug('MetaKG successfully loaded!');
     let queryEdges = this._processQueryGraph_2(this.queryGraph);
     debug(`(3) All edges created ${JSON.stringify(queryEdges)}`);
     const manager = new EdgeManager(queryEdges);
     while (manager.getEdgesNotExecuted()) {
+      //next available/most efficient edge
       let current_edge = manager.getNext();
+      //crate queries from edge
       let handler = this._createBatchEdgeQueryHandlersForCurrent(current_edge, kg);
       debug(`(5) Executing current edge >> "${current_edge.getID()}"`);
       //execute current edge query
       let res = await handler.query_2(handler.qEdges);
       this.logs = [...this.logs, ...handler.logs];
       if (res.length === 0) {
+        debug(`(X) Terminating..."${current_edge.getID()}" got 0 results.`);
         return;
       }
       //storing results will trigger a node entity count update
@@ -165,14 +166,13 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       current_edge.executed = true;
       debug(`(10) Edge successfully queried.`);
     };
-    //after all edges have been executed collect all results
+    //collect and organize results
     manager.collectResults();
-    manager.collectOrganizedResults();
     this.logs = [...this.logs, ...manager.logs];
     //update query graph
     this.bteGraph.update(manager.getResults());
     //update query results
     this.queryResults.update(manager.getOrganizedResults());
-    debug(`(14) FINISHED`);
+    debug(`(14) TRAPI query finished.`);
     }
 };

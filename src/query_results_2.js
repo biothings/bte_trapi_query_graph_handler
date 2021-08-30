@@ -4,6 +4,7 @@ const helper = new GraphHelper();
 const utils = require('./utils');
 const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
 
+
 /**
  * @typedef {
  *   $edge_metadata: Object<string, *>,
