@@ -6,9 +6,8 @@ class BioLinkModel {
   constructor() {
     if (!BioLinkModel.instance) {
       debug('BioLink-model class is initiated.');
-      let biolink_file = path.resolve(__dirname, './../../../biolink-model/data/biolink.yaml');
       this.biolink = new bl.BioLink();
-      this.biolink.loadSync(biolink_file);
+      this.biolink.loadSync();
     }
 
     return BioLinkModel.instance;
