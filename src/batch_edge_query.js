@@ -52,6 +52,9 @@ module.exports = class BatchEdgeQueryHandler {
    */
   async _postQueryFilter(response) {
     let filters_applied = new Set();
+    debug(`Filtering out undefined items (${response.length}) results`);
+    response = response.filter(res => res !== undefined );
+    debug(`After...(${response.length}) results`);
     try {
       const filtered = response.filter((item) => {
         if (
