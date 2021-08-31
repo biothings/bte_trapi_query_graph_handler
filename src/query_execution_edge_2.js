@@ -41,7 +41,7 @@ module.exports = class UpdatedExeEdge {
       if (this.qEdge.object.entity_count == this.qEdge.subject.entity_count) {
         // //(#) ---> ()
         this.reverse = false;
-        delete this.qEdge.object.holdCurie();
+        this.qEdge.object.holdCurie();
         debug(`(8) Sub - Obj were same but chose subject (${this.qEdge.subject.entity_count})`);
       }
       else if (this.qEdge.object.entity_count > this.qEdge.subject.entity_count) {

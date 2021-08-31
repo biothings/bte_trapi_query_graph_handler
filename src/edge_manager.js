@@ -133,6 +133,15 @@ module.exports = class EdgeManager {
                 `Next edge will pick lower entity value to use for query.`).getLog(),
             );
         }
+        else if (
+            (next.object.entity_count && !next.subject.entity_count) ||
+            (!next.object.entity_count && !next.subject.entity_count)
+        ) {
+            debug(`(5) Checking direction of edge with one set of entities...`);
+            //check direction is correct if edge only has one set of entities
+            //before sending off
+            next.reverse = next.subject.entity_count ? false : true;
+        }
         this.logs.push(
             new LogEntry('DEBUG', 
             null, 
