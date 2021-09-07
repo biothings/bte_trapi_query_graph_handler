@@ -81,10 +81,10 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
    * @private
    * @param {object} queryGraph - TRAPI Query Graph Object
    */
-   _processQueryGraph_2(queryGraph) {
+   async _processQueryGraph_2(queryGraph) {
     try {
       let queryGraphHandler = new QueryGraph(queryGraph);
-      let res = queryGraphHandler.calculateEdges();
+      let res = await queryGraphHandler.calculateEdges();
       this.logs = [...this.logs, ...queryGraphHandler.logs];
       return res;
     } catch (err) {
@@ -141,7 +141,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     debug('Start to load metakg.');
     const kg = this._loadMetaKG(this.smartapiID, this.team);
     debug('MetaKG successfully loaded!');
-    let queryEdges = this._processQueryGraph_2(this.queryGraph);
+    let queryEdges = await this._processQueryGraph_2(this.queryGraph);
     debug(`(3) All edges created ${JSON.stringify(queryEdges)}`);
     const manager = new EdgeManager(queryEdges);
     while (manager.getEdgesNotExecuted()) {
