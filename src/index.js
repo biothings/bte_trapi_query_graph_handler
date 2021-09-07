@@ -33,6 +33,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   getResponse() {
     this.bteGraph.notify();
     return {
+      workflow: [{ id: 'lookup' }],
       message: {
         query_graph: this.queryGraph,
         knowledge_graph: this.knowledgeGraph.kg,
@@ -98,7 +99,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   _createBatchEdgeQueryHandlers(queryPaths, kg) {
     let handlers = {};
     for (const index in queryPaths) {
-      handlers[index] = new BatchEdgeQueryHandler(kg, this.resolveOutputIDs, {caching: this.options.caching});
+      handlers[index] = new BatchEdgeQueryHandler(kg, this.resolveOutputIDs, { caching: this.options.caching });
       handlers[index].setEdges(queryPaths[index]);
       handlers[index].subscribe(this.queryResults);
       handlers[index].subscribe(this.bteGraph);

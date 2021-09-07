@@ -50,37 +50,38 @@ module.exports = class QueryResult {
 
     const results = [];
 
-    this.cachedQueryResults[0] && this.cachedQueryResults[0].forEach((cachedRecords, outputNodeID) => {
-      cachedRecords.forEach((cachedRecord) => {
-        const result = {
-          node_bindings: {
-            [cachedRecord.inputQueryNodeID]: [
-              {
-                id: cachedRecord.inputNodeID,
-              },
-            ],
-            [cachedRecord.outputQueryNodeID]: [
-              {
-                id: cachedRecord.outputNodeID,
-              },
-            ],
-          },
-          edge_bindings: {
-            [cachedRecord.queryEdgeID]: [
-              {
-                id: cachedRecord.kgEdgeID,
-              },
-            ],
-          },
-          //default score issue #200 - TODO: turn to evaluating module eventually
-          score: '1.0',
-        };
+    this.cachedQueryResults[0] &&
+      this.cachedQueryResults[0].forEach((cachedRecords, outputNodeID) => {
+        cachedRecords.forEach((cachedRecord) => {
+          const result = {
+            node_bindings: {
+              [cachedRecord.inputQueryNodeID]: [
+                {
+                  id: cachedRecord.inputNodeID,
+                },
+              ],
+              [cachedRecord.outputQueryNodeID]: [
+                {
+                  id: cachedRecord.outputNodeID,
+                },
+              ],
+            },
+            edge_bindings: {
+              [cachedRecord.queryEdgeID]: [
+                {
+                  id: cachedRecord.kgEdgeID,
+                },
+              ],
+            },
+            //default score issue #200 - TODO: turn to evaluating module eventually
+            score: '1.0',
+          };
 
-        results.push(result);
+          results.push(result);
 
-        this._addRemainingCachedQueryResults(cachedRecord.inputNodeID, results, result, 1);
+          this._addRemainingCachedQueryResults(cachedRecord.inputNodeID, results, result, 1);
+        });
       });
-    });
 
     return results;
   }
@@ -101,26 +102,28 @@ module.exports = class QueryResult {
     const cachedQueryResult = new Map();
 
     queryResult.forEach((record) => {
-      const inputNodeID = helper._getInputID(record);
-      const outputNodeID = helper._getOutputID(record);
-
-      if (this.cachedQueryResults.length === 0 || previousOutputNodeIDs.has(inputNodeID)) {
-        let cachedRecordsForOutputNodeID;
-        if (cachedQueryResult.has(outputNodeID)) {
-          cachedRecordsForOutputNodeID = cachedQueryResult.get(outputNodeID);
-        } else {
-          cachedRecordsForOutputNodeID = [];
-          cachedQueryResult.set(outputNodeID, cachedRecordsForOutputNodeID);
+      if (record) {
+        const inputNodeID = helper._getInputID(record);
+        const outputNodeID = helper._getOutputID(record);
+  
+        if (this.cachedQueryResults.length === 0 || previousOutputNodeIDs.has(inputNodeID)) {
+          let cachedRecordsForOutputNodeID;
+          if (cachedQueryResult.has(outputNodeID)) {
+            cachedRecordsForOutputNodeID = cachedQueryResult.get(outputNodeID);
+          } else {
+            cachedRecordsForOutputNodeID = [];
+            cachedQueryResult.set(outputNodeID, cachedRecordsForOutputNodeID);
+          }
+  
+          cachedRecordsForOutputNodeID.push({
+            inputQueryNodeID: helper._getInputQueryNodeID(record),
+            inputNodeID: inputNodeID,
+            queryEdgeID: record.$edge_metadata.trapi_qEdge_obj.getID(),
+            kgEdgeID: helper._getKGEdgeID(record),
+            outputQueryNodeID: helper._getOutputQueryNodeID(record),
+            outputNodeID: outputNodeID,
+          });
         }
-
-        cachedRecordsForOutputNodeID.push({
-          inputQueryNodeID: helper._getInputQueryNodeID(record),
-          inputNodeID: inputNodeID,
-          queryEdgeID: record.$edge_metadata.trapi_qEdge_obj.getID(),
-          kgEdgeID: helper._getKGEdgeID(record),
-          outputQueryNodeID: helper._getOutputQueryNodeID(record),
-          outputNodeID: outputNodeID,
-        });
       }
     });
 

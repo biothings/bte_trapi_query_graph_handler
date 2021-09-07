@@ -1,14 +1,14 @@
 const redisClient = require('./redis-client');
 const debug = require('debug')('bte:biothings-explorer-trapi:cache_handler');
 const LogEntry = require('./log_entry');
+const _ = require('lodash');
 
 module.exports = class {
   constructor(qEdges, caching, logs = []) {
     this.qEdges = qEdges;
     this.logs = logs;
-    this.cacheEnabled = (caching === 'false') ?
-      false : 
-      (!(process.env.REDIS_HOST === undefined) && !(process.env.REDIS_PORT === undefined));
+    this.cacheEnabled =
+      caching === 'false' ? false : !(process.env.REDIS_HOST === undefined) && !(process.env.REDIS_PORT === undefined);
     this.logs.push(
       new LogEntry('DEBUG', null, `REDIS cache is ${this.cacheEnabled === true ? '' : 'not'} enabled.`).getLog(),
     );
@@ -41,7 +41,28 @@ module.exports = class {
   }
 
   _copyRecord(record) {
-    const new_record = {
+    const objs = {
+      in: record.$input.obj[0],
+      out: record.$output.obj[0],
+    };
+
+    const copyObjs = {};
+
+    Object.entries(objs).forEach(([which, obj]) => {
+      copyObjs[which] = Object.fromEntries(
+        Object.entries(obj)
+          .filter(([key, val]) => !key.startsWith('_'))
+      );
+
+      Object.entries(Object.getOwnPropertyDescriptors(Object.getPrototypeOf(obj)))
+        .filter(([key, descriptor]) => typeof descriptor.get === 'function' && key !== '__proto__')
+        .map(([key]) => key)
+        .forEach((key) => {
+          copyObjs[which][key] = obj[key];
+        });
+    });
+
+    return {
       $edge_metadata: {
         input_id: record.$edge_metadata.input_id,
         output_id: record.$edge_metadata.output_id,
@@ -53,33 +74,13 @@ module.exports = class {
       },
       $input: {
         original: record.$input.original,
-        obj: [
-          {
-            dbIDs: record.$input.obj[0].dbIDs,
-            curies: record.$input.obj[0].curies,
-            label: record.$input.obj[0].label,
-            primaryID: record.$input.obj[0].primaryID,
-          },
-        ],
+        obj: [copyObjs['in']],
       },
       $output: {
         original: record.$output.original,
-        obj: [
-          {
-            dbIDs: record.$output.obj[0].dbIDs,
-            curies: record.$output.obj[0].curies,
-            label: record.$output.obj[0].label,
-            primaryID: record.$output.obj[0].primaryID,
-          },
-        ],
+        obj: [copyObjs['out']],
       },
     };
-    Object.keys(record).map((k) => {
-      if (!['$edge_metadata', '$input', '$output'].includes(k)) {
-        new_record[k] = record[k];
-      }
-    });
-    return new_record;
   }
 
   _groupQueryResultsByEdgeID(queryResult) {
