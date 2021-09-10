@@ -1,11 +1,13 @@
 const QNode = require('./query_node');
 const QEdge = require('./query_edge');
 const QExecEdge = require('./query_execution_edge');
-const _ = require('lodash');
 const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error');
 const LogEntry = require('./log_entry');
+const NewExeEdge = require('./query_execution_edge_2');
 const MAX_DEPTH = 3;
 const debug = require('debug')('bte:biothings-explorer-trapi:query_graph');
+const QNode2 = require('./query_node_2');
+const id_resolver = require('biomedical_id_resolver');
 
 module.exports = class QueryGraphHandler {
   constructor(queryGraph) {
@@ -59,9 +61,67 @@ module.exports = class QueryGraphHandler {
   /**
    * @private
    */
-  _storeEdges() {
+    async _findNodeCategories(ids) {
+      if (ids.length == 1) {
+        let category = await id_resolver.resolveSRI({
+            unknown: ids
+        });
+        debug(`Query node missing categories...Looking for match...`);
+        if (Object.hasOwnProperty.call(category, ids[0])) {
+            category = category[ids[0]][0]['semanticType'];
+            return ["biolink:" + category];
+        }else{
+            debug(`No category match found for ${JSON.stringify(ids)}.`);
+            return [];
+        }
+    }else{
+      debug(`(Error) Can't find category matches of multiple IDs.`);
+      return [];
+    }
+  }
+
+   /**
+   * @private
+   */
+    async _storeNodes_2() {
+      let nodes = {};
+      for (let node_id in this.queryGraph.nodes) {
+        //if node has ID but no categories
+        if (
+          (!Object.hasOwnProperty.call(this.queryGraph.nodes[node_id], 'categories') &&
+          Object.hasOwnProperty.call(this.queryGraph.nodes[node_id], 'ids')) ||
+          (Object.hasOwnProperty.call(this.queryGraph.nodes[node_id], 'categories') &&
+          this.queryGraph.nodes[node_id].categories.length == 0 &&
+          Object.hasOwnProperty.call(this.queryGraph.nodes[node_id], 'ids'))
+          ) {
+          let category = await this._findNodeCategories(this.queryGraph.nodes[node_id].ids);
+          this.queryGraph.nodes[node_id].categories = category;
+          debug(`Node category found. Assigning value: ${JSON.stringify(this.queryGraph.nodes[node_id])}`);
+          this.logs.push(
+            new LogEntry(
+            'DEBUG',
+            null, 
+            `Assigned missing node ID category: ${JSON.stringify(this.queryGraph.nodes[node_id])}`).getLog(),
+          );
+          nodes[node_id] = new QNode2(node_id, this.queryGraph.nodes[node_id]);
+        }else{
+          debug(`Creating node...`);
+          nodes[node_id] = new QNode2(node_id, this.queryGraph.nodes[node_id]);
+        }
+        
+      }
+      this.logs.push(
+        new LogEntry('DEBUG', null, `BTE identified ${Object.keys(nodes).length} QNodes from your query graph`).getLog(),
+      );
+      return nodes;
+    }
+
+  /**
+   * @private
+   */
+  async _storeEdges() {
     if (this.nodes === undefined) {
-      this.nodes = this._storeNodes();
+      this.nodes = await this._storeNodes();
     }
     let edges = {};
     for (let edge_id in this.queryGraph.edges) {
@@ -72,6 +132,34 @@ module.exports = class QueryGraphHandler {
           object: this.nodes[this.queryGraph.edges[edge_id].object],
         },
       };
+      edges[edge_id] = new QEdge(edge_id, edge_info);
+    }
+    this.logs.push(
+      new LogEntry('DEBUG', null, `BTE identified ${Object.keys(edges).length} QEdges from your query graph`).getLog(),
+    );
+    return edges;
+  }
+
+  /**
+   * @private
+   */
+   async _storeEdges_2() {
+    if (this.nodes === undefined) {
+      this.nodes = await this._storeNodes_2();
+    }
+    let edges = {};
+    for (let edge_id in this.queryGraph.edges) {
+      let edge_info = {
+        ...this.queryGraph.edges[edge_id],
+        ...{
+          subject: this.nodes[this.queryGraph.edges[edge_id].subject],
+          object: this.nodes[this.queryGraph.edges[edge_id].object],
+        },
+      };
+      //store in each node ids of edges connected to them
+      this.nodes[this.queryGraph.edges[edge_id].subject].updateConnection(edge_id);
+      this.nodes[this.queryGraph.edges[edge_id].object].updateConnection(edge_id);
+
       edges[edge_id] = new QEdge(edge_id, edge_info);
     }
     this.logs.push(
@@ -109,6 +197,32 @@ module.exports = class QueryGraphHandler {
     );
     debug(`ALL PATHS ${JSON.stringify(paths)}`);
     return paths;
+  }
+
+  /**
+   *
+   */
+  async calculateEdges() {
+    this._validate(this.queryGraph);
+    //populate edge and node info
+    debug(`(1) Creating edges for manager...`);
+    if (this.edges === undefined) {
+      this.edges = await this._storeEdges_2();
+    }
+    let edges = {};
+    let edge_index = 0;
+    //create a smart query edge per edge in query
+    for (const edge_id in this.edges) {
+      edges[edge_index] = [
+        // () ----> ()
+        this.edges[edge_id].object.curie ? 
+        new NewExeEdge(this.edges[edge_id], true, undefined) :
+        new NewExeEdge(this.edges[edge_id], false, undefined)
+        // reversed () <---- ()
+      ];
+      edge_index++;
+    }
+    return edges;
   }
 
   /**
