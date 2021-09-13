@@ -8,7 +8,11 @@ module.exports = class {
     this.qEdges = qEdges;
     this.logs = logs;
     this.cacheEnabled =
-      caching === 'false' ? false : !(process.env.REDIS_HOST === undefined) && !(process.env.REDIS_PORT === undefined);
+      caching === 'false'
+        ? false
+        : process.env.RESULT_CACHING !== 'false'
+          ? !(process.env.REDIS_HOST === undefined) && !(process.env.REDIS_PORT === undefined)
+          : false;
     this.logs.push(
       new LogEntry('DEBUG', null, `REDIS cache is ${this.cacheEnabled === true ? '' : 'not'} enabled.`).getLog(),
     );
