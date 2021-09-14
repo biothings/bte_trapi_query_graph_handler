@@ -288,7 +288,7 @@ describe("Test helper moduler", () => {
         })
     })
 
-    describe("Test _createUniqueEdgeID function", () => {
+    describe("Test _getKGEdgeID function", () => {
         const edgeObject = {
             isReversed() {
                 return false;
@@ -311,8 +311,8 @@ describe("Test helper moduler", () => {
                 }]
             },
         }
-        const res = helper._createUniqueEdgeID(record);
-        expect(res).toEqual('input-output-MyGene.info API-CPDB')
+        const res = helper._getKGEdgeID(record);
+        expect(res).toEqual('6b49bd17fb00886e05ec1f16def3c0da')
     })
 
     describe("Test _getInputCategory function", () => {
