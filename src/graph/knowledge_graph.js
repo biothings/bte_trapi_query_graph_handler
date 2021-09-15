@@ -66,30 +66,28 @@ module.exports = class KnowledgeGraph {
   }
 
   _createAttributes(kgEdge) {
-    let attributes;
+    let attributes = [
+      {
+        attribute_type_id: 'biolink:aggregator_knowledge_source',
+        value: ['infores:translator-biothings-explorer'],
+        value_type_id: 'biolink:InformationResource',
+      },
+    ];
+
     if (kgEdge.attributes.attributes) { //handle TRAPI APIs (Situation A of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208)
+      attributes = [...attributes, ...kgEdge.attributes.attributes];
+    } else if ( //handle direct info providers (Situation C of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208)
+      [  
+        'Clinical Risk KP API',
+        'Text Mining Targeted Association API',
+        'Multiomics Wellness KP API',
+        'Drug Response KP API',
+        'Text Mining Co-occurrence API',
+        'TCGA Mutation Frequency API',
+      ].some((api_name) => kgEdge.apis.has(api_name))
+    ) {
       attributes = [
-        {
-          "attribute_type_id": "biolink:aggregator_knowledge_source",
-          "value": ["infores:translator-biothings-explorer"],
-          "value_type_id": "biolink:InformationResource"
-        }, 
-        ...kgEdge.attributes.attributes
-      ];
-    } else if ([ //handle direct info providers (Situation C of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208)
-      'Clinical Risk KP API',
-      'Text Mining Targeted Association API',
-      'Multiomics Wellness KP API',
-      'Drug Response KP API',
-      'Text Mining Co-occurrence API',
-      'TCGA Mutation Frequency API'
-    ].some((api_name) => kgEdge.apis.has(api_name))) {
-      attributes = [
-        {
-          attribute_type_id: "biolink:aggregator_knowledge_source",
-          value: ["infores:translator-biothings-explorer"],
-          value_type_id: "biolink:InformationResource"
-        },
+        ...attributes,
         {
           attribute_type_id: 'biolink:supporting_data_source',
           value: Array.from(kgEdge.sources),
@@ -106,6 +104,7 @@ module.exports = class KnowledgeGraph {
           value_type_id: 'biolink:publication',
         },
       ];
+
       for (const key in kgEdge.attributes) {
         attributes.push({
           attribute_type_id: key,
@@ -115,11 +114,7 @@ module.exports = class KnowledgeGraph {
       }
     } else { //handle non-trapi APIs (Situation B of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208)
       attributes = [
-        {
-          attribute_type_id: "biolink:aggregator_knowledge_source",
-          value: ["infores:translator-biothings-explorer"],
-          value_type_id: "biolink:InformationResource"
-        },
+        ...attributes,
         {
           attribute_type_id: 'biolink:primary_knowledge_source',
           value: Array.from(kgEdge.sources),
@@ -136,6 +131,7 @@ module.exports = class KnowledgeGraph {
           value_type_id: 'biolink:publication',
         },
       ];
+
       for (const key in kgEdge.attributes) {
         attributes.push({
           attribute_type_id: key,
@@ -144,6 +140,7 @@ module.exports = class KnowledgeGraph {
         });
       }
     }
+
     return attributes;
   }
 
