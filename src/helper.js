@@ -49,18 +49,13 @@ module.exports = class QueryGraphHelper {
   }
 
   _getKGEdgeID(record) {
-    return [this._getInputID(record), this._getPredicate(record), this._getOutputID(record)].join('-');
-  }
-
-  _createUniqueEdgeID(record) {
     const edgeMetaData = [
       this._getInputID(record),
       this._getOutputID(record),
       this._getAPI(record),
       this._getSource(record),
     ];
-    // return this._generateHash(edgeMetaData.join('-'));
-    return edgeMetaData.join('-');
+    return this._generateHash(edgeMetaData.join('-'));
   }
 
   _getInputCategory(record) {
