@@ -36,22 +36,22 @@ module.exports = class KnowledgeGraph {
         {
           attribute_type_id: 'num_source_nodes',
           value: kgNode._sourceNodes.size,
-          value_type_id: 'bts:num_source_nodes',
+          //value_type_id: 'bts:num_source_nodes',
         },
         {
           attribute_type_id: 'num_target_nodes',
           value: kgNode._targetNodes.size,
-          value_type_id: 'bts:num_target_nodes',
+          //value_type_id: 'bts:num_target_nodes',
         },
         {
           attribute_type_id: 'source_qg_nodes',
           value: Array.from(kgNode._sourceQGNodes),
-          value_type_id: 'bts:source_qg_nodes',
+          //value_type_id: 'bts:source_qg_nodes',
         },
         {
           attribute_type_id: 'target_qg_nodes',
           value: Array.from(kgNode._targetQGNodes),
-          value_type_id: 'bts:target_qg_nodes',
+          //value_type_id: 'bts:target_qg_nodes',
         },
       ],
     };
@@ -59,7 +59,7 @@ module.exports = class KnowledgeGraph {
       res.attributes.push({
         attribute_type_id: key,
         value: kgNode._nodeAttributes[key],
-        value_type_id: 'bts:' + key,
+        //value_type_id: 'bts:' + key,
       });
     }
     return res;
@@ -70,7 +70,7 @@ module.exports = class KnowledgeGraph {
       {
         attribute_type_id: 'biolink:aggregator_knowledge_source',
         value: ['infores:translator-biothings-explorer'],
-        value_type_id: 'biolink:InformationResource',
+        //value_type_id: 'biolink:InformationResource',
       },
     ];
 
@@ -91,17 +91,17 @@ module.exports = class KnowledgeGraph {
         {
           attribute_type_id: 'biolink:supporting_data_source',
           value: Array.from(kgEdge.sources),
-          value_type_id: 'biolink:InformationResource',
+          //value_type_id: 'biolink:InformationResource',
         },
         {
           attribute_type_id: 'biolink:primary_knowledge_source',
           value: Array.from(kgEdge.inforesCuries),
-          value_type_id: 'biolink:InformationResource',
+          //value_type_id: 'biolink:InformationResource',
         },
         {
           attribute_type_id: 'publications',
           value: Array.from(kgEdge.publications),
-          value_type_id: 'biolink:publication',
+          //value_type_id: 'biolink:publication',
         },
       ];
 
@@ -109,7 +109,7 @@ module.exports = class KnowledgeGraph {
         attributes.push({
           attribute_type_id: key,
           value: kgEdge.attributes[key],
-          value_type_id: 'bts:' + key,
+          //value_type_id: 'bts:' + key,
         });
       }
     } else { //handle non-trapi APIs (Situation B of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208)
@@ -118,17 +118,17 @@ module.exports = class KnowledgeGraph {
         {
           attribute_type_id: 'biolink:primary_knowledge_source',
           value: Array.from(kgEdge.sources),
-          value_type_id: 'biolink:InformationResource',
+          //value_type_id: 'biolink:InformationResource',
         },
         {
           attribute_type_id: 'biolink:aggregator_knowledge_source',
           value: Array.from(kgEdge.inforesCuries),
-          value_type_id: 'biolink:InformationResource',
+          //value_type_id: 'biolink:InformationResource',
         },
         {
           attribute_type_id: 'publications',
           value: Array.from(kgEdge.publications),
-          value_type_id: 'biolink:publication',
+          //value_type_id: 'biolink:publication',
         },
       ];
 
@@ -136,7 +136,7 @@ module.exports = class KnowledgeGraph {
         attributes.push({
           attribute_type_id: key,
           value: kgEdge.attributes[key],
-          value_type_id: 'bts:' + key,
+          //value_type_id: 'bts:' + key,
         });
       }
     }
