@@ -40,6 +40,13 @@ module.exports = class QueryGraphHelper {
     return record.$edge_metadata.api_name || undefined;
   }
 
+  _getInforesCurie(record) {
+    if (record.$edge_metadata['x-translator']) {
+      return record.$edge_metadata['x-translator']['infores-curie'] || undefined;
+    }
+    return undefined;
+  }
+
   _getSource(record) {
     return record.$edge_metadata.source || undefined;
   }

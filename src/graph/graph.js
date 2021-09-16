@@ -58,6 +58,7 @@ module.exports = class Graph {
           });
         }
         this.edges[edgeID].addAPI(this.helper._getAPI(record));
+        this.edges[edgeID].addInforesCurie(this.helper._getInforesCurie(record));
         this.edges[edgeID].addSource(this.helper._getSource(record));
         this.edges[edgeID].addPublication(this.helper._getPublication(record));
         Object.keys(record)
