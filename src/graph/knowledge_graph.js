@@ -70,7 +70,7 @@ module.exports = class KnowledgeGraph {
       {
         attribute_type_id: 'biolink:aggregator_knowledge_source',
         value: ['infores:translator-biothings-explorer'],
-        //value_type_id: 'biolink:InformationResource',
+        value_type_id: 'biolink:InformationResource',
       },
     ];
 
@@ -91,12 +91,12 @@ module.exports = class KnowledgeGraph {
         {
           attribute_type_id: 'biolink:supporting_data_source',
           value: Array.from(kgEdge.sources),
-          //value_type_id: 'biolink:InformationResource',
+          value_type_id: 'biolink:InformationResource',
         },
         {
           attribute_type_id: 'biolink:primary_knowledge_source',
           value: Array.from(kgEdge.inforesCuries),
-          //value_type_id: 'biolink:InformationResource',
+          value_type_id: 'biolink:InformationResource',
         },
         {
           attribute_type_id: 'publications',
@@ -118,12 +118,12 @@ module.exports = class KnowledgeGraph {
         {
           attribute_type_id: 'biolink:primary_knowledge_source',
           value: Array.from(kgEdge.sources),
-          //value_type_id: 'biolink:InformationResource',
+          value_type_id: 'biolink:InformationResource',
         },
         {
           attribute_type_id: 'biolink:aggregator_knowledge_source',
           value: Array.from(kgEdge.inforesCuries),
-          //value_type_id: 'biolink:InformationResource',
+          value_type_id: 'biolink:InformationResource',
         },
         {
           attribute_type_id: 'publications',
