@@ -124,7 +124,7 @@ module.exports = class BatchEdgeQueryHandler {
     } else {
       debug('Start to convert qEdges into BTEEdges....');
       const edgeConverter = new QEdge2BTEEdgeHandler(nonCachedEdges, this.kg);
-      const bteEdges = edgeConverter.convert(nonCachedEdges);
+      const bteEdges = await edgeConverter.convert(nonCachedEdges);
       debug(`qEdges are successfully converted into ${bteEdges.length} BTEEdges....`);
       this.logs = [...this.logs, ...edgeConverter.logs];
       if (bteEdges.length === 0 && cachedResults.length === 0) {
@@ -163,7 +163,7 @@ module.exports = class BatchEdgeQueryHandler {
     } else {
       debug('Start to convert qEdges into BTEEdges....');
       const edgeConverter = new QEdge2BTEEdgeHandler(nonCachedEdges, this.kg);
-      const bteEdges = edgeConverter.convert(nonCachedEdges);
+      const bteEdges = await edgeConverter.convert(nonCachedEdges);
       debug(`qEdges are successfully converted into ${bteEdges.length} BTEEdges....`);
       this.logs = [...this.logs, ...edgeConverter.logs];
       if (bteEdges.length === 0 && cachedResults.length === 0) {
