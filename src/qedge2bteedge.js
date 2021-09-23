@@ -170,7 +170,7 @@ module.exports = class QEdge2BTEEdgeHandler {
         if (entity.semanticType === inputType && inputID in entity.dbIDs) {
           entity.dbIDs[inputID].map((id) => {
             const edge = _.cloneDeep(smartAPIEdge);
-            edge.input = id;
+            edge.input = { queryInputs: id, ...edge.query_operation.templateInputs };
             edge.input_resolved_identifiers = {
               [curie]: [entity],
             };
@@ -231,7 +231,7 @@ module.exports = class QEdge2BTEEdgeHandler {
     }
     if (Object.keys(id_mapping).length > 0) {
       const edge = _.cloneDeep(smartAPIEdge);
-      edge.input = { inputs: inputs };
+      edge.input = { queryInputs: inputs, ...edge.query_operation.templateInputs };
       edge.input_resolved_identifiers = input_resolved_identifiers;
       edge.original_input = id_mapping;
       const edgeToBePushed = _.cloneDeep(edge);
