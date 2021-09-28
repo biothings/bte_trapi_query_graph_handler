@@ -97,13 +97,10 @@ module.exports = class {
     //       copyObjs[which][key] = obj[key];
     //     });
     // });
-
-    return {
-      $edge_metadata: { ...record.$edge_metadata },
-      $input: copyObjs.$input,
-      $output: copyObjs.$output,
-      inTaxon: record.inTaxon,
-    };
+    const returnVal = { ...record };
+    returnVal.$input = copyObjs.$input;
+    returnVal.$output = copyObjs.$output;
+    return returnVal;
   }
 
   _groupQueryResultsByEdgeID(queryResult) {
