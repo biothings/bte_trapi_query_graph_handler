@@ -46,44 +46,63 @@ module.exports = class {
 
   _copyRecord(record) {
     const objs = {
-      in: record.$input.obj[0],
-      out: record.$output.obj[0],
+      $input: record.$input.obj,
+      $output: record.$output.obj,
     };
 
-    const copyObjs = {};
+    const copyObjs = Object.fromEntries(Object.entries(objs).map(([which, nodes]) => {
+      return [
+        which,
+        {
+          original: record[which].original,
+          obj: nodes.map((obj) => {
+            const copyObj = Object.fromEntries(Object.entries(obj).filter(([key]) => !key.startsWith('__')));
+            Object.entries(Object.getOwnPropertyDescriptors(Object.getPrototypeOf(obj)))
+              .filter(([key, descriptor]) => typeof descriptor.get === 'function' && key !== '__proto__')
+              .map(([key]) => key)
+              .forEach((key) => {
+                copyObj[key] = obj[key];
+              });
+            return copyObj;
+          }),
+        },
+      ];
+    }));
 
-    Object.entries(objs).forEach(([which, obj]) => {
-      copyObjs[which] = Object.fromEntries(
-        Object.entries(obj)
-          .filter(([key, val]) => !key.startsWith('_'))
-      );
 
-      Object.entries(Object.getOwnPropertyDescriptors(Object.getPrototypeOf(obj)))
-        .filter(([key, descriptor]) => typeof descriptor.get === 'function' && key !== '__proto__')
-        .map(([key]) => key)
-        .forEach((key) => {
-          copyObjs[which][key] = obj[key];
-        });
-    });
+    // const copyObjs = Object.fromEntries(Object.entries(objs).map(([which, obj]) => {
+    //   const copyObj = Object.fromEntries(Object.entries(obj).filter(([key]) => !key.startsWith('__')));
+    //   Object.entries(Object.getOwnPropertyDescriptors(Object.getPrototypeOf(obj)))
+    //     .filter(([key, descriptor]) => typeof descriptor.get === 'function' && key !== '__proto__')
+    //     .map(([key]) => key)
+    //     .forEach((key) => {
+    //       copyObj[key] = obj[key];
+    //     });
+
+    //   return [which, copyObj];
+    // }));
+
+    // const copyObjs = {};
+
+    // Object.entries(objs).forEach(([which, obj]) => {
+    //   copyObjs[which] = Object.fromEntries(
+    //     Object.entries(obj)
+    //       .filter(([key, val]) => !key.startsWith('_'))
+    //   );
+
+    //   Object.entries(Object.getOwnPropertyDescriptors(Object.getPrototypeOf(obj)))
+    //     .filter(([key, descriptor]) => typeof descriptor.get === 'function' && key !== '__proto__')
+    //     .map(([key]) => key)
+    //     .forEach((key) => {
+    //       copyObjs[which][key] = obj[key];
+    //     });
+    // });
 
     return {
-      $edge_metadata: {
-        input_id: record.$edge_metadata.input_id,
-        output_id: record.$edge_metadata.output_id,
-        output_type: record.$edge_metadata.output_type,
-        input_type: record.$edge_metadata.input_type,
-        predicate: record.$edge_metadata.predicate,
-        source: record.$edge_metadata.source,
-        api_name: record.$edge_metadata.api_name,
-      },
-      $input: {
-        original: record.$input.original,
-        obj: [copyObjs['in']],
-      },
-      $output: {
-        original: record.$output.original,
-        obj: [copyObjs['out']],
-      },
+      $edge_metadata: { ...record.$edge_metadata },
+      $input: copyObjs.$input,
+      $output: copyObjs.$output,
+      inTaxon: record.inTaxon,
     };
   }
 
