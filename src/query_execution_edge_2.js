@@ -234,10 +234,127 @@ module.exports = class UpdatedExeEdge {
     this.qEdge.object.updateCuries(combined_curies_2);
   }
 
+  applyNodeConstraints() {
+    debug(`(6) Applying Node Constraints to ${this.results.length} results.`);
+    let kept = [];
+    let save_kept = false;
+    let sub_constraints = this.subject.constraints;
+    if (sub_constraints && sub_constraints.length) {
+      debug(`Node (subject) constraints: ${JSON.stringify(sub_constraints)}`);
+      save_kept = true;
+      for (let i = 0; i < this.results.length; i++) {
+        const res = this.results[i];
+        let keep = true;
+        //apply constraints
+        for (let x = 0; x < sub_constraints.length; x++) {
+          const constraint = sub_constraints[x];
+          keep = this.meetsConstraint(constraint, res, '$input')
+        }
+        //pass or not
+        if (keep) {
+          kept.push(res);
+        }
+      }
+    }
+
+    let obj_constraints = this.object.constraints;
+    if (obj_constraints && obj_constraints.length) {
+      debug(`Node (object) constraints: ${JSON.stringify(obj_constraints)}`);
+      save_kept = true;
+      for (let i = 0; i < this.results.length; i++) {
+        const res = this.results[i];
+        let keep = true;
+        //apply constraints
+        for (let x = 0; x < obj_constraints.length; x++) {
+          const constraint = obj_constraints[x];
+          keep = this.meetsConstraint(constraint, res, '$output')
+        }
+        //pass or not
+        if (keep) {
+          kept.push(res);
+        }
+      }
+    }
+    if (save_kept) {
+      //only override results if there was any filtering done.
+      this.results =  kept;
+    }
+    debug(`(6) Reduced to ${this.results.length} results.`);
+  }
+
+  meetsConstraint(constraint, result, from) {
+    //list of attribute ids in node
+    let available_attributes = new Set();
+    for (const key in result[from].obj[0].attributes) {
+      available_attributes.add(key)
+    }
+    available_attributes = [...available_attributes];
+    // debug(`ATTRS ${JSON.stringify(result[from].obj[0]._leafSemanticType)}` +
+    // ` ${from} : ${JSON.stringify(available_attributes)}`);
+    //determine if node even contains right attributes
+    let filters_found = available_attributes.filter((a) => a.includes(constraint.name));
+    if (!filters_found.length) {
+      //node doesn't have the attribute needed
+      // debug("node doesn't have the attribute needed")
+      return false;
+    }else{
+      let node_attributes = result[from].obj[0].attributes;
+      switch (constraint.operator) {
+        case "==":
+          // debug(`${JSON.stringify(node_attributes)} vs ${constraint.value}`)
+            for (const key in node_attributes) {
+              if (Array.isArray(node_attributes[key])) {
+                if (node_attributes[key].includes(constraint.value)) {
+                  return true;
+                }
+              }else{
+                if (node_attributes[key] == constraint.value) {
+                  return true;
+                }
+              }
+            }
+            return false;
+        case ">":
+            for (const key in node_attributes) {
+              if (node_attributes[key] > constraint.value) {
+                return true;
+              }
+            }
+            return false;
+        case ">=":
+          for (const key in node_attributes) {
+            if (node_attributes[key] >= constraint.value) {
+              return true;
+            }
+          }
+          return false;
+        case "<":
+          for (const key in node_attributes) {
+            if (node_attributes[key] < constraint.value) {
+              return true;
+            }
+          }
+          return false;
+        case "<=":
+          for (const key in node_attributes) {
+            if (node_attributes[key] <= constraint.value) {
+              return true;
+            }
+          }
+          return false;
+        default:
+          debug(`Node operator not handled ${constraint.operator}`);
+          return false;
+      };
+    }
+  }
+
   storeResults(res) {
     debug(`(6) Storing results...`);
     //store new results in current edge
     this.results = res;
+    //will update results if any constraints are found
+    this.applyNodeConstraints();
     debug(`(7) Updating nodes based on edge results...`);
     this.updateNodesCuries(res);
   }

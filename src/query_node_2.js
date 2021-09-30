@@ -22,6 +22,8 @@ module.exports = class QNode {
         // might be told to store its curies temporarily
         this.held_curie = [];
         this.held_expanded = {};
+        //node constraints
+        this.constraints = info.constraints;
         //list of edge ids that are connected to this node
         this.connected_to = new Set();
         //object-ify array of initial curies
