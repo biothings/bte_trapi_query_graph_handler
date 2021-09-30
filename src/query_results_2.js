@@ -11,7 +11,7 @@ const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
  *   publications: string[],
  *   relation: string,
  *   source: string,
- *   score: string,
+ *   score: number,
  *   $input: Object<string, *>,
  *   $output: Object<string, *>
  * } Record
@@ -36,7 +36,7 @@ const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
  * @typedef {
  *   node_bindings: Object.<string, NodeBinding[]>,
  *   edge_bindings: Object.<string, EdgeBinding[]>,
- *   score: string
+ *   score: number
  * } Result
  */
 
@@ -306,7 +306,7 @@ module.exports = class QueryResult {
        */
       .map(infoByEdgeForOneCombo => {
         // default score issue #200 - TODO: turn to evaluating module eventually
-        const result = {node_bindings: {}, edge_bindings: {}, score: '1.0'};
+        const result = {node_bindings: {}, edge_bindings: {}, score: 1.0};
 
         toPairs(infoByEdgeForOneCombo).forEach(([queryEdgeID, {
             inputQueryNodeID, outputQueryNodeID,

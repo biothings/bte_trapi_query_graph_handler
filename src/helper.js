@@ -40,6 +40,13 @@ module.exports = class QueryGraphHelper {
     return record.$edge_metadata.api_name || undefined;
   }
 
+  _getInforesCurie(record) {
+    if (record.$edge_metadata['x-translator']) {
+      return record.$edge_metadata['x-translator']['infores-curie'] || undefined;
+    }
+    return undefined;
+  }
+
   _getSource(record) {
     return record.$edge_metadata.source || undefined;
   }
@@ -49,18 +56,13 @@ module.exports = class QueryGraphHelper {
   }
 
   _getKGEdgeID(record) {
-    return [this._getInputID(record), this._getPredicate(record), this._getOutputID(record)].join('-');
-  }
-
-  _createUniqueEdgeID(record) {
     const edgeMetaData = [
       this._getInputID(record),
       this._getOutputID(record),
       this._getAPI(record),
       this._getSource(record),
     ];
-    // return this._generateHash(edgeMetaData.join('-'));
-    return edgeMetaData.join('-');
+    return this._generateHash(edgeMetaData.join('-'));
   }
 
   _getInputCategory(record) {

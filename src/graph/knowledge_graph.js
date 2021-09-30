@@ -36,22 +36,22 @@ module.exports = class KnowledgeGraph {
         {
           attribute_type_id: 'num_source_nodes',
           value: kgNode._sourceNodes.size,
-          value_type_id: 'bts:num_source_nodes',
+          //value_type_id: 'bts:num_source_nodes',
         },
         {
           attribute_type_id: 'num_target_nodes',
           value: kgNode._targetNodes.size,
-          value_type_id: 'bts:num_target_nodes',
+          //value_type_id: 'bts:num_target_nodes',
         },
         {
           attribute_type_id: 'source_qg_nodes',
           value: Array.from(kgNode._sourceQGNodes),
-          value_type_id: 'bts:source_qg_nodes',
+          //value_type_id: 'bts:source_qg_nodes',
         },
         {
           attribute_type_id: 'target_qg_nodes',
           value: Array.from(kgNode._targetQGNodes),
-          value_type_id: 'bts:target_qg_nodes',
+          //value_type_id: 'bts:target_qg_nodes',
         },
       ],
     };
@@ -59,7 +59,7 @@ module.exports = class KnowledgeGraph {
       res.attributes.push({
         attribute_type_id: key,
         value: kgNode._nodeAttributes[key],
-        value_type_id: 'bts:' + key,
+        //value_type_id: 'bts:' + key,
       });
     }
     return res;
@@ -68,40 +68,79 @@ module.exports = class KnowledgeGraph {
   _createAttributes(kgEdge) {
     let attributes = [
       {
-        attribute_type_id: 'biolink:primary_knowledge_source',
-        value: Array.from(kgEdge.sources),
-        value_type_id: 'biolink:InformationResource',
-      },
-      {
         attribute_type_id: 'biolink:aggregator_knowledge_source',
-        value: Array.from(kgEdge.apis),
+        value: ['infores:translator-biothings-explorer'],
         value_type_id: 'biolink:InformationResource',
-      },
-      {
-        attribute_type_id: 'publications',
-        value: Array.from(kgEdge.publications),
-        value_type_id: 'biolink:publication',
       },
     ];
 
-    if (kgEdge.attributes.attributes) {
+    if (kgEdge.attributes.attributes) { //handle TRAPI APIs (Situation A of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208)
+      attributes = [...attributes, ...kgEdge.attributes.attributes];
+    } else if ( //handle direct info providers (Situation C of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208)
+      [  
+        'Clinical Risk KP API',
+        'Text Mining Targeted Association API',
+        'Multiomics Wellness KP API',
+        'Drug Response KP API',
+        'Text Mining Co-occurrence API',
+        'TCGA Mutation Frequency API',
+      ].some((api_name) => kgEdge.apis.has(api_name))
+    ) {
       attributes = [
+        ...attributes,
         {
-          "attribute_type_id": "biolink:aggregator_knowledge_source",
-          "value": "infores:translator-biothings-explorer",
-          "value_type_id": "biolink:InformationResource"
-        }, 
-        ...kgEdge.attributes.attributes
+          attribute_type_id: 'biolink:supporting_data_source',
+          value: Array.from(kgEdge.sources),
+          value_type_id: 'biolink:InformationResource',
+        },
+        {
+          attribute_type_id: 'biolink:primary_knowledge_source',
+          value: Array.from(kgEdge.inforesCuries),
+          value_type_id: 'biolink:InformationResource',
+        },
+        {
+          attribute_type_id: 'publications',
+          value: Array.from(kgEdge.publications),
+          //value_type_id: 'biolink:publication',
+        },
       ];
-    } else {
+
       for (const key in kgEdge.attributes) {
         attributes.push({
           attribute_type_id: key,
           value: kgEdge.attributes[key],
-          value_type_id: 'bts:' + key,
+          //value_type_id: 'bts:' + key,
+        });
+      }
+    } else { //handle non-trapi APIs (Situation B of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208)
+      attributes = [
+        ...attributes,
+        {
+          attribute_type_id: 'biolink:primary_knowledge_source',
+          value: Array.from(kgEdge.sources),
+          value_type_id: 'biolink:InformationResource',
+        },
+        {
+          attribute_type_id: 'biolink:aggregator_knowledge_source',
+          value: Array.from(kgEdge.inforesCuries),
+          value_type_id: 'biolink:InformationResource',
+        },
+        {
+          attribute_type_id: 'publications',
+          value: Array.from(kgEdge.publications),
+          //value_type_id: 'biolink:publication',
+        },
+      ];
+
+      for (const key in kgEdge.attributes) {
+        attributes.push({
+          attribute_type_id: key,
+          value: kgEdge.attributes[key],
+          //value_type_id: 'bts:' + key,
         });
       }
     }
+
     return attributes;
   }
 
