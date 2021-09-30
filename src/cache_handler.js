@@ -120,7 +120,7 @@ module.exports = class {
             JSON.stringify(edge),
           );
         }));
-        await redisClient.expire(id, process.env.REDIS_KEY_EXPIRE_TIME || 600);
+        await redisClient.expireAsync(id, process.env.REDIS_KEY_EXPIRE_TIME || 600);
       }),
     );
     debug('Successfully cached all query results.');
