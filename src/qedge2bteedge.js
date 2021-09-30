@@ -289,17 +289,10 @@ module.exports = class QEdge2BTEEdgeHandler {
 
   async convert(qEdges) {
     let bteEdges = [];
-<<<<<<< HEAD
-    qEdges.map((edge) => {
-      const smartapi_edges = this._getSmartAPIEdges(edge);
-      let apis = smartapi_edges.map((api) => api.association.api_name);
-      debug(`APIs being used: ${JSON.stringify([...new Set(apis)])}`);
-=======
     await Promise.all(qEdges.map(async (edge) => {
       const smartapi_edges = await this._getSmartAPIEdges(edge);
       const apis = _.uniq(smartapi_edges.map(api => api.association.api_name));
       debug(`${apis.length} APIs being used:`, JSON.stringify(apis));
->>>>>>> a35487ddc4b2430f14564a328099e5f0a347e401
       debug(`${smartapi_edges.length} SmartAPI edges are retrieved....`);
       await Promise.all(smartapi_edges.map(async (item) => {
         let newEdges = await this._createBTEEdges(item);
