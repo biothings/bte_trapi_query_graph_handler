@@ -278,8 +278,10 @@ module.exports = class UpdatedExeEdge {
     if (save_kept) {
       //only override results if there was any filtering done.
       this.results =  kept;
+      debug(`(6) Reduced to (${this.results.length}) results.`);
+    }else{
+      debug(`(6) No constraints. Skipping...`);
     }
-    debug(`(6) Reduced to ${this.results.length} results.`);
   }
 
   meetsConstraint(constraint, result, from) {
@@ -295,13 +297,15 @@ module.exports = class UpdatedExeEdge {
     let filters_found = available_attributes.filter((a) => a.includes(constraint.name));
     if (!filters_found.length) {
       //node doesn't have the attribute needed
-      // debug("node doesn't have the attribute needed")
       return false;
     }else{
-      let node_attributes = result[from].obj[0].attributes;
+      //match attr by name, parse only attrs of interest
+      let node_attributes = {};
+      filters_found.forEach((filter) => {
+        node_attributes[filter] = result[from].obj[0].attributes[filter];
+      });
       switch (constraint.operator) {
         case "==":
-          // debug(`${JSON.stringify(node_attributes)} vs ${constraint.value}`)
             for (const key in node_attributes) {
               if (Array.isArray(node_attributes[key])) {
                 if (node_attributes[key].includes(constraint.value)) {
@@ -316,29 +320,65 @@ module.exports = class UpdatedExeEdge {
             return false;
         case ">":
             for (const key in node_attributes) {
-              if (node_attributes[key] > constraint.value) {
-                return true;
+              if (Array.isArray(node_attributes[key])) {
+                for (let index = 0; index < node_attributes[key].length; index++) {
+                  const element = node_attributes[key][index];
+                  if (parseInt(element) > parseInt(constraint.value)) {
+                    return true;
+                  }
+                }
+              }else{
+                if (parseInt(node_attributes[key]) > parseInt(constraint.value)) {
+                  return true;
+                }
               }
             }
             return false;
         case ">=":
           for (const key in node_attributes) {
-            if (node_attributes[key] >= constraint.value) {
-              return true;
+            if (Array.isArray(node_attributes[key])) {
+              for (let index = 0; index < node_attributes[key].length; index++) {
+                const element = node_attributes[key][index];
+                if (parseInt(element) >= parseInt(constraint.value)) {
+                  return true;
+                }
+              }
+            }else{
+              if (parseInt(node_attributes[key]) >= parseInt(constraint.value)) {
+                return true;
+              }
             }
           }
           return false;
         case "<":
           for (const key in node_attributes) {
-            if (node_attributes[key] < constraint.value) {
-              return true;
+            if (Array.isArray(node_attributes[key])) {
+              for (let index = 0; index < node_attributes[key].length; index++) {
+                const element = node_attributes[key][index];
+                if (parseInt(element) > parseInt(constraint.value)) {
+                  return true;
+                }
+              }
+            }else{
+              if (parseInt(node_attributes[key]) < parseInt(constraint.value)) {
+                return true;
+              }
             }
           }
           return false;
         case "<=":
           for (const key in node_attributes) {
-            if (node_attributes[key] <= constraint.value) {
-              return true;
+            if (Array.isArray(node_attributes[key])) {
+              for (let index = 0; index < node_attributes[key].length; index++) {
+                const element = node_attributes[key][index];
+                if (parseInt(element) <= parseInt(constraint.value)) {
+                  return true;
+                }
+              }
+            }else{
+              if (parseInt(node_attributes[key]) <= parseInt(constraint.value)) {
+                return true;
+              }
             }
           }
           return false;
