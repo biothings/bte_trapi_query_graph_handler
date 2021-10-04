@@ -183,15 +183,106 @@ module.exports = class QEdge2BTEEdgeHandler {
   }
 
   /**
+   * @private
+   * @param {object} resolvedIDs
+   * @param {object} smartAPIEdge
+   */
+  _createTemplatedNonBatchSupportBTEEdges(smartAPIEdge) {
+    const bteEdges = [];
+    const inputID = smartAPIEdge.association.input_id;
+    const inputType = smartAPIEdge.association.input_type;
+    const resolvedIDs = smartAPIEdge.reasoner_edge.input_equivalent_identifiers;
+    for (const curie in resolvedIDs) {
+      resolvedIDs[curie].map((entity) => {
+        if (entity.semanticType === inputType && inputID in entity.dbIDs) {
+          entity.dbIDs[inputID].map((id) => {
+            const edge = _.cloneDeep(smartAPIEdge);
+            edge.input = { queryInputs: id, ...edge.query_operation.templateInputs };
+            edge.input_resolved_identifiers = {
+              [curie]: [entity],
+            };
+            if (ID_WITH_PREFIXES.includes(inputID) || id.toString().includes(':')) {
+              edge.original_input = {
+                [id]: curie,
+              };
+            } else {
+              edge.original_input = {
+                [inputID + ':' + id]: curie,
+              };
+            }
+            const edgeToBePushed = _.cloneDeep(edge);
+            edgeToBePushed.reasoner_edge = smartAPIEdge.reasoner_edge;
+            bteEdges.push(edgeToBePushed);
+          });
+        }
+      });
+    }
+    return bteEdges;
+  }
+
+  /**
+   * @private
+   * @param {object} resolvedIDs
+   * @param {object} smartAPIEdge
+   */
+  _createTemplatedBatchSupportBTEEdges(smartAPIEdge) {
+    const id_mapping = {};
+    const inputs = [];
+    const bteEdges = [];
+    const input_resolved_identifiers = {};
+    const inputID = smartAPIEdge.association.input_id;
+    const inputType = smartAPIEdge.association.input_type;
+    let resolvedIDs = smartAPIEdge.reasoner_edge.input_equivalent_identifiers;
+    debug(`Resolved ids: ${JSON.stringify(resolvedIDs)}`);
+    debug(`Input id: ${inputID}`);
+    for (const curie in resolvedIDs) {
+      resolvedIDs[curie].map((entity) => {
+        if (smartAPIEdge.tags.includes('bte-trapi')) {
+          if (entity.semanticType === inputType) {
+            input_resolved_identifiers[curie] = [entity];
+            inputs.push(entity.primaryID);
+            id_mapping[entity.primaryID] = curie;
+          }
+        } else if (entity.semanticType === inputType && inputID in entity.dbIDs) {
+          entity.dbIDs[inputID].map((id) => {
+            if (ID_WITH_PREFIXES.includes(inputID) || id.includes(':')) {
+              id_mapping[id] = curie;
+            } else {
+              id_mapping[inputID + ':' + id] = curie;
+            }
+            input_resolved_identifiers[curie] = [entity];
+            inputs.push(id);
+          });
+        }
+      });
+    }
+    if (Object.keys(id_mapping).length > 0) {
+      const edge = _.cloneDeep(smartAPIEdge);
+      edge.input = { queryInputs: inputs, ...edge.query_operation.templateInputs };
+      edge.input_resolved_identifiers = input_resolved_identifiers;
+      edge.original_input = id_mapping;
+      const edgeToBePushed = _.cloneDeep(edge);
+      edgeToBePushed.reasoner_edge = smartAPIEdge.reasoner_edge;
+      bteEdges.push(edgeToBePushed);
+    }
+    return bteEdges;
+  }
+
+  /**
    * Add inputs to smartapi edges
    */
   async _createBTEEdges(edge) {
     const supportBatch = edge.query_operation.supportBatch;
+    const useTemplating = edge.query_operation.useTemplating;
     let bteEdges;
     if (supportBatch === false) {
-      bteEdges = await this._createNonBatchSupportBTEEdges(edge);
+      bteEdges = useTemplating
+        ? this._createTemplatedNonBatchSupportBTEEdges(edge)
+        : this._createNonBatchSupportBTEEdges(edge);
     } else {
-      bteEdges = await this._createBatchSupportBTEEdges(edge);
+      bteEdges = useTemplating
+        ? this._createTemplatedBatchSupportBTEEdges(edge)
+        : this._createBatchSupportBTEEdges(edge);
     }
     return bteEdges;
   }
