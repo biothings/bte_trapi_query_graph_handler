@@ -4,6 +4,12 @@ const config = require('./config');
 const ID_WITH_PREFIXES = ['MONDO', 'DOID', 'UBERON', 'EFO', 'HP', 'CHEBI', 'CL', 'MGI', 'NCIT'];
 const debug = require('debug')('bte:biothings-explorer-trapi:qedge2btedge');
 
+const setImmediatePromise = () => {
+  return new Promise((resolve) => {
+    setImmediate(() => resolve());
+  });
+};
+
 module.exports = class QEdge2BTEEdgeHandler {
   constructor(qEdges, kg) {
     this.qEdges = qEdges;
@@ -74,16 +80,21 @@ module.exports = class QEdge2BTEEdgeHandler {
    * @param {object} resolvedIDs
    * @param {object} smartAPIEdge
    */
-  _createNonBatchSupportBTEEdges(smartAPIEdge) {
+  async _createNonBatchSupportBTEEdges(smartAPIEdge) {
     const bteEdges = [];
     const inputID = smartAPIEdge.association.input_id;
     const inputType = smartAPIEdge.association.input_type;
     const resolvedIDs = smartAPIEdge.reasoner_edge.input_equivalent_identifiers;
     for (const curie in resolvedIDs) {
-      resolvedIDs[curie].map((entity) => {
+      await Promise.all(resolvedIDs[curie].map(async (entity) => {
         if (entity.semanticType === inputType && inputID in entity.dbIDs) {
-          entity.dbIDs[inputID].map((id) => {
+          await Promise.all(entity.dbIDs[inputID].map(async (id) => {
+            let blockingSince = Date.now();
             const edge = _.cloneDeep(smartAPIEdge);
+            if (blockingSince + (parseInt(process.env.SETIMMEDIATE_TIME) || 3) < Date.now()) {
+              await setImmediatePromise();
+              blockingSince = Date.now();
+            }
             edge.input = id;
             edge.input_resolved_identifiers = {
               [curie]: [entity],
@@ -97,12 +108,18 @@ module.exports = class QEdge2BTEEdgeHandler {
                 [inputID + ':' + id]: curie,
               };
             }
+            blockingSince = Date.now();
             const edgeToBePushed = _.cloneDeep(edge);
+            if (blockingSince + (parseInt(process.env.SETIMMEDIATE_TIME) || 3) < Date.now()) {
+              await setImmediatePromise();
+              blockingSince = Date.now();
+            }
             edgeToBePushed.reasoner_edge = smartAPIEdge.reasoner_edge;
             bteEdges.push(edgeToBePushed);
-          });
+
+          }));
         }
-      });
+      }));
     }
     return bteEdges;
   }
@@ -112,7 +129,7 @@ module.exports = class QEdge2BTEEdgeHandler {
    * @param {object} resolvedIDs
    * @param {object} smartAPIEdge
    */
-  _createBatchSupportBTEEdges(smartAPIEdge) {
+  async _createBatchSupportBTEEdges(smartAPIEdge) {
     const id_mapping = {};
     const inputs = [];
     const bteEdges = [];
@@ -144,8 +161,104 @@ module.exports = class QEdge2BTEEdgeHandler {
       });
     }
     if (Object.keys(id_mapping).length > 0) {
+      let blockingSince = Date.now();
       const edge = _.cloneDeep(smartAPIEdge);
+      if (blockingSince + (parseInt(process.env.SETIMMEDIATE_TIME) || 3) < Date.now()) {
+        await setImmediatePromise();
+        blockingSince = Date.now();
+      }
       edge.input = inputs;
+      edge.input_resolved_identifiers = input_resolved_identifiers;
+      edge.original_input = id_mapping;
+      blockingSince = Date.now();
+      const edgeToBePushed = _.cloneDeep(edge);
+      if (blockingSince + (parseInt(process.env.SETIMMEDIATE_TIME) || 3) < Date.now()) {
+        await setImmediatePromise();
+        blockingSince = Date.now();
+      }
+      edgeToBePushed.reasoner_edge = smartAPIEdge.reasoner_edge;
+      bteEdges.push(edgeToBePushed);
+    }
+    return bteEdges;
+  }
+
+  /**
+   * @private
+   * @param {object} resolvedIDs
+   * @param {object} smartAPIEdge
+   */
+  _createTemplatedNonBatchSupportBTEEdges(smartAPIEdge) {
+    const bteEdges = [];
+    const inputID = smartAPIEdge.association.input_id;
+    const inputType = smartAPIEdge.association.input_type;
+    const resolvedIDs = smartAPIEdge.reasoner_edge.input_equivalent_identifiers;
+    for (const curie in resolvedIDs) {
+      resolvedIDs[curie].map((entity) => {
+        if (entity.semanticType === inputType && inputID in entity.dbIDs) {
+          entity.dbIDs[inputID].map((id) => {
+            const edge = _.cloneDeep(smartAPIEdge);
+            edge.input = { queryInputs: id, ...edge.query_operation.templateInputs };
+            edge.input_resolved_identifiers = {
+              [curie]: [entity],
+            };
+            if (ID_WITH_PREFIXES.includes(inputID) || id.toString().includes(':')) {
+              edge.original_input = {
+                [id]: curie,
+              };
+            } else {
+              edge.original_input = {
+                [inputID + ':' + id]: curie,
+              };
+            }
+            const edgeToBePushed = _.cloneDeep(edge);
+            edgeToBePushed.reasoner_edge = smartAPIEdge.reasoner_edge;
+            bteEdges.push(edgeToBePushed);
+          });
+        }
+      });
+    }
+    return bteEdges;
+  }
+
+  /**
+   * @private
+   * @param {object} resolvedIDs
+   * @param {object} smartAPIEdge
+   */
+  _createTemplatedBatchSupportBTEEdges(smartAPIEdge) {
+    const id_mapping = {};
+    const inputs = [];
+    const bteEdges = [];
+    const input_resolved_identifiers = {};
+    const inputID = smartAPIEdge.association.input_id;
+    const inputType = smartAPIEdge.association.input_type;
+    let resolvedIDs = smartAPIEdge.reasoner_edge.input_equivalent_identifiers;
+    debug(`Resolved ids: ${JSON.stringify(resolvedIDs)}`);
+    debug(`Input id: ${inputID}`);
+    for (const curie in resolvedIDs) {
+      resolvedIDs[curie].map((entity) => {
+        if (smartAPIEdge.tags.includes('bte-trapi')) {
+          if (entity.semanticType === inputType) {
+            input_resolved_identifiers[curie] = [entity];
+            inputs.push(entity.primaryID);
+            id_mapping[entity.primaryID] = curie;
+          }
+        } else if (entity.semanticType === inputType && inputID in entity.dbIDs) {
+          entity.dbIDs[inputID].map((id) => {
+            if (ID_WITH_PREFIXES.includes(inputID) || id.includes(':')) {
+              id_mapping[id] = curie;
+            } else {
+              id_mapping[inputID + ':' + id] = curie;
+            }
+            input_resolved_identifiers[curie] = [entity];
+            inputs.push(id);
+          });
+        }
+      });
+    }
+    if (Object.keys(id_mapping).length > 0) {
+      const edge = _.cloneDeep(smartAPIEdge);
+      edge.input = { queryInputs: inputs, ...edge.query_operation.templateInputs };
       edge.input_resolved_identifiers = input_resolved_identifiers;
       edge.original_input = id_mapping;
       const edgeToBePushed = _.cloneDeep(edge);
@@ -158,34 +271,39 @@ module.exports = class QEdge2BTEEdgeHandler {
   /**
    * Add inputs to smartapi edges
    */
-  _createBTEEdges(edge) {
+  async _createBTEEdges(edge) {
     const supportBatch = edge.query_operation.supportBatch;
+    const useTemplating = edge.query_operation.useTemplating;
     let bteEdges;
     if (supportBatch === false) {
-      bteEdges = this._createNonBatchSupportBTEEdges(edge);
+      bteEdges = useTemplating
+        ? this._createTemplatedNonBatchSupportBTEEdges(edge)
+        : this._createNonBatchSupportBTEEdges(edge);
     } else {
-      bteEdges = this._createBatchSupportBTEEdges(edge);
+      bteEdges = useTemplating
+        ? this._createTemplatedBatchSupportBTEEdges(edge)
+        : this._createBatchSupportBTEEdges(edge);
     }
     return bteEdges;
   }
 
-  convert(qEdges) {
+  async convert(qEdges) {
     let bteEdges = [];
-    qEdges.map((edge) => {
-      const smartapi_edges = this._getSmartAPIEdges(edge);
-      let apis = smartapi_edges.map(api => api.association.api_name);
-      debug(`APIs being used: ${JSON.stringify([...new Set(apis)])}`);
+    await Promise.all(qEdges.map(async (edge) => {
+      const smartapi_edges = await this._getSmartAPIEdges(edge);
+      const apis = _.uniq(smartapi_edges.map(api => api.association.api_name));
+      debug(`${apis.length} APIs being used:`, JSON.stringify(apis));
       debug(`${smartapi_edges.length} SmartAPI edges are retrieved....`);
-      smartapi_edges.map((item) => {
-        let newEdges = this._createBTEEdges(item);
+      await Promise.all(smartapi_edges.map(async (item) => {
+        let newEdges = await this._createBTEEdges(item);
         debug(`${newEdges.length} BTEEdges are created....`);
         newEdges = newEdges.map((e) => {
           e.filter = edge.filter;
           return e;
         });
         bteEdges = [...bteEdges, ...newEdges];
-      });
-    });
+      }));
+    }));
     if (bteEdges.length === 0) {
       debug(`No bte edge found for this query batch.`);
       this.logs.push(

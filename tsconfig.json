@@ -6,7 +6,7 @@
         "target": "es2020",
         "module": "commonjs",
         "rootDir": "./src",
-	"composite": true,
+        "composite": true,
         "declaration": true,
         "esModuleInterop": true,
         "resolveJsonModule": true,
