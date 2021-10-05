@@ -35,4 +35,5 @@ jobs:
       uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.github_token }}
+        base-path: packages/@biothings-explorer/query_graph_handler
         parallel-finished: true
