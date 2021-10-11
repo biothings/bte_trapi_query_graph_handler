@@ -124,12 +124,13 @@ module.exports = class BatchEdgeQueryHandler {
       cacheHandler.cacheEdges(query_res);
     }
     query_res = [...query_res, ...cachedResults];
-    const processed_query_res = await this._postQueryFilter(query_res);
-    debug(`Total number of response is ${processed_query_res.length}`);
-    debug('Start to update nodes,hi.');
-    nodeUpdate.update(processed_query_res);
-    debug('update nodes completed');
-    return processed_query_res;
+    debug(`Filtering out any "undefined" items in (${query_res.length}) results`);
+    query_res = query_res.filter(res => res !== undefined );
+    debug(`Total number of results is (${query_res.length})`);
+    debug('Start to update nodes...');
+    nodeUpdate.update(query_res);
+    debug('Update nodes completed!');
+    return query_res;
   }
 
   /**
