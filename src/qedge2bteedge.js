@@ -48,7 +48,7 @@ module.exports = class QEdge2BTEEdgeHandler {
       output_type: qEdge.getObject().getCategories(),
       predicate: qEdge.getPredicate(),
     };
-    debug(`Filter criteria is: ${JSON.stringify(filterCriteria)}`);
+    debug(`KG Filters: ${JSON.stringify(filterCriteria, null, 2)}`);
     let smartapi_edges = kg.filter(filterCriteria);
     smartapi_edges = smartapi_edges.map((item) => {
       item.reasoner_edge = qEdge;

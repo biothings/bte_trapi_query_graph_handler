@@ -258,10 +258,10 @@ module.exports = class UpdatedExeEdge {
   }
 
   getPredicate() {
-    if (this.predicate === undefined) {
+    if (this.qEdge.predicate === undefined) {
       return undefined;
     }
-    const predicates = utils.toArray(this.predicate).map((item) => utils.removeBioLinkPrefix(item));
+    const predicates = utils.toArray(this.qEdge.predicate).map((item) => utils.removeBioLinkPrefix(item));
     const expandedPredicates = this.expandPredicates(predicates);
     debug(`Expanded edges: ${expandedPredicates}`);
     return expandedPredicates
