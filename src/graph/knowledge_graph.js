@@ -74,8 +74,8 @@ module.exports = class KnowledgeGraph {
       },
     ];
 
-    if (kgEdge.attributes.attributes) { //handle TRAPI APIs (Situation A of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208)
-      attributes = [...attributes, ...kgEdge.attributes.attributes];
+    if (kgEdge.attributes['edge-attributes']) { //handle TRAPI APIs (Situation A of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208) and APIs that define 'edge-atributes' in x-bte
+      attributes = [...attributes, ...kgEdge.attributes['edge-attributes']];
     } else if ( //handle direct info providers (Situation C of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208)
       [  
         'Clinical Risk KP API',
