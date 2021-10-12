@@ -134,7 +134,7 @@ module.exports = class BatchEdgeQueryHandler {
       debug('Start to query BTEEdges....');
       query_res = await this._queryBTEEdges(expanded_bteEdges);
       debug('BTEEdges are successfully queried....');
-      await cacheHandler.cacheEdges(query_res);
+      cacheHandler.cacheEdges(query_res);
     }
     query_res = [...query_res, ...cachedResults];
     const processed_query_res = await this._postQueryFilter(query_res);
@@ -173,7 +173,7 @@ module.exports = class BatchEdgeQueryHandler {
       debug('Start to query BTEEdges....');
       query_res = await this._queryBTEEdges(expanded_bteEdges);
       debug('BTEEdges are successfully queried....');
-      await cacheHandler.cacheEdges(query_res);
+      cacheHandler.cacheEdges(query_res);
     }
     query_res = [...query_res, ...cachedResults];
     const processed_query_res = await this._postQueryFilter(query_res);
