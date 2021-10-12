@@ -240,6 +240,7 @@ module.exports = class UpdatedExeEdge {
     let save_kept = false;
     let sub_constraints = this.subject.constraints;
     if (sub_constraints && sub_constraints.length) {
+      let from = this.reverse ? '$output' : '$input';
       debug(`Node (subject) constraints: ${JSON.stringify(sub_constraints)}`);
       save_kept = true;
       for (let i = 0; i < this.results.length; i++) {
@@ -248,7 +249,7 @@ module.exports = class UpdatedExeEdge {
         //apply constraints
         for (let x = 0; x < sub_constraints.length; x++) {
           const constraint = sub_constraints[x];
-          keep = this.meetsConstraint(constraint, res, '$input')
+          keep = this.meetsConstraint(constraint, res, from)
         }
         //pass or not
         if (keep) {
@@ -259,6 +260,7 @@ module.exports = class UpdatedExeEdge {
 
     let obj_constraints = this.object.constraints;
     if (obj_constraints && obj_constraints.length) {
+      let from = this.reverse ? '$input' : '$output';
       debug(`Node (object) constraints: ${JSON.stringify(obj_constraints)}`);
       save_kept = true;
       for (let i = 0; i < this.results.length; i++) {
@@ -267,7 +269,7 @@ module.exports = class UpdatedExeEdge {
         //apply constraints
         for (let x = 0; x < obj_constraints.length; x++) {
           const constraint = obj_constraints[x];
-          keep = this.meetsConstraint(constraint, res, '$output')
+          keep = this.meetsConstraint(constraint, res, from)
         }
         //pass or not
         if (keep) {
@@ -307,13 +309,27 @@ module.exports = class UpdatedExeEdge {
       switch (constraint.operator) {
         case "==":
             for (const key in node_attributes) {
-              if (Array.isArray(node_attributes[key])) {
-                if (node_attributes[key].includes(constraint.value)) {
-                  return true;
+              if (!isNaN(constraint.value)) {
+                if (Array.isArray(node_attributes[key])) {
+                  if (node_attributes[key].includes(constraint.value) ||
+                  node_attributes[key].includes(constraint.value.toString())) {
+                    return true;
+                  }
+                }else{
+                  if (node_attributes[key] == constraint.value ||
+                    node_attributes[key] == constraint.value.toString()) {
+                    return true;
+                  }
                 }
               }else{
-                if (node_attributes[key] == constraint.value) {
-                  return true;
+                if (Array.isArray(node_attributes[key])) {
+                  if (node_attributes[key].includes(constraint.value)) {
+                    return true;
+                  }
+                }else{
+                  if (node_attributes[key] == constraint.value) {
+                    return true;
+                  }
                 }
               }
             }
