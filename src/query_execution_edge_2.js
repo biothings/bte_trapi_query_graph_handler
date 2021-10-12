@@ -294,7 +294,7 @@ module.exports = class UpdatedExeEdge {
     // debug(`ATTRS ${JSON.stringify(result[from].obj[0]._leafSemanticType)}` +
     // ` ${from} : ${JSON.stringify(available_attributes)}`);
     //determine if node even contains right attributes
-    let filters_found = available_attributes.filter((a) => a.includes(constraint.name));
+    let filters_found = available_attributes.filter((attr) => attr == constraint.id);
     if (!filters_found.length) {
       //node doesn't have the attribute needed
       return false;
