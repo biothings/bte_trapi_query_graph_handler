@@ -107,23 +107,23 @@ module.exports = class {
       return;
     }
     debug('Start to cache query results.');
-    const groupedQueryResult = this._groupQueryResultsByEdgeID(queryResult);
-    const hashedEdgeIDs = Array.from(Object.keys(groupedQueryResult));
-    debug(`Number of hashed edges: ${hashedEdgeIDs.length}`);
     try {
-    await Promise.all(
-      hashedEdgeIDs.map(async (id) => {
-        await Promise.all(groupedQueryResult[id].map(async (edge, index) => {
-          await redisClient.hsetAsync(
-            id,
-            index.toString(),
-            JSON.stringify(edge),
-          );
-        }));
-        await redisClient.expireAsync(id, process.env.REDIS_KEY_EXPIRE_TIME || 600);
-      }),
-    );
-    debug('Successfully cached all query results.');
+      const groupedQueryResult = this._groupQueryResultsByEdgeID(queryResult);
+      const hashedEdgeIDs = Array.from(Object.keys(groupedQueryResult));
+      debug(`Number of hashed edges: ${hashedEdgeIDs.length}`);
+      await Promise.all(
+        hashedEdgeIDs.map(async (id) => {
+          await Promise.all(groupedQueryResult[id].map(async (edge, index) => {
+            await redisClient.hsetAsync(
+              id,
+              index.toString(),
+              JSON.stringify(edge),
+            );
+          }));
+          await redisClient.expireAsync(id, process.env.REDIS_KEY_EXPIRE_TIME || 600);
+        }),
+      );
+      debug('Successfully cached all query results.');
     } catch (error) {
       debug(`Caching failed due to ${error}. This does not terminate the query.`);
     }
