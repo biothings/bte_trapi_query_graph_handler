@@ -1,6 +1,5 @@
 const _ = require('lodash');
 const LogEntry = require('./log_entry');
-const config = require('./config');
 const ID_WITH_PREFIXES = ['MONDO', 'DOID', 'UBERON', 'EFO', 'HP', 'CHEBI', 'CL', 'MGI', 'NCIT'];
 const debug = require('debug')('bte:biothings-explorer-trapi:qedge2btedge');
 
@@ -11,10 +10,11 @@ const setImmediatePromise = () => {
 };
 
 module.exports = class QEdge2BTEEdgeHandler {
-  constructor(qEdges, kg) {
+  constructor(qEdges, kg, options) {
     this.qEdges = qEdges;
     this.kg = kg;
     this.logs = [];
+    this.api_list = options && options.apis;
   }
 
   setQEdges(qEdges) {
@@ -50,6 +50,10 @@ module.exports = class QEdge2BTEEdgeHandler {
     };
     debug(`KG Filters: ${JSON.stringify(filterCriteria, null, 2)}`);
     let smartapi_edges = kg.filter(filterCriteria);
+    //simple list of api ids fron config
+    let apis_ids = this.api_list.map( api => api.id);
+    //filter out ops from APIs not specified in config
+    smartapi_edges = smartapi_edges.filter(op => apis_ids.includes(op.association.smartapi.id));
     smartapi_edges = smartapi_edges.map((item) => {
       item.reasoner_edge = qEdge;
       return item;

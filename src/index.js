@@ -25,6 +25,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   _loadMetaKG() {
     const kg = new meta_kg.default(this.path, this.predicatePath);
     debug(`Query options are: ${JSON.stringify(this.options)}`);
+
     debug(`SmartAPI Specs read from path: ${this.path}`);
     kg.constructMetaKGSync(this.includeReasoner, this.options);
     return kg;
@@ -143,7 +144,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   }
 
   _createBatchEdgeQueryHandlersForCurrent(currentEdge, kg) {
-    let handler = new BatchEdgeQueryHandler(kg, this.resolveOutputIDs);
+    let handler = new BatchEdgeQueryHandler(kg, this.resolveOutputIDs, {apis: this.options.apiNames});
     handler.setEdges(currentEdge);
     return handler;
   }
