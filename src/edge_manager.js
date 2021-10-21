@@ -1,6 +1,6 @@
 const _ = require('lodash');
 const LogEntry = require('./log_entry');
-const InvalidQueryGraphError = require('./exceptions/bte_error');
+const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error');
 const debug = require('debug')('bte:biothings-explorer-trapi:edge-manager');
 const config = require('./config');
 
@@ -127,6 +127,7 @@ module.exports = class EdgeManager {
     checkEntityMax(next) {
         const max = config.ENTITY_MAX;
         //(MAX) --- (0) not allowed
+        //(MAX) --- (MAX) not allowed
         //(MAX) --- (2) allowed, (2 will be used)
         if (
             (!next.object.entity_count && next.subject.entity_count > max) ||
