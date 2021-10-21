@@ -134,8 +134,14 @@ module.exports = class EdgeManager {
             (next.object.entity_count > max && !next.subject.entity_count) ||
             (next.object.entity_count > max && next.subject.entity_count > max)
         ) {
+            this.logs.push(
+                new LogEntry('DEBUG', 
+                null, 
+                `QueryAborted: Number of entities exceeded (${max}) in '${next.getID()}'.`)
+                .getLog(),
+            );
             throw new InvalidQueryGraphError(
-                `Number of entities exceeded (${config.ENTITY_MAX}) in '${next.getID()}'.`,
+                `Number of entities exceeded (${max}) in '${next.getID()}'.`,
                 'QueryAborted',
                 200);
         }
