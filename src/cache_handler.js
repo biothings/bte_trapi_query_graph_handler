@@ -2,6 +2,7 @@ const redisClient = require('./redis-client');
 const debug = require('debug')('bte:biothings-explorer-trapi:cache_handler');
 const LogEntry = require('./log_entry');
 const _ = require('lodash');
+const async = require('async');
 
 module.exports = class {
   constructor(qEdges, caching, logs = []) {
@@ -93,11 +94,15 @@ module.exports = class {
   _groupQueryResultsByEdgeID(queryResult) {
     let groupedResult = {};
     queryResult.map((record) => {
-      const hashedEdgeID = record.$edge_metadata.trapi_qEdge_obj.getHashedEdgeRepresentation();
-      if (!(hashedEdgeID in groupedResult)) {
-        groupedResult[hashedEdgeID] = [];
+      try {
+        const hashedEdgeID = record.$edge_metadata.trapi_qEdge_obj.getHashedEdgeRepresentation();
+        if (!(hashedEdgeID in groupedResult)) {
+          groupedResult[hashedEdgeID] = [];
+        }
+        groupedResult[hashedEdgeID].push(this._copyRecord(record));
+      } catch (e) {
+        debug('skipping malformed record');
       }
-      groupedResult[hashedEdgeID].push(this._copyRecord(record));
     });
     return groupedResult;
   }
@@ -111,18 +116,16 @@ module.exports = class {
       const groupedQueryResult = this._groupQueryResultsByEdgeID(queryResult);
       const hashedEdgeIDs = Array.from(Object.keys(groupedQueryResult));
       debug(`Number of hashed edges: ${hashedEdgeIDs.length}`);
-      await Promise.all(
-        hashedEdgeIDs.map(async (id) => {
-          await Promise.all(groupedQueryResult[id].map(async (edge, index) => {
+      await async.eachSeries(hashedEdgeIDs, async (id) => {
+          await async.eachOfSeries(groupedQueryResult[id], async (edge, index) => {
             await redisClient.hsetAsync(
               id,
               index.toString(),
               JSON.stringify(edge),
             );
-          }));
+          });
           await redisClient.expireAsync(id, process.env.REDIS_KEY_EXPIRE_TIME || 600);
-        }),
-      );
+        });
       debug('Successfully cached all query results.');
     } catch (error) {
       debug(`Caching failed due to ${error}. This does not terminate the query.`);
