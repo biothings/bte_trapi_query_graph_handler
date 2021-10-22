@@ -1,6 +1,7 @@
 const redisClient = require('./redis-client');
 const debug = require('debug')('bte:biothings-explorer-trapi:cache_handler');
 const LogEntry = require('./log_entry');
+const { parentPort } = require('worker_threads');
 const _ = require('lodash');
 
 module.exports = class {
@@ -36,7 +37,7 @@ module.exports = class {
           ? Object.entries(cachedRes)
             .sort(([key1], [key2]) => parseInt(key1) - parseInt(key2))
             .map(([key, val]) => { return JSON.parse(val); }, [])
-           : null;
+          : null;
       } catch (error) {
         cachedResJSON = null;
         debug(`Cache lookup/retrieval failed due to ${error}. Proceeding without cache.`);
@@ -104,6 +105,9 @@ module.exports = class {
 
   async cacheEdges(queryResult) {
     if (this.cacheEnabled === false) {
+      if (parentPort) {
+        parentPort.postMessage({ cacheDone: true });
+      }
       return;
     }
     debug('Start to cache query results.');
@@ -126,6 +130,10 @@ module.exports = class {
       debug('Successfully cached all query results.');
     } catch (error) {
       debug(`Caching failed due to ${error}. This does not terminate the query.`);
+    } finally {
+      if (parentPort) {
+        parentPort.postMessage({ cacheDone: true });
+      }
     }
   }
 };
