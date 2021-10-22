@@ -5,6 +5,7 @@ const debug = require('debug')('bte:biothings-explorer-trapi:batch_edge_query');
 const CacheHandler = require('./cache_handler');
 const utils = require('./utils');
 const LogEntry = require('./log_entry');
+const { parentPort } = require('worker_threads');
 
 module.exports = class BatchEdgeQueryHandler {
   constructor(kg, resolveOutputIDs = true, options) {
@@ -108,6 +109,9 @@ module.exports = class BatchEdgeQueryHandler {
 
     if (nonCachedEdges.length === 0) {
       query_res = [];
+      if (parentPort) {
+        parentPort.postMessage({ cacheDone: true });
+      }
     } else {
       debug('Start to convert qEdges into BTEEdges....');
       const edgeConverter = new QEdge2BTEEdgeHandler(nonCachedEdges, this.kg);
