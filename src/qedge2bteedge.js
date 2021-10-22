@@ -90,7 +90,7 @@ module.exports = class QEdge2BTEEdgeHandler {
         if (entity.semanticType === inputType && inputID in entity.dbIDs) {
           await Promise.all(entity.dbIDs[inputID].map(async (id) => {
             let blockingSince = Date.now();
-            const edge = _.cloneDeep(smartAPIEdge);
+            const edge = { ...smartAPIEdge };
             if (blockingSince + (parseInt(process.env.SETIMMEDIATE_TIME) || 3) < Date.now()) {
               await setImmediatePromise();
               blockingSince = Date.now();
@@ -109,7 +109,7 @@ module.exports = class QEdge2BTEEdgeHandler {
               };
             }
             blockingSince = Date.now();
-            const edgeToBePushed = _.cloneDeep(edge);
+            const edgeToBePushed = edge;
             if (blockingSince + (parseInt(process.env.SETIMMEDIATE_TIME) || 3) < Date.now()) {
               await setImmediatePromise();
               blockingSince = Date.now();
@@ -162,7 +162,7 @@ module.exports = class QEdge2BTEEdgeHandler {
     }
     if (Object.keys(id_mapping).length > 0) {
       let blockingSince = Date.now();
-      const edge = _.cloneDeep(smartAPIEdge);
+      const edge = { ...smartAPIEdge };
       if (blockingSince + (parseInt(process.env.SETIMMEDIATE_TIME) || 3) < Date.now()) {
         await setImmediatePromise();
         blockingSince = Date.now();
@@ -171,7 +171,7 @@ module.exports = class QEdge2BTEEdgeHandler {
       edge.input_resolved_identifiers = input_resolved_identifiers;
       edge.original_input = id_mapping;
       blockingSince = Date.now();
-      const edgeToBePushed = _.cloneDeep(edge);
+      const edgeToBePushed = edge;
       if (blockingSince + (parseInt(process.env.SETIMMEDIATE_TIME) || 3) < Date.now()) {
         await setImmediatePromise();
         blockingSince = Date.now();
@@ -196,7 +196,7 @@ module.exports = class QEdge2BTEEdgeHandler {
       resolvedIDs[curie].map((entity) => {
         if (entity.semanticType === inputType && inputID in entity.dbIDs) {
           entity.dbIDs[inputID].map((id) => {
-            const edge = _.cloneDeep(smartAPIEdge);
+            const edge = { ...smartAPIEdge };
             edge.input = { queryInputs: id, ...edge.query_operation.templateInputs };
             edge.input_resolved_identifiers = {
               [curie]: [entity],
@@ -210,7 +210,7 @@ module.exports = class QEdge2BTEEdgeHandler {
                 [inputID + ':' + id]: curie,
               };
             }
-            const edgeToBePushed = _.cloneDeep(edge);
+            const edgeToBePushed = edge;
             edgeToBePushed.reasoner_edge = smartAPIEdge.reasoner_edge;
             bteEdges.push(edgeToBePushed);
           });
@@ -233,7 +233,7 @@ module.exports = class QEdge2BTEEdgeHandler {
     const inputID = smartAPIEdge.association.input_id;
     const inputType = smartAPIEdge.association.input_type;
     let resolvedIDs = smartAPIEdge.reasoner_edge.input_equivalent_identifiers;
-    debug(`Resolved ids: ${JSON.stringify(resolvedIDs)}`);
+    // debug(`Resolved ids: ${JSON.stringify(resolvedIDs)}`);
     debug(`Input id: ${inputID}`);
     for (const curie in resolvedIDs) {
       resolvedIDs[curie].map((entity) => {
@@ -257,11 +257,11 @@ module.exports = class QEdge2BTEEdgeHandler {
       });
     }
     if (Object.keys(id_mapping).length > 0) {
-      const edge = _.cloneDeep(smartAPIEdge);
+      const edge = { ...smartAPIEdge };
       edge.input = { queryInputs: inputs, ...edge.query_operation.templateInputs };
       edge.input_resolved_identifiers = input_resolved_identifiers;
       edge.original_input = id_mapping;
-      const edgeToBePushed = _.cloneDeep(edge);
+      const edgeToBePushed = edge;
       edgeToBePushed.reasoner_edge = smartAPIEdge.reasoner_edge;
       bteEdges.push(edgeToBePushed);
     }
