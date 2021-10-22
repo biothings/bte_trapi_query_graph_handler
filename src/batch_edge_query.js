@@ -81,12 +81,12 @@ module.exports = class BatchEdgeQueryHandler {
       debug('Start to query BTEEdges....');
       query_res = await this._queryBTEEdges(expanded_bteEdges);
       debug('BTEEdges are successfully queried....');
+      debug(`Filtering out any "undefined" items in (${query_res.length}) results`);
+      query_res = query_res.filter(res => typeof res !== 'undefined' );
+      debug(`Total number of results is (${query_res.length})`);
       cacheHandler.cacheEdges(query_res);
     }
     query_res = [...query_res, ...cachedResults];
-    debug(`Filtering out any "undefined" items in (${query_res.length}) results`);
-    query_res = query_res.filter(res => res !== undefined );
-    debug(`Total number of results is (${query_res.length})`);
     debug('Start to update nodes...');
     nodeUpdate.update(query_res);
     debug('Update nodes completed!');
@@ -121,12 +121,12 @@ module.exports = class BatchEdgeQueryHandler {
       debug('Start to query BTEEdges....');
       query_res = await this._queryBTEEdges(expanded_bteEdges);
       debug('BTEEdges are successfully queried....');
+      debug(`Filtering out any "undefined" items in (${query_res.length}) results`);
+      query_res = query_res.filter(res => res !== undefined );
+      debug(`Total number of results is (${query_res.length})`);
       cacheHandler.cacheEdges(query_res);
     }
     query_res = [...query_res, ...cachedResults];
-    debug(`Filtering out any "undefined" items in (${query_res.length}) results`);
-    query_res = query_res.filter(res => res !== undefined );
-    debug(`Total number of results is (${query_res.length})`);
     debug('Start to update nodes...');
     nodeUpdate.update(query_res);
     debug('Update nodes completed!');
