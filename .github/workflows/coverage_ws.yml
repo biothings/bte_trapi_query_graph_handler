@@ -27,6 +27,7 @@ jobs:
       uses: coverallsapp/github-action@master
       with:
         base-path: packages/@biothings-explorer/query_graph_handler
+        path-to-lcov: ./packages/@biothings-explorer/query_graph_handler/coverage/lcov.info
         github-token: ${{ secrets.GITHUB_TOKEN }}
   finish:
     needs: test-coverage
