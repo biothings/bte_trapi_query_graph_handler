@@ -45,3 +45,11 @@ exports.API_LIST = [
   'Automat Chembio',
   'Automat Foodb',
 ];
+
+exports.API_MAX_ID_LIST = [
+  {
+    id: undefined,
+    name: 'Some nonexistent API',
+    max: 20,
+  },
+];
