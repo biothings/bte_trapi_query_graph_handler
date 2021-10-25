@@ -116,7 +116,6 @@ module.exports = class QEdge2BTEEdgeHandler {
             }
             edgeToBePushed.reasoner_edge = smartAPIEdge.reasoner_edge;
             bteEdges.push(edgeToBePushed);
-
           }));
         }
       }));
@@ -160,24 +159,31 @@ module.exports = class QEdge2BTEEdgeHandler {
         }
       });
     }
+
+    let chunksize = Infinity;
+    if (smartAPIEdge.tags.includes('biothings')) {
+      chunksize = 1000;
+    }
+    const configuredLimit = config.API_MAX_ID_LIST.find((api) => {
+      return api.id === smartAPIEdge.association.smartapi.id || api.name === smartAPIEdge.association.api_name;
+    });
+    chunksize = configuredLimit ? configuredLimit.max : chunksize;
     if (Object.keys(id_mapping).length > 0) {
-      let blockingSince = Date.now();
-      const edge = { ...smartAPIEdge };
-      if (blockingSince + (parseInt(process.env.SETIMMEDIATE_TIME) || 3) < Date.now()) {
-        await setImmediatePromise();
-        blockingSince = Date.now();
-      }
-      edge.input = inputs;
-      edge.input_resolved_identifiers = input_resolved_identifiers;
-      edge.original_input = id_mapping;
-      blockingSince = Date.now();
-      const edgeToBePushed = edge;
-      if (blockingSince + (parseInt(process.env.SETIMMEDIATE_TIME) || 3) < Date.now()) {
-        await setImmediatePromise();
-        blockingSince = Date.now();
-      }
-      edgeToBePushed.reasoner_edge = smartAPIEdge.reasoner_edge;
-      bteEdges.push(edgeToBePushed);
+      await Promise.all(_.chunk(inputs, chunksize).map(async (chunk) => {
+        let blockingSince = Date.now();
+        const edge = { ...smartAPIEdge };
+        if (blockingSince + (parseInt(process.env.SETIMMEDIATE_TIME) || 3) < Date.now()) {
+          await setImmediatePromise();
+          blockingSince = Date.now();
+        }
+        edge.input = chunk;
+        edge.input_resolved_identifiers = input_resolved_identifiers;
+        edge.original_input = id_mapping;
+        const edgeToBePushed = edge;
+        edgeToBePushed.reasoner_edge = smartAPIEdge.reasoner_edge;
+        bteEdges.push(edgeToBePushed);
+        }),
+      );
     }
     return bteEdges;
   }
@@ -187,7 +193,7 @@ module.exports = class QEdge2BTEEdgeHandler {
    * @param {object} resolvedIDs
    * @param {object} smartAPIEdge
    */
-  _createTemplatedNonBatchSupportBTEEdges(smartAPIEdge) {
+  async _createTemplatedNonBatchSupportBTEEdges(smartAPIEdge) {
     const bteEdges = [];
     const inputID = smartAPIEdge.association.input_id;
     const inputType = smartAPIEdge.association.input_type;
@@ -225,7 +231,7 @@ module.exports = class QEdge2BTEEdgeHandler {
    * @param {object} resolvedIDs
    * @param {object} smartAPIEdge
    */
-  _createTemplatedBatchSupportBTEEdges(smartAPIEdge) {
+  async _createTemplatedBatchSupportBTEEdges(smartAPIEdge) {
     const id_mapping = {};
     const inputs = [];
     const bteEdges = [];
@@ -256,14 +262,29 @@ module.exports = class QEdge2BTEEdgeHandler {
         }
       });
     }
+    let chunksize = Infinity;
+    if (smartAPIEdge.tags.includes('biothings')) {
+      chunksize = 1000;
+    }
+    const configuredLimit = config.API_MAX_ID_LIST.find((api) => {
+      return api.id === smartAPIEdge.association.smartapi.id || api.name === smartAPIEdge.association.api_name;
+    });
+    chunksize = configuredLimit ? configuredLimit.max : chunksize;
     if (Object.keys(id_mapping).length > 0) {
-      const edge = { ...smartAPIEdge };
-      edge.input = { queryInputs: inputs, ...edge.query_operation.templateInputs };
-      edge.input_resolved_identifiers = input_resolved_identifiers;
-      edge.original_input = id_mapping;
-      const edgeToBePushed = edge;
-      edgeToBePushed.reasoner_edge = smartAPIEdge.reasoner_edge;
-      bteEdges.push(edgeToBePushed);
+      await Promise.all(_.chunk(inputs, chunksize).map(async (chunk) => {
+        let blockingSince = Date.now();
+        const edge = { ...smartAPIEdge };
+        if (blockingSince + (parseInt(process.env.SETIMMEDIATE_TIME) || 3) < Date.now()) {
+          await setImmediatePromise();
+          blockingSince = Date.now();
+        }
+        edge.input = { queryInputs: chunk, ...edge.query_operation.templateInputs };
+        edge.input_resolved_identifiers = input_resolved_identifiers;
+        edge.original_input = id_mapping;
+        const edgeToBePushed = edge;
+        edgeToBePushed.reasoner_edge = smartAPIEdge.reasoner_edge;
+        bteEdges.push(edgeToBePushed);
+      }));
     }
     return bteEdges;
   }
@@ -277,12 +298,12 @@ module.exports = class QEdge2BTEEdgeHandler {
     let bteEdges;
     if (supportBatch === false) {
       bteEdges = useTemplating
-        ? this._createTemplatedNonBatchSupportBTEEdges(edge)
-        : this._createNonBatchSupportBTEEdges(edge);
+        ? await this._createTemplatedNonBatchSupportBTEEdges(edge)
+        : await this._createNonBatchSupportBTEEdges(edge);
     } else {
       bteEdges = useTemplating
-        ? this._createTemplatedBatchSupportBTEEdges(edge)
-        : this._createBatchSupportBTEEdges(edge);
+        ? await this._createTemplatedBatchSupportBTEEdges(edge)
+        : await this._createBatchSupportBTEEdges(edge);
     }
     return bteEdges;
   }
