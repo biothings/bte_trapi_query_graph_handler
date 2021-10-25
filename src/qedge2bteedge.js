@@ -161,7 +161,7 @@ module.exports = class QEdge2BTEEdgeHandler {
     }
 
     let chunksize = Infinity;
-    if (smartAPIEdge.tags.includes('biothings') || smartAPIEdge.tags.includes('trapi')) {
+    if (smartAPIEdge.tags.includes('biothings')) {
       chunksize = 1000;
     }
     const configuredLimit = config.API_MAX_ID_LIST.find((api) => {
@@ -268,7 +268,7 @@ module.exports = class QEdge2BTEEdgeHandler {
       });
     }
     let chunksize = Infinity;
-    if (smartAPIEdge.tags.includes('biothings') || smartAPIEdge.tags.includes('trapi')) {
+    if (smartAPIEdge.tags.includes('biothings')) {
       chunksize = 1000;
     }
     const configuredLimit = config.API_MAX_ID_LIST.find((api) => {
