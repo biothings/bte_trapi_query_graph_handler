@@ -1,6 +1,9 @@
 const _ = require('lodash');
 const LogEntry = require('./log_entry');
+const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error');
 const debug = require('debug')('bte:biothings-explorer-trapi:edge-manager');
+const config = require('./config');
+
 
 module.exports = class EdgeManager {
     constructor(edges) {
@@ -121,8 +124,34 @@ module.exports = class EdgeManager {
         });
     }
 
+    checkEntityMax(next) {
+        const max = config.ENTITY_MAX;
+        //(MAX) --- (0) not allowed
+        //(MAX) --- (MAX) not allowed
+        //(MAX) --- (2) allowed, (2 will be used)
+        if (
+            (!next.object.entity_count && next.subject.entity_count > max) ||
+            (next.object.entity_count > max && !next.subject.entity_count) ||
+            (next.object.entity_count > max && next.subject.entity_count > max)
+        ) {
+            this.logs.push(
+                new LogEntry('DEBUG', 
+                null, 
+                `QueryAborted: Number of entities exceeded (${max}) in '${next.getID()}'.`)
+                .getLog(),
+            );
+            throw new InvalidQueryGraphError(
+                `Number of entities exceeded (${max}) in '${next.getID()}'.`,
+                'QueryAborted',
+                200);
+        }
+    }
+
     preSendOffCheck(next) {
         if (next.object.entity_count && next.subject.entity_count) {
+            //check that edge entities are or have potential to stay
+            //under max limit
+            this.checkEntityMax(next);
             //if at the time of being queried the edge has both
             //obj and sub entity counts
             //chose obj/suj lower entity count for query
