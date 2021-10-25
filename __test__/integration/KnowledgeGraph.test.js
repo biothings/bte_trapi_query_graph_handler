@@ -43,9 +43,10 @@ describe("Testing KnowledgeGraph Module", () => {
         predicate: 'biolink:activity_decreased_by',
         subject: 'PUBCHEM.COMPOUND:2662',
         object: 'NCBIGene:771',
-        apis: {},
-        sources: {},
-        publications: {},
+        apis: new Set(),
+        sources: new Set(),
+        publications: new Set(),
+        inforesCuries: new Set(),
         attributes: {
             attributes: [
                 {
@@ -123,7 +124,7 @@ describe("Testing KnowledgeGraph Module", () => {
             ],
         },
     };
-    
+
     describe("Testing _createNode function", () => {
         test("test creating node", () => {
             const kg = new KnowledgeGraph();
@@ -143,7 +144,9 @@ describe("Testing KnowledgeGraph Module", () => {
             for (let res_obj of res) {
                 expect(res_obj).toHaveProperty('attribute_type_id');
                 expect(res_obj).toHaveProperty('value');
-                expect(res_obj).toHaveProperty('value_type_id');
+                if (res_obj.attribute_type_id.includes('biolink:')) {
+                    expect(res_obj).toHaveProperty('value_type_id');
+                }
             }
         })
     })
@@ -159,7 +162,9 @@ describe("Testing KnowledgeGraph Module", () => {
             for (let res_obj of res.attributes) {
                 expect(res_obj).toHaveProperty('attribute_type_id');
                 expect(res_obj).toHaveProperty('value');
-                expect(res_obj).toHaveProperty('value_type_id');
+                if (res_obj.attribute_type_id.includes('biolink:')) {
+                    expect(res_obj).toHaveProperty('value_type_id');
+                }
             }
         })
     })

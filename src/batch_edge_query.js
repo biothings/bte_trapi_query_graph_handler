@@ -5,6 +5,7 @@ const debug = require('debug')('bte:biothings-explorer-trapi:batch_edge_query');
 const CacheHandler = require('./cache_handler');
 const utils = require('./utils');
 const LogEntry = require('./log_entry');
+const { parentPort } = require('worker_threads');
 
 module.exports = class BatchEdgeQueryHandler {
   constructor(kg, resolveOutputIDs = true, options) {
@@ -81,12 +82,12 @@ module.exports = class BatchEdgeQueryHandler {
       debug('Start to query BTEEdges....');
       query_res = await this._queryBTEEdges(expanded_bteEdges);
       debug('BTEEdges are successfully queried....');
+      debug(`Filtering out any "undefined" items in (${query_res.length}) results`);
+      query_res = query_res.filter(res => typeof res !== 'undefined' );
+      debug(`Total number of results is (${query_res.length})`);
       cacheHandler.cacheEdges(query_res);
     }
     query_res = [...query_res, ...cachedResults];
-    debug(`Filtering out any "undefined" items in (${query_res.length}) results`);
-    query_res = query_res.filter(res => res !== undefined );
-    debug(`Total number of results is (${query_res.length})`);
     debug('Start to update nodes...');
     nodeUpdate.update(query_res);
     debug('Update nodes completed!');
@@ -108,6 +109,9 @@ module.exports = class BatchEdgeQueryHandler {
 
     if (nonCachedEdges.length === 0) {
       query_res = [];
+      if (parentPort) {
+        parentPort.postMessage({ cacheDone: true });
+      }
     } else {
       debug('Start to convert qEdges into BTEEdges....');
       const edgeConverter = new QEdge2BTEEdgeHandler(nonCachedEdges, this.kg);
@@ -121,12 +125,12 @@ module.exports = class BatchEdgeQueryHandler {
       debug('Start to query BTEEdges....');
       query_res = await this._queryBTEEdges(expanded_bteEdges);
       debug('BTEEdges are successfully queried....');
+      debug(`Filtering out any "undefined" items in (${query_res.length}) results`);
+      query_res = query_res.filter(res => res !== undefined );
+      debug(`Total number of results is (${query_res.length})`);
       cacheHandler.cacheEdges(query_res);
     }
     query_res = [...query_res, ...cachedResults];
-    debug(`Filtering out any "undefined" items in (${query_res.length}) results`);
-    query_res = query_res.filter(res => res !== undefined );
-    debug(`Total number of results is (${query_res.length})`);
     debug('Start to update nodes...');
     nodeUpdate.update(query_res);
     debug('Update nodes completed!');
