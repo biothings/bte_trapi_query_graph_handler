@@ -317,7 +317,8 @@ module.exports = class UpdatedExeEdge {
                   }
                 }else{
                   if (node_attributes[key] == constraint.value ||
-                    node_attributes[key] == constraint.value.toString()) {
+                    node_attributes[key] == constraint.value.toString() ||
+                    node_attributes[key] == parseInt(constraint.value)) {
                     return true;
                   }
                 }
@@ -327,7 +328,9 @@ module.exports = class UpdatedExeEdge {
                     return true;
                   }
                 }else{
-                  if (node_attributes[key] == constraint.value) {
+                  if (node_attributes[key] == constraint.value ||
+                    node_attributes[key] == constraint.value.toString() ||
+                    node_attributes[key] == parseInt(constraint.value)) {
                     return true;
                   }
                 }
