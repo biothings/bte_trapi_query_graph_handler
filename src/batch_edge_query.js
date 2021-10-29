@@ -53,8 +53,52 @@ module.exports = class BatchEdgeQueryHandler {
    */
   async _postQueryFilter(response) {
     debug(`Filtering out "undefined" items (${response.length}) results`);
-    response = response.filter(res => res !== undefined );
+    response = response.filter((res) => res !== undefined);
     return response;
+  }
+
+  /**
+   * Remove curies which resolve to the same thing, keeping the first.
+   * @private
+   */
+  async _rmEquivalentDuplicates(qEdges) {
+    Object.values(qEdges).forEach((qEdge) => {
+      const nodes = {
+        subject: qEdge.subject,
+        object: qEdge.object,
+      };
+      const strippedCuries = [];
+      Object.entries(nodes).forEach(([nodeType, node]) => {
+        const reducedCuries = [];
+        const nodeStrippedCuries = [];
+        if (!node.curie) { return; }
+        node.curie.forEach((curie) => {
+          // if the curie is already present, or an equivalent is, remove it
+          if (!reducedCuries.includes(curie)) {
+            const equivalentAlreadyIncluded = qEdge.input_equivalent_identifiers[curie][0].curies.some(
+              (equivalentCurie) => reducedCuries.includes(equivalentCurie),
+            );
+            if (!equivalentAlreadyIncluded) {
+              reducedCuries.push(curie);
+            } else {
+              nodeStrippedCuries.push(curie);
+            }
+          }
+        });
+        node.curie = reducedCuries;
+        strippedCuries.push(...nodeStrippedCuries);
+        if (nodeStrippedCuries.length > 0) {
+          debug(
+            `stripped (${nodeStrippedCuries.length}) duplicate equivalent curies from ${
+              node.id
+            }: ${nodeStrippedCuries.join(',')}`,
+          );
+        }
+      });
+      strippedCuries.forEach((curie) => {
+        delete qEdge.input_equivalent_identifiers[curie];
+      });
+    });
   }
 
   async query(qEdges) {
@@ -83,7 +127,7 @@ module.exports = class BatchEdgeQueryHandler {
       query_res = await this._queryBTEEdges(expanded_bteEdges);
       debug('BTEEdges are successfully queried....');
       debug(`Filtering out any "undefined" items in (${query_res.length}) results`);
-      query_res = query_res.filter(res => typeof res !== 'undefined' );
+      query_res = query_res.filter((res) => typeof res !== 'undefined');
       debug(`Total number of results is (${query_res.length})`);
       cacheHandler.cacheEdges(query_res);
     }
@@ -101,6 +145,7 @@ module.exports = class BatchEdgeQueryHandler {
     const nodeUpdate = new NodesUpdateHandler(qEdges);
     //difference is there is no previous edge info anymore
     await nodeUpdate.setEquivalentIDs_2(qEdges);
+    await this._rmEquivalentDuplicates(qEdges);
     debug('Node Update Success');
     const cacheHandler = new CacheHandler(qEdges);
     const { cachedResults, nonCachedEdges } = await cacheHandler.categorizeEdges(qEdges);
@@ -126,7 +171,7 @@ module.exports = class BatchEdgeQueryHandler {
       query_res = await this._queryBTEEdges(expanded_bteEdges);
       debug('BTEEdges are successfully queried....');
       debug(`Filtering out any "undefined" items in (${query_res.length}) results`);
-      query_res = query_res.filter(res => res !== undefined );
+      query_res = query_res.filter((res) => res !== undefined);
       debug(`Total number of results is (${query_res.length})`);
       cacheHandler.cacheEdges(query_res);
     }
