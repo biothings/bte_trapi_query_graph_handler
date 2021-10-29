@@ -1,4 +1,5 @@
 exports.API_MAX_ID_LIST = [
+  // pending APIs with template-based querying (POST / batch-query IDs)
   {
     id: undefined,
     name: 'Some nonexistent API',
