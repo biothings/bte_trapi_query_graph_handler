@@ -1,6 +1,6 @@
 const _ = require('lodash');
 const LogEntry = require('./log_entry');
-const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error');
+const BTEError = require('./exceptions/bte_error');
 const debug = require('debug')('bte:biothings-explorer-trapi:edge-manager');
 const config = require('./config');
 
@@ -129,29 +129,25 @@ module.exports = class EdgeManager {
         //(MAX) --- (0) not allowed
         //(MAX) --- (MAX) not allowed
         //(MAX) --- (2) allowed, (2 will be used)
+        let sub_count = next.object.getEntityCount();
+        let obj_count = next.subject.getEntityCount();
+        debug(`Checking entity max : (${sub_count})--(${obj_count})`);
         if (
-            (!next.object.entity_count && next.subject.entity_count > max) ||
-            (next.object.entity_count > max && !next.subject.entity_count) ||
-            (next.object.entity_count > max && next.subject.entity_count > max)
+            (obj_count == 0 && sub_count > max) ||
+            (obj_count > max && sub_count == 0) ||
+            (obj_count > max && sub_count > max)
         ) {
-            this.logs.push(
-                new LogEntry('DEBUG', 
-                null, 
-                `QueryAborted: Number of entities exceeded (${max}) in '${next.getID()}'.`)
-                .getLog(),
-            );
-            throw new InvalidQueryGraphError(
-                `Number of entities exceeded (${max}) in '${next.getID()}'.`,
-                'QueryAborted',
-                200);
+            throw new BTEError(
+                `Max number of entities exceeded (${max}) in '${next.getID()}'`
+                );
         }
     }
 
     preSendOffCheck(next) {
+        //check that edge entities are or have potential to stay
+        //under max limit
+        this.checkEntityMax(next);
         if (next.object.entity_count && next.subject.entity_count) {
-            //check that edge entities are or have potential to stay
-            //under max limit
-            this.checkEntityMax(next);
             //if at the time of being queried the edge has both
             //obj and sub entity counts
             //chose obj/suj lower entity count for query
@@ -191,14 +187,14 @@ module.exports = class EdgeManager {
     _filterEdgeResults(edge) {
         let keep = [];
         let results = edge.results;
-        let sub_curies = edge.subject.curie;
-        let obj_curies = edge.object.curie;
-        debug(`'${edge.getID()}' Reversed[${edge.reverse}] (${JSON.stringify(sub_curies.length || 0)})` +
-        `--(${JSON.stringify(obj_curies.length || 0)}) entities / (${results.length}) results.`);
-        // debug(`IDS SUB ${JSON.stringify(sub_curies)}`)
-        // debug(`IDS OBJ ${JSON.stringify(obj_curies)}`)
-        let object_node_ids = edge.reverse ? sub_curies : obj_curies;
-        let subject_node_ids = edge.reverse ? obj_curies : sub_curies;
+        let sub_count = edge.subject.curie;
+        let obj_count = edge.object.curie;
+        debug(`'${edge.getID()}' Reversed[${edge.reverse}] (${JSON.stringify(sub_count.length || 0)})` +
+        `--(${JSON.stringify(obj_count.length || 0)}) entities / (${results.length}) results.`);
+        // debug(`IDS SUB ${JSON.stringify(sub_count)}`)
+        // debug(`IDS OBJ ${JSON.stringify(obj_count)}`)
+        let object_node_ids = edge.reverse ? sub_count : obj_count;
+        let subject_node_ids = edge.reverse ? obj_count : sub_count;
 
         results.forEach((res) => {
             //check sub curies against $input ids

@@ -6,7 +6,7 @@ class InvalidQueryGraphError extends Error {
     super(...params);
 
     if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, BTEError);
+      Error.captureStackTrace(this, InvalidQueryGraphError);
     }
 
     this.name = name;
