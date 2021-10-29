@@ -1,5 +1,5 @@
 exports.API_MAX_ID_LIST = [
-  // pending APIs with template-based querying
+  // pending APIs with template-based querying (POST / batch-query IDs)
   {
     id: '1d288b3a3caf75d541ffaae3aab386c8',
     name: 'BioThings SEMMEDDB API',
@@ -10,7 +10,7 @@ exports.API_MAX_ID_LIST = [
     name: 'Text Mining Targeted Association API',
     max: 100,
   },
-  // other pending apis
+  // other pending apis that use POST (batch-query IDs)
   {
     id: 'e3edd325c76f2992a111b43a907a4870',
     name: 'BioThings DGIdb API',
