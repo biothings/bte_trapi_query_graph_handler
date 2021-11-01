@@ -207,4 +207,8 @@ module.exports = class QNode {
     hasEquivalentIDs() {
         return !(typeof this.equivalentIDs === 'undefined');
     }
+
+    getEntityCount() {
+        return this.curie ? this.curie.length : 0;
+    }
 };

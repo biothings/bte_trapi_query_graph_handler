@@ -1,6 +1,9 @@
 const _ = require('lodash');
 const LogEntry = require('./log_entry');
+const BTEError = require('./exceptions/bte_error');
 const debug = require('debug')('bte:biothings-explorer-trapi:edge-manager');
+const config = require('./config');
+
 
 module.exports = class EdgeManager {
     constructor(edges) {
@@ -121,7 +124,29 @@ module.exports = class EdgeManager {
         });
     }
 
+    checkEntityMax(next) {
+        const max = config.ENTITY_MAX;
+        //(MAX) --- (0) not allowed
+        //(MAX) --- (MAX) not allowed
+        //(MAX) --- (2) allowed, (2 will be used)
+        let sub_count = next.object.getEntityCount();
+        let obj_count = next.subject.getEntityCount();
+        debug(`Checking entity max : (${sub_count})--(${obj_count})`);
+        if (
+            (obj_count == 0 && sub_count > max) ||
+            (obj_count > max && sub_count == 0) ||
+            (obj_count > max && sub_count > max)
+        ) {
+            throw new BTEError(
+                `Max number of entities exceeded (${max}) in '${next.getID()}'`
+                );
+        }
+    }
+
     preSendOffCheck(next) {
+        //check that edge entities are or have potential to stay
+        //under max limit
+        this.checkEntityMax(next);
         if (next.object.entity_count && next.subject.entity_count) {
             //if at the time of being queried the edge has both
             //obj and sub entity counts
@@ -162,14 +187,14 @@ module.exports = class EdgeManager {
     _filterEdgeResults(edge) {
         let keep = [];
         let results = edge.results;
-        let sub_curies = edge.subject.curie;
-        let obj_curies = edge.object.curie;
-        debug(`'${edge.getID()}' Reversed[${edge.reverse}] (${JSON.stringify(sub_curies.length || 0)})` +
-        `--(${JSON.stringify(obj_curies.length || 0)}) entities / (${results.length}) results.`);
-        // debug(`IDS SUB ${JSON.stringify(sub_curies)}`)
-        // debug(`IDS OBJ ${JSON.stringify(obj_curies)}`)
-        let object_node_ids = edge.reverse ? sub_curies : obj_curies;
-        let subject_node_ids = edge.reverse ? obj_curies : sub_curies;
+        let sub_count = edge.subject.curie;
+        let obj_count = edge.object.curie;
+        debug(`'${edge.getID()}' Reversed[${edge.reverse}] (${JSON.stringify(sub_count.length || 0)})` +
+        `--(${JSON.stringify(obj_count.length || 0)}) entities / (${results.length}) results.`);
+        // debug(`IDS SUB ${JSON.stringify(sub_count)}`)
+        // debug(`IDS OBJ ${JSON.stringify(obj_count)}`)
+        let object_node_ids = edge.reverse ? sub_count : obj_count;
+        let subject_node_ids = edge.reverse ? obj_count : sub_count;
 
         results.forEach((res) => {
             //check sub curies against $input ids
