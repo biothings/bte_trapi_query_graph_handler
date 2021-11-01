@@ -1,4 +1,4 @@
-exports.API_MAX_ID_LIST = [
+exports.API_BATCH_SIZE = [
   // pending APIs with template-based querying (POST / batch-query IDs)
   {
     id: '1d288b3a3caf75d541ffaae3aab386c8',
