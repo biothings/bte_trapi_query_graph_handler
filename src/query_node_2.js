@@ -2,6 +2,7 @@ const _ = require('lodash');
 const utils = require('./utils');
 const biolink = require('./biolink');
 const debug = require('debug')('bte:biothings-explorer-trapi:NewQNode');
+const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error');
 
 module.exports = class QNode {
     /**
@@ -22,10 +23,26 @@ module.exports = class QNode {
         // might be told to store its curies temporarily
         this.held_curie = [];
         this.held_expanded = {};
+        //node constraints
+        this.constraints = info.constraints;
         //list of edge ids that are connected to this node
         this.connected_to = new Set();
         //object-ify array of initial curies
         this.expandCurie();
+        this.validateConstraints();
+    }
+
+    validateConstraints() {
+        const required = ['id', 'operator', 'value'];
+        if (this.constraints && this.constraints.length) {
+            this.constraints.forEach((constraint) => {
+                let constraint_keys = Object.keys(constraint);
+                if (_.intersection(constraint_keys, required).length < 3) {
+                    throw new InvalidQueryGraphError(
+                        `Invalid constraint specification must include (${required})`);
+                }
+            });
+        }
     }
 
     expandCurie() {
