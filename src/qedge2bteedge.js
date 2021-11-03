@@ -27,11 +27,10 @@ module.exports = class QEdge2BTEEdgeHandler {
 
   /**
    * Get SmartAPI Edges based on TRAPI Query Edge.
-   * @private
    * @param {object} kg - SmartAPI Knowledge Graph Object
    * @param {object} qEdge - TRAPI Query Edge Object
    */
-  _getSmartAPIEdges(qEdge, kg = this.kg) {
+  getSmartAPIEdges(qEdge, kg = this.kg) {
     debug(`Subject node is ${qEdge.getSubject().id}`);
     debug(`Object node is ${qEdge.getObject().id}`);
     this.logs.push(
@@ -319,7 +318,7 @@ module.exports = class QEdge2BTEEdgeHandler {
   async convert(qEdges) {
     let bteEdges = [];
     await Promise.all(qEdges.map(async (edge) => {
-      const smartapi_edges = await this._getSmartAPIEdges(edge);
+      const smartapi_edges = await this.getSmartAPIEdges(edge);
       const apis = _.uniq(smartapi_edges.map(api => api.association.api_name));
       debug(`${apis.length} APIs being used:`, JSON.stringify(apis));
       debug(`${smartapi_edges.length} SmartAPI edges are retrieved....`);

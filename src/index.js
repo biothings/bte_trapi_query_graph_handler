@@ -8,6 +8,10 @@ const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error')
 const debug = require('debug')('bte:biothings-explorer-trapi:main');
 const Graph = require('./graph/graph');
 const EdgeManager = require('./edge_manager');
+const QEdge = require('./query_edge');
+const QEdge2BTEEdgeHandler = require('./qedge2bteedge');
+const _ = require('lodash');
+const LogEntry = require('./log_entry');
 
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 
@@ -52,10 +56,12 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       if (Object.hasOwnProperty.call(queryGraph.nodes, nodeId)) {
         const currentNode = queryGraph.nodes[nodeId];
         if (Object.hasOwnProperty.call(currentNode, 'categories')) {
-          if (currentNode['categories'].includes("biolink:Protein") &&
-          !currentNode['categories'].includes("biolink:Gene")) {
+          if (
+            currentNode['categories'].includes('biolink:Protein') &&
+            !currentNode['categories'].includes('biolink:Gene')
+          ) {
             debug(`(0) Adding "Gene" category to "Protein" node.`);
-            currentNode['categories'].push("biolink:Gene");
+            currentNode['categories'].push('biolink:Gene');
           }
         }
       }
@@ -74,7 +80,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
    * @private
    * @param {object} queryGraph - TRAPI Query Graph Object
    */
-   async _processQueryGraph(queryGraph) {
+  async _processQueryGraph(queryGraph) {
     try {
       let queryGraphHandler = new QueryGraph(queryGraph);
       let res = await queryGraphHandler.calculateEdges();
@@ -101,9 +107,30 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   }
 
   _createBatchEdgeQueryHandlersForCurrent(currentEdge, kg) {
-    let handler = new BatchEdgeQueryHandler(kg, this.resolveOutputIDs, {caching: this.options.caching });
+    let handler = new BatchEdgeQueryHandler(kg, this.resolveOutputIDs, { caching: this.options.caching });
     handler.setEdges(currentEdge);
     return handler;
+  }
+
+  async _edgesSupported(qEdges, kg) {
+    qEdges = _.flatten(Object.values(qEdges));
+    const edgeConverter = new QEdge2BTEEdgeHandler(qEdges, kg);
+    const sAPIEdges = Object.entries(qEdges).map(([index, qEdge]) => edgeConverter.getSmartAPIEdges(qEdge));
+    const edgesMissingOps = sAPIEdges.reduce((acc, APICollection, index) => {
+      if (APICollection.length === 0) {
+        acc.push(qEdges[index].qEdge.id);
+      }
+      return acc;
+    }, []);
+    if (edgesMissingOps.length > 0) {
+      const terminateLog = `Query Edge${edgesMissingOps.length > 1 ? 's' : ''} ${edgesMissingOps.join(', ')} ${
+        edgesMissingOps.length > 1 ? 'have' : 'has'
+      } no SmartAPI edges. Your query terminates.`;
+      debug(terminateLog);
+      this.logs.push(new LogEntry(terminateLog).getLog());
+      return false;
+    }
+    return true;
   }
 
   async query() {
@@ -113,6 +140,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     debug('MetaKG successfully loaded!');
     let queryEdges = await this._processQueryGraph(this.queryGraph);
     debug(`(3) All edges created ${JSON.stringify(queryEdges)}`);
+    if (!(await this._edgesSupported(queryEdges, kg))) {
+      return;
+    }
     const manager = new EdgeManager(queryEdges);
     while (manager.getEdgesNotExecuted()) {
       //next available/most efficient edge
@@ -136,7 +166,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       //edge all done
       current_edge.executed = true;
       debug(`(10) Edge successfully queried.`);
-    };
+    }
     //collect and organize results
     manager.collectResults();
     this.logs = [...this.logs, ...manager.logs];
@@ -145,5 +175,5 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     //update query results
     this.queryResults.update(manager.getOrganizedResults());
     debug(`(14) TRAPI query finished.`);
-    }
+  }
 };
