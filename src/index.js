@@ -8,6 +8,10 @@ const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error')
 const debug = require('debug')('bte:biothings-explorer-trapi:main');
 const Graph = require('./graph/graph');
 const EdgeManager = require('./edge_manager');
+const QEdge = require('./query_edge');
+const QEdge2BTEEdgeHandler = require('./qedge2bteedge');
+const _ = require('lodash');
+const LogEntry = require('./log_entry');
 
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 
@@ -148,6 +152,27 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     return handler;
   }
 
+  async _edgesSupported(qEdges, kg) {
+    qEdges = _.flatten(Object.values(qEdges));
+    const edgeConverter = new QEdge2BTEEdgeHandler(qEdges, kg);
+    const sAPIEdges = Object.entries(qEdges).map(([index, qEdge]) => edgeConverter.getSmartAPIEdges(qEdge));
+    const edgesMissingOps = sAPIEdges.reduce((acc, APICollection, index) => {
+      if (APICollection.length === 0) {
+        acc.push(qEdges[index].qEdge.id);
+      }
+      return acc;
+    }, []);
+    if (edgesMissingOps.length > 0) {
+      const terminateLog = `Query Edge${edgesMissingOps.length > 1 ? 's' : ''} ${edgesMissingOps.join(', ')} ${
+        edgesMissingOps.length > 1 ? 'have' : 'has'
+      } no SmartAPI edges. Your query terminates.`;
+      debug(terminateLog);
+      this.logs.push(new LogEntry(terminateLog).getLog());
+      return false;
+    }
+    return true;
+  }
+
   async query_2() {
     this._initializeResponse();
     debug('Start to load metakg.');
@@ -155,6 +180,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     debug('MetaKG successfully loaded!');
     let queryEdges = await this._processQueryGraph_2(this.queryGraph);
     debug(`(3) All edges created ${JSON.stringify(queryEdges)}`);
+    if (!(await this._edgesSupported(queryEdges, kg))) {
+      return;
+    }
     const manager = new EdgeManager(queryEdges);
     while (manager.getEdgesNotExecuted()) {
       //next available/most efficient edge
