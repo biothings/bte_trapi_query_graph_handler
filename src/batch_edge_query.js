@@ -3,8 +3,6 @@ const QEdge2BTEEdgeHandler = require('./qedge2bteedge');
 const NodesUpdateHandler = require('./update_nodes');
 const debug = require('debug')('bte:biothings-explorer-trapi:batch_edge_query');
 const CacheHandler = require('./cache_handler');
-const utils = require('./utils');
-const LogEntry = require('./log_entry');
 const { parentPort } = require('worker_threads');
 
 module.exports = class BatchEdgeQueryHandler {
@@ -103,48 +101,11 @@ module.exports = class BatchEdgeQueryHandler {
 
   async query(qEdges) {
     debug('Node Update Start');
-    const nodeUpdate = new NodesUpdateHandler(qEdges);
-    await nodeUpdate.setEquivalentIDs(qEdges);
-    debug('Node Update Success');
-    const cacheHandler = new CacheHandler(qEdges, this.caching);
-    const { cachedResults, nonCachedEdges } = await cacheHandler.categorizeEdges(qEdges);
-    this.logs = [...this.logs, ...cacheHandler.logs];
-    let query_res;
-
-    if (nonCachedEdges.length === 0) {
-      query_res = [];
-    } else {
-      debug('Start to convert qEdges into BTEEdges....');
-      const edgeConverter = new QEdge2BTEEdgeHandler(nonCachedEdges, this.kg);
-      const bteEdges = await edgeConverter.convert(nonCachedEdges);
-      debug(`qEdges are successfully converted into ${bteEdges.length} BTEEdges....`);
-      this.logs = [...this.logs, ...edgeConverter.logs];
-      if (bteEdges.length === 0 && cachedResults.length === 0) {
-        return [];
-      }
-      const expanded_bteEdges = this._expandBTEEdges(bteEdges);
-      debug('Start to query BTEEdges....');
-      query_res = await this._queryBTEEdges(expanded_bteEdges);
-      debug('BTEEdges are successfully queried....');
-      debug(`Filtering out any "undefined" items in (${query_res.length}) results`);
-      query_res = query_res.filter((res) => typeof res !== 'undefined');
-      debug(`Total number of results is (${query_res.length})`);
-      cacheHandler.cacheEdges(query_res);
-    }
-    query_res = [...query_res, ...cachedResults];
-    debug('Start to update nodes...');
-    nodeUpdate.update(query_res);
-    debug('Update nodes completed!');
-    return query_res;
-  }
-
-  async query_2(qEdges) {
-    debug('Node Update Start');
     //it's now a single edge but convert to arr to simplify refactoring
     qEdges = Array.isArray(qEdges) ? qEdges : [qEdges];
     const nodeUpdate = new NodesUpdateHandler(qEdges);
     //difference is there is no previous edge info anymore
-    await nodeUpdate.setEquivalentIDs_2(qEdges);
+    await nodeUpdate.setEquivalentIDs(qEdges);
     await this._rmEquivalentDuplicates(qEdges);
     debug('Node Update Success');
     const cacheHandler = new CacheHandler(qEdges);
