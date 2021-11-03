@@ -166,7 +166,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         edgesMissingOps.length > 1 ? 'have' : 'has'
       } no SmartAPI edges. Your query terminates.`;
       debug(terminateLog);
-      this.logs.push(new LogEntry(terminateLog).getLog());
+      this.logs.push(new LogEntry('WARNING', null, terminateLog).getLog());
       return false;
     }
     return true;
