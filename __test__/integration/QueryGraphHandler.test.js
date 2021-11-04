@@ -1,5 +1,5 @@
 const QueryGraphHandler = require("../../src/query_graph");
-const QNode2 = require("../../src/query_node_2");
+const QNode2 = require("../../src/query_node");
 const QEdge = require("../../src/query_edge");
 
 describe("Testing QueryGraphHandler Module", () => {
@@ -91,7 +91,7 @@ describe("Testing QueryGraphHandler Module", () => {
 
         test("test if storeNodes with one hop query", async () => {
             let handler = new QueryGraphHandler(OneHopQuery);
-            let nodes = await handler._storeNodes_2();
+            let nodes = await handler._storeNodes();
             expect(nodes).toHaveProperty("n0");
             expect(nodes).not.toHaveProperty("n2");
             expect(nodes.n0).toBeInstanceOf(QNode2);
@@ -99,7 +99,7 @@ describe("Testing QueryGraphHandler Module", () => {
 
         test("test if storeNodes with multi hop query", async () => {
             let handler = new QueryGraphHandler(FourHopQuery);
-            let nodes = await handler._storeNodes_2();
+            let nodes = await handler._storeNodes();
             expect(nodes).toHaveProperty("n0");
             expect(nodes).toHaveProperty("n3");
             expect(nodes.n0).toBeInstanceOf(QNode2);
@@ -111,7 +111,7 @@ describe("Testing QueryGraphHandler Module", () => {
 
         test("test storeEdges with one hop query", async () => {
             let handler = new QueryGraphHandler(OneHopQuery);
-            let edges = await handler._storeEdges_2();
+            let edges = await handler._storeEdges();
             expect(edges).toHaveProperty("e01");
             expect(edges).not.toHaveProperty("e02");
             expect(edges.e01).toBeInstanceOf(QEdge);
@@ -120,7 +120,7 @@ describe("Testing QueryGraphHandler Module", () => {
 
         test("test storeEdges with multi hop query", async () => {
             let handler = new QueryGraphHandler(FourHopQuery);
-            let edges = await handler._storeEdges_2();
+            let edges = await handler._storeEdges();
             expect(edges).toHaveProperty("e01");
             expect(edges).toHaveProperty("e02");
             expect(edges.e01).toBeInstanceOf(QEdge);

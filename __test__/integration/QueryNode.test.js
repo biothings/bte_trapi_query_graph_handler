@@ -12,13 +12,13 @@ describe("Testing QueryNode Module", () => {
 
     describe("Testing hasInput function", () => {
         test("test node without curies specified should return false", () => {
-            const gene_node = new QNode("n1", { categories: "Gene" });
+            const gene_node = new QNode("n1", { categories: ["Gene"] });
             const res = gene_node.hasInput();
             expect(res).toBeFalsy();
         })
 
         test("test node with curies specified should return true", () => {
-            const gene_node = new QNode("n1", { categories: "Gene", ids: "NCBIGene:1017" });
+            const gene_node = new QNode("n1", { categories: ["Gene"], ids: ["NCBIGene:1017"] });
             const res = gene_node.hasInput();
             expect(res).toBeTruthy();
         })
@@ -26,7 +26,7 @@ describe("Testing QueryNode Module", () => {
 
     describe("Test hasEquivalentIDs function", () => {
         test("test node with equivalent identifiers set should return true", () => {
-            const gene_node = new QNode("n1", { categories: "Gene" });
+            const gene_node = new QNode("n1", { categories: ["Gene"] });
             gene_node.setEquivalentIDs(node1_equivalent_ids);
             const res = gene_node.hasEquivalentIDs();
             expect(res).toBeTruthy();

@@ -1,5 +1,5 @@
 const { cloneDeep } = require('lodash');
-const QNode = require('../../src/query_node_2');
+const QNode = require('../../src/query_node');
 const QEdge = require('../../src/query_edge');
 const QueryResult = require('../../src/query_results');
 
