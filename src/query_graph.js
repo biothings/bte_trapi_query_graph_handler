@@ -1,12 +1,9 @@
-const QNode = require('./query_node');
 const QEdge = require('./query_edge');
-const QExecEdge = require('./query_execution_edge');
 const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error');
 const LogEntry = require('./log_entry');
-const NewExeEdge = require('./query_execution_edge_2');
-const MAX_DEPTH = 3;
+const ExeEdge = require('./query_execution_edge');
 const debug = require('debug')('bte:biothings-explorer-trapi:query_graph');
-const QNode2 = require('./query_node_2');
+const QNode = require('./query_node');
 const id_resolver = require('biomedical_id_resolver');
 
 module.exports = class QueryGraphHandler {
@@ -47,20 +44,6 @@ module.exports = class QueryGraphHandler {
   /**
    * @private
    */
-  _storeNodes() {
-    let nodes = {};
-    for (let node_id in this.queryGraph.nodes) {
-      nodes[node_id] = new QNode(node_id, this.queryGraph.nodes[node_id]);
-    }
-    this.logs.push(
-      new LogEntry('DEBUG', null, `BTE identified ${Object.keys(nodes).length} QNodes from your query graph`).getLog(),
-    );
-    return nodes;
-  }
-
-  /**
-   * @private
-   */
     async _findNodeCategories(ids) {
       if (ids.length == 1) {
         let category = await id_resolver.resolveSRI({
@@ -83,7 +66,7 @@ module.exports = class QueryGraphHandler {
    /**
    * @private
    */
-    async _storeNodes_2() {
+    async _storeNodes() {
       let nodes = {};
       for (let node_id in this.queryGraph.nodes) {
         //if node has ID but no categories
@@ -103,10 +86,10 @@ module.exports = class QueryGraphHandler {
             null, 
             `Assigned missing node ID category: ${JSON.stringify(this.queryGraph.nodes[node_id])}`).getLog(),
           );
-          nodes[node_id] = new QNode2(node_id, this.queryGraph.nodes[node_id]);
+          nodes[node_id] = new QNode(node_id, this.queryGraph.nodes[node_id]);
         }else{
           debug(`Creating node...`);
-          nodes[node_id] = new QNode2(node_id, this.queryGraph.nodes[node_id]);
+          nodes[node_id] = new QNode(node_id, this.queryGraph.nodes[node_id]);
         }
         
       }
@@ -119,33 +102,9 @@ module.exports = class QueryGraphHandler {
   /**
    * @private
    */
-  async _storeEdges() {
+   async _storeEdges() {
     if (this.nodes === undefined) {
       this.nodes = await this._storeNodes();
-    }
-    let edges = {};
-    for (let edge_id in this.queryGraph.edges) {
-      let edge_info = {
-        ...this.queryGraph.edges[edge_id],
-        ...{
-          subject: this.nodes[this.queryGraph.edges[edge_id].subject],
-          object: this.nodes[this.queryGraph.edges[edge_id].object],
-        },
-      };
-      edges[edge_id] = new QEdge(edge_id, edge_info);
-    }
-    this.logs.push(
-      new LogEntry('DEBUG', null, `BTE identified ${Object.keys(edges).length} QEdges from your query graph`).getLog(),
-    );
-    return edges;
-  }
-
-  /**
-   * @private
-   */
-   async _storeEdges_2() {
-    if (this.nodes === undefined) {
-      this.nodes = await this._storeNodes_2();
     }
     let edges = {};
     for (let edge_id in this.queryGraph.edges) {
@@ -171,43 +130,12 @@ module.exports = class QueryGraphHandler {
   /**
    *
    */
-  createQueryPaths() {
-    this._validate(this.queryGraph);
-    const paths = {};
-    let current_graph = this._findFirstLevelEdges();
-    paths[0] = current_graph.map((item) => item.edge);
-    for (let i = 1; i < MAX_DEPTH + 1; i++) {
-      current_graph = this._findNextLevelEdges(current_graph);
-      if (current_graph.length > 0 && i === MAX_DEPTH) {
-        throw new InvalidQueryGraphError(
-          `Your Query Graph exceeds the maximum query depth set in bte, which is ${MAX_DEPTH}`,
-        );
-      }
-      if (current_graph.length === 0) {
-        break;
-      }
-      paths[i] = current_graph.map((item) => item.edge);
-    }
-    this.logs.push(
-      new LogEntry(
-        'DEBUG',
-        null,
-        `BTE identified your query graph as a ${Object.keys(paths).length}-depth query graph`,
-      ).getLog(),
-    );
-    debug(`ALL PATHS ${JSON.stringify(paths)}`);
-    return paths;
-  }
-
-  /**
-   *
-   */
   async calculateEdges() {
     this._validate(this.queryGraph);
     //populate edge and node info
     debug(`(1) Creating edges for manager...`);
     if (this.edges === undefined) {
-      this.edges = await this._storeEdges_2();
+      this.edges = await this._storeEdges();
     }
     let edges = {};
     let edge_index = 0;
@@ -216,8 +144,8 @@ module.exports = class QueryGraphHandler {
       edges[edge_index] = [
         // () ----> ()
         this.edges[edge_id].object.curie ? 
-        new NewExeEdge(this.edges[edge_id], true, undefined) :
-        new NewExeEdge(this.edges[edge_id], false, undefined)
+        new ExeEdge(this.edges[edge_id], true, undefined) :
+        new ExeEdge(this.edges[edge_id], false, undefined)
         // reversed () <---- ()
       ];
       edge_index++;
@@ -225,59 +153,4 @@ module.exports = class QueryGraphHandler {
     return edges;
   }
 
-  /**
-   * @private
-   */
-  _findFirstLevelEdges() {
-    if (this.edges === undefined) {
-      this.edges = this._storeEdges();
-    }
-    const result = [];
-    for (const edge_id in this.edges) {
-      const subjectNode = this.edges[edge_id].subject;
-      const objectNode = this.edges[edge_id].object;
-      if (subjectNode.hasInput()) {
-        result.push({
-          current_node: objectNode,
-          edge: new QExecEdge(this.edges[edge_id], false, undefined),
-          path_source_node: subjectNode,
-        });
-      }
-      if (objectNode.hasInput()) {
-        result.push({
-          current_node: subjectNode,
-          edge: new QExecEdge(this.edges[edge_id], true, undefined),
-          path_source_node: objectNode,
-        });
-      }
-    }
-    return result;
-  }
-
-  /**
-   * @private
-   */
-  _findNextLevelEdges(groups) {
-    const result = [];
-    for (const edge of Object.values(this.edges)) {
-      for (const grp of groups) {
-        if (edge.getID() !== grp.edge.getID()) {
-          if (edge.subject.getID() === grp.current_node.getID()) {
-            result.push({
-              current_node: edge.object,
-              edge: new QExecEdge(edge, false, grp.edge),
-              path_source_node: grp.path_source_node,
-            });
-          } else if (edge.object.getID() === grp.current_node.getID()) {
-            result.push({
-              current_node: edge.subject,
-              edge: new QExecEdge(edge, true, grp.edge),
-              path_source_node: grp.path_source_node,
-            });
-          }
-        }
-      }
-    }
-    return result;
-  }
 };

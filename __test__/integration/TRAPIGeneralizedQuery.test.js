@@ -68,7 +68,7 @@ describe("Testing TRAPI QueryHandler Generalized Query Handling", () => {
     //     test("Two hop has edges connecting end to end", async () => {
     //         const queryHandler = new TRAPIQueryHandler.TRAPIQueryHandler();
     //         queryHandler.setQueryGraph(TwoHopQuery);
-    //         await queryHandler.query_2();
+    //         await queryHandler.query();
     //         let res = queryHandler.getResponse();
     //         expect(Object.keys(res.message.knowledge_graph.nodes).length).toBeGreaterThan(2);
     //         expect(res.message.knowledge_graph.nodes).toHaveProperty("NCBIGene:5742");
@@ -120,7 +120,7 @@ describe("Testing TRAPI QueryHandler Generalized Query Handling", () => {
     //     test("Three hop has edges connecting end to end", async () => {
     //         const queryHandler = new TRAPIQueryHandler.TRAPIQueryHandler();
     //         queryHandler.setQueryGraph(ThreeHopQuery);
-    //         await queryHandler.query_2();
+    //         await queryHandler.query();
     //         let res = queryHandler.getResponse();
     //         expect(Object.keys(res.message.knowledge_graph.nodes).length).toBeGreaterThan(4);
     //         expect(res.message.knowledge_graph.nodes).toHaveProperty("NCBIGene:117145");
@@ -159,7 +159,7 @@ describe("Testing TRAPI QueryHandler Generalized Query Handling", () => {
     //     test("Broad category to known entity with all expected branching entities present", async () => {
     //         const queryHandler = new TRAPIQueryHandler.TRAPIQueryHandler();
     //         queryHandler.setQueryGraph(BroadCategoryQuery);
-    //         await queryHandler.query_2();
+    //         await queryHandler.query();
     //         let res = queryHandler.getResponse();
     //         expect(res.message.knowledge_graph.nodes).toHaveProperty("NCBIGene:3778");
     //         expect(res.message.knowledge_graph.nodes).toHaveProperty("MONDO:0005247");
@@ -199,7 +199,7 @@ describe("Testing TRAPI QueryHandler Generalized Query Handling", () => {
     //     test("Predict known entity to general category to have all nodes expected", async () => {
     //         const queryHandler = new TRAPIQueryHandler.TRAPIQueryHandler();
     //         queryHandler.setQueryGraph(PredictQuery);
-    //         await queryHandler.query_2();
+    //         await queryHandler.query();
     //         let res = queryHandler.getResponse();
     //         expect(res.message.knowledge_graph.nodes).toHaveProperty("MONDO:0005030");
     //         expect(res.message.knowledge_graph.nodes).toHaveProperty("NCBIGene:3778");

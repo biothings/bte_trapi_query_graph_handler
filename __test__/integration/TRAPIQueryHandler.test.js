@@ -1,5 +1,3 @@
-const QNode = require("../../src/query_node");
-const QEdge = require("../../src/query_edge");
 const TRAPIQueryHandler = require("../../src/index");
 
 describe("Testing TRAPIQueryHandler Module", () => {
@@ -26,7 +24,7 @@ describe("Testing TRAPIQueryHandler Module", () => {
         test("test with one query edge", async () => {
             const queryHandler = new TRAPIQueryHandler.TRAPIQueryHandler();
             queryHandler.setQueryGraph(OneHopQuery);
-            await queryHandler.query_2();
+            await queryHandler.query();
             expect(queryHandler.knowledgeGraph.kg).toHaveProperty('nodes');
         })
     })

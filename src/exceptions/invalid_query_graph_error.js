@@ -1,17 +1,16 @@
 class InvalidQueryGraphError extends Error {
-  constructor(message = 'Your Input Query Graph is invalid.',
-  name = 'InvalidQueryGraphError',
-  code = 400,
-   ...params) {
+  constructor(message = 'Your Input Query Graph is invalid.', ...params) {
     super(...params);
-
+    
+    Object.setPrototypeOf(this, InvalidQueryGraphError.prototype);
+    
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, InvalidQueryGraphError);
     }
 
-    this.name = name;
+    this.name = 'InvalidQueryGraphError';
     this.message = message;
-    this.statusCode = code;
+    this.statusCode = 400;
   }
 }
 
