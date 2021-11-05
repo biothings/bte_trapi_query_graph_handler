@@ -130,12 +130,12 @@ module.exports = class {
           });
           await redisClient.expireAsync(id, process.env.REDIS_KEY_EXPIRE_TIME || 600);
         });
-      debug('Successfully cached all query results.');
+      debug(`Successfully cached (${queryResult.length}) query results.`);
     } catch (error) {
       debug(`Caching failed due to ${error}. This does not terminate the query.`);
     } finally {
       if (parentPort) {
-        parentPort.postMessage({ cacheDone: true });
+        parentPort.postMessage({ cacheDone: 1 });
       }
     }
   }
