@@ -115,6 +115,9 @@ module.exports = class {
       }
       return;
     }
+    if (parentPort) {
+      parentPort.postMessage({ cacheInProgress: 1 });
+    }
     debug('Start to cache query results.');
     try {
       const groupedQueryResult = this._groupQueryResultsByEdgeID(queryResult);
