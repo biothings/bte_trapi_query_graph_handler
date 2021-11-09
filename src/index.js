@@ -101,7 +101,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   }
 
   _createBatchEdgeQueryHandlersForCurrent(currentEdge, kg) {
-    let handler = new BatchEdgeQueryHandler(kg, this.resolveOutputIDs);
+    let handler = new BatchEdgeQueryHandler(kg, this.resolveOutputIDs, {caching: this.options.caching });
     handler.setEdges(currentEdge);
     return handler;
   }
