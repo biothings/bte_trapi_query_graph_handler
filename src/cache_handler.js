@@ -10,7 +10,7 @@ module.exports = class {
     this.qEdges = qEdges;
     this.logs = logs;
     this.cacheEnabled =
-      caching === 'false'
+      caching === false
         ? false
         : process.env.RESULT_CACHING !== 'false'
         ? !(process.env.REDIS_HOST === undefined) && !(process.env.REDIS_PORT === undefined)
