@@ -21,6 +21,7 @@ const redisClient =
         hsetAsync: promisify(client.hset).bind(client),
         hgetallAsync: promisify(client.hgetall).bind(client),
         expireAsync: promisify(client.expire).bind(client),
+        delAsync: promisify(client.del).bind(client),
         // hmsetAsync: promisify(client.hmset).bind(client),
         // keysAsync: promisify(client.keys).bind(client),
         // existsAsync: promisify(client.exists).bind(client),
