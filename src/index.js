@@ -112,24 +112,44 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   }
 
   async _edgesSupported(qEdges, kg) {
-    qEdges = _.flatten(Object.values(qEdges));
-    const edgeConverter = new QEdge2BTEEdgeHandler(qEdges, kg);
-    const sAPIEdges = Object.entries(qEdges).map(([index, qEdge]) => edgeConverter.getSmartAPIEdges(qEdge));
-    const edgesMissingOps = sAPIEdges.reduce((acc, APICollection, index) => {
-      if (APICollection.length === 0) {
-        acc.push(qEdges[index].qEdge.id);
+    // _.cloneDeep() is resource-intensive but only runs once per query
+    qEdges = _.cloneDeep(qEdges);
+    const manager = new EdgeManager(qEdges);
+    const edgesMissingOps = {};
+    while (manager.getEdgesNotExecuted()) {
+      let current_edge = manager.getNext();
+      const edgeConverter = new QEdge2BTEEdgeHandler([current_edge], kg);
+      const sAPIEdges = edgeConverter.getSmartAPIEdges(current_edge);
+      if (!sAPIEdges.length) {
+        edgesMissingOps[current_edge.qEdge.id] = current_edge.reverse;
       }
-      return acc;
-    }, []);
-    if (edgesMissingOps.length > 0) {
-      const terminateLog = `Query Edge${edgesMissingOps.length > 1 ? 's' : ''} ${edgesMissingOps.join(', ')} ${
-        edgesMissingOps.length > 1 ? 'have' : 'has'
+      // assume results so next edge may be reversed or not
+      current_edge.executed = true;
+      current_edge.object.entity_count = 1;
+      current_edge.subject.entity_count = 1;
+      // this.logs = [...this.logs, ...edgeConverter.logs];
+    }
+
+    const len = Object.keys(edgesMissingOps).length;
+    // this.logs = [...this.logs, ...manager.logs];
+    let edgesToLog = Object.entries(edgesMissingOps).map(([edge, reversed]) => {
+      return reversed
+        ? `(reversed ${edge})`
+        : `(${edge})`;
+    });
+    edgesToLog = edgesToLog.length > 1
+      ? `[${edgesToLog.join(', ')}]`
+      : `${edgesToLog.join(', ')}`
+    if (len > 0) {
+      const terminateLog = `Query Edge${len > 1 ? 's' : ''} ${edgesToLog} ${
+        len > 1 ? 'have' : 'has'
       } no SmartAPI edges. Your query terminates.`;
       debug(terminateLog);
       this.logs.push(new LogEntry('WARNING', null, terminateLog).getLog());
       return false;
+    } else {
+      return true;
     }
-    return true;
   }
 
   async query() {
