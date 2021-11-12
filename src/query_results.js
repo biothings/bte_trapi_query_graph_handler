@@ -1,9 +1,8 @@
-const { keys, toPairs, values, zipObject } = require('lodash');
+const { isEqual, cloneDeep, keys, toPairs, values, zipObject } = require('lodash');
 const GraphHelper = require('./helper');
 const helper = new GraphHelper();
 const utils = require('./utils');
 const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
-
 
 /**
  * @typedef {
@@ -66,6 +65,81 @@ module.exports = class QueryResult {
     return this._results;
   }
 
+  // NOTE: if we want to handle cycles, we'll probably need to keep track of what's been visited
+  // But since Andrew said we don't have to worry about cycles for now, we're skipping that.
+  _getPrimaryIDByQueryNodeIDCombos(
+    dataByEdge,
+    queryEdgeID,
+    briefRecordsByEdge,
+    primaryIDByQueryNodeIDCombos,
+    primaryIDByQueryNodeIDCombo,
+    queryNodeIDToMatch,
+    primaryIDToMatch
+  ) {
+    const {connected_to, records} = dataByEdge[queryEdgeID];
+
+    // queryNodeID example: 'n0'
+    const inputQueryNodeID = helper._getInputQueryNodeID(records[0]);
+    const outputQueryNodeID = helper._getOutputQueryNodeID(records[0]);
+
+    let otherQueryNodeID, getMatchingPrimaryID, getOtherPrimaryID;
+
+    if ([inputQueryNodeID, undefined].indexOf(queryNodeIDToMatch) > -1) {
+      queryNodeIDToMatch = inputQueryNodeID;
+      otherQueryNodeID = outputQueryNodeID;
+      getMatchingPrimaryID = helper._getInputID;
+      getOtherPrimaryID = helper._getOutputID;
+    } else if (queryNodeIDToMatch === outputQueryNodeID) {
+      otherQueryNodeID = inputQueryNodeID;
+      getMatchingPrimaryID = helper._getOutputID;
+      getOtherPrimaryID = helper._getInputID;
+    } else {
+      return;
+    }
+
+    const primaryIDByQueryNodeIDComboClone = cloneDeep(primaryIDByQueryNodeIDCombo);
+    records.filter((record) => {
+      return [getMatchingPrimaryID(record), undefined].indexOf(primaryIDToMatch) > -1 ;
+    }).forEach((record, i) => {
+      // primaryID example: 'NCBIGene:1234'
+      const matchingPrimaryID = getMatchingPrimaryID(record);
+      const otherPrimaryID = getOtherPrimaryID(record);
+
+      if (i !== 0) {
+        primaryIDByQueryNodeIDCombo = cloneDeep(primaryIDByQueryNodeIDComboClone);
+        primaryIDByQueryNodeIDCombos.push(primaryIDByQueryNodeIDCombo);
+      }
+
+      // Later on, we'll just need several IDs from each record,
+      // not the entire record. Let's collect those ahead of time.
+      if (!briefRecordsByEdge.hasOwnProperty(queryEdgeID)) {
+        briefRecordsByEdge[queryEdgeID] = [];
+      }
+      briefRecordsByEdge[queryEdgeID].push({
+        inputQueryNodeID: helper._getInputQueryNodeID(record),
+        outputQueryNodeID: helper._getOutputQueryNodeID(record),
+        inputPrimaryID: helper._getInputID(record),
+        outputPrimaryID: helper._getOutputID(record),
+        kgEdgeID: helper._getKGEdgeID(record),
+      });
+
+      primaryIDByQueryNodeIDCombo[queryNodeIDToMatch] = matchingPrimaryID;
+      primaryIDByQueryNodeIDCombo[otherQueryNodeID] = otherPrimaryID;
+
+      connected_to.forEach((connectedQueryEdgeID, j) => {
+        this._getPrimaryIDByQueryNodeIDCombos(
+          dataByEdge,
+          connectedQueryEdgeID,
+          briefRecordsByEdge,
+          primaryIDByQueryNodeIDCombos,
+          primaryIDByQueryNodeIDCombo,
+          otherQueryNodeID,
+          otherPrimaryID
+        );
+      });
+    });
+  }
+
   /**
    * Transform a collection of records into query result(s).
    * Cache the result(s) so they're ready for getResults().
@@ -80,66 +154,17 @@ module.exports = class QueryResult {
     debug(`Updating query results now!`);
     this._results = [];
 
-    const edges = new Set(keys(dataByEdge));
-    const edgeCount = edges.size;
-
-    // For every query node, get the primaryIDs that every record
-    // touching that query node has in common at that query node.
-    const commonPrimaryIDsByQueryNodeID = {};
-    let emptyQueryNodeFound = false;
-    toPairs(dataByEdge).some(([queryEdgeID, {connected_to, records}]) => {
-
-      // queryEdgeID example: 'e01'
-
+    // verify there are no empty records
+    // TODO: with the new generalized query handling
+    // is this check needed any more?
+    let noRecords = false;
+    values(dataByEdge).some(({records}) => {
       if (!records || records.length === 0) {
-        debug(`query edge ${queryEdgeID} has no records`);
+        debug(`at least one query edge has no records`);
 
-        emptyQueryNodeFound = true;
+        noRecords = true;
 
         // this is like calling break in a for loop
-        return true;
-      }
-
-      // query node ID example: 'n1'
-
-      const inputQueryNodeID = helper._getInputQueryNodeID(records[0]);
-      const outputQueryNodeID = helper._getOutputQueryNodeID(records[0]);
-
-      // primary ID example: 'NCBI:1234'
-
-      const inputPrimaryIDs = new Set(records.map(record => {
-        return helper._getInputID(record);
-      }));
-      if (!commonPrimaryIDsByQueryNodeID[inputQueryNodeID]) {
-        // if this is the first one
-        commonPrimaryIDsByQueryNodeID[inputQueryNodeID] = inputPrimaryIDs;
-      } else {
-        // take the intersection. This means we limit to primary IDs common
-        // to every record at this query node.
-        commonPrimaryIDsByQueryNodeID[inputQueryNodeID] = utils.intersection(
-          commonPrimaryIDsByQueryNodeID[inputQueryNodeID], inputPrimaryIDs
-        );
-      }
-
-      // the following is just the same as above, except for output
-      const outputPrimaryIDs = new Set(records.map(record => {
-        return helper._getOutputID(record);
-      }));
-      if (!commonPrimaryIDsByQueryNodeID[outputQueryNodeID]) {
-        // if this is the first one
-        commonPrimaryIDsByQueryNodeID[outputQueryNodeID] = outputPrimaryIDs;
-      } else {
-        // take the intersection. This means we limit to primary IDs common
-        // to every record at this query node.
-        commonPrimaryIDsByQueryNodeID[outputQueryNodeID] = utils.intersection(
-          commonPrimaryIDsByQueryNodeID[outputQueryNodeID], outputPrimaryIDs
-        );
-      }
-
-      if ((commonPrimaryIDsByQueryNodeID[inputQueryNodeID].size === 0) ||
-          (commonPrimaryIDsByQueryNodeID[outputQueryNodeID].size === 0)) {
-        debug(`at least one query node for ${queryEdgeID} doesn't have compatible records`);
-        emptyQueryNodeFound = true;
         return true;
       }
     });
@@ -147,96 +172,95 @@ module.exports = class QueryResult {
     // If any query node is empty, there will be no results, so we can skip
     // any further processing. Every query node in commonPrimaryIDsByQueryNodeID
     // must have at least one primary ID
-    if (emptyQueryNodeFound) {
+    if (noRecords) {
       return;
     }
 
-    // Later on, we'll just need several IDs from each record,
-    // not the entire record. Let's collect those ahead of time.
-    const briefRecordsByEdge = toPairs(dataByEdge)
-      .reduce((acc, [queryEdgeID, {connected_to, records}]) => {
-        acc[queryEdgeID] = records.map((record) => {
-          return {
-            inputQueryNodeID: helper._getInputQueryNodeID(record),
-            outputQueryNodeID: helper._getOutputQueryNodeID(record),
-            inputPrimaryID: helper._getInputID(record),
-            outputPrimaryID: helper._getOutputID(record),
-            kgEdgeID: helper._getKGEdgeID(record),
-          };
+    const edges = new Set(keys(dataByEdge));
+    const edgeCount = edges.size;
+
+    const queryNodeIDs = new Set();
+    toPairs(dataByEdge).forEach((x) => {
+      const [queryEdgeID, {connected_to, records}] = x;
+
+      const inputQueryNodeID = helper._getInputQueryNodeID(records[0]);
+      const outputQueryNodeID = helper._getOutputQueryNodeID(records[0]);
+
+      queryNodeIDs.add(inputQueryNodeID);
+      queryNodeIDs.add(outputQueryNodeID);
+    });
+
+    const primaryIDByQueryNodeIDCombos = [];
+    const starter = {};
+    primaryIDByQueryNodeIDCombos.push(starter)
+
+    let starterQueryEdgeID, starterQueryNodeIDToMatch;
+    toPairs(dataByEdge).some((x) => {
+      const [queryEdgeID, {connected_to, records}] = x;
+
+      const inputQueryNodeID = helper._getInputQueryNodeID(records[0]);
+      const outputQueryNodeID = helper._getOutputQueryNodeID(records[0]);
+
+      if (connected_to.length === 0) {
+        starterQueryEdgeID = queryEdgeID;
+        starterQueryNodeIDToMatch = inputQueryNodeID;
+      } else {
+        connected_to.some((c) => {
+          const nextEdge = dataByEdge[c];
+          const inputQueryNodeID1 = helper._getInputQueryNodeID(nextEdge.records[0]);
+          const outputQueryNodeID1 = helper._getOutputQueryNodeID(nextEdge.records[0]);
+          if (!starterQueryEdgeID) {
+            if ([inputQueryNodeID1, outputQueryNodeID1].indexOf(inputQueryNodeID) === -1) {
+              starterQueryEdgeID = queryEdgeID;
+              starterQueryNodeIDToMatch = inputQueryNodeID;
+              return true;
+            } else if ([outputQueryNodeID1, outputQueryNodeID1].indexOf(outputQueryNodeID) === -1) {
+              starterQueryEdgeID = queryEdgeID;
+              starterQueryNodeIDToMatch = outputQueryNodeID;
+              return true;
+            }
+          }
         });
 
-        return acc;
-      }, {});
+        if (starterQueryEdgeID) {
+          return true;
+        }
+      }
+    });
 
-    const queryNodeIDs = keys(commonPrimaryIDsByQueryNodeID);
+    const briefRecordsByEdge = {};
+    this._getPrimaryIDByQueryNodeIDCombos(
+      dataByEdge,
+      starterQueryEdgeID,
+      briefRecordsByEdge,
+      primaryIDByQueryNodeIDCombos,
+      starter,
+      starterQueryNodeIDToMatch
+    );
 
-    // The values from commonPrimaryIDsByQueryNodeID are an array of sets.
-    // Each of those sets represents all the primary IDs that are common
-    // to the records touching a specific query node at that query node.
-    //
-    // Example Data
-    // ------------
-    //
-    // query graph:
-    // n0->n1
-    // 
-    // primaryIDs in records:
-    // input output
-    // n0a   n1a
-    // n0a   n1b
-    // n0b   n1a
-    // n0b   n1b
-    //
-    // queryNodeID  commonPrimaryIDs
-    // n0           n0a, n0b
-    // n1           n1a, n1b
-    //  
-    // commonPrimaryIDsByQueryNodeID:
-    // {
-    //   "n0": new Set(["n0a", "n0b"]),
-    //   "n1": new Set(["n1a", "n1b"])
-    // }
-    //
-    // the values: [new Set([n0a, n0b]), new Set([n1a, n1b])]
-    //
-    // For an array of sets, we can take one item from every set
-    // to make a single new set. The cartesian product represents
-    // every possible such new set.
-    //
-    // (The specific implementation of cartesian product we're
-    // currently using expects arrays instead of sets, so we
-    // had to convert sets to arrays, but maybe we should use
-    // a different implementation to avoid this conversion.)
-    //
-    // input: [[n0a, n0b], [n1a, n1b]] ->
-    // cartesian product: [[n0a, n1a], [n0a, n1b], [n1a, n1a], [n1a, n1b]]
-    this._results = utils.cartesian(
-        values(commonPrimaryIDsByQueryNodeID)
-          // the implementation we're currently using expects arrays, not sets
-          .map(v => Array.from(v))
-    )
-      // We're mapping every sub-array of this:
-      // [[n0a, n1a], [n0a, n1b], [n1a, n1a], [n1a, n1b]]
-      //
-      // to get this:
-      // [
-      //   {"n0": "n0a", "n1": "n1a"},
-      //   {"n0": "n0a", "n1": "n1b"},
-      //   {"n0": "n0b", "n1": "n1a"},
-      //   {"n0": "n0b", "n1": "n1b"},
-      // ]
-      .map(commonPrimaryIDCombo => {
-        // [n0a, n1a] -> {"n0": "n0a", "n1": "n1a"}
-        return zipObject(queryNodeIDs, commonPrimaryIDCombo);
-      })
-      // We've now identified all the possible combinations of primary IDs.
-      // Next, let's check the records to see which possible combinations
-      // have a record for every item in the combination.
-      //
-      // This is necessary, because even though we checked for common
-      // primary IDs at every query node, that check didn't verify that
-      // the records with those primary IDs are compatible with each other.
-      .map(primaryIDByQueryNodeID => {
+    const queryNodeIDCount = Array.from(queryNodeIDs).length;
+    const primaryIDByQueryNodeIDCombosStrings = new Set();
+    const primaryIDByQueryNodeIDCombosFiltered = primaryIDByQueryNodeIDCombos.filter((primaryIDByQueryNodeIDCombo) => {
+      const primaryIDByQueryNodeIDComboString = keys(primaryIDByQueryNodeIDCombo)
+        .concat(values(primaryIDByQueryNodeIDCombo))
+        .sort()
+        .join("-");
+
+      // remove duplicates
+      if (primaryIDByQueryNodeIDCombosStrings.has(primaryIDByQueryNodeIDComboString)) {
+        return false;
+      } else {
+        primaryIDByQueryNodeIDCombosStrings.add(primaryIDByQueryNodeIDComboString);
+      }
+
+      // remove incomplete combos
+      return keys(primaryIDByQueryNodeIDCombo).length === queryNodeIDCount;
+    });
+
+    this._results = primaryIDByQueryNodeIDCombosFiltered
+      // We've now identified all the valid combinations of primary IDs.
+      // Next, let's go through the records again to start assembling results.
+      .map((primaryIDByQueryNodeID) => {
         return toPairs(briefRecordsByEdge)
           .reduce((acc, [queryEdgeID, briefRecords]) => {
             const compatibleBriefRecords = briefRecords.filter(({
@@ -246,13 +270,6 @@ module.exports = class QueryResult {
               return (primaryIDByQueryNodeID[inputQueryNodeID] == inputPrimaryID) &&
                 (primaryIDByQueryNodeID[outputQueryNodeID] == outputPrimaryID);
             });
-
-            // Make sure this edge has at least one compatible record.
-            // If this were a loop, we could break twice and not even
-            // need the next filter step further below.
-            if (compatibleBriefRecords.length === 0) {
-              return acc;
-            }
 
             // Because of the filter step above, every compatibleBriefRecord
             // in this batch will have the same values for:
@@ -275,15 +292,6 @@ module.exports = class QueryResult {
 
             return acc;
           }, {})
-      })
-      .filter(infoByEdgeForOneCombo => {
-        // Make sure every query graph edge is represented.
-        // If a query graph edge had zero valid records,
-        // it won't have an entry in infoByEdgeForOneCombo.
-        return utils.intersection(
-          edges,
-          (new Set(keys(infoByEdgeForOneCombo)))
-        ).size === edgeCount;
       })
       /**
        * Assemble each query result.
