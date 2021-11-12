@@ -156,6 +156,20 @@ describe("Test helper moduler", () => {
         },
         publications: ['PMID:345', 'PMID:456'],
         $input: {
+          original: 'SYMBOL:KCNMA1',
+          obj: [
+            {
+              primaryID: 'NCBIGene:3778',
+              label: 'KCNMA1',
+              dbIDs: {
+                SYMBOL: 'KCNMA1',
+                NCBIGene: '3778',
+              },
+              curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
+            },
+          ],
+        },
+        $output: {
           original: 'MONDO:0011122',
           obj: [
             {
@@ -167,20 +181,6 @@ describe("Test helper moduler", () => {
                 name: 'obesity disorder',
               },
               curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-            },
-          ],
-        },
-        $output: {
-          original: 'SYMBOL:KCNMA1',
-          obj: [
-            {
-              primaryID: 'NCBIGene:3778',
-              label: 'KCNMA1',
-              dbIDs: {
-                SYMBOL: 'KCNMA1',
-                NCBIGene: '3778',
-              },
-              curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
             },
           ],
         },
