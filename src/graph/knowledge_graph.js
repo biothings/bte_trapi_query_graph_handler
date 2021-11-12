@@ -116,7 +116,7 @@ module.exports = class KnowledgeGraph {
           {
             attribute_type_id: 'biolink:publications',
             value: Array.from(kgEdge.publications),
-            value_type_id: 'biolink:publications',
+            // value_type_id: 'biolink:publications',
           }
         ];
       }
@@ -159,7 +159,7 @@ module.exports = class KnowledgeGraph {
           {
             attribute_type_id: 'biolink:publications',
             value: Array.from(kgEdge.publications),
-            value_type_id: 'biolink:publications',
+            // value_type_id: 'biolink:publications',
           }
         ];
       }
