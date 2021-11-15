@@ -8,6 +8,9 @@ const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error')
 const debug = require('debug')('bte:biothings-explorer-trapi:main');
 const Graph = require('./graph/graph');
 const EdgeManager = require('./edge_manager');
+const _ = require('lodash');
+const QEdge2BTEEdgeHandler = require('./qedge2bteedge');
+const LogEntry = require('./log_entry');
 
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 
