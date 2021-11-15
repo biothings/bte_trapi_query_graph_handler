@@ -68,7 +68,236 @@ describe('Testing QueryResults Module', () => {
     });
 
     describe('Two Records', () => {
-      describe('query graph: gene1-disease1-gene2', () => {
+      describe('query graph: gene1-disease1-gene1', () => {
+        const gene_node_start = new QNode('n1', { categories: ['Gene'] });
+        const disease_node = new QNode('n2', { categories: ['Disease'] });
+        const gene_node_end = new QNode('n3', { categories: ['Gene'] });
+
+        const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
+        const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
+
+        const record1 = {
+          $edge_metadata: {
+            trapi_qEdge_obj: edge1,
+            predicate: 'biolink:gene_associated_with_condition',
+            api_name: 'Automat Pharos',
+          },
+          publications: ['PMID:123', 'PMID:1234'],
+          $input: {
+            original: 'SYMBOL:KCNMA1',
+            obj: [
+              {
+                primaryID: 'NCBIGene:3778',
+                label: 'KCNMA1',
+                dbIDs: {
+                  SYMBOL: 'KCNMA1',
+                  NCBIGene: '3778',
+                },
+                curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
+              },
+            ],
+          },
+          $output: {
+            original: 'MONDO:0011122',
+            obj: [
+              {
+                primaryID: 'MONDO:0011122',
+                label: 'obesity disorder',
+                dbIDs: {
+                  MONDO: '0011122',
+                  MESH: 'D009765',
+                  name: 'obesity disorder',
+                },
+                curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+              },
+            ],
+          },
+        };
+
+        const record2 = {
+          $edge_metadata: {
+            trapi_qEdge_obj: edge2,
+            predicate: 'biolink:condition_associated_with_gene',
+            api_name: 'Automat Hetio',
+          },
+          publications: ['PMID:345', 'PMID:456'],
+          $input: {
+            original: 'MONDO:0011122',
+            obj: [
+              {
+                primaryID: 'MONDO:0011122',
+                label: 'obesity disorder',
+                dbIDs: {
+                  MONDO: '0011122',
+                  MESH: 'D009765',
+                  name: 'obesity disorder',
+                },
+                curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+              },
+            ],
+          },
+          $output: {
+            original: 'SYMBOL:KCNMA1',
+            obj: [
+              {
+                primaryID: 'NCBIGene:3778',
+                label: 'KCNMA1',
+                dbIDs: {
+                  SYMBOL: 'KCNMA1',
+                  NCBIGene: '3778',
+                },
+                curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
+              },
+            ],
+          },
+        };
+
+        test('should get n1, n2, n3 and e01, e02', () => {
+          const queryResult = new QueryResult();
+
+          queryResult.update({
+            "e01": {
+              "connected_to": ["e02"],
+              "records": [record1]
+            },
+            "e02": {
+              "connected_to": ["e01"],
+              "records": [record2]
+            }
+          });
+
+          const results = queryResult.getResults();
+
+          expect(results.length).toEqual(1);
+
+          expect(Object.keys(results[0].node_bindings).length).toEqual(3);
+          expect(results[0].node_bindings).toHaveProperty('n1');
+          expect(results[0].node_bindings).toHaveProperty('n2');
+          expect(results[0].node_bindings).toHaveProperty('n3');
+
+          expect(Object.keys(results[0].edge_bindings).length).toEqual(2);
+          expect(results[0].edge_bindings).toHaveProperty('e01');
+          expect(results[0].edge_bindings).toHaveProperty('e02');
+
+          expect(results[0]).toHaveProperty('score');
+        });
+      });
+
+      describe('query graph: gene1-disease1-gene2 (no ids params)', () => {
+        const gene_node_start = new QNode('n1', { categories: ['Gene'] });
+        const disease_node = new QNode('n2', { categories: ['Disease'] });
+        const gene_node_end = new QNode('n3', { categories: ['Gene'] });
+
+        const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
+        const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
+
+        const record1 = {
+          $edge_metadata: {
+            trapi_qEdge_obj: edge1,
+            predicate: 'biolink:gene_associated_with_condition',
+            api_name: 'Automat Pharos',
+          },
+          publications: ['PMID:123', 'PMID:1234'],
+          $input: {
+            original: 'SYMBOL:KCNMA1',
+            obj: [
+              {
+                primaryID: 'NCBIGene:3778',
+                label: 'KCNMA1',
+                dbIDs: {
+                  SYMBOL: 'KCNMA1',
+                  NCBIGene: '3778',
+                },
+                curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
+              },
+            ],
+          },
+          $output: {
+            original: 'MONDO:0011122',
+            obj: [
+              {
+                primaryID: 'MONDO:0011122',
+                label: 'obesity disorder',
+                dbIDs: {
+                  MONDO: '0011122',
+                  MESH: 'D009765',
+                  name: 'obesity disorder',
+                },
+                curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+              },
+            ],
+          },
+        };
+
+        const record2 = {
+          $edge_metadata: {
+            trapi_qEdge_obj: edge2,
+            predicate: 'biolink:condition_associated_with_gene',
+            api_name: 'Automat Hetio',
+          },
+          publications: ['PMID:345', 'PMID:456'],
+          $input: {
+            original: 'MONDO:0011122',
+            obj: [
+              {
+                primaryID: 'MONDO:0011122',
+                label: 'obesity disorder',
+                dbIDs: {
+                  MONDO: '0011122',
+                  MESH: 'D009765',
+                  name: 'obesity disorder',
+                },
+                curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+              },
+            ],
+          },
+          $output: {
+            original: 'SYMBOL:TULP3',
+            obj: [
+              {
+                primaryID: 'NCBIGene:7289',
+                label: 'TULP3',
+                dbIDs: {
+                  SYMBOL: 'TULP3',
+                  NCBIGene: '7289',
+                },
+                curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
+              },
+            ],
+          },
+        };
+
+        test('should get n1, n2, n3 and e01, e02', () => {
+          const queryResult = new QueryResult();
+          queryResult.update({
+            "e01": {
+              "connected_to": ["e02"],
+              "records": [record1]
+            },
+            "e02": {
+              "connected_to": ["e01"],
+              "records": [record2]
+            }
+          });
+
+          const results = queryResult.getResults();
+
+          expect(results.length).toEqual(1);
+
+          expect(Object.keys(results[0].node_bindings).length).toEqual(3);
+          expect(results[0].node_bindings).toHaveProperty('n1');
+          expect(results[0].node_bindings).toHaveProperty('n2');
+          expect(results[0].node_bindings).toHaveProperty('n3');
+
+          expect(Object.keys(results[0].edge_bindings).length).toEqual(2);
+          expect(results[0].edge_bindings).toHaveProperty('e01');
+          expect(results[0].edge_bindings).toHaveProperty('e02');
+
+          expect(results[0]).toHaveProperty('score');
+        });
+      });
+
+      describe('query graph: gene1-disease1-gene2 (gene1 has ids param)', () => {
         const gene_node_start = new QNode('n1', { categories: ['Gene'], ids: ['NCBIGene:3778'] });
         const disease_node = new QNode('n2', { categories: ['Disease'] });
         const gene_node_end = new QNode('n3', { categories: ['Gene'] });
@@ -182,27 +411,10 @@ describe('Testing QueryResults Module', () => {
         });
       });
 
-      describe('query graph: gene1-disease1-gene1', () => {
-        // TODO: why does only the first set of nodes return a result?
-        // The other two node sets return 0 results.
-
-        //*
+      describe('query graph: gene1-disease1-gene2 (gene1 & gene2 have ids params)', () => {
         const gene_node_start = new QNode('n1', { categories: ['Gene'], ids: ['NCBIGene:3778'] });
         const disease_node = new QNode('n2', { categories: ['Disease'] });
-        const gene_node_end = new QNode('n3', { categories: ['Gene'] });
-        //*/
-        
-        /*
-        const gene_node_start = new QNode('n1', { categories: ['Gene'], ids: ['NCBIGene:3778'] });
-        const disease_node = new QNode('n2', { categories: ['Disease'] });
-        const gene_node_end = new QNode('n3', { categories: ['Gene'], ids: ['NCBIGene:3778'] });
-        //*/
-
-        /*
-        const gene_node_start = new QNode('n1', { categories: ['Gene'] });
-        const disease_node = new QNode('n2', { categories: ['Disease'] });
-        const gene_node_end = new QNode('n3', { categories: ['Gene'], ids: ['NCBIGene:3778'] });
-        //*/
+        const gene_node_end = new QNode('n3', { categories: ['Gene'], ids: ['NCBIGene:7289'] });
 
         const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
         const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
@@ -245,6 +457,7 @@ describe('Testing QueryResults Module', () => {
           },
         };
 
+        // note I had to switch $input and $output
         const record2 = {
           $edge_metadata: {
             trapi_qEdge_obj: edge2,
@@ -253,6 +466,20 @@ describe('Testing QueryResults Module', () => {
           },
           publications: ['PMID:345', 'PMID:456'],
           $input: {
+            original: 'SYMBOL:TULP3',
+            obj: [
+              {
+                primaryID: 'NCBIGene:7289',
+                label: 'TULP3',
+                dbIDs: {
+                  SYMBOL: 'TULP3',
+                  NCBIGene: '7289',
+                },
+                curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
+              },
+            ],
+          },
+          $output: {
             original: 'MONDO:0011122',
             obj: [
               {
@@ -267,25 +494,10 @@ describe('Testing QueryResults Module', () => {
               },
             ],
           },
-          $output: {
-            original: 'SYMBOL:KCNMA1',
-            obj: [
-              {
-                primaryID: 'NCBIGene:3778',
-                label: 'KCNMA1',
-                dbIDs: {
-                  SYMBOL: 'KCNMA1',
-                  NCBIGene: '3778',
-                },
-                curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
-              },
-            ],
-          },
         };
 
         test('should get n1, n2, n3 and e01, e02', () => {
           const queryResult = new QueryResult();
-
           queryResult.update({
             "e01": {
               "connected_to": ["e02"],
@@ -313,6 +525,122 @@ describe('Testing QueryResults Module', () => {
           expect(results[0]).toHaveProperty('score');
         });
       });
+
+      describe('query graph: gene1-disease1-gene2 (gene2 has ids param)', () => {
+        const gene_node_start = new QNode('n1', { categories: ['Gene'] });
+        const disease_node = new QNode('n2', { categories: ['Disease'] });
+        const gene_node_end = new QNode('n3', { categories: ['Gene'], ids: ['NCBIGene:7289'] });
+
+        const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
+        const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
+
+        const record1 = {
+          $edge_metadata: {
+            trapi_qEdge_obj: edge1,
+            predicate: 'biolink:gene_associated_with_condition',
+            api_name: 'Automat Pharos',
+          },
+          publications: ['PMID:123', 'PMID:1234'],
+          $input: {
+            original: 'SYMBOL:KCNMA1',
+            obj: [
+              {
+                primaryID: 'NCBIGene:3778',
+                label: 'KCNMA1',
+                dbIDs: {
+                  SYMBOL: 'KCNMA1',
+                  NCBIGene: '3778',
+                },
+                curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
+              },
+            ],
+          },
+          $output: {
+            original: 'MONDO:0011122',
+            obj: [
+              {
+                primaryID: 'MONDO:0011122',
+                label: 'obesity disorder',
+                dbIDs: {
+                  MONDO: '0011122',
+                  MESH: 'D009765',
+                  name: 'obesity disorder',
+                },
+                curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+              },
+            ],
+          },
+        };
+
+        // note I had to switch $input and $output
+        const record2 = {
+          $edge_metadata: {
+            trapi_qEdge_obj: edge2,
+            predicate: 'biolink:condition_associated_with_gene',
+            api_name: 'Automat Hetio',
+          },
+          publications: ['PMID:345', 'PMID:456'],
+          $input: {
+            original: 'SYMBOL:TULP3',
+            obj: [
+              {
+                primaryID: 'NCBIGene:7289',
+                label: 'TULP3',
+                dbIDs: {
+                  SYMBOL: 'TULP3',
+                  NCBIGene: '7289',
+                },
+                curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
+              },
+            ],
+          },
+          $output: {
+            original: 'MONDO:0011122',
+            obj: [
+              {
+                primaryID: 'MONDO:0011122',
+                label: 'obesity disorder',
+                dbIDs: {
+                  MONDO: '0011122',
+                  MESH: 'D009765',
+                  name: 'obesity disorder',
+                },
+                curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+              },
+            ],
+          },
+        };
+
+        test('should get n1, n2, n3 and e01, e02', () => {
+          const queryResult = new QueryResult();
+          queryResult.update({
+            "e01": {
+              "connected_to": ["e02"],
+              "records": [record1]
+            },
+            "e02": {
+              "connected_to": ["e01"],
+              "records": [record2]
+            }
+          });
+
+          const results = queryResult.getResults();
+
+          expect(results.length).toEqual(1);
+
+          expect(Object.keys(results[0].node_bindings).length).toEqual(3);
+          expect(results[0].node_bindings).toHaveProperty('n1');
+          expect(results[0].node_bindings).toHaveProperty('n2');
+          expect(results[0].node_bindings).toHaveProperty('n3');
+
+          expect(Object.keys(results[0].edge_bindings).length).toEqual(2);
+          expect(results[0].edge_bindings).toHaveProperty('e01');
+          expect(results[0].edge_bindings).toHaveProperty('e02');
+
+          expect(results[0]).toHaveProperty('score');
+        });
+      });
+
     });
 
     describe('Three Records', () => {
