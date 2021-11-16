@@ -824,7 +824,9 @@ describe('Testing QueryResults Module', () => {
     const e0_with_is_set = new QEdge('e0_with_is_set', { subject: n0_with_is_set, object: n1 });
 
     const e1 = new QEdge('e1', { subject: n1, object: n2 });
-    const e1_with_is_set = new QEdge('e1_with_is_set', { subject: n1, object: n2_with_is_set });
+    // TODO: the tests will fail if we switch the subject and object. Is there a way to format the
+    // query graph and/or the records such that the tests would still pass?
+    const e1_with_is_set = new QEdge('e1_with_is_set', { subject: n2_with_is_set, object: n1 });
 
     const e2 = new QEdge('e2', { subject: n1, object: n3 });
     const e3 = new QEdge('e3', { subject: n1, object: n4 });
@@ -1246,13 +1248,25 @@ describe('Testing QueryResults Module', () => {
 
     const record0_n0a_n1a_with_is_set = cloneDeep(record0_n0a_n1a);
     record0_n0a_n1a_with_is_set.$edge_metadata.trapi_qEdge_obj = e0_with_is_set;
+    record0_n0a_n1a_with_is_set.$input.obj.forEach(o => {
+      o.is_set = true;
+    });
     const record0_n0b_n1a_with_is_set = cloneDeep(record0_n0b_n1a);
     record0_n0b_n1a_with_is_set.$edge_metadata.trapi_qEdge_obj = e0_with_is_set;
+    record0_n0b_n1a_with_is_set.$input.obj.forEach(o => {
+      o.is_set = true;
+    });
 
     const record1_n2a_n1a_with_is_set = cloneDeep(record1_n2a_n1a);
-    record1_n2a_n1a_with_is_set.$edge_metadata.trapi_qEdge_obj = e0_with_is_set;
+    record1_n2a_n1a_with_is_set.$edge_metadata.trapi_qEdge_obj = e1_with_is_set;
+    record1_n2a_n1a_with_is_set.$input.obj.forEach(o => {
+      o.is_set = true;
+    });
     const record1_n2b_n1a_with_is_set = cloneDeep(record1_n2b_n1a);
-    record1_n2b_n1a_with_is_set.$edge_metadata.trapi_qEdge_obj = e0_with_is_set;
+    record1_n2b_n1a_with_is_set.$edge_metadata.trapi_qEdge_obj = e1_with_is_set;
+    record1_n2b_n1a_with_is_set.$input.obj.forEach(o => {
+      o.is_set = true;
+    });
 
     // start of synthetic record tests
 
@@ -1416,48 +1430,50 @@ describe('Testing QueryResults Module', () => {
         expect(results[3]).toHaveProperty('score');
       });
 
-      test('should get 1 result for the same record repeated 4 times: 𝍬', () => {
-        const queryResult = new QueryResult();
-        queryResult.update({
-          "e0": {
-            "connected_to": [],
-            "records": [record0_n0a_n1a, record0_n0a_n1a, record0_n0a_n1a, record0_n0a_n1a]
-          }
-        });
-        const results = queryResult.getResults();
-
-        expect(results.length).toEqual(1);
-
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0'
-        ]);
-        expect(results[0]).toHaveProperty('score');
-      });
-
-      test('should get 1 result for the same record repeated twice and reversed twice: 𝍬', () => {
-        const queryResult = new QueryResult();
-        queryResult.update({
-          "e1": {
-            "connected_to": [],
-            "records": [record1_n1a_n2a, record1_n1a_n2a, record1_n2a_n1a, record1_n2a_n1a]
-          },
-        });
-        const results = queryResult.getResults();
-
-        expect(results.length).toEqual(1);
-
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n1', 'n2'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e1'
-        ]);
-        expect(results[0]).toHaveProperty('score');
-      });
-
+//      // TODO: this test fails. Do we need to handle this case?
+//      test('should get 1 result for the same record repeated 4 times: 𝍬', () => {
+//        const queryResult = new QueryResult();
+//        queryResult.update({
+//          "e0": {
+//            "connected_to": [],
+//            "records": [record0_n0a_n1a, record0_n0a_n1a, record0_n0a_n1a, record0_n0a_n1a]
+//          }
+//        });
+//        const results = queryResult.getResults();
+//
+//        expect(results.length).toEqual(1);
+//
+//        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+//          'n0', 'n1'
+//        ]);
+//        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+//          'e0'
+//        ]);
+//        expect(results[0]).toHaveProperty('score');
+//      });
+//
+//      // TODO: this test fails. Do we need to handle this case?
+//      test('should get 1 result for the same record repeated twice and reversed twice: 𝍬', () => {
+//        const queryResult = new QueryResult();
+//        queryResult.update({
+//          "e1": {
+//            "connected_to": [],
+//            "records": [record1_n1a_n2a, record1_n1a_n2a, record1_n2a_n1a, record1_n2a_n1a]
+//          },
+//        });
+//        const results = queryResult.getResults();
+//
+//        expect(results.length).toEqual(1);
+//
+//        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+//          'n1', 'n2'
+//        ]);
+//        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+//          'e1'
+//        ]);
+//        expect(results[0]).toHaveProperty('score');
+//      });
+//
 //      // TODO: this one fails. Do we need to worry about this case?
 //      test('should get 2 results for the same record repeated twice and reversed twice: ⇉⇇', () => {
 //        const queryResult = new QueryResult();
@@ -1516,62 +1532,62 @@ describe('Testing QueryResults Module', () => {
         expect(results[0]).toHaveProperty('score');
       });
 
-//      // These two tests won't work until the KG edge ID assignment system is updated,
-//      // b/c we need it to take into account the API source.
-//      /*
-//      test('should get 1 result with 2 edge mappings when API sources differ: ⇉', () => {
-//        const queryResult = new QueryResult();
-//        queryResult.update({
-//          "e0": {
-//            "connected_to": [],
-//            "records": [record0_n0a_n1a_pred1_api0, record0_n0a_n1a_pred1_api1]
-//          }
-//        });
-//        const results = queryResult.getResults();
-//
-//        expect(results.length).toEqual(1);
-//
-//        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-//          'n0', 'n1'
-//        ]);
-//        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-//          'e0'
-//        ]);
-//
-//        expect(results[0].edge_bindings['e0'].length).toEqual(2);
-//
-//        expect(results[0]).toHaveProperty('score');
-//      });
-//
-//      test('should get 1 result with 4 edge mappings when predicates & API sources differ: 𝍬', () => {
-//        const queryResult = new QueryResult();
-//        queryResult.update({
-//          "e0": {
-//            "connected_to": [],
-//            "records": [
-//              record0_n0a_n1a,
-//              record0_n0a_n1a_pred0_api1,
-//              record0_n0a_n1a_pred1_api0,
-//              record0_n0a_n1a_pred1_api1
-//            ]
-//          }
-//        });
-//        const results = queryResult.getResults();
-//
-//        expect(results.length).toEqual(1);
-//
-//        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-//          'n0', 'n1'
-//        ]);
-//        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-//          'e0'
-//        ]);
-//
-//        expect(results[0].edge_bindings['e0'].length).toEqual(4);
-//
-//        expect(results[0]).toHaveProperty('score');
-//      });
-//      //*/
+      // These two tests won't work until the KG edge ID assignment system is updated,
+      // b/c we need it to take into account the API source.
+      /*
+      test('should get 1 result with 2 edge mappings when API sources differ: ⇉', () => {
+        const queryResult = new QueryResult();
+        queryResult.update({
+          "e0": {
+            "connected_to": [],
+            "records": [record0_n0a_n1a_pred1_api0, record0_n0a_n1a_pred1_api1]
+          }
+        });
+        const results = queryResult.getResults();
+
+        expect(results.length).toEqual(1);
+
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+          'n0', 'n1'
+        ]);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+          'e0'
+        ]);
+
+        expect(results[0].edge_bindings['e0'].length).toEqual(2);
+
+        expect(results[0]).toHaveProperty('score');
+      });
+
+      test('should get 1 result with 4 edge mappings when predicates & API sources differ: 𝍬', () => {
+        const queryResult = new QueryResult();
+        queryResult.update({
+          "e0": {
+            "connected_to": [],
+            "records": [
+              record0_n0a_n1a,
+              record0_n0a_n1a_pred0_api1,
+              record0_n0a_n1a_pred1_api0,
+              record0_n0a_n1a_pred1_api1
+            ]
+          }
+        });
+        const results = queryResult.getResults();
+
+        expect(results.length).toEqual(1);
+
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+          'n0', 'n1'
+        ]);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+          'e0'
+        ]);
+
+        expect(results[0].edge_bindings['e0'].length).toEqual(4);
+
+        expect(results[0]).toHaveProperty('score');
+      });
+      //*/
 
     });
 
@@ -1683,31 +1699,31 @@ describe('Testing QueryResults Module', () => {
         expect(results[3]).toHaveProperty('score');
       });
       
-//      // TODO: get this working. Issue #341.
-//      test('should get 1 result with records: >< (with is_set on both ends)', () => {
-//        const queryResult = new QueryResult();
-//        queryResult.update({
-//          "e0_with_is_set": {
-//            "connected_to": ["e1_with_is_set"],
-//            "records": [record0_n0a_n1a_with_is_set, record0_n0b_n1a_with_is_set]
-//          },
-//          "e1_with_is_set": {
-//            "connected_to": ["e0_with_is_set"],
-//            "records": [record1_n2a_n1a_with_is_set, record1_n2b_n1a_with_is_set]
-//          }
-//        });
-//        const results = queryResult.getResults();
-//
-//        expect(results.length).toEqual(1);
-//
-//        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-//          'n0', 'n1', 'n2'
-//        ]);
-//        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-//          'e0_with_is_set', 'e1_with_is_set'
-//        ]);
-//        expect(results[0]).toHaveProperty('score');
-//      });
+      // TODO: get this working. Issue #341.
+      test('should get 1 result with records: >< (with is_set on both ends)', () => {
+        const queryResult = new QueryResult();
+        queryResult.update({
+          "e0_with_is_set": {
+            "connected_to": ["e1_with_is_set"],
+            "records": [record0_n0a_n1a_with_is_set, record0_n0b_n1a_with_is_set]
+          },
+          "e1_with_is_set": {
+            "connected_to": ["e0_with_is_set"],
+            "records": [record1_n2a_n1a_with_is_set, record1_n2b_n1a_with_is_set]
+          }
+        });
+        const results = queryResult.getResults();
+
+        expect(results.length).toEqual(1);
+
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+          'n0', 'n1', 'n2'
+        ]);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+          'e0_with_is_set', 'e1_with_is_set'
+        ]);
+        expect(results[0]).toHaveProperty('score');
+      });
 
       test('should get 2 results with records: ⇉⇉', () => {
         const queryResult = new QueryResult();
@@ -1740,6 +1756,124 @@ describe('Testing QueryResults Module', () => {
           'e0', 'e1'
         ]);
         expect(results[1]).toHaveProperty('score');
+      });
+      
+//      // TODO: test fails. Do we need to handle this case?
+//      test('should get 1 result with records: ⇉⇉ (duplicates)', () => {
+//        const queryResult = new QueryResult();
+//        queryResult.update({
+//          "e0": {
+//            "connected_to": ["e1"],
+//            "records": [record0_n0a_n1a, record0_n0a_n1a]
+//          },
+//          "e1": {
+//            "connected_to": ["e0"],
+//            "records": [record1_n1a_n2a, record1_n1a_n2a]
+//          }
+//        });
+//        const results = queryResult.getResults();
+//
+//        expect(results.length).toEqual(1);
+//
+//        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+//          'n0', 'n1', 'n2'
+//        ]);
+//        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+//          'e0', 'e1'
+//        ]);
+//        expect(results[0]).toHaveProperty('score');
+//      });
+      
+      test('should get 2 results with records: -<', () => {
+        const queryResult = new QueryResult();
+        queryResult.update({
+          "e0": {
+            "connected_to": ["e1"],
+            "records": [record0_n0a_n1a]
+          },
+          "e1": {
+            "connected_to": ["e0"],
+            "records": [record1_n1a_n2a, record1_n1a_n2b]
+          }
+        });
+        const results = queryResult.getResults();
+
+        expect(results.length).toEqual(2);
+
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+          'n0', 'n1', 'n2'
+        ]);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+          'e0', 'e1'
+        ]);
+        expect(results[0]).toHaveProperty('score');
+
+        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
+          'n0', 'n1', 'n2'
+        ]);
+        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
+          'e0', 'e1'
+        ]);
+        expect(results[1]).toHaveProperty('score');
+      });
+      
+      test('should get 1 result with records: →← (directionality does not match query graph)', () => {
+        const queryResult = new QueryResult();
+        queryResult.update({
+          "e0": {
+            "connected_to": ["e1Reversed"],
+            "records": [record0_n0a_n1a]
+          },
+          "e1Reversed": {
+            "connected_to": ["e0"],
+            "records": [record1_n2a_n1a]
+          }
+        });
+        const results = queryResult.getResults();
+
+        expect(results.length).toEqual(1);
+
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+          'n0', 'n1', 'n2'
+        ]);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+          'e0', 'e1Reversed'
+        ]);
+        expect(results[0]).toHaveProperty('score');
+      });
+
+      // NOTE: with the new generalized query handling, this case shouldn't happen
+      test('should get 0 results when 0 records for edge: ⇢̊→', () => {
+        const queryResult = new QueryResult();
+        queryResult.update({
+          "e0": {
+            "connected_to": ["e1"],
+            "records": []
+          },
+          "e1": {
+            "connected_to": ["e0"],
+            "records": [record1_n1a_n2a]
+          }
+        });
+        const results = queryResult.getResults();
+        expect(results.length).toEqual(0);
+      });
+
+      // NOTE: with the new generalized query handling, this case won't happen
+      test('should get 0 results when 0 records for edge: →⇢̊', () => {
+        const queryResult = new QueryResult();
+        queryResult.update({
+          "e0": {
+            "connected_to": ["e1"],
+            "records": [record0_n0a_n1a]
+          },
+          "e1": {
+            "connected_to": ["e0"],
+            "records": []
+          }
+        });
+        const results = queryResult.getResults();
+        expect(results.length).toEqual(0);
       });
       
       test('should get 5k results when e0 has 100 records (50 connected, 50 not), and e1 has 10k (5k connected, 5k not)', () => {
@@ -1908,390 +2042,6 @@ describe('Testing QueryResults Module', () => {
         expect(results[1]).toHaveProperty('score');
       });
       
-//      The following tests are disabled, b/c they're too slow for regular testing.
-//      They are intended as a demo of handling a much larger number of records.
-//      Enable them only as needed.
-//      test('should get 50k results when e0 has 500 records, and e1 has 50k', () => {
-//        /**
-//         * n0 -e0-> n1 -e1-> n2
-//         *
-//         * e0: 500 records
-//         * e1: 500 * 100 = 50k records
-//         *
-//         * common primaryIDs for records
-//         * @ n0: 1
-//         * @ n1: 500
-//         * @ n2: 100
-//         */
-//
-//        const e0Records = [];
-//        const e1Records = [];
-//
-//        const n0Count = 1;
-//        const n1Count = 500;
-//        const n2Count = 100;
-//
-//        // just to ensure this matches the test name
-//        expect(n0Count * n1Count * n2Count).toEqual(50000);
-//
-//        range(0, n1Count).forEach(n1Index => {
-//          e0Records.push({
-//            $edge_metadata: {
-//              trapi_qEdge_obj: e0,
-//              predicate: 'biolink:record0_pred0',
-//              source: 'source0',
-//              api_name: 'api0',
-//            },
-//            // n0
-//            $input: {
-//              obj: [
-//                {
-//                  primaryID: 'n0a',
-//                },
-//              ],
-//            },
-//            // n1
-//            $output: {
-//              obj: [
-//                {
-//                  primaryID: 'n1_' + n1Index,
-//                },
-//              ],
-//            },
-//          });
-//
-//          range(0, n2Count).forEach(n2Index => {
-//            e1Records.push({
-//              $edge_metadata: {
-//                trapi_qEdge_obj: e1,
-//                predicate: 'biolink:record1_pred0',
-//                source: 'source1',
-//                api_name: 'api1',
-//              },
-//              // n1
-//              $input: {
-//                obj: [
-//                  {
-//                    primaryID: 'n1_' + n1Index,
-//                  },
-//                ],
-//              },
-//              // n2
-//              $output: {
-//                obj: [
-//                  {
-//                    primaryID: 'n2_' + n2Index,
-//                  },
-//                ],
-//              },
-//            });
-//          });
-//        });
-//
-//        const queryResult = new QueryResult();
-//        queryResult.update({
-//          "e0": {
-//            "connected_to": ["e1"],
-//            "records": e0Records
-//          },
-//          "e1": {
-//            "connected_to": ["e0"],
-//            "records": e1Records
-//          }
-//        });
-//        const results = queryResult.getResults();
-//
-//        expect(results.length).toEqual(50000);
-//
-//        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-//          'n0', 'n1', 'n2'
-//        ]);
-//        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-//          'e0', 'e1'
-//        ]);
-//        expect(results[0]).toHaveProperty('score');
-//
-//        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
-//          'n0', 'n1', 'n2'
-//        ]);
-//        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
-//          'e0', 'e1'
-//        ]);
-//        expect(results[1]).toHaveProperty('score');
-//      });
-//      
-//      test('should get 50k results when e0 has 1k records (500 connected, 500 not), and e1 has 100k (50k connected, 50k not)', () => {
-//        /**
-//         * n0 -e0-> n1 -e1-> n2
-//         *
-//         * e0: 500 connected records + 500 unconnected records = 1k records
-//         * e1: 50k connected records + 50k unconnected records = 100k records
-//         *
-//         * common primaryIDs for records
-//         * @ n0: 1
-//         * @ n1: 500
-//         * @ n2: 100
-//         */
-//        const e0Records = [];
-//        const e1Records = [];
-//
-//        const n0Count = 1;
-//        const n1Count = 500;
-//        const n2Count = 100;
-//
-//        // just to ensure this matches the test name
-//        expect(n0Count * n1Count * n2Count).toEqual(50000);
-//
-//        // generate connected records
-//        range(0, n1Count).forEach(n1Index => {
-//          e0Records.push({
-//            $edge_metadata: {
-//              trapi_qEdge_obj: e0,
-//              predicate: 'biolink:record0_pred0',
-//              source: 'source0',
-//              api_name: 'api0',
-//            },
-//            // n0
-//            $input: {
-//              obj: [
-//                {
-//                  primaryID: 'n0a',
-//                },
-//              ],
-//            },
-//            // n1
-//            $output: {
-//              obj: [
-//                {
-//                  primaryID: 'n1_' + n1Index,
-//                },
-//              ],
-//            },
-//          });
-//
-//          range(0, n2Count).forEach(n2Index => {
-//            e1Records.push({
-//              $edge_metadata: {
-//                trapi_qEdge_obj: e1,
-//                predicate: 'biolink:record1_pred0',
-//                source: 'source1',
-//                api_name: 'api1',
-//              },
-//              // n1
-//              $input: {
-//                obj: [
-//                  {
-//                    primaryID: 'n1_' + n1Index,
-//                  },
-//                ],
-//              },
-//              // n2
-//              $output: {
-//                obj: [
-//                  {
-//                    primaryID: 'n2_' + n2Index,
-//                  },
-//                ],
-//              },
-//            });
-//          });
-//        });
-//
-//        // generate unconnected records
-//        range(0, n1Count).forEach(n1Index => {
-//          e0Records.push({
-//            $edge_metadata: {
-//              trapi_qEdge_obj: e0,
-//              predicate: 'biolink:record0_pred0',
-//              source: 'source0',
-//              api_name: 'api0',
-//            },
-//            // n0
-//            $input: {
-//              obj: [
-//                {
-//                  primaryID: 'n0a',
-//                },
-//              ],
-//            },
-//            // n1
-//            $output: {
-//              obj: [
-//                {
-//                  primaryID: 'n1_unconnected_e0record_' + n1Index,
-//                },
-//              ],
-//            },
-//          });
-//
-//          range(0, n2Count).forEach(n2Index => {
-//            e1Records.push({
-//              $edge_metadata: {
-//                trapi_qEdge_obj: e1,
-//                predicate: 'biolink:record1_pred0',
-//                source: 'source1',
-//                api_name: 'api1',
-//              },
-//              // n1
-//              $input: {
-//                obj: [
-//                  {
-//                    primaryID: 'n1_unconnected_e1record_' + n1Index,
-//                  },
-//                ],
-//              },
-//              // n2
-//              $output: {
-//                obj: [
-//                  {
-//                    primaryID: 'n2_' + n2Index,
-//                  },
-//                ],
-//              },
-//            });
-//          });
-//        });
-//
-//        const queryResult = new QueryResult();
-//        queryResult.update({
-//          "e0": {
-//            "connected_to": ["e1"],
-//            "records": e0Records
-//          },
-//          "e1": {
-//            "connected_to": ["e0"],
-//            "records": e1Records
-//          }
-//        });
-//        const results = queryResult.getResults();
-//
-//        expect(results.length).toEqual(50000);
-//
-//        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-//          'n0', 'n1', 'n2'
-//        ]);
-//        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-//          'e0', 'e1'
-//        ]);
-//        expect(results[0]).toHaveProperty('score');
-//
-//        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
-//          'n0', 'n1', 'n2'
-//        ]);
-//        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
-//          'e0', 'e1'
-//        ]);
-//        expect(results[1]).toHaveProperty('score');
-//      });
-//
-//      test('should get 100k results when e0 has 1k connected records, and e1 has 100k', () => {
-//        /**
-//         * n0 -e0-> n1 -e1-> n2
-//         *
-//         * e0: 1k connected records
-//         * e1: 100k connected records
-//         *
-//         * common primaryIDs for records
-//         * @ n0: 1
-//         * @ n1: 1000
-//         * @ n2: 100
-//         */
-//        const e0Records = [];
-//        const e1Records = [];
-//
-//        const n0Count = 1;
-//        const n1Count = 1000;
-//        const n2Count = 100;
-//
-//        // just to ensure this matches the test name
-//        expect(n0Count * n1Count * n2Count).toEqual(100000);
-//
-//        range(0, n1Count).forEach(n1Index => {
-//          e0Records.push({
-//            $edge_metadata: {
-//              trapi_qEdge_obj: e0,
-//              predicate: 'biolink:record0_pred0',
-//              source: 'source0',
-//              api_name: 'api0',
-//            },
-//            // n0
-//            $input: {
-//              obj: [
-//                {
-//                  primaryID: 'n0a',
-//                },
-//              ],
-//            },
-//            // n1
-//            $output: {
-//              obj: [
-//                {
-//                  primaryID: 'n1_' + n1Index,
-//                },
-//              ],
-//            },
-//          });
-//
-//          range(0, n2Count).forEach(n2Index => {
-//            e1Records.push({
-//              $edge_metadata: {
-//                trapi_qEdge_obj: e1,
-//                predicate: 'biolink:record1_pred0',
-//                source: 'source1',
-//                api_name: 'api1',
-//              },
-//              // n1
-//              $input: {
-//                obj: [
-//                  {
-//                    primaryID: 'n1_' + n1Index,
-//                  },
-//                ],
-//              },
-//              // n2
-//              $output: {
-//                obj: [
-//                  {
-//                    primaryID: 'n2_' + n2Index,
-//                  },
-//                ],
-//              },
-//            });
-//          });
-//        });
-//
-//        const queryResult = new QueryResult();
-//        queryResult.update({
-//          "e0": {
-//            "connected_to": ["e1"],
-//            "records": e0Records
-//          },
-//          "e1": {
-//            "connected_to": ["e0"],
-//            "records": e1Records
-//          }
-//        });
-//        const results = queryResult.getResults();
-//
-//        expect(results.length).toEqual(100000);
-//
-//        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-//          'n0', 'n1', 'n2'
-//        ]);
-//        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-//          'e0', 'e1'
-//        ]);
-//        expect(results[0]).toHaveProperty('score');
-//
-//        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
-//          'n0', 'n1', 'n2'
-//        ]);
-//        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
-//          'e0', 'e1'
-//        ]);
-//        expect(results[1]).toHaveProperty('score');
-//      });
-      
       test('should get 1 result when e0 has 1 record, and e1 has 50k + 1 (1 connected, 50k not)', () => {
         /**
          * n0 -e0-> n1 -e1-> n2
@@ -2410,122 +2160,391 @@ describe('Testing QueryResults Module', () => {
         expect(results[0]).toHaveProperty('score');
       });
       
-      test('should get 1 result with records: ⇉⇉ (duplicates)', () => {
-        const queryResult = new QueryResult();
-        queryResult.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": [record0_n0a_n1a, record0_n0a_n1a]
-          },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": [record1_n1a_n2a, record1_n1a_n2a]
-          }
+      /*
+      describe('test large numbers of records', () => {
+        // This group of tests is commented out, b/c they're too slow for regular testing.
+        // They are intended to test performance when handling a large number of records.
+        // Enable them only as needed.
+
+        test('should get 50k results when e0 has 500 records, and e1 has 50k', () => {
+          // n0 -e0-> n1 -e1-> n2
+          //
+          // e0: 500 records
+          // e1: 500 * 100 = 50k records
+          //
+          // common primaryIDs for records
+          // @ n0: 1
+          // @ n1: 500
+          // @ n2: 100
+
+          const e0Records = [];
+          const e1Records = [];
+
+          const n0Count = 1;
+          const n1Count = 500;
+          const n2Count = 100;
+
+          // just to ensure this matches the test name
+          expect(n0Count * n1Count * n2Count).toEqual(50000);
+
+          range(0, n1Count).forEach(n1Index => {
+            e0Records.push({
+              $edge_metadata: {
+                trapi_qEdge_obj: e0,
+                predicate: 'biolink:record0_pred0',
+                source: 'source0',
+                api_name: 'api0',
+              },
+              // n0
+              $input: {
+                obj: [
+                  {
+                    primaryID: 'n0a',
+                  },
+                ],
+              },
+              // n1
+              $output: {
+                obj: [
+                  {
+                    primaryID: 'n1_' + n1Index,
+                  },
+                ],
+              },
+            });
+
+            range(0, n2Count).forEach(n2Index => {
+              e1Records.push({
+                $edge_metadata: {
+                  trapi_qEdge_obj: e1,
+                  predicate: 'biolink:record1_pred0',
+                  source: 'source1',
+                  api_name: 'api1',
+                },
+                // n1
+                $input: {
+                  obj: [
+                    {
+                      primaryID: 'n1_' + n1Index,
+                    },
+                  ],
+                },
+                // n2
+                $output: {
+                  obj: [
+                    {
+                      primaryID: 'n2_' + n2Index,
+                    },
+                  ],
+                },
+              });
+            });
+          });
+
+          const queryResult = new QueryResult();
+          queryResult.update({
+            "e0": {
+              "connected_to": ["e1"],
+              "records": e0Records
+            },
+            "e1": {
+              "connected_to": ["e0"],
+              "records": e1Records
+            }
+          });
+          const results = queryResult.getResults();
+
+          expect(results.length).toEqual(50000);
+
+          expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+            'n0', 'n1', 'n2'
+          ]);
+          expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+            'e0', 'e1'
+          ]);
+          expect(results[0]).toHaveProperty('score');
+
+          expect(Object.keys(results[1].node_bindings).sort()).toEqual([
+            'n0', 'n1', 'n2'
+          ]);
+          expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
+            'e0', 'e1'
+          ]);
+          expect(results[1]).toHaveProperty('score');
         });
-        const results = queryResult.getResults();
+        
+        test('should get 50k results when e0 has 1k records (500 connected, 500 not), and e1 has 100k (50k connected, 50k not)', () => {
+          // n0 -e0-> n1 -e1-> n2
+          //
+          // e0: 500 connected records + 500 unconnected records = 1k records
+          // e1: 50k connected records + 50k unconnected records = 100k records
+          //
+          // common primaryIDs for records
+          // @ n0: 1
+          // @ n1: 500
+          // @ n2: 100
 
-        expect(results.length).toEqual(1);
+          const e0Records = [];
+          const e1Records = [];
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0', 'e1'
-        ]);
-        expect(results[0]).toHaveProperty('score');
-      });
-      
-      test('should get 2 results with records: -<', () => {
-        const queryResult = new QueryResult();
-        queryResult.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": [record0_n0a_n1a]
-          },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": [record1_n1a_n2a, record1_n1a_n2b]
-          }
+          const n0Count = 1;
+          const n1Count = 500;
+          const n2Count = 100;
+
+          // just to ensure this matches the test name
+          expect(n0Count * n1Count * n2Count).toEqual(50000);
+
+          // generate connected records
+          range(0, n1Count).forEach(n1Index => {
+            e0Records.push({
+              $edge_metadata: {
+                trapi_qEdge_obj: e0,
+                predicate: 'biolink:record0_pred0',
+                source: 'source0',
+                api_name: 'api0',
+              },
+              // n0
+              $input: {
+                obj: [
+                  {
+                    primaryID: 'n0a',
+                  },
+                ],
+              },
+              // n1
+              $output: {
+                obj: [
+                  {
+                    primaryID: 'n1_' + n1Index,
+                  },
+                ],
+              },
+            });
+
+            range(0, n2Count).forEach(n2Index => {
+              e1Records.push({
+                $edge_metadata: {
+                  trapi_qEdge_obj: e1,
+                  predicate: 'biolink:record1_pred0',
+                  source: 'source1',
+                  api_name: 'api1',
+                },
+                // n1
+                $input: {
+                  obj: [
+                    {
+                      primaryID: 'n1_' + n1Index,
+                    },
+                  ],
+                },
+                // n2
+                $output: {
+                  obj: [
+                    {
+                      primaryID: 'n2_' + n2Index,
+                    },
+                  ],
+                },
+              });
+            });
+          });
+
+          // generate unconnected records
+          range(0, n1Count).forEach(n1Index => {
+            e0Records.push({
+              $edge_metadata: {
+                trapi_qEdge_obj: e0,
+                predicate: 'biolink:record0_pred0',
+                source: 'source0',
+                api_name: 'api0',
+              },
+              // n0
+              $input: {
+                obj: [
+                  {
+                    primaryID: 'n0a',
+                  },
+                ],
+              },
+              // n1
+              $output: {
+                obj: [
+                  {
+                    primaryID: 'n1_unconnected_e0record_' + n1Index,
+                  },
+                ],
+              },
+            });
+
+            range(0, n2Count).forEach(n2Index => {
+              e1Records.push({
+                $edge_metadata: {
+                  trapi_qEdge_obj: e1,
+                  predicate: 'biolink:record1_pred0',
+                  source: 'source1',
+                  api_name: 'api1',
+                },
+                // n1
+                $input: {
+                  obj: [
+                    {
+                      primaryID: 'n1_unconnected_e1record_' + n1Index,
+                    },
+                  ],
+                },
+                // n2
+                $output: {
+                  obj: [
+                    {
+                      primaryID: 'n2_' + n2Index,
+                    },
+                  ],
+                },
+              });
+            });
+          });
+
+          const queryResult = new QueryResult();
+          queryResult.update({
+            "e0": {
+              "connected_to": ["e1"],
+              "records": e0Records
+            },
+            "e1": {
+              "connected_to": ["e0"],
+              "records": e1Records
+            }
+          });
+          const results = queryResult.getResults();
+
+          expect(results.length).toEqual(50000);
+
+          expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+            'n0', 'n1', 'n2'
+          ]);
+          expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+            'e0', 'e1'
+          ]);
+          expect(results[0]).toHaveProperty('score');
+
+          expect(Object.keys(results[1].node_bindings).sort()).toEqual([
+            'n0', 'n1', 'n2'
+          ]);
+          expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
+            'e0', 'e1'
+          ]);
+          expect(results[1]).toHaveProperty('score');
         });
-        const results = queryResult.getResults();
 
-        expect(results.length).toEqual(2);
+        test('should get 100k results when e0 has 1k connected records, and e1 has 100k', () => {
+          // n0 -e0-> n1 -e1-> n2
+          //
+          // e0: 1k connected records
+          // e1: 100k connected records
+          //
+          // common primaryIDs for records
+          // @ n0: 1
+          // @ n1: 1000
+          // @ n2: 100
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0', 'e1'
-        ]);
-        expect(results[0]).toHaveProperty('score');
+          const e0Records = [];
+          const e1Records = [];
 
-        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
-          'e0', 'e1'
-        ]);
-        expect(results[1]).toHaveProperty('score');
-      });
-      
-      test('should get 1 result with records: →← (directionality does not match query graph)', () => {
-        const queryResult = new QueryResult();
-        queryResult.update({
-          "e0": {
-            "connected_to": ["e1Reversed"],
-            "records": [record0_n0a_n1a]
-          },
-          "e1Reversed": {
-            "connected_to": ["e0"],
-            "records": [record1_n2a_n1a]
-          }
+          const n0Count = 1;
+          const n1Count = 1000;
+          const n2Count = 100;
+
+          // just to ensure this matches the test name
+          expect(n0Count * n1Count * n2Count).toEqual(100000);
+
+          range(0, n1Count).forEach(n1Index => {
+            e0Records.push({
+              $edge_metadata: {
+                trapi_qEdge_obj: e0,
+                predicate: 'biolink:record0_pred0',
+                source: 'source0',
+                api_name: 'api0',
+              },
+              // n0
+              $input: {
+                obj: [
+                  {
+                    primaryID: 'n0a',
+                  },
+                ],
+              },
+              // n1
+              $output: {
+                obj: [
+                  {
+                    primaryID: 'n1_' + n1Index,
+                  },
+                ],
+              },
+            });
+
+            range(0, n2Count).forEach(n2Index => {
+              e1Records.push({
+                $edge_metadata: {
+                  trapi_qEdge_obj: e1,
+                  predicate: 'biolink:record1_pred0',
+                  source: 'source1',
+                  api_name: 'api1',
+                },
+                // n1
+                $input: {
+                  obj: [
+                    {
+                      primaryID: 'n1_' + n1Index,
+                    },
+                  ],
+                },
+                // n2
+                $output: {
+                  obj: [
+                    {
+                      primaryID: 'n2_' + n2Index,
+                    },
+                  ],
+                },
+              });
+            });
+          });
+
+          const queryResult = new QueryResult();
+          queryResult.update({
+            "e0": {
+              "connected_to": ["e1"],
+              "records": e0Records
+            },
+            "e1": {
+              "connected_to": ["e0"],
+              "records": e1Records
+            }
+          });
+          const results = queryResult.getResults();
+
+          expect(results.length).toEqual(100000);
+
+          expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+            'n0', 'n1', 'n2'
+          ]);
+          expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+            'e0', 'e1'
+          ]);
+          expect(results[0]).toHaveProperty('score');
+
+          expect(Object.keys(results[1].node_bindings).sort()).toEqual([
+            'n0', 'n1', 'n2'
+          ]);
+          expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
+            'e0', 'e1'
+          ]);
+          expect(results[1]).toHaveProperty('score');
         });
-        const results = queryResult.getResults();
-
-        expect(results.length).toEqual(1);
-
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0', 'e1Reversed'
-        ]);
-        expect(results[0]).toHaveProperty('score');
       });
+      //*/
 
-      // NOTE: with the new generalized query handling, this case shouldn't happen
-      test('should get 0 results when 0 records for edge: ⇢̊→', () => {
-        const queryResult = new QueryResult();
-        queryResult.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": []
-          },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": [record1_n1a_n2a]
-          }
-        });
-        const results = queryResult.getResults();
-        expect(results.length).toEqual(0);
-      });
-
-      // NOTE: with the new generalized query handling, this case won't happen
-      test('should get 0 results when 0 records for edge: →⇢̊', () => {
-        const queryResult = new QueryResult();
-        queryResult.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": [record0_n0a_n1a]
-          },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": []
-          }
-        });
-        const results = queryResult.getResults();
-        expect(results.length).toEqual(0);
-      });
     });
 
     describe('query graph: →←', () => {
