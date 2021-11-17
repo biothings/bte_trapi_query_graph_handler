@@ -12,6 +12,30 @@ module.exports = class QueryGraphHandler {
     this.logs = [];
   }
 
+  _checkCycles(queryGraph) {
+    let edge_subjects = new Set();
+    let edge_objects = new Set();
+    //get subject node refs
+    for (const edgeID in queryGraph.edges) {
+      edge_subjects.add(queryGraph.edges[edgeID].subject);
+      edge_objects.add(queryGraph.edges[edgeID].object);
+    }
+    //check no edge outputs are edge inputs = cycle
+    for (const edgeID in queryGraph.edges) {
+      if (
+        //self-reference
+        queryGraph.edges[edgeID].subject == queryGraph.edges[edgeID].object ||
+        //indirect cycle
+        edge_subjects.has(queryGraph.edges[edgeID].object) ||
+        //reverse indirect cycle
+        edge_objects.has(queryGraph.edges[edgeID].subject) 
+        ) {
+        debug(`Error: "${edgeID}" causes circular reference.`);
+        throw new InvalidQueryGraphError('Invalid Query Graph. Cycle detected.');
+      }
+    }
+  }
+
   _validateEmptyNodes(queryGraph) {
     if (Object.keys(queryGraph.nodes).length === 0) {
       throw new InvalidQueryGraphError('Your Query Graph has no nodes defined.');
@@ -38,6 +62,7 @@ module.exports = class QueryGraphHandler {
   _validate(queryGraph) {
     this._validateEmptyEdges(queryGraph);
     this._validateEmptyNodes(queryGraph);
+    this._checkCycles(queryGraph);
     this._validateNodeEdgeCorrespondence(queryGraph);
   }
 
