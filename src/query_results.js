@@ -89,8 +89,19 @@ module.exports = class QueryResult {
    * every recursion passing its output queryNodeID and primaryID to the next call
    * to use as a matching criteria for its input.
    *
-   * returns:
-   * {
+   * This graphic helps to explain how this works:
+   * https://github.com/biothings/BioThings_Explorer_TRAPI/issues/341#issuecomment-972140186
+   *
+   * The preresults returned from this method are not at all consolidated. They are
+   * analogous to the collection of sets in the lower left of the graphic, which
+   * represents every valid combination of primaryIDs and kgEdgeIDs but excludes
+   * invalid combinations like B-1-Z, which is a dead-end.
+   *
+   * NOTE: this currently only works for trees (no cycles). If we want to handle cycles,
+   * we'll probably need to keep track of what's been visited.
+   * But A.S. said we don't have to worry about cycles for now.
+   *
+   * @return {
    *   inputQueryNodeID: string,
    *   outputQueryNodeID: string,
    *   inputPrimaryID: string,
@@ -98,10 +109,6 @@ module.exports = class QueryResult {
    *   queryEdgeID: string,
    *   kgEdgeID: string,
    * }
-   *
-   * NOTE: this currently only works for trees (no cycles). If we want to handle cycles,
-   * we'll probably need to keep track of what's been visited.
-   * But A.S. said we don't have to worry about cycles for now.
    */
   _getPreresults(
     dataByEdge,
@@ -275,11 +282,20 @@ module.exports = class QueryResult {
       initialQueryNodeIDToMatch,
     );
 
-    // There are two cases where we get more preresults than results and need to consolidate:
-    // 1. one or more query nodes have param `is_set: true`
-    // 2. one or more edges have multiple predicates each
-    //
-    // We now take the "atomized" preresults and consolidate them as appropriate.
+    /**
+     * Consolidation
+     *
+     * With reference to this graphic:
+     * https://github.com/biothings/BioThings_Explorer_TRAPI/issues/341#issuecomment-972140186
+     * The preresults are analogous to the collection of sets in the lower left. Now we want
+     * to consolidate the preresults as indicated by the the large blue arrow in the graphic
+     * to get consolidatedPreresults, which are almost identical the the final results, except
+     * for some minor differences that make it easier to perform the consolidation.
+     *
+     * There are two types of consolidation we need to perform here:
+     * 1. one or more query nodes have an 'is_set' param
+     * 2. one or more primaryID pairs have multiple kgEdges each
+     */
     const consolidatedPreresults = [];
 
     // for when there's an is_set param
@@ -430,6 +446,10 @@ module.exports = class QueryResult {
       }
     });
 
+    /**
+     * The last step is to do the minor re-formatting to turn consolidatedResults
+     * into the desired final results.
+     */
     this._results = consolidatedPreresults.map((consolidatedPreresult) => {
 
       // TODO: calculate an actual score
