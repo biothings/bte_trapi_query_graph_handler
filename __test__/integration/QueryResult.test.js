@@ -812,21 +812,26 @@ describe('Testing QueryResults Module', () => {
 
   describe('"Synthetic" Records', () => {
     const n0 = new QNode('n0', { categories: ['category_n0_n2'], ids: ['n0a'] });
-    const n0_with_is_set = new QNode('n0', { categories: ['category_n0_n2'], ids: ['n0a', 'n0b'], is_set: true });
+    const n0_with_is_set = new QNode('n0_with_is_set', { categories: ['category_n0_n2'], ids: ['n0a', 'n0b'], is_set: true });
     const n1 = new QNode('n1', { categories: ['category_n1'] });
+    const n1_with_is_set = new QNode('n1_with_is_set', { categories: ['category_n1'], is_set: true });
     const n2 = new QNode('n2', { categories: ['category_n0_n2'] });
-    const n2_with_is_set = new QNode('n2', { categories: ['category_n0_n2'], ids: ['n2a', 'n2b'], is_set: true });
+    const n2_with_is_set = new QNode('n2_with_is_set', { categories: ['category_n0_n2'], ids: ['n2a', 'n2b'], is_set: true });
     const n3 = new QNode('n3', { categories: ['biolink:category_n3'] });
     const n4 = new QNode('n4', { categories: ['category_n4'] });
     const n5 = new QNode('n5', { categories: ['category_n5'] });
 
     const e0 = new QEdge('e0', { subject: n0, object: n1 });
-    const e0_with_is_set = new QEdge('e0_with_is_set', { subject: n0_with_is_set, object: n1 });
+    const e0_left_is_set = new QEdge('e0_left_is_set', { subject: n0_with_is_set, object: n1 });
+    const e0_right_is_set = new QEdge('e0_right_is_set', { subject: n0, object: n1_with_is_set });
+    const e0_both_is_set = new QEdge('e0_both_is_set', { subject: n0_with_is_set, object: n1_with_is_set });
 
     const e1 = new QEdge('e1', { subject: n1, object: n2 });
     // TODO: the tests will fail if we switch the subject and object. Is there a way to format the
     // query graph and/or the records such that the tests would still pass?
-    const e1_with_is_set = new QEdge('e1_with_is_set', { subject: n2_with_is_set, object: n1 });
+    const e1_left_is_set = new QEdge('e1_left_is_set', { subject: n1_with_is_set, object: n2 });
+    const e1_reversed_left_is_set = new QEdge('e1_reversed_left_is_set', { subject: n2_with_is_set, object: n1 });
+    const e1_both_is_set = new QEdge('e1_both_is_set', { subject: n2_with_is_set, object: n1_with_is_set });
 
     const e2 = new QEdge('e2', { subject: n1, object: n3 });
     const e3 = new QEdge('e3', { subject: n1, object: n4 });
@@ -861,9 +866,9 @@ describe('Testing QueryResults Module', () => {
       },
     };
 
-    const e0Reversed = new QEdge('e0Reversed', { subject: n1, object: n0 });
+    const e0_reversed = new QEdge('e0_reversed', { subject: n1, object: n0 });
     const record0_n1a_n0a = cloneDeep(record0_n0a_n1a);
-    record0_n1a_n0a.$edge_metadata.trapi_qEdge_obj = e0Reversed;
+    record0_n1a_n0a.$edge_metadata.trapi_qEdge_obj = e0_reversed;
     record0_n1a_n0a.$input = cloneDeep(record0_n0a_n1a.$output)
     record0_n1a_n0a.$output = cloneDeep(record0_n0a_n1a.$input)
 
@@ -979,9 +984,9 @@ describe('Testing QueryResults Module', () => {
       },
     };
 
-    const e1Reversed = new QEdge('e1Reversed', { subject: n2, object: n1 });
+    const e1_reversed = new QEdge('e1_reversed', { subject: n2, object: n1 });
     const record1_n2a_n1a = cloneDeep(record1_n1a_n2a);
-    record1_n2a_n1a.$edge_metadata.trapi_qEdge_obj = e1Reversed;
+    record1_n2a_n1a.$edge_metadata.trapi_qEdge_obj = e1_reversed;
     record1_n2a_n1a.$input = cloneDeep(record1_n1a_n2a.$output)
     record1_n2a_n1a.$output = cloneDeep(record1_n1a_n2a.$input)
 
@@ -1011,7 +1016,7 @@ describe('Testing QueryResults Module', () => {
     };
 
     const record1_n2b_n1a = cloneDeep(record1_n1a_n2b);
-    record1_n2b_n1a.$edge_metadata.trapi_qEdge_obj = e1Reversed;
+    record1_n2b_n1a.$edge_metadata.trapi_qEdge_obj = e1_reversed;
     record1_n2b_n1a.$input = cloneDeep(record1_n1a_n2b.$output)
     record1_n2b_n1a.$output = cloneDeep(record1_n1a_n2b.$input)
 
@@ -1090,9 +1095,9 @@ describe('Testing QueryResults Module', () => {
       },
     };
 
-    const e2Reversed = new QEdge('e2Reversed', { subject: n3, object: n1 });
+    const e2_reversed = new QEdge('e2_reversed', { subject: n3, object: n1 });
     const record2_n3a_n1a = cloneDeep(record2_n1a_n3a);
-    record2_n3a_n1a.$edge_metadata.trapi_qEdge_obj = e2Reversed;
+    record2_n3a_n1a.$edge_metadata.trapi_qEdge_obj = e2_reversed;
     record2_n3a_n1a.$input = cloneDeep(record2_n1a_n3a.$output)
     record2_n3a_n1a.$output = cloneDeep(record2_n1a_n3a.$input)
 
@@ -1246,25 +1251,81 @@ describe('Testing QueryResults Module', () => {
       },
     };
 
-    const record0_n0a_n1a_with_is_set = cloneDeep(record0_n0a_n1a);
-    record0_n0a_n1a_with_is_set.$edge_metadata.trapi_qEdge_obj = e0_with_is_set;
-    record0_n0a_n1a_with_is_set.$input.obj.forEach(o => {
+    const record0_n0a_n1a_right_is_set = cloneDeep(record0_n0a_n1a);
+    record0_n0a_n1a_right_is_set.$edge_metadata.trapi_qEdge_obj = e0_right_is_set;
+    record0_n0a_n1a_right_is_set.$output.obj.forEach(o => {
       o.is_set = true;
     });
-    const record0_n0b_n1a_with_is_set = cloneDeep(record0_n0b_n1a);
-    record0_n0b_n1a_with_is_set.$edge_metadata.trapi_qEdge_obj = e0_with_is_set;
-    record0_n0b_n1a_with_is_set.$input.obj.forEach(o => {
+    const record0_n0b_n1a_right_is_set = cloneDeep(record0_n0b_n1a);
+    record0_n0b_n1a_right_is_set.$edge_metadata.trapi_qEdge_obj = e0_right_is_set;
+    record0_n0b_n1a_right_is_set.$output.obj.forEach(o => {
       o.is_set = true;
     });
 
-    const record1_n2a_n1a_with_is_set = cloneDeep(record1_n2a_n1a);
-    record1_n2a_n1a_with_is_set.$edge_metadata.trapi_qEdge_obj = e1_with_is_set;
-    record1_n2a_n1a_with_is_set.$input.obj.forEach(o => {
+    const record0_n0a_n1a_left_is_set = cloneDeep(record0_n0a_n1a);
+    record0_n0a_n1a_left_is_set.$edge_metadata.trapi_qEdge_obj = e0_left_is_set;
+    record0_n0a_n1a_left_is_set.$input.obj.forEach(o => {
       o.is_set = true;
     });
-    const record1_n2b_n1a_with_is_set = cloneDeep(record1_n2b_n1a);
-    record1_n2b_n1a_with_is_set.$edge_metadata.trapi_qEdge_obj = e1_with_is_set;
-    record1_n2b_n1a_with_is_set.$input.obj.forEach(o => {
+    const record0_n0b_n1a_left_is_set = cloneDeep(record0_n0b_n1a);
+    record0_n0b_n1a_left_is_set.$edge_metadata.trapi_qEdge_obj = e0_left_is_set;
+    record0_n0b_n1a_left_is_set.$input.obj.forEach(o => {
+      o.is_set = true;
+    });
+
+    const record1_n1a_n2a_left_is_set = cloneDeep(record1_n1a_n2a);
+    record1_n1a_n2a_left_is_set.$edge_metadata.trapi_qEdge_obj = e1_left_is_set;
+    record1_n1a_n2a_left_is_set.$input.obj.forEach(o => {
+      o.is_set = true;
+    });
+    const record1_n1a_n2b_left_is_set = cloneDeep(record1_n1a_n2b);
+    record1_n1a_n2b_left_is_set.$edge_metadata.trapi_qEdge_obj = e1_left_is_set;
+    record1_n1a_n2b_left_is_set.$input.obj.forEach(o => {
+      o.is_set = true;
+    });
+
+    const record1_n2a_n1a_left_is_set = cloneDeep(record1_n2a_n1a);
+    record1_n2a_n1a_left_is_set.$edge_metadata.trapi_qEdge_obj = e1_reversed_left_is_set;
+    record1_n2a_n1a_left_is_set.$input.obj.forEach(o => {
+      o.is_set = true;
+    });
+    const record1_n2b_n1a_left_is_set = cloneDeep(record1_n2b_n1a);
+    record1_n2b_n1a_left_is_set.$edge_metadata.trapi_qEdge_obj = e1_reversed_left_is_set;
+    record1_n2b_n1a_left_is_set.$input.obj.forEach(o => {
+      o.is_set = true;
+    });
+
+    const record0_n0a_n1a_both_is_set = cloneDeep(record0_n0a_n1a);
+    record0_n0a_n1a_both_is_set.$edge_metadata.trapi_qEdge_obj = e0_both_is_set;
+    record0_n0a_n1a_both_is_set.$input.obj.forEach(o => {
+      o.is_set = true;
+    });
+    record0_n0a_n1a_both_is_set.$output.obj.forEach(o => {
+      o.is_set = true;
+    });
+    const record0_n0b_n1a_both_is_set = cloneDeep(record0_n0b_n1a);
+    record0_n0b_n1a_both_is_set.$edge_metadata.trapi_qEdge_obj = e0_both_is_set;
+    record0_n0b_n1a_both_is_set.$input.obj.forEach(o => {
+      o.is_set = true;
+    });
+    record0_n0b_n1a_both_is_set.$output.obj.forEach(o => {
+      o.is_set = true;
+    });
+
+    const record1_n2a_n1a_both_is_set = cloneDeep(record1_n2a_n1a);
+    record1_n2a_n1a_both_is_set.$edge_metadata.trapi_qEdge_obj = e1_both_is_set;
+    record1_n2a_n1a_both_is_set.$input.obj.forEach(o => {
+      o.is_set = true;
+    });
+    record1_n2a_n1a_both_is_set.$output.obj.forEach(o => {
+      o.is_set = true;
+    });
+    const record1_n2b_n1a_both_is_set = cloneDeep(record1_n2b_n1a);
+    record1_n2b_n1a_both_is_set.$edge_metadata.trapi_qEdge_obj = e1_both_is_set;
+    record1_n2b_n1a_both_is_set.$input.obj.forEach(o => {
+      o.is_set = true;
+    });
+    record1_n2b_n1a_both_is_set.$output.obj.forEach(o => {
       o.is_set = true;
     });
 
@@ -1430,28 +1491,28 @@ describe('Testing QueryResults Module', () => {
         expect(results[3]).toHaveProperty('score');
       });
 
-//      // TODO: this test fails. Do we need to handle this case?
-//      test('should get 1 result for the same record repeated 4 times: 𝍬', () => {
-//        const queryResult = new QueryResult();
-//        queryResult.update({
-//          "e0": {
-//            "connected_to": [],
-//            "records": [record0_n0a_n1a, record0_n0a_n1a, record0_n0a_n1a, record0_n0a_n1a]
-//          }
-//        });
-//        const results = queryResult.getResults();
-//
-//        expect(results.length).toEqual(1);
-//
-//        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-//          'n0', 'n1'
-//        ]);
-//        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-//          'e0'
-//        ]);
-//        expect(results[0]).toHaveProperty('score');
-//      });
-//
+      // TODO: Do we want to test for removing duplicates?
+      test('should get 1 result for the same record repeated 4 times: 𝍬', () => {
+        const queryResult = new QueryResult();
+        queryResult.update({
+          "e0": {
+            "connected_to": [],
+            "records": [record0_n0a_n1a, record0_n0a_n1a, record0_n0a_n1a, record0_n0a_n1a]
+          }
+        });
+        const results = queryResult.getResults();
+
+        expect(results.length).toEqual(1);
+
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+          'n0', 'n1'
+        ]);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+          'e0'
+        ]);
+        expect(results[0]).toHaveProperty('score');
+      });
+
 //      // TODO: this test fails. Do we need to handle this case?
 //      test('should get 1 result for the same record repeated twice and reversed twice: 𝍬', () => {
 //        const queryResult = new QueryResult();
@@ -1479,10 +1540,10 @@ describe('Testing QueryResults Module', () => {
 //        const queryResult = new QueryResult();
 //        queryResult.update({
 //          "e1": {
-//            "connected_to": ["e1Reversed"],
+//            "connected_to": ["e1_reversed"],
 //            "records": [record1_n1a_n2a, record1_n1a_n2a]
 //          },
-//          "e1Reversed": {
+//          "e1_reversed": {
 //            "connected_to": ["e1"],
 //            "records": [record1_n2a_n1a, record1_n2a_n1a]
 //          }
@@ -1503,7 +1564,7 @@ describe('Testing QueryResults Module', () => {
 //          'n2', 'n1'
 //        ]);
 //        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
-//          'e1Reversed'
+//          'e1_reversed'
 //        ]);
 //        expect(results[1]).toHaveProperty('score');
 //      });
@@ -1699,17 +1760,82 @@ describe('Testing QueryResults Module', () => {
         expect(results[3]).toHaveProperty('score');
       });
       
-      // TODO: get this working. Issue #341.
-      test('should get 1 result with records: >< (with is_set on both ends)', () => {
+      test('should get 2 results with records: >< (is_set for n0)', () => {
         const queryResult = new QueryResult();
         queryResult.update({
-          "e0_with_is_set": {
-            "connected_to": ["e1_with_is_set"],
-            "records": [record0_n0a_n1a_with_is_set, record0_n0b_n1a_with_is_set]
+          "e0_left_is_set": {
+            "connected_to": ["e1"],
+            "records": [record0_n0a_n1a_left_is_set, record0_n0b_n1a_left_is_set]
           },
-          "e1_with_is_set": {
-            "connected_to": ["e0_with_is_set"],
-            "records": [record1_n2a_n1a_with_is_set, record1_n2b_n1a_with_is_set]
+          "e1": {
+            "connected_to": ["e0_left_is_set"],
+            "records": [record1_n1a_n2a, record1_n1a_n2b]
+          }
+        });
+        const results = queryResult.getResults();
+
+        expect(results.length).toEqual(2);
+
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+          'n0_with_is_set', 'n1', 'n2'
+        ]);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+          'e0_left_is_set', 'e1'
+        ]);
+        expect(results[0]).toHaveProperty('score');
+
+        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
+          'n0_with_is_set', 'n1', 'n2'
+        ]);
+        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
+          'e0_left_is_set', 'e1'
+        ]);
+        expect(results[1]).toHaveProperty('score');
+      });
+      
+      test('should get 4 results with records: >< (is_set for n1)', () => {
+        const queryResult = new QueryResult();
+        queryResult.update({
+          "e0_right_is_set": {
+            "connected_to": ["e1_left_is_set"],
+            "records": [record0_n0a_n1a_right_is_set, record0_n0b_n1a_right_is_set]
+          },
+          "e1_left_is_set": {
+            "connected_to": ["e0_right_is_set"],
+            "records": [record1_n1a_n2a_left_is_set, record1_n1a_n2b_left_is_set]
+          }
+        });
+        const results = queryResult.getResults();
+
+        expect(results.length).toEqual(4);
+
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+          'n0', 'n1_with_is_set', 'n2'
+        ]);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+          'e0_right_is_set', 'e1_left_is_set'
+        ]);
+        expect(results[0]).toHaveProperty('score');
+
+        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
+          'n0', 'n1_with_is_set', 'n2'
+        ]);
+        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
+          'e0_right_is_set', 'e1_left_is_set'
+        ]);
+        expect(results[1]).toHaveProperty('score');
+      });
+
+      test('should get 1 result with records: >< (is_set for n0 and n2)', () => {
+        const queryResult = new QueryResult();
+        queryResult.update({
+          "e0_left_is_set": {
+            "connected_to": ["e1_reversed_left_is_set"],
+            "records": [record0_n0a_n1a_left_is_set, record0_n0b_n1a_left_is_set]
+          },
+          "e1_reversed_left_is_set": {
+            "connected_to": ["e0_left_is_set"],
+            "records": [record1_n2a_n1a_left_is_set, record1_n2b_n1a_left_is_set]
           }
         });
         const results = queryResult.getResults();
@@ -1717,10 +1843,35 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2'
+          'n0_with_is_set', 'n1', 'n2_with_is_set'
         ]);
         expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0_with_is_set', 'e1_with_is_set'
+          'e0_left_is_set', 'e1_reversed_left_is_set'
+        ]);
+        expect(results[0]).toHaveProperty('score');
+      });
+
+      test('should get 1 result with records: >< (is_set for n0, n1 and n2)', () => {
+        const queryResult = new QueryResult();
+        queryResult.update({
+          "e0_both_is_set": {
+            "connected_to": ["e1_both_is_set"],
+            "records": [record0_n0a_n1a_both_is_set, record0_n0b_n1a_both_is_set]
+          },
+          "e1_both_is_set": {
+            "connected_to": ["e0_both_is_set"],
+            "records": [record1_n2a_n1a_both_is_set, record1_n2b_n1a_both_is_set]
+          }
+        });
+        const results = queryResult.getResults();
+
+        expect(results.length).toEqual(1);
+
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+          'n0_with_is_set', 'n1_with_is_set', 'n2_with_is_set'
+        ]);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+          'e0_both_is_set', 'e1_both_is_set'
         ]);
         expect(results[0]).toHaveProperty('score');
       });
@@ -1758,31 +1909,31 @@ describe('Testing QueryResults Module', () => {
         expect(results[1]).toHaveProperty('score');
       });
       
-//      // TODO: test fails. Do we need to handle this case?
-//      test('should get 1 result with records: ⇉⇉ (duplicates)', () => {
-//        const queryResult = new QueryResult();
-//        queryResult.update({
-//          "e0": {
-//            "connected_to": ["e1"],
-//            "records": [record0_n0a_n1a, record0_n0a_n1a]
-//          },
-//          "e1": {
-//            "connected_to": ["e0"],
-//            "records": [record1_n1a_n2a, record1_n1a_n2a]
-//          }
-//        });
-//        const results = queryResult.getResults();
-//
-//        expect(results.length).toEqual(1);
-//
-//        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-//          'n0', 'n1', 'n2'
-//        ]);
-//        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-//          'e0', 'e1'
-//        ]);
-//        expect(results[0]).toHaveProperty('score');
-//      });
+      // TODO: Do we want to test for removing duplicates?
+      test('should get 1 result with records: ⇉⇉ (duplicates)', () => {
+        const queryResult = new QueryResult();
+        queryResult.update({
+          "e0": {
+            "connected_to": ["e1"],
+            "records": [record0_n0a_n1a, record0_n0a_n1a]
+          },
+          "e1": {
+            "connected_to": ["e0"],
+            "records": [record1_n1a_n2a, record1_n1a_n2a]
+          }
+        });
+        const results = queryResult.getResults();
+
+        expect(results.length).toEqual(1);
+
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+          'n0', 'n1', 'n2'
+        ]);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+          'e0', 'e1'
+        ]);
+        expect(results[0]).toHaveProperty('score');
+      });
       
       test('should get 2 results with records: -<', () => {
         const queryResult = new QueryResult();
@@ -1821,10 +1972,10 @@ describe('Testing QueryResults Module', () => {
         const queryResult = new QueryResult();
         queryResult.update({
           "e0": {
-            "connected_to": ["e1Reversed"],
+            "connected_to": ["e1_reversed"],
             "records": [record0_n0a_n1a]
           },
-          "e1Reversed": {
+          "e1_reversed": {
             "connected_to": ["e0"],
             "records": [record1_n2a_n1a]
           }
@@ -1837,7 +1988,7 @@ describe('Testing QueryResults Module', () => {
           'n0', 'n1', 'n2'
         ]);
         expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0', 'e1Reversed'
+          'e0', 'e1_reversed'
         ]);
         expect(results[0]).toHaveProperty('score');
       });
@@ -2552,10 +2703,10 @@ describe('Testing QueryResults Module', () => {
         const queryResult = new QueryResult();
         queryResult.update({
           "e0": {
-            "connected_to": ["e1Reversed"],
+            "connected_to": ["e1_reversed"],
             "records": [record0_n0a_n1a]
           },
-          "e1Reversed": {
+          "e1_reversed": {
             "connected_to": ["e0"],
             "records": [record1_n2a_n1a]
           }
@@ -2568,7 +2719,7 @@ describe('Testing QueryResults Module', () => {
           'n0', 'n1', 'n2'
         ]);
         expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0', 'e1Reversed'
+          'e0', 'e1_reversed'
         ]);
         expect(results[0]).toHaveProperty('score');
       });
@@ -2604,10 +2755,10 @@ describe('Testing QueryResults Module', () => {
         const queryResult = new QueryResult();
         queryResult.update({
           "e0": {
-            "connected_to": ["e1Reversed"],
+            "connected_to": ["e1_reversed"],
             "records": []
           },
-          "e1Reversed": {
+          "e1_reversed": {
             "connected_to": ["e0"],
             "records": [record1_n2a_n1a]
           }
@@ -2640,12 +2791,12 @@ describe('Testing QueryResults Module', () => {
       test('should get 1 result for 1 record per edge: ←→', () => {
         const queryResult = new QueryResult();
         queryResult.update({
-          "e1Reversed": {
+          "e1_reversed": {
             "connected_to": ["e4"],
             "records": [record1_n2a_n1a]
           },
           "e4": {
-            "connected_to": ["e1Reversed"],
+            "connected_to": ["e1_reversed"],
             "records": [record4_n2a_n5a]
           }
         });
@@ -2657,7 +2808,7 @@ describe('Testing QueryResults Module', () => {
           'n1', 'n2', 'n5'
         ]);
         expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e1Reversed', 'e4'
+          'e1_reversed', 'e4'
         ]);
         expect(results[0]).toHaveProperty('score');
       });
@@ -2666,12 +2817,12 @@ describe('Testing QueryResults Module', () => {
         const queryResult = new QueryResult();
 
         queryResult.update({
-          "e1Reversed": {
+          "e1_reversed": {
             "connected_to": ["e4"],
             "records": [record1_n2b_n1a]
           },
           "e4": {
-            "connected_to": ["e1Reversed"],
+            "connected_to": ["e1_reversed"],
             "records": [record4_n2a_n5a]
           }
         });
@@ -2748,16 +2899,16 @@ describe('Testing QueryResults Module', () => {
 //        const queryResult = new QueryResult();
 //
 //        queryResult.update({
-//          "e0Reversed": {
+//          "e0_reversed": {
 //            "connected_to": ["e1", "e2"],
 //            "records": [record0_n1a_n0a]
 //          },
 //          "e1": {
-//            "connected_to": ["e0Reversed", "e2"],
+//            "connected_to": ["e0_reversed", "e2"],
 //            "records": [record1_n1a_n2a]
 //          },
 //          "e2": {
-//            "connected_to": ["e0Reversed", "e1"],
+//            "connected_to": ["e0_reversed", "e1"],
 //            "records": [record2_n1a_n3a]
 //          },
 //        });
@@ -2770,7 +2921,7 @@ describe('Testing QueryResults Module', () => {
 //          'n0', 'n1', 'n2', 'n3'
 //        ]);
 //        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-//          'e0Reversed', 'e1', 'e2'
+//          'e0_reversed', 'e1', 'e2'
 //        ]);
 //
 //        expect(results[0]).toHaveProperty('score');
@@ -2786,15 +2937,15 @@ describe('Testing QueryResults Module', () => {
 
         queryResult.update({
           "e0": {
-            "connected_to": ["e1Reversed", "e2"],
+            "connected_to": ["e1_reversed", "e2"],
             "records": [record0_n0a_n1a]
           },
-          "e1Reversed": {
+          "e1_reversed": {
             "connected_to": ["e0", "e2"],
             "records": [record1_n2a_n1a]
           },
           "e2": {
-            "connected_to": ["e0", "e1Reversed"],
+            "connected_to": ["e0", "e1_reversed"],
             "records": [record2_n1a_n3a]
           },
         });
@@ -2807,7 +2958,7 @@ describe('Testing QueryResults Module', () => {
           'n0', 'n1', 'n2', 'n3'
         ]);
         expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0', 'e1Reversed', 'e2'
+          'e0', 'e1_reversed', 'e2'
         ]);
 
         expect(results[0]).toHaveProperty('score');
@@ -2823,15 +2974,15 @@ describe('Testing QueryResults Module', () => {
 
         queryResult.update({
           "e0": {
-            "connected_to": ["e1Reversed", "e2Reversed"],
+            "connected_to": ["e1_reversed", "e2_reversed"],
             "records": [record0_n0a_n1a]
           },
-          "e1Reversed": {
-            "connected_to": ["e0", "e2Reversed"],
+          "e1_reversed": {
+            "connected_to": ["e0", "e2_reversed"],
             "records": [record1_n2a_n1a]
           },
-          "e2Reversed": {
-            "connected_to": ["e0", "e1Reversed"],
+          "e2_reversed": {
+            "connected_to": ["e0", "e1_reversed"],
             "records": [record2_n3a_n1a]
           },
         });
@@ -2844,7 +2995,7 @@ describe('Testing QueryResults Module', () => {
           'n0', 'n1', 'n2', 'n3'
         ]);
         expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0', 'e1Reversed', 'e2Reversed'
+          'e0', 'e1_reversed', 'e2_reversed'
         ]);
 
         expect(results[0]).toHaveProperty('score');
