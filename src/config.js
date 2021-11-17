@@ -10,6 +10,11 @@ exports.API_MAX_ID_LIST = [
     name: 'Text Mining Targeted Association API',
     max: 100,
   },
+  {
+    id: '02af7d098ab304e80d6f4806c3527027',
+    name: 'Multiomics Wellness KP API',
+    max: 100,
+  },
 ];
 
 //max node IDs an edge with no other IDs can have
