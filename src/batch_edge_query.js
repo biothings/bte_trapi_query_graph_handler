@@ -108,7 +108,7 @@ module.exports = class BatchEdgeQueryHandler {
     await nodeUpdate.setEquivalentIDs(qEdges);
     await this._rmEquivalentDuplicates(qEdges);
     debug('Node Update Success');
-    const cacheHandler = new CacheHandler(qEdges, this.caching);
+    const cacheHandler = new CacheHandler(qEdges, this.caching, this.kg);
     const { cachedResults, nonCachedEdges } = await cacheHandler.categorizeEdges(qEdges);
     this.logs = [...this.logs, ...cacheHandler.logs];
     let query_res;
