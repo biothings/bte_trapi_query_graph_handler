@@ -34,6 +34,7 @@ module.exports = class {
     for (let i = 0; i < qEdges.length; i++) {
       const hashedEdgeID = this._hashEdgeByKG(qEdges[i].getHashedEdgeRepresentation());
       let cachedResJSON;
+      const unlock = await redisClient.lock('redisLock:' + id);
       try {
         const cachedRes = await redisClient.hgetallAsync(hashedEdgeID);
         cachedResJSON = cachedRes
@@ -44,6 +45,8 @@ module.exports = class {
       } catch (error) {
         cachedResJSON = null;
         debug(`Cache lookup/retrieval failed due to ${error}. Proceeding without cache.`);
+      } finally {
+        unlock();
       }
       if (cachedResJSON) {
         this.logs.push(new LogEntry('DEBUG', null, `BTE find cached results for ${qEdges[i].getID()}`).getLog());
