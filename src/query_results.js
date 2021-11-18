@@ -1,9 +1,8 @@
-const { keys, toPairs, values, zipObject } = require('lodash');
+const { isEqual, cloneDeep, keys, toPairs, values, zipObject } = require('lodash');
 const GraphHelper = require('./helper');
 const helper = new GraphHelper();
 const utils = require('./utils');
 const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
-
 
 /**
  * @typedef {
@@ -40,6 +39,18 @@ const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
  * } Result
  */
 
+// TODO: if these are correct, they should probably be moved to helper.js
+function _getInputIsSet(record) {
+  return record.$edge_metadata.trapi_qEdge_obj.isReversed()
+    ? record.$output.obj[0].is_set
+    : record.$input.obj[0].is_set;
+}
+function _getOutputIsSet(record) {
+  return record.$edge_metadata.trapi_qEdge_obj.isReversed()
+    ? record.$input.obj[0].is_set
+    : record.$output.obj[0].is_set;
+}
+
 /**
  * Assemble a list of query results.
  *
@@ -67,6 +78,109 @@ module.exports = class QueryResult {
   }
 
   /**
+   * Create combinations of record data where each combination satisfies the query graph,
+   * with each hop having one associated record and every associated record being linked
+   * to its neighbor as per the query graph.
+   *
+   * These combinations are called preresults, because they hold the data used to
+   * assemble the actual results.
+   *
+   * This is a recursive function, and it traverses the query graph as a tree, with
+   * every recursion passing its output queryNodeID and primaryID to the next call
+   * to use as a matching criteria for its input.
+   *
+   * This graphic helps to explain how this works:
+   * https://github.com/biothings/BioThings_Explorer_TRAPI/issues/341#issuecomment-972140186
+   *
+   * The preresults returned from this method are not at all consolidated. They are
+   * analogous to the collection of sets in the lower left of the graphic, which
+   * represents every valid combination of primaryIDs and kgEdgeIDs but excludes
+   * invalid combinations like B-1-Z, which is a dead-end.
+   *
+   * NOTE: this currently only works for trees (no cycles). If we want to handle cycles,
+   * we'll probably need to keep track of what's been visited.
+   * But A.S. said we don't have to worry about cycles for now.
+   *
+   * @return {
+   *   inputQueryNodeID: string,
+   *   outputQueryNodeID: string,
+   *   inputPrimaryID: string,
+   *   outputPrimaryID: string,
+   *   queryEdgeID: string,
+   *   kgEdgeID: string,
+   * }
+   */
+  _getPreresults(
+    dataByEdge,
+    queryEdgeID,
+    edgeCount,
+    preresults,
+    preresult,
+    queryNodeIDToMatch,
+    primaryIDToMatch
+  ) {
+    const {connected_to, records} = dataByEdge[queryEdgeID];
+
+    // queryNodeID example: 'n0'
+    const inputQueryNodeID = helper._getInputQueryNodeID(records[0]);
+    const outputQueryNodeID = helper._getOutputQueryNodeID(records[0]);
+
+    let otherQueryNodeID, getMatchingPrimaryID, getOtherPrimaryID;
+
+    if ([inputQueryNodeID, undefined].indexOf(queryNodeIDToMatch) > -1) {
+      queryNodeIDToMatch = inputQueryNodeID;
+      otherQueryNodeID = outputQueryNodeID;
+      getMatchingPrimaryID = helper._getInputID;
+      getOtherPrimaryID = helper._getOutputID;
+    } else if (queryNodeIDToMatch === outputQueryNodeID) {
+      otherQueryNodeID = inputQueryNodeID;
+      getMatchingPrimaryID = helper._getOutputID;
+      getOtherPrimaryID = helper._getInputID;
+    } else {
+      return;
+    }
+
+    const preresultClone = cloneDeep(preresult);
+
+    records.filter((record) => {
+      return [getMatchingPrimaryID(record), undefined].indexOf(primaryIDToMatch) > -1 ;
+    }).forEach((record, i) => {
+      // primaryID example: 'NCBIGene:1234'
+      const matchingPrimaryID = getMatchingPrimaryID(record);
+      const otherPrimaryID = getOtherPrimaryID(record);
+
+      if (i !== 0) {
+        preresult = cloneDeep(preresultClone);
+      }
+
+      preresult.push({
+        inputQueryNodeID: helper._getInputQueryNodeID(record),
+        outputQueryNodeID: helper._getOutputQueryNodeID(record),
+        inputPrimaryID: helper._getInputID(record),
+        outputPrimaryID: helper._getOutputID(record),
+        queryEdgeID: queryEdgeID,
+        kgEdgeID: helper._getKGEdgeID(record),
+      });
+
+      if (preresult.length == edgeCount) {
+        preresults.push(preresult);
+      }
+
+      connected_to.forEach((connectedQueryEdgeID, j) => {
+        this._getPreresults(
+          dataByEdge,
+          connectedQueryEdgeID,
+          edgeCount,
+          preresults,
+          preresult,
+          otherQueryNodeID,
+          otherPrimaryID
+        );
+      });
+    });
+  }
+
+  /**
    * Transform a collection of records into query result(s).
    * Cache the result(s) so they're ready for getResults().
    *
@@ -80,66 +194,16 @@ module.exports = class QueryResult {
     debug(`Updating query results now!`);
     this._results = [];
 
-    const edges = new Set(keys(dataByEdge));
-    const edgeCount = edges.size;
-
-    // For every query node, get the primaryIDs that every record
-    // touching that query node has in common at that query node.
-    const commonPrimaryIDsByQueryNodeID = {};
-    let emptyQueryNodeFound = false;
-    toPairs(dataByEdge).some(([queryEdgeID, {connected_to, records}]) => {
-
-      // queryEdgeID example: 'e01'
-
+    // verify there are no empty records
+    // TODO: with the new generalized query handling is this check needed any more?
+    let noRecords = false;
+    values(dataByEdge).some(({records}) => {
       if (!records || records.length === 0) {
-        debug(`query edge ${queryEdgeID} has no records`);
+        debug(`at least one query edge has no records`);
 
-        emptyQueryNodeFound = true;
+        noRecords = true;
 
         // this is like calling break in a for loop
-        return true;
-      }
-
-      // query node ID example: 'n1'
-
-      const inputQueryNodeID = helper._getInputQueryNodeID(records[0]);
-      const outputQueryNodeID = helper._getOutputQueryNodeID(records[0]);
-
-      // primary ID example: 'NCBI:1234'
-
-      const inputPrimaryIDs = new Set(records.map(record => {
-        return helper._getInputID(record);
-      }));
-      if (!commonPrimaryIDsByQueryNodeID[inputQueryNodeID]) {
-        // if this is the first one
-        commonPrimaryIDsByQueryNodeID[inputQueryNodeID] = inputPrimaryIDs;
-      } else {
-        // take the intersection. This means we limit to primary IDs common
-        // to every record at this query node.
-        commonPrimaryIDsByQueryNodeID[inputQueryNodeID] = utils.intersection(
-          commonPrimaryIDsByQueryNodeID[inputQueryNodeID], inputPrimaryIDs
-        );
-      }
-
-      // the following is just the same as above, except for output
-      const outputPrimaryIDs = new Set(records.map(record => {
-        return helper._getOutputID(record);
-      }));
-      if (!commonPrimaryIDsByQueryNodeID[outputQueryNodeID]) {
-        // if this is the first one
-        commonPrimaryIDsByQueryNodeID[outputQueryNodeID] = outputPrimaryIDs;
-      } else {
-        // take the intersection. This means we limit to primary IDs common
-        // to every record at this query node.
-        commonPrimaryIDsByQueryNodeID[outputQueryNodeID] = utils.intersection(
-          commonPrimaryIDsByQueryNodeID[outputQueryNodeID], outputPrimaryIDs
-        );
-      }
-
-      if ((commonPrimaryIDsByQueryNodeID[inputQueryNodeID].size === 0) ||
-          (commonPrimaryIDsByQueryNodeID[outputQueryNodeID].size === 0)) {
-        debug(`at least one query node for ${queryEdgeID} doesn't have compatible records`);
-        emptyQueryNodeFound = true;
         return true;
       }
     });
@@ -147,207 +211,275 @@ module.exports = class QueryResult {
     // If any query node is empty, there will be no results, so we can skip
     // any further processing. Every query node in commonPrimaryIDsByQueryNodeID
     // must have at least one primary ID
-    if (emptyQueryNodeFound) {
+    if (noRecords) {
       return;
     }
 
-    // Later on, we'll just need several IDs from each record,
-    // not the entire record. Let's collect those ahead of time.
-    const briefRecordsByEdge = toPairs(dataByEdge)
-      .reduce((acc, [queryEdgeID, {connected_to, records}]) => {
-        acc[queryEdgeID] = records.map((record) => {
+    const edges = new Set(keys(dataByEdge));
+    const edgeCount = edges.size;
+
+    // find all QNodes having is_set params
+    // NOTE: is_set in the query graph and the JavaScript Set object below refer to different sets.
+    const queryNodeIDsWithIsSet = new Set();
+    toPairs(dataByEdge).forEach(([queryEdgeID, {connected_to, records}]) => {
+      const inputQueryNodeID = helper._getInputQueryNodeID(records[0]);
+      const outputQueryNodeID = helper._getOutputQueryNodeID(records[0]);
+
+      if (_getInputIsSet(records[0])) {
+        queryNodeIDsWithIsSet.add(inputQueryNodeID)
+      } else if (_getOutputIsSet(records[0])) {
+        queryNodeIDsWithIsSet.add(outputQueryNodeID)
+      }
+    });
+
+    // find a QNode having only one QEdge to use as the root node for tree traversal
+    let initialQueryEdgeID, initialQueryNodeIDToMatch;
+    toPairs(dataByEdge).some(([queryEdgeID, {connected_to, records}]) => {
+      const inputQueryNodeID = helper._getInputQueryNodeID(records[0]);
+      const outputQueryNodeID = helper._getOutputQueryNodeID(records[0]);
+
+      if (connected_to.length === 0) {
+        initialQueryEdgeID = queryEdgeID;
+        initialQueryNodeIDToMatch = inputQueryNodeID;
+      } else {
+        connected_to.some((c) => {
+          const nextEdge = dataByEdge[c];
+          const inputQueryNodeID1 = helper._getInputQueryNodeID(nextEdge.records[0]);
+          const outputQueryNodeID1 = helper._getOutputQueryNodeID(nextEdge.records[0]);
+          if (!initialQueryEdgeID) {
+            if ([inputQueryNodeID1, outputQueryNodeID1].indexOf(inputQueryNodeID) === -1) {
+              initialQueryEdgeID = queryEdgeID;
+              initialQueryNodeIDToMatch = inputQueryNodeID;
+
+              // like calling break in a loop
+              return true;
+            } else if ([outputQueryNodeID1, outputQueryNodeID1].indexOf(outputQueryNodeID) === -1) {
+              initialQueryEdgeID = queryEdgeID;
+              initialQueryNodeIDToMatch = outputQueryNodeID;
+
+              // like calling break in a loop
+              return true;
+            }
+          }
+        });
+
+        if (initialQueryEdgeID) {
+          // like calling break in a loop
+          return true;
+        }
+      }
+    });
+
+    // 'preresult' just means it has the data needed to assemble a result,
+    // but it's formatted differently for easier pre-processing.
+    const preresults = [];
+    this._getPreresults(
+      dataByEdge,
+      initialQueryEdgeID,
+      edgeCount,
+      preresults,
+      [], // first preresult
+      initialQueryNodeIDToMatch,
+    );
+
+    /**
+     * Consolidation
+     *
+     * With reference to this graphic:
+     * https://github.com/biothings/BioThings_Explorer_TRAPI/issues/341#issuecomment-972140186
+     * The preresults are analogous to the collection of sets in the lower left. Now we want
+     * to consolidate the preresults as indicated by the the large blue arrow in the graphic
+     * to get consolidatedPreresults, which are almost identical the the final results, except
+     * for some minor differences that make it easier to perform the consolidation.
+     *
+     * There are two types of consolidation we need to perform here:
+     * 1. one or more query nodes have an 'is_set' param
+     * 2. one or more primaryID pairs have multiple kgEdges each
+     */
+    const consolidatedPreresults = [];
+
+    // for when there's an is_set param
+    let primaryIDsByQueryNodeID = {};
+    const kgEdgeIDsByQueryEdgeID = {};
+
+    // for when there's NOT an is_set param.
+    // It's currently just consolidating when there are multiple KG edge predicates.
+    let kgEdgeIDsByRecordDedupTag = {};
+
+    // Each of these tags is an identifier for a result and is made up of the concatenation
+    // of every recordDedupTag for a given preresult.
+    //
+    // These tags contain the info we use to determine whether a result is a duplicate
+    // (one or more records for a result should be consolidated).
+    //
+    // This info will vary depending on things like whether the QEdge has any is_set params.
+    const resultDedupTags = new Set();
+
+    preresults.forEach((preresult, i) => {
+      let consolidatedPreresult = [];
+
+      // a preresultRecord is basically the information from a record,
+      // but formatted differently for purposes of assembling results.
+      let preresultRecord = {
+        inputPrimaryIDs: new Set(),
+        outputPrimaryIDs: new Set(),
+        kgEdgeIDs: new Set(),
+      };
+
+      const preresultRecordClone = cloneDeep(preresultRecord);
+
+      // This is needed because consolidation when is_set is NOT specified
+      // is more limited than when it is specified. It's currently just
+      // consolidating when there are multiple KG edge predicates.
+      //
+      // TODO: it's a little confusing why we need the preresult.length check, but
+      // without it, the following test in QueryResult.test.js fails:
+      // 'should get 1 result with 2 edge mappings when predicates differ: ⇉'
+      if (preresult.length > 1) {
+        kgEdgeIDsByRecordDedupTag = {};
+      }
+
+      let recordDedupTags = [];
+
+      preresult.forEach(({
+        inputQueryNodeID, outputQueryNodeID,
+        inputPrimaryID, outputPrimaryID,
+        queryEdgeID, kgEdgeID
+      }, j) => {
+
+        if (queryNodeIDsWithIsSet.has(inputQueryNodeID) && queryNodeIDsWithIsSet.has(outputQueryNodeID)) {
+          // both QNodes of the QEdge for this record have is_set params 
+
+          const recordDedupTag = [inputQueryNodeID, outputQueryNodeID].join("-")
+          recordDedupTags.push(recordDedupTag);
+
+          // TODO: why do we always do this here, but in the 'else' section below, we
+          // only do it when kgEdgeIDsByRecordDedupTag[recordDedupTag] doesn't exist?
+          // The tests pass regardless of whether this is inside or outside of the
+          // if statement below.
+          preresultRecord = cloneDeep(preresultRecordClone);
+          consolidatedPreresult.push(preresultRecord);
+
+          if (!(primaryIDsByQueryNodeID.hasOwnProperty(inputQueryNodeID) && primaryIDsByQueryNodeID.hasOwnProperty(outputQueryNodeID))) {
+            kgEdgeIDsByQueryEdgeID[queryEdgeID] = new Set();
+            preresultRecord.kgEdgeIDs = kgEdgeIDsByQueryEdgeID[queryEdgeID];
+
+            if (!primaryIDsByQueryNodeID.hasOwnProperty(inputQueryNodeID)) {
+              primaryIDsByQueryNodeID[inputQueryNodeID] = new Set();
+              preresultRecord.inputPrimaryIDs = primaryIDsByQueryNodeID[inputQueryNodeID];
+            }
+
+            if (primaryIDsByQueryNodeID.hasOwnProperty(outputQueryNodeID)) {
+              primaryIDsByQueryNodeID[outputQueryNodeID] = new Set();
+              preresultRecord.outputPrimaryIDs = primaryIDsByQueryNodeID[outputQueryNodeID];
+            }
+          }
+
+          primaryIDsByQueryNodeID[inputQueryNodeID].add(inputPrimaryID);
+          primaryIDsByQueryNodeID[outputQueryNodeID].add(outputPrimaryID);
+          kgEdgeIDsByQueryEdgeID[queryEdgeID].add(kgEdgeID);
+        } else if (queryNodeIDsWithIsSet.has(inputQueryNodeID)) {
+          // The input QNode of the QEdge for this record has an is_set param.
+          // If only one QNode has an is_set param, that QNode will be the input.
+          // That's why we don't need a case for 'if (queryNodeIDsWithIsSet.has(outputQueryNodeID))...'
+
+          const recordDedupTag = [inputQueryNodeID, outputQueryNodeID, outputPrimaryID].join("-")
+          recordDedupTags.push(recordDedupTag);
+
+          // TODO: why must we always do this here, but in the 'else' section below, we
+          // only do it when kgEdgeIDsByRecordDedupTag[recordDedupTag] doesn't exist?
+          // Some tests fail when this is inside the if statement below
+          preresultRecord = cloneDeep(preresultRecordClone);
+          consolidatedPreresult.push(preresultRecord);
+
+          if (!primaryIDsByQueryNodeID.hasOwnProperty(inputQueryNodeID)) {
+            kgEdgeIDsByQueryEdgeID[queryEdgeID] = new Set();
+            primaryIDsByQueryNodeID[inputQueryNodeID] = new Set();
+
+            // When is_set is not specified for output, there's only
+            // going to be a single one for this preresultRecord.
+            preresultRecord.outputPrimaryIDs.add(outputPrimaryID);
+          }
+
+          preresultRecord.kgEdgeIDs = kgEdgeIDsByQueryEdgeID[queryEdgeID];
+          preresultRecord.inputPrimaryIDs = primaryIDsByQueryNodeID[inputQueryNodeID];
+
+          kgEdgeIDsByQueryEdgeID[queryEdgeID].add(kgEdgeID);
+          primaryIDsByQueryNodeID[inputQueryNodeID].add(inputPrimaryID);
+        } else {
+          // The only other consolidation we need to do is when two primaryIDs for two
+          // different respective QNodes have multiple KG Edges connecting them.
+          const recordDedupTag = [
+            inputQueryNodeID,
+            inputPrimaryID,
+            outputQueryNodeID,
+            outputPrimaryID
+          ].join("-");
+
+          recordDedupTags.push(recordDedupTag);
+
+          if (!kgEdgeIDsByRecordDedupTag.hasOwnProperty(recordDedupTag)) {
+            preresultRecord = cloneDeep(preresultRecordClone);
+            consolidatedPreresult.push(preresultRecord);
+
+            kgEdgeIDsByRecordDedupTag[recordDedupTag] = new Set();
+            preresultRecord.kgEdgeIDs = kgEdgeIDsByRecordDedupTag[recordDedupTag];
+
+            // When is_set is not specified, each preresultRecord only has one
+            // each of unique inputPrimaryID and outputPrimaryID.
+            preresultRecord.inputPrimaryIDs.add(inputPrimaryID);
+            preresultRecord.outputPrimaryIDs.add(outputPrimaryID);
+          }
+
+          kgEdgeIDsByRecordDedupTag[recordDedupTag].add(kgEdgeID);
+        }
+
+        preresultRecord.inputQueryNodeID = inputQueryNodeID;
+        preresultRecord.outputQueryNodeID = outputQueryNodeID;
+        preresultRecord.queryEdgeID = queryEdgeID;
+      });
+
+      const resultDedupTag = recordDedupTags.join("-");
+      if (consolidatedPreresult.length === edgeCount && (!resultDedupTags.has(resultDedupTag))) {
+        consolidatedPreresults.push(consolidatedPreresult);
+        resultDedupTags.add(resultDedupTag)
+      }
+    });
+
+    /**
+     * The last step is to do the minor re-formatting to turn consolidatedResults
+     * into the desired final results.
+     */
+    this._results = consolidatedPreresults.map((consolidatedPreresult) => {
+
+      // TODO: calculate an actual score
+      const result = {node_bindings: {}, edge_bindings: {}, score: 1.0};
+
+      consolidatedPreresult.forEach(({
+        inputQueryNodeID, outputQueryNodeID,
+        inputPrimaryIDs, outputPrimaryIDs,
+        queryEdgeID, kgEdgeIDs
+      }) => {
+        result.node_bindings[inputQueryNodeID] = Array.from(inputPrimaryIDs).map(inputPrimaryID => {
           return {
-            inputQueryNodeID: helper._getInputQueryNodeID(record),
-            outputQueryNodeID: helper._getOutputQueryNodeID(record),
-            inputPrimaryID: helper._getInputID(record),
-            outputPrimaryID: helper._getOutputID(record),
-            kgEdgeID: helper._getKGEdgeID(record),
+            id: inputPrimaryID
           };
         });
 
-        return acc;
-      }, {});
-
-    const queryNodeIDs = keys(commonPrimaryIDsByQueryNodeID);
-
-    // The values from commonPrimaryIDsByQueryNodeID are an array of sets.
-    // Each of those sets represents all the primary IDs that are common
-    // to the records touching a specific query node at that query node.
-    //
-    // Example Data
-    // ------------
-    //
-    // query graph:
-    // n0->n1
-    // 
-    // primaryIDs in records:
-    // input output
-    // n0a   n1a
-    // n0a   n1b
-    // n0b   n1a
-    // n0b   n1b
-    //
-    // queryNodeID  commonPrimaryIDs
-    // n0           n0a, n0b
-    // n1           n1a, n1b
-    //  
-    // commonPrimaryIDsByQueryNodeID:
-    // {
-    //   "n0": new Set(["n0a", "n0b"]),
-    //   "n1": new Set(["n1a", "n1b"])
-    // }
-    //
-    // the values: [new Set([n0a, n0b]), new Set([n1a, n1b])]
-    //
-    // For an array of sets, we can take one item from every set
-    // to make a single new set. The cartesian product represents
-    // every possible such new set.
-    //
-    // (The specific implementation of cartesian product we're
-    // currently using expects arrays instead of sets, so we
-    // had to convert sets to arrays, but maybe we should use
-    // a different implementation to avoid this conversion.)
-    //
-    // input: [[n0a, n0b], [n1a, n1b]] ->
-    // cartesian product: [[n0a, n1a], [n0a, n1b], [n1a, n1a], [n1a, n1b]]
-    this._results = utils.cartesian(
-        values(commonPrimaryIDsByQueryNodeID)
-          // the implementation we're currently using expects arrays, not sets
-          .map(v => Array.from(v))
-    )
-      // We're mapping every sub-array of this:
-      // [[n0a, n1a], [n0a, n1b], [n1a, n1a], [n1a, n1b]]
-      //
-      // to get this:
-      // [
-      //   {"n0": "n0a", "n1": "n1a"},
-      //   {"n0": "n0a", "n1": "n1b"},
-      //   {"n0": "n0b", "n1": "n1a"},
-      //   {"n0": "n0b", "n1": "n1b"},
-      // ]
-      .map(commonPrimaryIDCombo => {
-        // [n0a, n1a] -> {"n0": "n0a", "n1": "n1a"}
-        return zipObject(queryNodeIDs, commonPrimaryIDCombo);
-      })
-      // We've now identified all the possible combinations of primary IDs.
-      // Next, let's check the records to see which possible combinations
-      // have a record for every item in the combination.
-      //
-      // This is necessary, because even though we checked for common
-      // primary IDs at every query node, that check didn't verify that
-      // the records with those primary IDs are compatible with each other.
-      .map(primaryIDByQueryNodeID => {
-        return toPairs(briefRecordsByEdge)
-          .reduce((acc, [queryEdgeID, briefRecords]) => {
-            const compatibleBriefRecords = briefRecords.filter(({
-              inputQueryNodeID, outputQueryNodeID,
-              inputPrimaryID, outputPrimaryID,
-            }) => {
-              return (primaryIDByQueryNodeID[inputQueryNodeID] == inputPrimaryID) &&
-                (primaryIDByQueryNodeID[outputQueryNodeID] == outputPrimaryID);
-            });
-
-            // Make sure this edge has at least one compatible record.
-            // If this were a loop, we could break twice and not even
-            // need the next filter step further below.
-            if (compatibleBriefRecords.length === 0) {
-              return acc;
-            }
-
-            // Because of the filter step above, every compatibleBriefRecord
-            // in this batch will have the same values for:
-            // inputQueryNodeID, outputQueryNodeID, inputPrimaryID, outputPrimaryID
-            //
-            // However, it is possible to have different values for kgEdgeID, so
-            // let's put all of those into a set.
-            const kgEdgeIDs = compatibleBriefRecords.reduce((acc, {kgEdgeID}) => {
-              acc.add(kgEdgeID);
-              return acc;
-            }, new Set());
-
-            acc[queryEdgeID] = {
-              inputQueryNodeID: compatibleBriefRecords[0].inputQueryNodeID,
-              outputQueryNodeID: compatibleBriefRecords[0].outputQueryNodeID,
-              inputPrimaryID: compatibleBriefRecords[0].inputPrimaryID,
-              outputPrimaryID: compatibleBriefRecords[0].outputPrimaryID,
-              kgEdgeIDs
-            };
-
-            return acc;
-          }, {})
-      })
-      .filter(infoByEdgeForOneCombo => {
-        // Make sure every query graph edge is represented.
-        // If a query graph edge had zero valid records,
-        // it won't have an entry in infoByEdgeForOneCombo.
-        return utils.intersection(
-          edges,
-          (new Set(keys(infoByEdgeForOneCombo)))
-        ).size === edgeCount;
-      })
-      /**
-       * Assemble each query result.
-       *
-       * infoByEdgeForOneCombo represents one compatible combination of records.
-       * This means a collection of records, one per query graph edge, all fit
-       * together with each other with inputs and outputs connected
-       * as specified by the query graph. But for convenience, instead of full
-       * records, we're actually just working with the IDs we need, as collected
-       * earlier.
-       *
-       * @param {Object.<QueryEdgeID, {
-       *   inputQueryNodeID: string,
-       *   outputQueryNodeID: string,
-       *   inputPrimaryID: string,
-       *   outputPrimaryID: string,
-       *   kgEdgeIDs: Set.<string>
-       * }>} infoByEdgeForOneCombo
-       * @return {Result}
-       */
-      .map(infoByEdgeForOneCombo => {
-        // default score issue #200 - TODO: turn to evaluating module eventually
-        const result = {node_bindings: {}, edge_bindings: {}, score: 1.0};
-
-        toPairs(infoByEdgeForOneCombo).forEach(([queryEdgeID, {
-            inputQueryNodeID, outputQueryNodeID,
-            inputPrimaryID, outputPrimaryID,
-            kgEdgeIDs
-          }], i) => {
-
-          // NOTE: either or both of the following could have been set already
-          // when we processed records for another query edge, but that's OK.
-          //
-          // When two records are linked, the outputPrimaryID for one record
-          // will be the same as the inputPrimaryID for the other. Because of
-          // that, whichever record was processed here first will have already
-          // set the value for result.node_bindings[queryNodeID]. Because every
-          // record in infoByEdgeForOneCombo uses the same mappings
-          // from queryNodeID to primaryID, there is no conflict. The same logic
-          // is also valid for the case of more than two linked records.
-          if (!result.node_bindings.hasOwnProperty(inputQueryNodeID)) {
-            result.node_bindings[inputQueryNodeID] = [
-              {
-                id: inputPrimaryID
-              },
-            ];
-          }
-          if (!result.node_bindings.hasOwnProperty(outputQueryNodeID)) {
-            result.node_bindings[outputQueryNodeID] = [
-              {
-                id: outputPrimaryID
-              },
-            ];
-          }
-
-          const edge_bindings = result.edge_bindings[queryEdgeID] = [];
-          kgEdgeIDs.forEach((kgEdgeID) => {
-            edge_bindings.push({
-              id: kgEdgeID
-            });
-          });
+        result.node_bindings[outputQueryNodeID] = Array.from(outputPrimaryIDs).map(outputPrimaryID => {
+          return {
+            id: outputPrimaryID
+          };
         });
 
-        return result;
+        const edge_bindings = result.edge_bindings[queryEdgeID] = Array.from(kgEdgeIDs).map((kgEdgeID) => {
+          return {
+            id: kgEdgeID
+          };
+        });
       });
+
+      return result;
+    });
   }
 };
