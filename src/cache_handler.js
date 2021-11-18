@@ -34,7 +34,7 @@ module.exports = class {
     for (let i = 0; i < qEdges.length; i++) {
       const hashedEdgeID = this._hashEdgeByKG(qEdges[i].getHashedEdgeRepresentation());
       let cachedResJSON;
-      const unlock = await redisClient.lock('redisLock:' + id);
+      const unlock = await redisClient.lock('redisLock:' + hashedEdgeID);
       try {
         const cachedRes = await redisClient.hgetallAsync(hashedEdgeID);
         cachedResJSON = cachedRes
