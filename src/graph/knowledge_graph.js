@@ -86,24 +86,40 @@ module.exports = class KnowledgeGraph {
         'TCGA Mutation Frequency API',
       ].some((api_name) => kgEdge.apis.has(api_name))
     ) {
-      attributes = [
-        ...attributes,
-        {
-          attribute_type_id: 'biolink:supporting_data_source',
-          value: Array.from(kgEdge.sources),
-          value_type_id: 'biolink:InformationResource',
-        },
-        {
-          attribute_type_id: 'biolink:primary_knowledge_source',
-          value: Array.from(kgEdge.inforesCuries),
-          value_type_id: 'biolink:InformationResource',
-        },
-        {
-          attribute_type_id: 'publications',
-          value: Array.from(kgEdge.publications),
-          //value_type_id: 'biolink:publication',
-        },
-      ];
+      attributes = [...attributes];
+      //primary knowledge source
+      if (Array.from(kgEdge.sources).length) {
+        attributes = [
+          ...attributes,
+          {
+            attribute_type_id: 'biolink:primary_knowledge_source',
+            value: Array.from(kgEdge.sources),
+            value_type_id: 'biolink:InformationResource',
+          }
+        ];
+      }
+      //aggregator knowledge source
+      if (Array.from(kgEdge.inforesCuries).length) {
+        attributes = [
+          ...attributes,
+          {
+            attribute_type_id: 'biolink:aggregator_knowledge_source',
+            value: Array.from(kgEdge.inforesCuries),
+            value_type_id: 'biolink:InformationResource',
+          }
+        ];
+      }
+      //publications
+      if (Array.from(kgEdge.publications).length) {
+        attributes = [
+          ...attributes,
+          {
+            attribute_type_id: 'biolink:publications',
+            value: Array.from(kgEdge.publications),
+            // value_type_id: 'biolink:publications',
+          }
+        ];
+      }
 
       for (const key in kgEdge.attributes) {
         attributes.push({
@@ -113,24 +129,40 @@ module.exports = class KnowledgeGraph {
         });
       }
     } else { //handle non-trapi APIs (Situation B of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208)
-      attributes = [
-        ...attributes,
-        {
-          attribute_type_id: 'biolink:primary_knowledge_source',
-          value: Array.from(kgEdge.sources),
-          value_type_id: 'biolink:InformationResource',
-        },
-        {
-          attribute_type_id: 'biolink:aggregator_knowledge_source',
-          value: Array.from(kgEdge.inforesCuries),
-          value_type_id: 'biolink:InformationResource',
-        },
-        {
-          attribute_type_id: 'publications',
-          value: Array.from(kgEdge.publications),
-          //value_type_id: 'biolink:publication',
-        },
-      ];
+      attributes = [...attributes];
+      //primary knowledge source
+      if (Array.from(kgEdge.sources).length) {
+        attributes = [
+          ...attributes,
+          {
+            attribute_type_id: 'biolink:primary_knowledge_source',
+            value: Array.from(kgEdge.sources),
+            value_type_id: 'biolink:InformationResource',
+          }
+        ];
+      }
+      //aggregator knowledge source
+      if (Array.from(kgEdge.inforesCuries).length) {
+        attributes = [
+          ...attributes,
+          {
+            attribute_type_id: 'biolink:aggregator_knowledge_source',
+            value: Array.from(kgEdge.inforesCuries),
+            value_type_id: 'biolink:InformationResource',
+          }
+        ];
+      }
+      //publications
+      if (Array.from(kgEdge.publications).length) {
+        attributes = [
+          ...attributes,
+          {
+            attribute_type_id: 'biolink:publications',
+            value: Array.from(kgEdge.publications),
+            // value_type_id: 'biolink:publications',
+          }
+        ];
+      }
 
       for (const key in kgEdge.attributes) {
         attributes.push({
