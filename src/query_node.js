@@ -15,6 +15,8 @@ module.exports = class QNode {
         this.category = info.categories || 'NamedThing';
         // mainIDs
         this.curie = info.ids;
+        //is_set
+        this.is_set = info.is_set;
         //mainID : its equivalent ids
         this.expanded_curie = {};
         this.entity_count = info.ids ? info.ids.length : 0;
@@ -30,6 +32,11 @@ module.exports = class QNode {
         //object-ify array of initial curies
         this.expandCurie();
         this.validateConstraints();
+    }
+
+    isSet() {
+        //query node specified as set
+        return this.is_set ? true : false;
     }
 
     validateConstraints() {
