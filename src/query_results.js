@@ -41,13 +41,13 @@ const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
 // TODO: if these are correct, they should probably be moved to helper.js
 function _getInputIsSet(record) {
   return record.$edge_metadata.trapi_qEdge_obj.isReversed()
-    ? record.$output.obj[0].isSet()
-    : record.$input.obj[0].isSet();
+    ? record.$edge_metadata.trapi_qEdge_obj.object.isSet()
+    : record.$edge_metadata.trapi_qEdge_obj.subject.isSet();
 }
 function _getOutputIsSet(record) {
   return record.$edge_metadata.trapi_qEdge_obj.isReversed()
-    ? record.$input.obj[0].isSet()
-    : record.$output.obj[0].isSet();
+    ? record.$edge_metadata.trapi_qEdge_obj.subject.isSet()
+    : record.$edge_metadata.trapi_qEdge_obj.object.isSet();
 }
 
 /**
