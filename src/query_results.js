@@ -368,7 +368,7 @@ module.exports = class QueryResult {
               preresultRecord.inputPrimaryIDs = primaryIDsByQueryNodeID[inputQueryNodeID];
             }
 
-            if (primaryIDsByQueryNodeID.hasOwnProperty(outputQueryNodeID)) {
+            if (!primaryIDsByQueryNodeID.hasOwnProperty(outputQueryNodeID)) {
               primaryIDsByQueryNodeID[outputQueryNodeID] = new Set();
               preresultRecord.outputPrimaryIDs = primaryIDsByQueryNodeID[outputQueryNodeID];
             }
@@ -391,14 +391,11 @@ module.exports = class QueryResult {
           preresultRecord = cloneDeep(preresultRecordClone);
           consolidatedPreresult.push(preresultRecord);
 
-          if (!primaryIDsByQueryNodeID.hasOwnProperty(inputQueryNodeID)) {
+          if (!kgEdgeIDsByQueryEdgeID.hasOwnProperty(queryEdgeID)) {
             kgEdgeIDsByQueryEdgeID[queryEdgeID] = new Set();
-            primaryIDsByQueryNodeID[inputQueryNodeID] = new Set();
-
-            // When isSet() is not specified for output, there's only
-            // going to be a single one for this preresultRecord.
-            preresultRecord.outputPrimaryIDs.add(outputPrimaryID);
+            preresultRecord.kgEdgeIDs = kgEdgeIDsByQueryEdgeID[queryEdgeID];
           }
+          kgEdgeIDsByQueryEdgeID[queryEdgeID].add(kgEdgeID);
 
           preresultRecord.kgEdgeIDs = kgEdgeIDsByQueryEdgeID[queryEdgeID];
           preresultRecord.inputPrimaryIDs = primaryIDsByQueryNodeID[inputQueryNodeID];
