@@ -118,11 +118,15 @@ module.exports = class QueryResult {
     queryNodeIDToMatch,
     primaryIDToMatch
   ) {
+    //connected_to and records of starting edge of tree
     const {connected_to, records} = dataByEdge[queryEdgeID];
 
+    //get a valid record from records to continue
+    let record = records.find(rec => rec !== undefined);
+
     // queryNodeID example: 'n0'
-    const inputQueryNodeID = helper._getInputQueryNodeID(records[0]);
-    const outputQueryNodeID = helper._getOutputQueryNodeID(records[0]);
+    const inputQueryNodeID = helper._getInputQueryNodeID(record);
+    const outputQueryNodeID = helper._getOutputQueryNodeID(record);
 
     let otherQueryNodeID, getMatchingPrimaryID, getOtherPrimaryID;
 
@@ -139,17 +143,17 @@ module.exports = class QueryResult {
       return;
     }
 
-    const preresultClone = cloneDeep(preresult);
+    const preresultClone = [...preresult];
 
     records.filter((record) => {
       return [getMatchingPrimaryID(record), undefined].indexOf(primaryIDToMatch) > -1 ;
     }).forEach((record, i) => {
       // primaryID example: 'NCBIGene:1234'
-      const matchingPrimaryID = getMatchingPrimaryID(record);
+      const matchingPrimaryID = getMatchingPrimaryID(record); //not used?
       const otherPrimaryID = getOtherPrimaryID(record);
 
       if (i !== 0) {
-        preresult = cloneDeep(preresultClone);
+        preresult = [...preresultClone];
       }
 
       preresult.push({
@@ -165,7 +169,7 @@ module.exports = class QueryResult {
         preresults.push(preresult);
       }
 
-      connected_to.forEach((connectedQueryEdgeID, j) => {
+      connected_to.forEach((connectedQueryEdgeID) => {
         this._getPreresults(
           dataByEdge,
           connectedQueryEdgeID,
@@ -192,27 +196,6 @@ module.exports = class QueryResult {
   update(dataByEdge) {
     debug(`Updating query results now!`);
     this._results = [];
-
-    // verify there are no empty records
-    // TODO: with the new generalized query handling is this check needed any more?
-    let noRecords = false;
-    values(dataByEdge).some(({records}) => {
-      if (!records || records.length === 0) {
-        debug(`at least one query edge has no records`);
-
-        noRecords = true;
-
-        // this is like calling break in a for loop
-        return true;
-      }
-    });
-
-    // If any query node is empty, there will be no results, so we can skip
-    // any further processing. Every query node in commonPrimaryIDsByQueryNodeID
-    // must have at least one primary ID
-    if (noRecords) {
-      return;
-    }
 
     const edges = new Set(keys(dataByEdge));
     const edgeCount = edges.size;
@@ -314,7 +297,7 @@ module.exports = class QueryResult {
     // This info will vary depending on things like whether the QEdge has any isSet() params.
     const resultDedupTags = new Set();
 
-    preresults.forEach((preresult, i) => {
+    preresults.forEach((preresult) => {
       let consolidatedPreresult = [];
 
       // a preresultRecord is basically the information from a record,
@@ -325,7 +308,7 @@ module.exports = class QueryResult {
         kgEdgeIDs: new Set(),
       };
 
-      const preresultRecordClone = cloneDeep(preresultRecord);
+      const preresultRecordClone = {...preresultRecord};
 
       // This is needed because consolidation when isSet() is NOT specified
       // is more limited than when it is specified. It's currently just
