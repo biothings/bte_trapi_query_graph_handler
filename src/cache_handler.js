@@ -4,10 +4,12 @@ const LogEntry = require('./log_entry');
 const { parentPort } = require('worker_threads');
 const _ = require('lodash');
 const async = require('async');
+const helper = require('./helper');
 
 module.exports = class {
-  constructor(qEdges, caching, logs = []) {
+  constructor(qEdges, caching, kg = undefined, logs = []) {
     this.qEdges = qEdges;
+    this.kg = kg;
     this.logs = logs;
     this.cacheEnabled =
       caching === false
@@ -30,8 +32,9 @@ module.exports = class {
     let nonCachedEdges = [];
     let cachedResults = [];
     for (let i = 0; i < qEdges.length; i++) {
-      const hashedEdgeID = qEdges[i].getHashedEdgeRepresentation();
+      const hashedEdgeID = this._hashEdgeByKG(qEdges[i].getHashedEdgeRepresentation());
       let cachedResJSON;
+      const unlock = await redisClient.lock('redisLock:' + hashedEdgeID);
       try {
         const cachedRes = await redisClient.hgetallAsync(hashedEdgeID);
         cachedResJSON = cachedRes
@@ -42,6 +45,8 @@ module.exports = class {
       } catch (error) {
         cachedResJSON = null;
         debug(`Cache lookup/retrieval failed due to ${error}. Proceeding without cache.`);
+      } finally {
+        unlock();
       }
       if (cachedResJSON) {
         this.logs.push(new LogEntry('DEBUG', null, `BTE find cached results for ${qEdges[i].getID()}`).getLog());
@@ -85,18 +90,27 @@ module.exports = class {
 
     const returnVal = { ...record };
     returnVal.$edge_metadata = { ...record.$edge_metadata };
-    // replaced after taking out of cahce, so save some memory
+    // replaced after taking out of cache, so save some memory
     returnVal.$edge_metadata.trapi_qEdge_obj = undefined;
     returnVal.$input = copyObjs.$input;
     returnVal.$output = copyObjs.$output;
     return returnVal;
   }
 
+  _hashEdgeByKG(hashedEdgeID) {
+    if (!this.kg) {
+      return hashedEdgeID;
+    }
+    const len = String(this.kg.ops.length);
+    const allIDs = Array.from(new Set(this.kg.ops.map((op) => op.association.smartapi.id))).join('');
+    return new helper()._generateHash(hashedEdgeID + len + allIDs);
+  }
+
   _groupQueryResultsByEdgeID(queryResult) {
     let groupedResult = {};
     queryResult.map((record) => {
       try {
-        const hashedEdgeID = record.$edge_metadata.trapi_qEdge_obj.getHashedEdgeRepresentation();
+        const hashedEdgeID = this._hashEdgeByKG(record.$edge_metadata.trapi_qEdge_obj.getHashedEdgeRepresentation());
         if (!(hashedEdgeID in groupedResult)) {
           groupedResult[hashedEdgeID] = [];
         }
@@ -124,15 +138,18 @@ module.exports = class {
       const hashedEdgeIDs = Array.from(Object.keys(groupedQueryResult));
       debug(`Number of hashed edges: ${hashedEdgeIDs.length}`);
       await async.eachSeries(hashedEdgeIDs, async (id) => {
+        // lock to prevent caching to/reading from actively caching edge
+        const unlock = await redisClient.lock("redisLock:" + id);
+        try {
+          await redisClient.delAsync(id); // prevents weird overwrite edge cases
           await async.eachOfSeries(groupedQueryResult[id], async (edge, index) => {
-            await redisClient.hsetAsync(
-              id,
-              index.toString(),
-              JSON.stringify(edge),
-            );
+            await redisClient.hsetAsync(id, index.toString(), JSON.stringify(edge));
           });
           await redisClient.expireAsync(id, process.env.REDIS_KEY_EXPIRE_TIME || 600);
-        });
+        } finally {
+          unlock(); // release lock whether cache succeeded or not
+        }
+      });
       debug(`Successfully cached (${queryResult.length}) query results.`);
     } catch (error) {
       debug(`Caching failed due to ${error}. This does not terminate the query.`);
