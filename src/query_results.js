@@ -3,7 +3,7 @@ const GraphHelper = require('./helper');
 const helper = new GraphHelper();
 const utils = require('./utils');
 const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
-
+const { getScores, calculateScore } = require('./score');
 
 /**
  * @typedef {
@@ -76,8 +76,17 @@ module.exports = class QueryResult {
    * @param {DataByEdge} dataByEdge
    * @return {undefined} nothing returned; just cache this._results
    */
-  update(dataByEdge) {
+  async update(dataByEdge) {
     debug(`Updating query results now!`);
+
+    let scoreCombos = [];
+    try {
+      scoreCombos = await getScores(dataByEdge);
+      debug(`Successfully got ${scoreCombos.length} score combos.`);
+    } catch (err) {
+      debug("ERROR", err);
+    }
+
     this._results = [];
 
     const edges = new Set(keys(dataByEdge));
@@ -161,6 +170,8 @@ module.exports = class QueryResult {
             outputQueryNodeID: helper._getOutputQueryNodeID(record),
             inputPrimaryID: helper._getInputID(record),
             outputPrimaryID: helper._getOutputID(record),
+            inputUMLS: helper._getInputUMLS(record), //for scoring
+            outputUMLS: helper._getOutputUMLS(record), //for scoring
             kgEdgeID: helper._getKGEdgeID(record),
           };
         });
@@ -270,6 +281,8 @@ module.exports = class QueryResult {
               outputQueryNodeID: compatibleBriefRecords[0].outputQueryNodeID,
               inputPrimaryID: compatibleBriefRecords[0].inputPrimaryID,
               outputPrimaryID: compatibleBriefRecords[0].outputPrimaryID,
+              inputUMLS: compatibleBriefRecords[0].inputUMLS, //for scoring
+              outputUMLS: compatibleBriefRecords[0].outputUMLS, //for scoring
               kgEdgeIDs
             };
 
@@ -300,13 +313,15 @@ module.exports = class QueryResult {
        *   outputQueryNodeID: string,
        *   inputPrimaryID: string,
        *   outputPrimaryID: string,
+       *   inputUMLS: Array.<string>,
+       *   outputUMLS: Array.<string>,
        *   kgEdgeIDs: Set.<string>
        * }>} infoByEdgeForOneCombo
        * @return {Result}
        */
       .map(infoByEdgeForOneCombo => {
-        // default score issue #200 - TODO: turn to evaluating module eventually
-        const result = {node_bindings: {}, edge_bindings: {}, score: 1.0};
+        const result = {node_bindings: {}, edge_bindings: {}, score: calculateScore(infoByEdgeForOneCombo, scoreCombos)};
+        debug("SCORE", result.score);
 
         toPairs(infoByEdgeForOneCombo).forEach(([queryEdgeID, {
             inputQueryNodeID, outputQueryNodeID,
@@ -348,6 +363,7 @@ module.exports = class QueryResult {
         });
 
         return result;
-      });
+      })
+      .sort((result1, result2) => (result2.score - result1.score)); //sort by decreasing score
   }
 };

@@ -145,7 +145,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     //update query graph
     this.bteGraph.update(manager.getResults());
     //update query results
-    this.queryResults.update(manager.getOrganizedResults());
+    await this.queryResults.update(manager.getOrganizedResults());
     debug(`(14) TRAPI query finished.`);
-    }
+  }
 };

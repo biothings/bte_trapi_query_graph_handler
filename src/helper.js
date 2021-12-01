@@ -36,6 +36,18 @@ module.exports = class QueryGraphHelper {
       : record.$input.obj[0].primaryID;
   }
 
+  _getOutputUMLS(record) {
+    return record.$edge_metadata.trapi_qEdge_obj.isReversed()
+      ? record.$input.obj[0].dbIDs.UMLS
+      : record.$output.obj[0].dbIDs.UMLS;
+  }
+
+  _getInputUMLS(record) {
+    return record.$edge_metadata.trapi_qEdge_obj.isReversed()
+      ? record.$output.obj[0].dbIDs.UMLS
+      : record.$input.obj[0].dbIDs.UMLS;
+  }
+
   _getAPI(record) {
     return record.$edge_metadata.api_name || undefined;
   }
