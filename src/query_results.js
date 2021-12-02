@@ -280,7 +280,15 @@ module.exports = class QueryResult {
      */
     const consolidatedPreresults = [];
 
-    // for when there's an isSet() param
+    /**
+     * for when there's an isSet() param
+     *
+     * primaryIDsByQueryNodeID could look like this:
+     * {
+     *   "n0": new Set(["NCBIGene:3630"]),
+     *   "n1": new Set(["MONDO:0005068", "MONDO:0005010"])
+     * }
+     */
     let primaryIDsByQueryNodeID = {};
     const kgEdgeIDsByQueryEdgeID = {};
 
@@ -362,8 +370,6 @@ module.exports = class QueryResult {
           kgEdgeIDsByQueryEdgeID[queryEdgeID].add(kgEdgeID);
         } else if (queryNodeIDsWithIsSet.has(inputQueryNodeID)) {
           // The input QNode of the QEdge for this record has an isSet() param.
-          // If only one QNode has an isSet() param, that QNode will be the input.
-          // That's why we don't need a case for 'if (queryNodeIDsWithIsSet.has(outputQueryNodeID))...'
 
           const recordDedupTag = [inputQueryNodeID, outputQueryNodeID, outputPrimaryID].join("-")
           recordDedupTags.push(recordDedupTag);
@@ -385,6 +391,31 @@ module.exports = class QueryResult {
 
           kgEdgeIDsByQueryEdgeID[queryEdgeID].add(kgEdgeID);
           primaryIDsByQueryNodeID[inputQueryNodeID].add(inputPrimaryID);
+        } else if (queryNodeIDsWithIsSet.has(outputQueryNodeID)) {
+          // TODO: verify I switched input & output correctly below in this block:
+          
+          // The output QNode of the QEdge for this record has an isSet() param.
+
+          const recordDedupTag = [outputQueryNodeID, inputQueryNodeID, inputPrimaryID].join("-")
+          recordDedupTags.push(recordDedupTag);
+
+          // TODO: why must we always do this here, but in the 'else' section below, we
+          // only do it when kgEdgeIDsByRecordDedupTag[recordDedupTag] doesn't exist?
+          // Some tests fail when this is inside the if statement below
+          preresultRecord = cloneDeep(preresultRecordClone);
+          consolidatedPreresult.push(preresultRecord);
+
+          if (!kgEdgeIDsByQueryEdgeID.hasOwnProperty(queryEdgeID)) {
+            kgEdgeIDsByQueryEdgeID[queryEdgeID] = new Set();
+            preresultRecord.kgEdgeIDs = kgEdgeIDsByQueryEdgeID[queryEdgeID];
+          }
+          kgEdgeIDsByQueryEdgeID[queryEdgeID].add(kgEdgeID);
+
+          preresultRecord.kgEdgeIDs = kgEdgeIDsByQueryEdgeID[queryEdgeID];
+          preresultRecord.inputPrimaryIDs = primaryIDsByQueryNodeID[outputQueryNodeID];
+
+          kgEdgeIDsByQueryEdgeID[queryEdgeID].add(kgEdgeID);
+          primaryIDsByQueryNodeID[outputQueryNodeID].add(outputPrimaryID);
         } else {
           // The only other consolidation we need to do is when two primaryIDs for two
           // different respective QNodes have multiple KG Edges connecting them.
