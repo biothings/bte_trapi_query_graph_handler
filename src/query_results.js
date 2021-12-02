@@ -278,6 +278,8 @@ module.exports = class QueryResult {
      * 1. one or more query nodes have an 'isSet()' param
      * 2. one or more primaryID pairs have multiple kgEdges each
      */
+    
+    // Each of these is equivalent to a result. It's just formatted differently.
     const consolidatedPreresults = [];
 
     /**
@@ -306,6 +308,9 @@ module.exports = class QueryResult {
     const resultDedupTags = new Set();
 
     preresults.forEach((preresult) => {
+      // the preresult is not exactly this, but here's an example to give the rough idea:
+      // 1: [["NCBIGene:3630", "MONDO:0005068"], ["MONDO:0005068", "PUBCHEM.COMPOUND:43815"]]
+      // 2: [["NCBIGene:3630", "MONDO:0005010"], ["MONDO:0005010", "PUBCHEM.COMPOUND:43815"]]
       let consolidatedPreresult = [];
 
       // a preresultRecord is basically the information from a record,
@@ -372,6 +377,7 @@ module.exports = class QueryResult {
           // The input QNode of the QEdge for this record has an isSet() param.
 
           const recordDedupTag = [inputQueryNodeID, outputQueryNodeID, outputPrimaryID].join("-")
+          // e.g., "n1-n2-PUBCHEM.COMPOUND:43815"
           recordDedupTags.push(recordDedupTag);
 
           // TODO: why must we always do this here, but in the 'else' section below, we
@@ -389,14 +395,14 @@ module.exports = class QueryResult {
           preresultRecord.kgEdgeIDs = kgEdgeIDsByQueryEdgeID[queryEdgeID];
           preresultRecord.inputPrimaryIDs = primaryIDsByQueryNodeID[inputQueryNodeID];
 
-          kgEdgeIDsByQueryEdgeID[queryEdgeID].add(kgEdgeID);
           primaryIDsByQueryNodeID[inputQueryNodeID].add(inputPrimaryID);
         } else if (queryNodeIDsWithIsSet.has(outputQueryNodeID)) {
           // TODO: verify I switched input & output correctly below in this block:
           
           // The output QNode of the QEdge for this record has an isSet() param.
 
-          const recordDedupTag = [outputQueryNodeID, inputQueryNodeID, inputPrimaryID].join("-")
+          const recordDedupTag = [inputQueryNodeID, inputPrimaryID, outputQueryNodeID].join("-")
+          // e.g., "n0-NCBIGene:3630-n1"
           recordDedupTags.push(recordDedupTag);
 
           // TODO: why must we always do this here, but in the 'else' section below, we
@@ -412,9 +418,8 @@ module.exports = class QueryResult {
           kgEdgeIDsByQueryEdgeID[queryEdgeID].add(kgEdgeID);
 
           preresultRecord.kgEdgeIDs = kgEdgeIDsByQueryEdgeID[queryEdgeID];
-          preresultRecord.inputPrimaryIDs = primaryIDsByQueryNodeID[outputQueryNodeID];
+          preresultRecord.outputPrimaryIDs = primaryIDsByQueryNodeID[outputQueryNodeID];
 
-          kgEdgeIDsByQueryEdgeID[queryEdgeID].add(kgEdgeID);
           primaryIDsByQueryNodeID[outputQueryNodeID].add(outputPrimaryID);
         } else {
           // The only other consolidation we need to do is when two primaryIDs for two
@@ -449,7 +454,16 @@ module.exports = class QueryResult {
         preresultRecord.queryEdgeID = queryEdgeID;
       });
 
-      const resultDedupTag = recordDedupTags.join("-");
+      const resultDedupTag = recordDedupTags.join("_&_");
+      // when is_set specified for n1:
+      // e.g., "n0-NCBIGene:3630-n1_&_n1-n2-PUBCHEM.COMPOUND:43815"
+      //
+      // when is_set NOT specified for n1:
+      // e.g., "n0-NCBIGene:3630-n1-MONDO:0005068_&_n1-MONDO:0005068-n2-PUBCHEM.COMPOUND:43815"
+      // e.g., "n0-NCBIGene:3630-n1-MONDO:0005010_&_n1-MONDO:0005010-n2-PUBCHEM.COMPOUND:43815"
+      
+      // do we have one record for every query edge: consolidatedPreresult.length === edgeCount
+      // have we added this consolidatedPreresult already: resultDedupTags.has(resultDedupTag)
       if (consolidatedPreresult.length === edgeCount && (!resultDedupTags.has(resultDedupTag))) {
         consolidatedPreresults.push(consolidatedPreresult);
         resultDedupTags.add(resultDedupTag)
@@ -457,7 +471,7 @@ module.exports = class QueryResult {
     });
 
     /**
-     * The last step is to do the minor re-formatting to turn consolidatedResults
+     * The last step is to do the minor re-formatting to turn consolidatedPreresults
      * into the desired final results.
      */
     this._results = consolidatedPreresults.map((consolidatedPreresult) => {
