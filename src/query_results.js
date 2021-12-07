@@ -394,7 +394,10 @@ module.exports = class QueryResult {
 
           preresultRecord.kgEdgeIDs = kgEdgeIDsByQueryEdgeID[queryEdgeID];
           preresultRecord.inputPrimaryIDs = primaryIDsByQueryNodeID[inputQueryNodeID];
-
+          if (!Object.hasOwnProperty.call(primaryIDsByQueryNodeID, inputQueryNodeID)) {
+            primaryIDsByQueryNodeID[inputQueryNodeID] = new Set();
+            preresultRecord.inputPrimaryIDs = [inputPrimaryID];
+          }
           primaryIDsByQueryNodeID[inputQueryNodeID].add(inputPrimaryID);
         } else if (queryNodeIDsWithIsSet.has(outputQueryNodeID)) {
           // TODO: verify I switched input & output correctly below in this block:
@@ -419,7 +422,10 @@ module.exports = class QueryResult {
 
           preresultRecord.kgEdgeIDs = kgEdgeIDsByQueryEdgeID[queryEdgeID];
           preresultRecord.outputPrimaryIDs = primaryIDsByQueryNodeID[outputQueryNodeID];
-
+          if (!Object.hasOwnProperty.call(primaryIDsByQueryNodeID, outputPrimaryID)) {
+            primaryIDsByQueryNodeID[outputQueryNodeID] = new Set();
+            preresultRecord.outputPrimaryIDs = [outputPrimaryID];
+          }
           primaryIDsByQueryNodeID[outputQueryNodeID].add(outputPrimaryID);
         } else {
           // The only other consolidation we need to do is when two primaryIDs for two
