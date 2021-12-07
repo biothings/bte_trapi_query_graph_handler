@@ -15,6 +15,7 @@ const redisClient = require('./redis-client');
 
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 exports.redisClient = redisClient;
+exports.LogEntry = LogEntry;
 
 exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   constructor(options = {}, smartAPIPath = undefined, predicatesPath = undefined, includeReasoner = true) {
