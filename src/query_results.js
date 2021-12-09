@@ -393,10 +393,15 @@ module.exports = class QueryResult {
           kgEdgeIDsByQueryEdgeID[queryEdgeID].add(kgEdgeID);
 
           preresultRecord.kgEdgeIDs = kgEdgeIDsByQueryEdgeID[queryEdgeID];
-          preresultRecord.inputPrimaryIDs = primaryIDsByQueryNodeID[inputQueryNodeID];
+          //primary ids
+          if (!primaryIDsByQueryNodeID[inputQueryNodeID] || !primaryIDsByQueryNodeID[inputQueryNodeID].size) {
+            preresultRecord.inputPrimaryIDs = new Set([inputPrimaryID]);
+          }else{
+            preresultRecord.inputPrimaryIDs = primaryIDsByQueryNodeID[inputQueryNodeID];
+          }
+          
           if (!Object.hasOwnProperty.call(primaryIDsByQueryNodeID, inputQueryNodeID)) {
             primaryIDsByQueryNodeID[inputQueryNodeID] = new Set();
-            preresultRecord.inputPrimaryIDs = [inputPrimaryID];
           }
           primaryIDsByQueryNodeID[inputQueryNodeID].add(inputPrimaryID);
         } else if (queryNodeIDsWithIsSet.has(outputQueryNodeID)) {
@@ -421,10 +426,14 @@ module.exports = class QueryResult {
           kgEdgeIDsByQueryEdgeID[queryEdgeID].add(kgEdgeID);
 
           preresultRecord.kgEdgeIDs = kgEdgeIDsByQueryEdgeID[queryEdgeID];
-          preresultRecord.outputPrimaryIDs = primaryIDsByQueryNodeID[outputQueryNodeID];
+          //primary ids
+          if (!primaryIDsByQueryNodeID[outputQueryNodeID] || !primaryIDsByQueryNodeID[outputQueryNodeID].size) {
+            preresultRecord.outputPrimaryIDs = new Set([outputPrimaryID]);
+          } else {
+            preresultRecord.outputPrimaryIDs = primaryIDsByQueryNodeID[outputQueryNodeID];
+          }
           if (!Object.hasOwnProperty.call(primaryIDsByQueryNodeID, outputPrimaryID)) {
             primaryIDsByQueryNodeID[outputQueryNodeID] = new Set();
-            preresultRecord.outputPrimaryIDs = [outputPrimaryID];
           }
           primaryIDsByQueryNodeID[outputQueryNodeID].add(outputPrimaryID);
         } else {
@@ -502,7 +511,7 @@ module.exports = class QueryResult {
           };
         });
 
-        const edge_bindings = result.edge_bindings[queryEdgeID] = Array.from(kgEdgeIDs).map((kgEdgeID) => {
+        result.edge_bindings[queryEdgeID] = Array.from(kgEdgeIDs).map((kgEdgeID) => {
           return {
             id: kgEdgeID
           };
