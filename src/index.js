@@ -12,6 +12,7 @@ const _ = require('lodash');
 const QEdge2BTEEdgeHandler = require('./qedge2bteedge');
 const LogEntry = require('./log_entry');
 const redisClient = require('./redis-client');
+const config = require('./config');
 
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 exports.redisClient = redisClient;
@@ -176,6 +177,37 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         debug(`(X) Terminating..."${current_edge.getID()}" got 0 results.`);
         return;
       }
+
+      //Logging for exploding results
+      if (res.length > config.ENTITY_MAX) {
+        if (current_edge.reverse) {
+          debug(`Edge ${current_edge.qEdge.id} results exploded. (${current_edge.object.entity_count} input ids) --> (${res.length} results)`,);
+          debug(`(${current_edge.object.id} - ${current_edge.object.category}) ----> (${current_edge.subject.id} - ${current_edge.subject.category})`,);
+          debug(`Predicates: ${current_edge.qEdge.predicate}`);
+          debug(`Input curies: ${JSON.stringify(current_edge.object.curie)}`);
+        } else {
+          debug(`Edge ${current_edge.qEdge.id} results exploded. (${current_edge.subject.entity_count} input ids) --> (${res.length} results)`,);
+          debug(`(${current_edge.object.id} - ${current_edge.object.category}) ----> (${current_edge.subject.id} - ${current_edge.subject.category})`,);
+          debug(`Predicates: ${current_edge.qEdge.predicate}`);
+          debug(`Input curies: ${JSON.stringify(current_edge.subject.curie)}`);
+        }
+
+        let combos = {};
+        for (let r of res) {
+          if (!combos[r.$input.original]) {
+            combos[r.$input.original] = [];
+          }
+          combos[r.$input.original].push(r.$output.original);
+        }
+
+        //print in descending order of curies connected to it
+        Object.entries(combos)
+          .sort((a, b) => b[1].length - a[1].length)
+          .forEach((combo) => {
+            debug(`${combo[0]} (${combo[1].length})`);
+          });
+      }
+
       //storing results will trigger a node entity count update
       current_edge.storeResults(res);
       //filter results
