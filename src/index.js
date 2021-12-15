@@ -97,7 +97,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   _createBatchEdgeQueryHandlers(queryPaths, kg) {
     let handlers = {};
     for (const index in queryPaths) {
-      handlers[index] = new BatchEdgeQueryHandler(kg, this.resolveOutputIDs, { caching: this.options.caching });
+      handlers[index] = new BatchEdgeQueryHandler(kg, this.resolveOutputIDs, { caching: this.options.caching, maxResultsPerEdge: this.options.maxResultsPerEdge });
       handlers[index].setEdges(queryPaths[index]);
       handlers[index].subscribe(this.queryResults);
       handlers[index].subscribe(this.bteGraph);
@@ -106,7 +106,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   }
 
   _createBatchEdgeQueryHandlersForCurrent(currentEdge, kg) {
-    let handler = new BatchEdgeQueryHandler(kg, this.resolveOutputIDs, {caching: this.options.caching });
+    let handler = new BatchEdgeQueryHandler(kg, this.resolveOutputIDs, {caching: this.options.caching, maxResultsPerEdge: this.options.maxResultsPerEdge });
     handler.setEdges(currentEdge);
     return handler;
   }

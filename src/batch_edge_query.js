@@ -10,7 +10,8 @@ module.exports = class BatchEdgeQueryHandler {
     this.kg = kg;
     this.subscribers = [];
     this.logs = [];
-    this.caching = options && options.caching;
+    this.caching = options?.caching;
+    this.maxResultsPerEdge = options?.maxResultsPerEdge;
     this.resolveOutputIDs = resolveOutputIDs;
   }
 
@@ -41,7 +42,7 @@ module.exports = class BatchEdgeQueryHandler {
    */
   async _queryBTEEdges(bteEdges) {
     let executor = new call_api(bteEdges);
-    const res = await executor.query(this.resolveOutputIDs);
+    const res = await executor.query(this.resolveOutputIDs, this.maxResultsPerEdge);
     this.logs = [...this.logs, ...executor.logs];
     return res;
   }
