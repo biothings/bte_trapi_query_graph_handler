@@ -160,20 +160,20 @@ module.exports = class QEdge2BTEEdgeHandler {
       });
     }
 
-    let chunksize = Infinity;
+    let batchSize = Infinity;
     if (smartAPIEdge.tags.includes('biothings')) {
-      chunksize = 1000;
+      batchSize = 1000;
     }
     let configuredLimit = smartAPIEdge.query_operation.batchSize;
-    let hardLimit = config.API_MAX_ID_LIST.find((api) => {
+    let hardLimit = config.API_BATCH_SIZE.find((api) => {
       return api.id === smartAPIEdge.association.smartapi.id || api.name === smartAPIEdge.association.api_name;
     });
     // BTE internal configured limit takes precedence over annotated limit
-    chunksize = hardLimit
+    batchSize = hardLimit
       ? hardLimit.max
-      : configuredLimit ? configuredLimit : chunksize;
+      : configuredLimit ? configuredLimit : batchSize;
     if (Object.keys(id_mapping).length > 0) {
-      await Promise.all(_.chunk(inputs, chunksize).map(async (chunk) => {
+      await Promise.all(_.chunk(inputs, batchSize).map(async (chunk) => {
         let blockingSince = Date.now();
         const edge = { ...smartAPIEdge };
         if (blockingSince + (parseInt(process.env.SETIMMEDIATE_TIME) || 3) < Date.now()) {
@@ -266,20 +266,20 @@ module.exports = class QEdge2BTEEdgeHandler {
         }
       });
     }
-    let chunksize = Infinity;
+    let batchSize = Infinity;
     if (smartAPIEdge.tags.includes('biothings')) {
-      chunksize = 1000;
+      batchSize = 1000;
     }
     let configuredLimit = smartAPIEdge.query_operation.batchSize;
-    let hardLimit = config.API_MAX_ID_LIST.find((api) => {
+    let hardLimit = config.API_BATCH_SIZE.find((api) => {
       return api.id === smartAPIEdge.association.smartapi.id || api.name === smartAPIEdge.association.api_name;
     });
     // BTE internal configured limit takes precedence over annotated limit
-    chunksize = hardLimit
+    batchSize = hardLimit
       ? hardLimit.max
-      : configuredLimit ? configuredLimit : chunksize;
+      : configuredLimit ? configuredLimit : batchSize;
     if (Object.keys(id_mapping).length > 0) {
-      await Promise.all(_.chunk(inputs, chunksize).map(async (chunk) => {
+      await Promise.all(_.chunk(inputs, batchSize).map(async (chunk) => {
         let blockingSince = Date.now();
         const edge = { ...smartAPIEdge };
         if (blockingSince + (parseInt(process.env.SETIMMEDIATE_TIME) || 3) < Date.now()) {
