@@ -119,6 +119,9 @@ module.exports = class QueryResult {
     queryNodeIDToMatch,
     primaryIDToMatch
   ) {
+    if (!dataByEdge[queryEdgeID]) {
+      return;
+    }
     const {connected_to, records} = dataByEdge[queryEdgeID];
 
     // queryNodeID example: 'n0'
@@ -281,6 +284,7 @@ module.exports = class QueryResult {
       [], // first preresult
       initialQueryNodeIDToMatch,
     );
+    debug(`${preresults.length} preresults found`);
 
     /**
      * Consolidation
@@ -446,6 +450,7 @@ module.exports = class QueryResult {
       }
     });
 
+    debug(`${consolidatedPreresults.length} consolidatedPreresults found`);
     /**
      * The last step is to do the minor re-formatting to turn consolidatedResults
      * into the desired final results.
@@ -481,5 +486,6 @@ module.exports = class QueryResult {
 
       return result;
     });
+    debug(`Got ${this._results.length} total results.`);
   }
 };
