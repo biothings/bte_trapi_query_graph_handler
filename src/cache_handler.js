@@ -36,7 +36,8 @@ module.exports = class {
       let cachedResJSON;
       const unlock = await redisClient.lock('redisLock:' + hashedEdgeID);
       try {
-        const cachedRes = await redisClient.hgetallAsync(hashedEdgeID);
+        const redisID = "bte:edgeCache:" + hashedEdgeID;
+        const cachedRes = await redisClient.hgetallAsync(redisID);
         cachedResJSON = cachedRes
           ? Object.entries(cachedRes)
             .sort(([key1], [key2]) => parseInt(key1) - parseInt(key2))
