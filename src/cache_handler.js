@@ -36,7 +36,8 @@ module.exports = class {
       let cachedResJSON;
       const unlock = await redisClient.lock('redisLock:' + hashedEdgeID);
       try {
-        const cachedRes = await redisClient.hgetallAsync(hashedEdgeID);
+        const redisID = "bte:edgeCache:" + hashedEdgeID;
+        const cachedRes = await redisClient.hgetallAsync(redisID);
         cachedResJSON = cachedRes
           ? Object.entries(cachedRes)
             .sort(([key1], [key2]) => parseInt(key1) - parseInt(key2))
@@ -141,11 +142,12 @@ module.exports = class {
         // lock to prevent caching to/reading from actively caching edge
         const unlock = await redisClient.lock("redisLock:" + id);
         try {
-          await redisClient.delAsync(id); // prevents weird overwrite edge cases
+          const redisID = "bte:edgeCache:" + id;
+          await redisClient.delAsync(redisID); // prevents weird overwrite edge cases
           await async.eachOfSeries(groupedQueryResult[id], async (edge, index) => {
-            await redisClient.hsetAsync(id, index.toString(), JSON.stringify(edge));
+            await redisClient.hsetAsync(redisID, index.toString(), JSON.stringify(edge));
           });
-          await redisClient.expireAsync(id, process.env.REDIS_KEY_EXPIRE_TIME || 600);
+          await redisClient.expireAsync(redisID, process.env.REDIS_KEY_EXPIRE_TIME || 600);
         } finally {
           unlock(); // release lock whether cache succeeded or not
         }

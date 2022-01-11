@@ -209,13 +209,15 @@ module.exports = class EdgeManager {
                         //check if array
                         if (Array.isArray(o._dbIDs[prefix])) {
                             o._dbIDs[prefix].forEach((single_alias) => {
-                            if (single_alias.includes(':')) {
-                                //value already has prefix
-                                ids.add(single_alias);
-                            }else{
-                                //concat with prefix
-                                ids.add(prefix + ':' + single_alias);
-                            }
+                                if (single_alias) {
+                                    if (single_alias.includes(':')) {
+                                        //value already has prefix
+                                        ids.add(single_alias);
+                                    }else{
+                                        //concat with prefix
+                                        ids.add(prefix + ':' + single_alias);
+                                    }
+                                }
                             });
                         }else{
                             if (o._dbIDs[prefix].includes(':')) {
@@ -248,13 +250,15 @@ module.exports = class EdgeManager {
                         //check if array
                         if (Array.isArray(o._dbIDs[prefix])) {
                             o._dbIDs[prefix].forEach((single_alias) => {
-                            if (single_alias.includes(':')) {
-                                //value already has prefix
-                                o_ids.add(single_alias);
-                            }else{
-                                //concat with prefix
-                                o_ids.add(prefix + ':' + single_alias);
-                            }
+                                if (single_alias) {
+                                    if (single_alias.includes(':')) {
+                                        //value already has prefix
+                                        o_ids.add(single_alias);
+                                    }else{
+                                        //concat with prefix
+                                        o_ids.add(prefix + ':' + single_alias);
+                                    }
+                                }
                             });
                         }else{
                             if (o._dbIDs[prefix].includes(':')) {

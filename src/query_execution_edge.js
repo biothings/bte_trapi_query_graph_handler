@@ -91,12 +91,14 @@ module.exports = class UpdatedExeEdge {
               //check if array
               if (Array.isArray(o._dbIDs[prefix])) {
                 o._dbIDs[prefix].forEach((single_alias) => {
-                  if (single_alias.includes(':')) {
-                    //value already has prefix
-                    original_aliases.add(single_alias);
-                  }else{
-                    //concat with prefix
-                    original_aliases.add(prefix + ':' + single_alias);
+                  if (single_alias) {
+                    if (single_alias.includes(':')) {
+                      //value already has prefix
+                      original_aliases.add(single_alias);
+                    }else{
+                      //concat with prefix
+                      original_aliases.add(prefix + ':' + single_alias);
+                    }
                   }
                 });
               }else{
@@ -155,12 +157,14 @@ module.exports = class UpdatedExeEdge {
               //check if array
               if (Array.isArray(o._dbIDs[prefix])) {
                 o._dbIDs[prefix].forEach((single_alias) => {
-                  if (single_alias.includes(':')) {
-                    //value already has prefix
-                    original_aliases.add(single_alias);
-                  }else{
-                    //concat with prefix
-                    original_aliases.add(prefix + ':' + single_alias);
+                  if (single_alias) {
+                    if (single_alias.includes(':')) {
+                      //value already has prefix
+                      original_aliases.add(single_alias);
+                    }else{
+                      //concat with prefix
+                      original_aliases.add(prefix + ':' + single_alias);
+                    }
                   }
                 });
               }else{

@@ -69,7 +69,7 @@ module.exports = class KnowledgeGraph {
     let attributes = [
       {
         attribute_type_id: 'biolink:aggregator_knowledge_source',
-        value: ['infores:translator-biothings-explorer'],
+        value: ['infores:biothings-explorer'],
         value_type_id: 'biolink:InformationResource',
       },
     ];
