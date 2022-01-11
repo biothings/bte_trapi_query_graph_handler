@@ -40,14 +40,14 @@ const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
 
 // TODO: if these are correct, they should probably be moved to helper.js
 function _getInputIsSet(record) {
-  return record.$edge_metadata.trapi_qEdge_obj.isReversed()
-    ? record.$edge_metadata.trapi_qEdge_obj.object.isSet()
-    : record.$edge_metadata.trapi_qEdge_obj.subject.isSet();
+  return record.$edge_metadata.trapi_qEdge_obj.reverse
+    ? record.$edge_metadata.trapi_qEdge_obj.object.is_set
+    : record.$edge_metadata.trapi_qEdge_obj.subject.is_set;
 }
 function _getOutputIsSet(record) {
-  return record.$edge_metadata.trapi_qEdge_obj.isReversed()
-    ? record.$edge_metadata.trapi_qEdge_obj.subject.isSet()
-    : record.$edge_metadata.trapi_qEdge_obj.object.isSet();
+  return record.$edge_metadata.trapi_qEdge_obj.reverse
+    ? record.$edge_metadata.trapi_qEdge_obj.subject.is_set
+    : record.$edge_metadata.trapi_qEdge_obj.object.is_set;
 }
 
 /**
@@ -200,8 +200,8 @@ module.exports = class QueryResult {
     const edges = new Set(keys(dataByEdge));
     const edgeCount = edges.size;
 
-    // find all QNodes having isSet() params
-    // NOTE: isSet() in the query graph and the JavaScript Set object below refer to different sets.
+    // find all QNodes having is_set params
+    // NOTE: is_set in the query graph and the JavaScript Set object below refer to different sets.
     const queryNodeIDsWithIsSet = new Set();
     toPairs(dataByEdge).forEach(([queryEdgeID, {connected_to, records}]) => {
       const inputQueryNodeID = helper._getInputQueryNodeID(records[0]);
@@ -275,7 +275,7 @@ module.exports = class QueryResult {
      * for some minor differences that make it easier to perform the consolidation.
      *
      * There are two types of consolidation we need to perform here:
-     * 1. one or more query nodes have an 'isSet()' param
+     * 1. one or more query nodes have an 'is_set' param
      * 2. one or more primaryID pairs have multiple kgEdges each
      */
     
@@ -283,7 +283,7 @@ module.exports = class QueryResult {
     const consolidatedPreresults = [];
 
     /**
-     * for when there's an isSet() param
+     * for when there's an is_set param
      *
      * primaryIDsByQueryNodeID could look like this:
      * {
@@ -294,7 +294,7 @@ module.exports = class QueryResult {
     let primaryIDsByQueryNodeID = {};
     const kgEdgeIDsByQueryEdgeID = {};
 
-    // for when there's NOT an isSet() param.
+    // for when there's NOT an is_set param.
     // It's currently just consolidating when there are multiple KG edge predicates.
     let kgEdgeIDsByRecordDedupTag = {};
 
@@ -304,7 +304,7 @@ module.exports = class QueryResult {
     // These tags contain the info we use to determine whether a result is a duplicate
     // (one or more records for a result should be consolidated).
     //
-    // This info will vary depending on things like whether the QEdge has any isSet() params.
+    // This info will vary depending on things like whether the QEdge has any is_set params.
     const resultDedupTags = new Set();
 
     preresults.forEach((preresult) => {
@@ -323,7 +323,7 @@ module.exports = class QueryResult {
 
       const preresultRecordClone = {...preresultRecord};
 
-      // This is needed because consolidation when isSet() is NOT specified
+      // This is needed because consolidation when is_set is NOT specified
       // is more limited than when it is specified. It's currently just
       // consolidating when there are multiple KG edge predicates.
       //
@@ -343,7 +343,7 @@ module.exports = class QueryResult {
       }, j) => {
 
         if (queryNodeIDsWithIsSet.has(inputQueryNodeID) && queryNodeIDsWithIsSet.has(outputQueryNodeID)) {
-          // both QNodes of the QEdge for this record have isSet() params 
+          // both QNodes of the QEdge for this record have is_set params 
 
           const recordDedupTag = [inputQueryNodeID, outputQueryNodeID].join("-")
           recordDedupTags.push(recordDedupTag);
@@ -374,7 +374,7 @@ module.exports = class QueryResult {
           primaryIDsByQueryNodeID[outputQueryNodeID].add(outputPrimaryID);
           kgEdgeIDsByQueryEdgeID[queryEdgeID].add(kgEdgeID);
         } else if (queryNodeIDsWithIsSet.has(inputQueryNodeID)) {
-          // The input QNode of the QEdge for this record has an isSet() param.
+          // The input QNode of the QEdge for this record has an is_set param.
 
           const recordDedupTag = [inputQueryNodeID, outputQueryNodeID, outputPrimaryID].join("-")
           // e.g., "n1-n2-PUBCHEM.COMPOUND:43815"
@@ -407,7 +407,7 @@ module.exports = class QueryResult {
         } else if (queryNodeIDsWithIsSet.has(outputQueryNodeID)) {
           // TODO: verify I switched input & output correctly below in this block:
           
-          // The output QNode of the QEdge for this record has an isSet() param.
+          // The output QNode of the QEdge for this record has an is_set param.
 
           const recordDedupTag = [inputQueryNodeID, inputPrimaryID, outputQueryNodeID].join("-")
           // e.g., "n0-NCBIGene:3630-n1"
@@ -455,7 +455,7 @@ module.exports = class QueryResult {
             kgEdgeIDsByRecordDedupTag[recordDedupTag] = new Set();
             preresultRecord.kgEdgeIDs = kgEdgeIDsByRecordDedupTag[recordDedupTag];
 
-            // When isSet() is not specified, each preresultRecord only has one
+            // When is_set is not specified, each preresultRecord only has one
             // each of unique inputPrimaryID and outputPrimaryID.
             preresultRecord.inputPrimaryIDs.add(inputPrimaryID);
             preresultRecord.outputPrimaryIDs.add(outputPrimaryID);
