@@ -11,16 +11,16 @@ describe('Testing QueryResults Module', () => {
         queryResult.update(results);
         const query_results = queryResult.getResults();
 
-        expect(query_results.length).toEqual(4);
+        expect(query_results.length).toEqual(3);
 
         expect(Object.keys(query_results[0].node_bindings).sort()).toEqual([
           'n0', 'n1'
         ]);
         expect(Object.keys(query_results[0].edge_bindings).sort()).toEqual([
-          'e0'
+          'e00'
         ]);
 
-        expect(query_results[0].edge_bindings['e0'].length).toEqual(2);
+        expect(query_results[0].edge_bindings['e00'].length).toEqual(2);
 
         expect(query_results[0]).toHaveProperty('score');
       });

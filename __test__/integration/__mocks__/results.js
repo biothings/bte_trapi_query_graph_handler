@@ -30,10 +30,9 @@
 // }
 
 // 4 results from (2 ids as set) to unique ids
-// 1 result from wrong input id to unique id
 
 const results = {
-    'e0': {
+    'e00': {
         'connected_to': [],
         'records':[
             {
@@ -202,11 +201,11 @@ const results = {
                    }
                 },
                 "$input":{
-                   "original":"MONDO:0013433",
+                   "original":"MONDO:0019340",
                    "obj":[
                       {
                          "id":{
-                            "identifier":"MONDO:0013433",
+                            "identifier":"MONDO:0019340",
                             "label":"primary sclerosing cholangitis"
                          },
                          "type":[
@@ -217,7 +216,7 @@ const results = {
                             "biolink:Entity",
                             "biolink:ThingWithTaxon"
                          ],
-                         "primaryID":"MONDO:0013433",
+                         "primaryID":"MONDO:0019340",
                          "label":"primary sclerosing cholangitis",
                          "semanticType":"Disease",
                          "_leafSemanticType":"Disease",
@@ -240,8 +239,8 @@ const results = {
                             "identifier":"UMLS:002",
                             "label":"UMLS:002"
                          },
-                         "primaryID":"UMLS:003",
-                         "label":"UMLS:003",
+                         "primaryID":"UMLS:002",
+                         "label":"UMLS:002",
                          "semanticType":"SmallMolecule",
                          "_leafSemanticType":"SmallMolecule",
                          "type":[
@@ -472,116 +471,6 @@ const results = {
                     ]
                 }
             },
-            // this record should not make it to final results
-            {
-                "$edge_metadata":{
-                   "input_id":"UMLS",
-                   "input_type":"Disease",
-                   "output_id":"UMLS",
-                   "output_type":"SmallMolecule",
-                   "predicate":"treated_by",
-                   "source":"infores:semmeddb",
-                   "api_name":"BioThings SEMMEDDB API",
-                   "trapi_qEdge_obj":{
-                      "qEdge":{
-                         "id":"e00",
-                         "subject":{
-                            "id":"n0",
-                            "category":[
-                               "biolink:Disease"
-                            ],
-                            "curie":[
-                               "MONDO:0013433",
-                               "MONDO:0019340"
-                            ],
-                            "is_set":true,
-                            "entity_count":2
-                         },
-                         "object":{
-                            "id":"n1",
-                            "category":[
-                               "biolink:SmallMolecule"
-                            ],
-                            "is_set":false,
-                            "entity_count":558
-                         }
-                      },
-                      "reverse":false,
-                      "object":{
-                         "id":"n1",
-                         "category":[
-                            "biolink:SmallMolecule"
-                         ],
-                         "is_set":false
-                      },
-                      "subject":{
-                         "id":"n0",
-                         "category":[
-                            "biolink:Disease"
-                         ],
-                         "curie":[
-                            "MONDO:0013433",
-                            "MONDO:0019340"
-                         ],
-                         "is_set":true
-                      },
-                      "executed":true,
-                      "results":"$results"
-                   }
-                },
-                "$input":{
-                   "original":"MONDO:invalid",
-                   "obj":[
-                      {
-                         "id":{
-                            "identifier":"MONDO:invalid",
-                            "label":"primary sclerosing cholangitis"
-                         },
-                         "type":[
-                            "biolink:Disease",
-                            "biolink:DiseaseOrPhenotypicFeature",
-                            "biolink:BiologicalEntity",
-                            "biolink:NamedThing",
-                            "biolink:Entity",
-                            "biolink:ThingWithTaxon"
-                         ],
-                         "primaryID":"MONDO:invalid",
-                         "label":"primary sclerosing cholangitis",
-                         "semanticType":"Disease",
-                         "_leafSemanticType":"Disease",
-                         "semanticTypes":[
-                            "biolink:Disease",
-                            "biolink:DiseaseOrPhenotypicFeature",
-                            "biolink:BiologicalEntity",
-                            "biolink:NamedThing",
-                            "biolink:Entity",
-                            "biolink:ThingWithTaxon"
-                         ]
-                      }
-                   ]
-                },
-                "$output":{
-                   "original":"UMLS:005",
-                   "obj":[
-                      {
-                         "id":{
-                            "identifier":"UMLS:005",
-                            "label":"UMLS:005"
-                         },
-                         "primaryID":"UMLS:005",
-                         "label":"UMLS:005",
-                         "semanticType":"SmallMolecule",
-                         "_leafSemanticType":"SmallMolecule",
-                         "type":[
-                            "SmallMolecule"
-                         ],
-                         "semanticTypes":[
-                            "SmallMolecule"
-                         ]
-                      }
-                    ]
-                }
-            }
         ]
     }
 }
