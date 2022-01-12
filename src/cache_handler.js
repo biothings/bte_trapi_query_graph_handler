@@ -29,11 +29,15 @@ class DelimitedChunks extends Transform {
   }
 
   _flush(callback) {
-    if (this._buffer.length) {
-      const final = JSON.parse(lz4.decode(Buffer.from(this._buffer, 'base64url')).toString());
-      callback(null, final);
+    try {
+      if (this._buffer.length) {
+        const final = JSON.parse(lz4.decode(Buffer.from(this._buffer, 'base64url')).toString());
+        callback(null, final);
+      }
+      callback();
+    } catch (error) {
+      callback(error);
     }
-    callback();
   }
 }
 
