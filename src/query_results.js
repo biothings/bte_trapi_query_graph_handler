@@ -404,6 +404,12 @@ module.exports = class QueryResult {
             primaryIDsByQueryNodeID[inputQueryNodeID] = new Set();
           }
           primaryIDsByQueryNodeID[inputQueryNodeID].add(inputPrimaryID);
+          // Never adding output ID here
+          // if (!Object.hasOwnProperty.call(primaryIDsByQueryNodeID, outputQueryNodeID)) {
+          //   primaryIDsByQueryNodeID[outputQueryNodeID] = new Set();
+          // }
+          // primaryIDsByQueryNodeID[outputQueryNodeID].add(outputPrimaryID);
+
         } else if (queryNodeIDsWithIsSet.has(outputQueryNodeID)) {
           // TODO: verify I switched input & output correctly below in this block:
           
@@ -436,6 +442,7 @@ module.exports = class QueryResult {
             primaryIDsByQueryNodeID[outputQueryNodeID] = new Set();
           }
           primaryIDsByQueryNodeID[outputQueryNodeID].add(outputPrimaryID);
+          // Never adding input ID here
         } else {
           // The only other consolidation we need to do is when two primaryIDs for two
           // different respective QNodes have multiple KG Edges connecting them.
