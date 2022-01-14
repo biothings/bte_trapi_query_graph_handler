@@ -184,6 +184,41 @@ module.exports = class QueryResult {
   }
 
   /**
+   * For the purposes of consolidating results, a unique node ID just
+   * depends on whether 'is_set' is true or false.
+   *
+   * If it's true, then we only care about the QNode ID
+   * (inputQueryNodeID or outputQueryNodeID), e.g., n1.
+   *
+   * If it's false, then we need to take into account the primaryID
+   * (inputPrimaryID or outputPrimaryID) as well, e.g., n0-NCBIGene:3630.
+   *
+   * We will later use these uniqueNodeIDs to generate unique result IDs.
+   * The unique result IDs will be unique per result, but they will only
+   * contain the bare minimum of information required to make them unique.
+   *
+   * Examples of what these unique results IDs can look like
+   *   when is_set is specified for n1:
+   *     "n0-NCBIGene:3630-n1_&_n1-n2-PUBCHEM.COMPOUND:43815"
+   *
+   *   when is_set is NOT specified for n1:
+   *     "n0-NCBIGene:3630-n1-MONDO:0005068_&_n1-MONDO:0005068-n2-PUBCHEM.COMPOUND:43815"
+   *     "n0-NCBIGene:3630-n1-MONDO:0005010_&_n1-MONDO:0005010-n2-PUBCHEM.COMPOUND:43815"
+   *
+   * @param {Set<string>} queryNodeIDsWithIsSet
+   * @param {string} queryNodeID
+   * @param {string} primaryID
+   * @return {string} uniqueNodeID
+   */
+  _getUniqueNodeID(queryNodeIDsWithIsSet, queryNodeID, primaryID) {
+    if (queryNodeIDsWithIsSet.has(queryNodeID)) {
+      return queryNodeID;
+    } else {
+      return `${queryNodeID}-${primaryID}`;
+    }
+  }
+
+  /**
    * Transform a collection of records into query result(s).
    * Cache the result(s) so they're ready for getResults().
    *
@@ -278,219 +313,288 @@ module.exports = class QueryResult {
      * 1. one or more query nodes have an 'is_set' param
      * 2. one or more primaryID pairs have multiple kgEdges each
      */
-    
-    // Each of these is equivalent to a result. It's just formatted differently.
-    const consolidatedPreresults = [];
 
-    /**
-     * for when there's an is_set param
-     *
-     * primaryIDsByQueryNodeID could look like this:
-     * {
-     *   "n0": new Set(["NCBIGene:3630"]),
-     *   "n1": new Set(["MONDO:0005068", "MONDO:0005010"])
-     * }
-     */
-    let primaryIDsByQueryNodeID = {};
-    const kgEdgeIDsByQueryEdgeID = {};
-
-    // for when there's NOT an is_set param.
-    // It's currently just consolidating when there are multiple KG edge predicates.
-    let kgEdgeIDsByRecordDedupTag = {};
-
-    // Each of these tags is an identifier for a result and is made up of the concatenation
-    // of every recordDedupTag for a given preresult.
-    //
-    // These tags contain the info we use to determine whether a result is a duplicate
-    // (one or more records for a result should be consolidated).
-    //
-    // This info will vary depending on things like whether the QEdge has any is_set params.
-    const resultDedupTags = new Set();
+    const preresultsByUniqueResultID = {};
 
     preresults.forEach((preresult) => {
-      // the preresult is not exactly this, but here's an example to give the rough idea:
-      // 1: [["NCBIGene:3630", "MONDO:0005068"], ["MONDO:0005068", "PUBCHEM.COMPOUND:43815"]]
-      // 2: [["NCBIGene:3630", "MONDO:0005010"], ["MONDO:0005010", "PUBCHEM.COMPOUND:43815"]]
-      let consolidatedPreresult = [];
-
-      // a preresultRecord is basically the information from a record,
-      // but formatted differently for purposes of assembling results.
-      let preresultRecord = {
-        inputPrimaryIDs: new Set(),
-        outputPrimaryIDs: new Set(),
-        kgEdgeIDs: new Set(),
-      };
-
-      const preresultRecordClone = {...preresultRecord};
-
-      // This is needed because consolidation when is_set is NOT specified
-      // is more limited than when it is specified. It's currently just
-      // consolidating when there are multiple KG edge predicates.
+      // example inputPrimaryID and outputPrimaryID in a preresult:
+      // [
+      //   {"inputPrimaryID": "NCBIGene:3630", "outputPrimaryID", "MONDO:0005068"},
+      //   {"inputPrimaryID": "MONDO:0005068", "outputPrimaryID", "PUBCHEM.COMPOUND:43815"}
+      // ]
       //
-      // TODO: it's a little confusing why we need the preresult.length check, but
-      // without it, the following test in QueryResult.test.js fails:
-      // 'should get 1 result with 2 edge mappings when predicates differ: ⇉'
-      if (preresult.length > 1) {
-        kgEdgeIDsByRecordDedupTag = {};
-      }
+      // Other items present in a presult but not shown above:
+      // inputQueryNodeID, outputQueryNodeID, queryEdgeID, kgEdgeID
 
-      let recordDedupTags = [];
+      const uniqueNodeIDs = [];
+
+      const firstRecord = preresult[0];
+      // Add the input for the first record and then just add outputs after that.
+      // The output for one record is the input for the subsequent record. 
+      uniqueNodeIDs.push(
+        this._getUniqueNodeID(queryNodeIDsWithIsSet, firstRecord.inputQueryNodeID, firstRecord.inputPrimaryID)
+      );
 
       preresult.forEach(({
         inputQueryNodeID, outputQueryNodeID,
         inputPrimaryID, outputPrimaryID,
         queryEdgeID, kgEdgeID
-      }, j) => {
-
-        if (queryNodeIDsWithIsSet.has(inputQueryNodeID) && queryNodeIDsWithIsSet.has(outputQueryNodeID)) {
-          // both QNodes of the QEdge for this record have is_set params 
-
-          const recordDedupTag = [inputQueryNodeID, outputQueryNodeID].join("-")
-          recordDedupTags.push(recordDedupTag);
-
-          // TODO: why do we always do this here, but in the 'else' section below, we
-          // only do it when kgEdgeIDsByRecordDedupTag[recordDedupTag] doesn't exist?
-          // The tests pass regardless of whether this is inside or outside of the
-          // if statement below.
-          preresultRecord = cloneDeep(preresultRecordClone);
-          consolidatedPreresult.push(preresultRecord);
-
-          if (!(primaryIDsByQueryNodeID.hasOwnProperty(inputQueryNodeID) && primaryIDsByQueryNodeID.hasOwnProperty(outputQueryNodeID))) {
-            kgEdgeIDsByQueryEdgeID[queryEdgeID] = new Set();
-            preresultRecord.kgEdgeIDs = kgEdgeIDsByQueryEdgeID[queryEdgeID];
-
-            if (!primaryIDsByQueryNodeID.hasOwnProperty(inputQueryNodeID)) {
-              primaryIDsByQueryNodeID[inputQueryNodeID] = new Set();
-              preresultRecord.inputPrimaryIDs = primaryIDsByQueryNodeID[inputQueryNodeID];
-            }
-
-            if (!primaryIDsByQueryNodeID.hasOwnProperty(outputQueryNodeID)) {
-              primaryIDsByQueryNodeID[outputQueryNodeID] = new Set();
-              preresultRecord.outputPrimaryIDs = primaryIDsByQueryNodeID[outputQueryNodeID];
-            }
-          }
-
-          primaryIDsByQueryNodeID[inputQueryNodeID].add(inputPrimaryID);
-          primaryIDsByQueryNodeID[outputQueryNodeID].add(outputPrimaryID);
-          kgEdgeIDsByQueryEdgeID[queryEdgeID].add(kgEdgeID);
-        } else if (queryNodeIDsWithIsSet.has(inputQueryNodeID)) {
-          // The input QNode of the QEdge for this record has an is_set param.
-
-          const recordDedupTag = [inputQueryNodeID, outputQueryNodeID, outputPrimaryID].join("-")
-          // e.g., "n1-n2-PUBCHEM.COMPOUND:43815"
-          recordDedupTags.push(recordDedupTag);
-
-          // TODO: why must we always do this here, but in the 'else' section below, we
-          // only do it when kgEdgeIDsByRecordDedupTag[recordDedupTag] doesn't exist?
-          // Some tests fail when this is inside the if statement below
-          preresultRecord = cloneDeep(preresultRecordClone);
-          consolidatedPreresult.push(preresultRecord);
-
-          if (!kgEdgeIDsByQueryEdgeID.hasOwnProperty(queryEdgeID)) {
-            kgEdgeIDsByQueryEdgeID[queryEdgeID] = new Set();
-            preresultRecord.kgEdgeIDs = kgEdgeIDsByQueryEdgeID[queryEdgeID];
-          }
-          kgEdgeIDsByQueryEdgeID[queryEdgeID].add(kgEdgeID);
-
-          preresultRecord.kgEdgeIDs = kgEdgeIDsByQueryEdgeID[queryEdgeID];
-          //primary ids
-          if (!primaryIDsByQueryNodeID[inputQueryNodeID] || !primaryIDsByQueryNodeID[inputQueryNodeID].size) {
-            preresultRecord.inputPrimaryIDs = new Set([inputPrimaryID]);
-          }else{
-            preresultRecord.inputPrimaryIDs = primaryIDsByQueryNodeID[inputQueryNodeID];
-          }
-          
-          if (!Object.hasOwnProperty.call(primaryIDsByQueryNodeID, inputQueryNodeID)) {
-            primaryIDsByQueryNodeID[inputQueryNodeID] = new Set();
-          }
-          primaryIDsByQueryNodeID[inputQueryNodeID].add(inputPrimaryID);
-          // Never adding output ID here
-          // if (!Object.hasOwnProperty.call(primaryIDsByQueryNodeID, outputQueryNodeID)) {
-          //   primaryIDsByQueryNodeID[outputQueryNodeID] = new Set();
-          // }
-          // primaryIDsByQueryNodeID[outputQueryNodeID].add(outputPrimaryID);
-
-        } else if (queryNodeIDsWithIsSet.has(outputQueryNodeID)) {
-          // TODO: verify I switched input & output correctly below in this block:
-          
-          // The output QNode of the QEdge for this record has an is_set param.
-
-          const recordDedupTag = [inputQueryNodeID, inputPrimaryID, outputQueryNodeID].join("-")
-          // e.g., "n0-NCBIGene:3630-n1"
-          recordDedupTags.push(recordDedupTag);
-
-          // TODO: why must we always do this here, but in the 'else' section below, we
-          // only do it when kgEdgeIDsByRecordDedupTag[recordDedupTag] doesn't exist?
-          // Some tests fail when this is inside the if statement below
-          preresultRecord = cloneDeep(preresultRecordClone);
-          consolidatedPreresult.push(preresultRecord);
-
-          if (!kgEdgeIDsByQueryEdgeID.hasOwnProperty(queryEdgeID)) {
-            kgEdgeIDsByQueryEdgeID[queryEdgeID] = new Set();
-            preresultRecord.kgEdgeIDs = kgEdgeIDsByQueryEdgeID[queryEdgeID];
-          }
-          kgEdgeIDsByQueryEdgeID[queryEdgeID].add(kgEdgeID);
-
-          preresultRecord.kgEdgeIDs = kgEdgeIDsByQueryEdgeID[queryEdgeID];
-          //primary ids
-          if (!primaryIDsByQueryNodeID[outputQueryNodeID] || !primaryIDsByQueryNodeID[outputQueryNodeID].size) {
-            preresultRecord.outputPrimaryIDs = new Set([outputPrimaryID]);
-          } else {
-            preresultRecord.outputPrimaryIDs = primaryIDsByQueryNodeID[outputQueryNodeID];
-          }
-          if (!Object.hasOwnProperty.call(primaryIDsByQueryNodeID, outputPrimaryID)) {
-            primaryIDsByQueryNodeID[outputQueryNodeID] = new Set();
-          }
-          primaryIDsByQueryNodeID[outputQueryNodeID].add(outputPrimaryID);
-          // Never adding input ID here
-        } else {
-          // The only other consolidation we need to do is when two primaryIDs for two
-          // different respective QNodes have multiple KG Edges connecting them.
-          const recordDedupTag = [
-            inputQueryNodeID,
-            inputPrimaryID,
-            outputQueryNodeID,
-            outputPrimaryID
-          ].join("-");
-
-          recordDedupTags.push(recordDedupTag);
-
-          if (!kgEdgeIDsByRecordDedupTag.hasOwnProperty(recordDedupTag)) {
-            preresultRecord = cloneDeep(preresultRecordClone);
-            consolidatedPreresult.push(preresultRecord);
-
-            kgEdgeIDsByRecordDedupTag[recordDedupTag] = new Set();
-            preresultRecord.kgEdgeIDs = kgEdgeIDsByRecordDedupTag[recordDedupTag];
-
-            // When is_set is not specified, each preresultRecord only has one
-            // each of unique inputPrimaryID and outputPrimaryID.
-            preresultRecord.inputPrimaryIDs.add(inputPrimaryID);
-            preresultRecord.outputPrimaryIDs.add(outputPrimaryID);
-          }
-
-          kgEdgeIDsByRecordDedupTag[recordDedupTag].add(kgEdgeID);
-        }
-
-        preresultRecord.inputQueryNodeID = inputQueryNodeID;
-        preresultRecord.outputQueryNodeID = outputQueryNodeID;
-        preresultRecord.queryEdgeID = queryEdgeID;
+      }) => {
+        uniqueNodeIDs.push(
+          this._getUniqueNodeID(queryNodeIDsWithIsSet, outputQueryNodeID, outputPrimaryID)
+        );
       });
 
-      const resultDedupTag = recordDedupTags.join("_&_");
-      // when is_set specified for n1:
-      // e.g., "n0-NCBIGene:3630-n1_&_n1-n2-PUBCHEM.COMPOUND:43815"
+      const uniqueResultID = uniqueNodeIDs.join("_&_");
+      // Example uniqueResultIDs:
+      //   when is_set specified for n1:
+      //     "n0-NCBIGene:3630-n1_&_n1-n2-PUBCHEM.COMPOUND:43815"
       //
-      // when is_set NOT specified for n1:
-      // e.g., "n0-NCBIGene:3630-n1-MONDO:0005068_&_n1-MONDO:0005068-n2-PUBCHEM.COMPOUND:43815"
-      // e.g., "n0-NCBIGene:3630-n1-MONDO:0005010_&_n1-MONDO:0005010-n2-PUBCHEM.COMPOUND:43815"
-      
-      // do we have one record for every query edge: consolidatedPreresult.length === edgeCount
-      // have we added this consolidatedPreresult already: resultDedupTags.has(resultDedupTag)
-      if (consolidatedPreresult.length === edgeCount && (!resultDedupTags.has(resultDedupTag))) {
-        consolidatedPreresults.push(consolidatedPreresult);
-        resultDedupTags.add(resultDedupTag)
+      //   when is_set NOT specified for n1:
+      //     "n0-NCBIGene:3630-n1-MONDO:0005068_&_n1-MONDO:0005068-n2-PUBCHEM.COMPOUND:43815"
+      //     "n0-NCBIGene:3630-n1-MONDO:0005010_&_n1-MONDO:0005010-n2-PUBCHEM.COMPOUND:43815"
+
+      if (!preresultsByUniqueResultID.hasOwnProperty(uniqueResultID)) {
+        preresultsByUniqueResultID[uniqueResultID] = [];
       }
+      preresultsByUniqueResultID[uniqueResultID].push(preresult)
     });
+
+    const consolidatedPreresults = values(preresultsByUniqueResultID).map(preresults => {
+      return preresults.map((preresult) => {
+        const firstRecord = preresult[0];
+        const consolidatedPreresult = {
+          inputQueryNodeID: firstRecord.inputQueryNodeID,
+          outputQueryNodeID: firstRecord.outputQueryNodeID,
+          inputPrimaryIDs: new Set(),
+          outputPrimaryIDs: new Set(),
+          queryEdgeID: firstRecord.queryEdgeID,
+          kgEdgeIDs: new Set()
+        };
+        preresult.forEach(({
+          inputQueryNodeID, outputQueryNodeID,
+          inputPrimaryID, outputPrimaryID,
+          queryEdgeID, kgEdgeID
+        }) => {
+          consolidatedPreresult.inputPrimaryIDs.add(inputPrimaryID);
+          consolidatedPreresult.outputPrimaryIDs.add(outputPrimaryID);
+          consolidatedPreresult.kgEdgeIDs.add(kgEdgeID);
+        });
+        return consolidatedPreresult;
+      });
+    });
+
+//    // Each of these is equivalent to a result. It's just formatted differently.
+//    const consolidatedPreresults = [];
+//
+//    /**
+//     * for when there's an is_set param
+//     *
+//     * primaryIDsByQueryNodeID could look like this:
+//     * {
+//     *   "n0": new Set(["NCBIGene:3630"]),
+//     *   "n1": new Set(["MONDO:0005068", "MONDO:0005010"])
+//     * }
+//     */
+//    let primaryIDsByQueryNodeID = {};
+//    const kgEdgeIDsByQueryEdgeID = {};
+//
+//    // for when there's NOT an is_set param.
+//    // It's currently just consolidating when there are multiple KG edge predicates.
+//    let kgEdgeIDsByRecordDedupTag = {};
+//
+//    // Each of these tags is an identifier for a result and is made up of the concatenation
+//    // of every recordDedupTag for a given preresult.
+//    //
+//    // These tags contain the info we use to determine whether a result is a duplicate
+//    // (one or more records for a result should be consolidated).
+//    //
+//    // This info will vary depending on things like whether the QEdge has any is_set params.
+//    const resultDedupTags = new Set();
+//
+//    preresults.forEach((preresult) => {
+//      // the preresult is not exactly this, but here's an example to give the rough idea:
+//      // 1: [["NCBIGene:3630", "MONDO:0005068"], ["MONDO:0005068", "PUBCHEM.COMPOUND:43815"]]
+//      // 2: [["NCBIGene:3630", "MONDO:0005010"], ["MONDO:0005010", "PUBCHEM.COMPOUND:43815"]]
+//      let consolidatedPreresult = [];
+//
+//      // a preresultRecord is basically the information from a record,
+//      // but formatted differently for purposes of assembling results.
+//      let preresultRecord = {
+//        inputPrimaryIDs: new Set(),
+//        outputPrimaryIDs: new Set(),
+//        kgEdgeIDs: new Set(),
+//      };
+//
+//      const preresultRecordClone = {...preresultRecord};
+//
+//      // This is needed because consolidation when is_set is NOT specified
+//      // is more limited than when it is specified. It's currently just
+//      // consolidating when there are multiple KG edge predicates.
+//      //
+//      // TODO: it's a little confusing why we need the preresult.length check, but
+//      // without it, the following test in QueryResult.test.js fails:
+//      // 'should get 1 result with 2 edge mappings when predicates differ: ⇉'
+//      if (preresult.length > 1) {
+//        kgEdgeIDsByRecordDedupTag = {};
+//      }
+//
+//      let recordDedupTags = [];
+//
+//      preresult.forEach(({
+//        inputQueryNodeID, outputQueryNodeID,
+//        inputPrimaryID, outputPrimaryID,
+//        queryEdgeID, kgEdgeID
+//      }, j) => {
+//        if (queryNodeIDsWithIsSet.has(inputQueryNodeID) && queryNodeIDsWithIsSet.has(outputQueryNodeID)) {
+//          // both QNodes of the QEdge for this record have is_set params 
+//
+//          const recordDedupTag = [inputQueryNodeID, outputQueryNodeID].join("-")
+//          recordDedupTags.push(recordDedupTag);
+//
+//          // TODO: why do we always do this here, but in the 'else' section below, we
+//          // only do it when kgEdgeIDsByRecordDedupTag[recordDedupTag] doesn't exist?
+//          // The tests pass regardless of whether this is inside or outside of the
+//          // if statement below.
+//          preresultRecord = cloneDeep(preresultRecordClone);
+//          consolidatedPreresult.push(preresultRecord);
+//
+//          if (!(primaryIDsByQueryNodeID.hasOwnProperty(inputQueryNodeID) && primaryIDsByQueryNodeID.hasOwnProperty(outputQueryNodeID))) {
+//            kgEdgeIDsByQueryEdgeID[queryEdgeID] = new Set();
+//            preresultRecord.kgEdgeIDs = kgEdgeIDsByQueryEdgeID[queryEdgeID];
+//
+//            if (!primaryIDsByQueryNodeID.hasOwnProperty(inputQueryNodeID)) {
+//              primaryIDsByQueryNodeID[inputQueryNodeID] = new Set();
+//              preresultRecord.inputPrimaryIDs = primaryIDsByQueryNodeID[inputQueryNodeID];
+//            }
+//
+//            if (!primaryIDsByQueryNodeID.hasOwnProperty(outputQueryNodeID)) {
+//              primaryIDsByQueryNodeID[outputQueryNodeID] = new Set();
+//              preresultRecord.outputPrimaryIDs = primaryIDsByQueryNodeID[outputQueryNodeID];
+//            }
+//          }
+//
+//          primaryIDsByQueryNodeID[inputQueryNodeID].add(inputPrimaryID);
+//          primaryIDsByQueryNodeID[outputQueryNodeID].add(outputPrimaryID);
+//          kgEdgeIDsByQueryEdgeID[queryEdgeID].add(kgEdgeID);
+//        } else if (1 == 2 && queryNodeIDsWithIsSet.has(inputQueryNodeID)) {
+//          // The input QNode of the QEdge for this record has an is_set param.
+//
+//          const recordDedupTag = [inputQueryNodeID, outputQueryNodeID, outputPrimaryID].join("-")
+//          // e.g., "n1-n2-PUBCHEM.COMPOUND:43815"
+//          recordDedupTags.push(recordDedupTag);
+//
+//          // TODO: why must we always do this here, but in the 'else' section below, we
+//          // only do it when kgEdgeIDsByRecordDedupTag[recordDedupTag] doesn't exist?
+//          // Some tests fail when this is inside the if statement below
+//          preresultRecord = cloneDeep(preresultRecordClone);
+//          consolidatedPreresult.push(preresultRecord);
+//
+//          if (!kgEdgeIDsByQueryEdgeID.hasOwnProperty(queryEdgeID)) {
+//            kgEdgeIDsByQueryEdgeID[queryEdgeID] = new Set();
+//            preresultRecord.kgEdgeIDs = kgEdgeIDsByQueryEdgeID[queryEdgeID];
+//          }
+//          kgEdgeIDsByQueryEdgeID[queryEdgeID].add(kgEdgeID);
+//
+//          preresultRecord.kgEdgeIDs = kgEdgeIDsByQueryEdgeID[queryEdgeID];
+//          //primary ids
+//          if (!primaryIDsByQueryNodeID[inputQueryNodeID] || !primaryIDsByQueryNodeID[inputQueryNodeID].size) {
+//            preresultRecord.inputPrimaryIDs = new Set([inputPrimaryID]);
+//          }else{
+//            preresultRecord.inputPrimaryIDs = primaryIDsByQueryNodeID[inputQueryNodeID];
+//          }
+//          
+//          if (!Object.hasOwnProperty.call(primaryIDsByQueryNodeID, inputQueryNodeID)) {
+//            primaryIDsByQueryNodeID[inputQueryNodeID] = new Set();
+//          }
+//          primaryIDsByQueryNodeID[inputQueryNodeID].add(inputPrimaryID);
+//          // Never adding output ID here
+//          // if (!Object.hasOwnProperty.call(primaryIDsByQueryNodeID, outputQueryNodeID)) {
+//          //   primaryIDsByQueryNodeID[outputQueryNodeID] = new Set();
+//          // }
+//          // primaryIDsByQueryNodeID[outputQueryNodeID].add(outputPrimaryID);
+//
+//        } else if (queryNodeIDsWithIsSet.has(outputQueryNodeID)) {
+//          // TODO: verify I switched input & output correctly below in this block:
+//          
+//          // The output QNode of the QEdge for this record has an is_set param.
+//
+//          const recordDedupTag = [inputQueryNodeID, inputPrimaryID, outputQueryNodeID].join("-")
+//          // e.g., "n0-NCBIGene:3630-n1"
+//          recordDedupTags.push(recordDedupTag);
+//
+//          // TODO: why must we always do this here, but in the 'else' section below, we
+//          // only do it when kgEdgeIDsByRecordDedupTag[recordDedupTag] doesn't exist?
+//          // Some tests fail when this is inside the if statement below
+//          preresultRecord = cloneDeep(preresultRecordClone);
+//          consolidatedPreresult.push(preresultRecord);
+//
+//          if (!kgEdgeIDsByQueryEdgeID.hasOwnProperty(queryEdgeID)) {
+//            kgEdgeIDsByQueryEdgeID[queryEdgeID] = new Set();
+//            preresultRecord.kgEdgeIDs = kgEdgeIDsByQueryEdgeID[queryEdgeID];
+//          }
+//          kgEdgeIDsByQueryEdgeID[queryEdgeID].add(kgEdgeID);
+//
+//          preresultRecord.kgEdgeIDs = kgEdgeIDsByQueryEdgeID[queryEdgeID];
+//          //primary ids
+//          if (!primaryIDsByQueryNodeID[outputQueryNodeID] || !primaryIDsByQueryNodeID[outputQueryNodeID].size) {
+//            preresultRecord.outputPrimaryIDs = new Set([outputPrimaryID]);
+//          } else {
+//            preresultRecord.outputPrimaryIDs = primaryIDsByQueryNodeID[outputQueryNodeID];
+//          }
+//          if (!Object.hasOwnProperty.call(primaryIDsByQueryNodeID, outputPrimaryID)) {
+//            primaryIDsByQueryNodeID[outputQueryNodeID] = new Set();
+//          }
+//          primaryIDsByQueryNodeID[outputQueryNodeID].add(outputPrimaryID);
+//          // Never adding input ID here
+//        } else {
+//          // The only other consolidation we need to do is when two primaryIDs for two
+//          // different respective QNodes have multiple KG Edges connecting them.
+//          const recordDedupTag = [
+//            inputQueryNodeID,
+//            inputPrimaryID,
+//            outputQueryNodeID,
+//            outputPrimaryID
+//          ].join("-");
+//
+//          recordDedupTags.push(recordDedupTag);
+//
+//          if (!kgEdgeIDsByRecordDedupTag.hasOwnProperty(recordDedupTag)) {
+//            preresultRecord = cloneDeep(preresultRecordClone);
+//            consolidatedPreresult.push(preresultRecord);
+//
+//            kgEdgeIDsByRecordDedupTag[recordDedupTag] = new Set();
+//            preresultRecord.kgEdgeIDs = kgEdgeIDsByRecordDedupTag[recordDedupTag];
+//
+//            // When is_set is not specified, each preresultRecord only has one
+//            // each of unique inputPrimaryID and outputPrimaryID.
+//            preresultRecord.inputPrimaryIDs.add(inputPrimaryID);
+//            preresultRecord.outputPrimaryIDs.add(outputPrimaryID);
+//          }
+//
+//          kgEdgeIDsByRecordDedupTag[recordDedupTag].add(kgEdgeID);
+//        }
+//
+//        preresultRecord.inputQueryNodeID = inputQueryNodeID;
+//        preresultRecord.outputQueryNodeID = outputQueryNodeID;
+//        preresultRecord.queryEdgeID = queryEdgeID;
+//      });
+//
+//      const resultDedupTag = recordDedupTags.join("_&_");
+//      // when is_set specified for n1:
+//      // e.g., "n0-NCBIGene:3630-n1_&_n1-n2-PUBCHEM.COMPOUND:43815"
+//      //
+//      // when is_set NOT specified for n1:
+//      // e.g., "n0-NCBIGene:3630-n1-MONDO:0005068_&_n1-MONDO:0005068-n2-PUBCHEM.COMPOUND:43815"
+//      // e.g., "n0-NCBIGene:3630-n1-MONDO:0005010_&_n1-MONDO:0005010-n2-PUBCHEM.COMPOUND:43815"
+//      
+//      // do we have one record for every query edge: consolidatedPreresult.length === edgeCount
+//      // have we added this consolidatedPreresult already: resultDedupTags.has(resultDedupTag)
+//      if (consolidatedPreresult.length === edgeCount && (!resultDedupTags.has(resultDedupTag))) {
+//        consolidatedPreresults.push(consolidatedPreresult);
+//        resultDedupTags.add(resultDedupTag)
+//      }
+//    });
 
     /**
      * The last step is to do the minor re-formatting to turn consolidatedPreresults
