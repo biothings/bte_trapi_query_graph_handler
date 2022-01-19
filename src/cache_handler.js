@@ -50,7 +50,17 @@ module.exports = class {
         unlock();
       }
       if (cachedResJSON) {
-        this.logs.push(new LogEntry('DEBUG', null, `BTE find cached results for ${qEdges[i].getID()}`).getLog());
+        this.logs.push(
+          new LogEntry(
+            'DEBUG',
+            null,
+            `BTE finds cached results for ${qEdges[i].getID()}`,
+            {
+              type: 'cacheHit',
+              edge_id: qEdges[i].getID(),
+            }
+          ).getLog()
+        );
         cachedResJSON.map((rec) => {
           rec.$edge_metadata.trapi_qEdge_obj = qEdges[i];
         });
