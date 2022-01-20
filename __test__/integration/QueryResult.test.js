@@ -457,8 +457,6 @@ describe('Testing QueryResults Module', () => {
           },
         };
 
-        // NOTE: I had to switch $input and $output.
-        // Compare with first test of this type.
         const record2 = {
           $edge_metadata: {
             trapi_qEdge_obj: edge2,
@@ -467,20 +465,6 @@ describe('Testing QueryResults Module', () => {
           },
           publications: ['PMID:345', 'PMID:456'],
           $input: {
-            original: 'SYMBOL:TULP3',
-            obj: [
-              {
-                primaryID: 'NCBIGene:7289',
-                label: 'TULP3',
-                dbIDs: {
-                  SYMBOL: 'TULP3',
-                  NCBIGene: '7289',
-                },
-                curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
-              },
-            ],
-          },
-          $output: {
             original: 'MONDO:0011122',
             obj: [
               {
@@ -495,6 +479,20 @@ describe('Testing QueryResults Module', () => {
               },
             ],
           },
+          $output: {
+            original: 'SYMBOL:TULP3',
+            obj: [
+              {
+                primaryID: 'NCBIGene:7289',
+                label: 'TULP3',
+                dbIDs: {
+                  SYMBOL: 'TULP3',
+                  NCBIGene: '7289',
+                },
+                curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
+              },
+            ],
+          }
         };
 
         test('should get n1, n2, n3 and e01, e02', () => {
@@ -573,8 +571,6 @@ describe('Testing QueryResults Module', () => {
           },
         };
 
-        // NOTE: I had to switch $input and $output.
-        // Compare with first test of this type.
         const record2 = {
           $edge_metadata: {
             trapi_qEdge_obj: edge2,
@@ -583,20 +579,6 @@ describe('Testing QueryResults Module', () => {
           },
           publications: ['PMID:345', 'PMID:456'],
           $input: {
-            original: 'SYMBOL:TULP3',
-            obj: [
-              {
-                primaryID: 'NCBIGene:7289',
-                label: 'TULP3',
-                dbIDs: {
-                  SYMBOL: 'TULP3',
-                  NCBIGene: '7289',
-                },
-                curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
-              },
-            ],
-          },
-          $output: {
             original: 'MONDO:0011122',
             obj: [
               {
@@ -608,6 +590,20 @@ describe('Testing QueryResults Module', () => {
                   name: 'obesity disorder',
                 },
                 curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+              },
+            ],
+          },
+          $output: {
+            original: 'SYMBOL:TULP3',
+            obj: [
+              {
+                primaryID: 'NCBIGene:7289',
+                label: 'TULP3',
+                dbIDs: {
+                  SYMBOL: 'TULP3',
+                  NCBIGene: '7289',
+                },
+                curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
               },
             ],
           },
@@ -1993,39 +1989,6 @@ describe('Testing QueryResults Module', () => {
         expect(results[0]).toHaveProperty('score');
       });
 
-      // NOTE: with the new generalized query handling, this case shouldn't happen
-      test('should get 0 results when 0 records for edge: ⇢̊→', () => {
-        const queryResult = new QueryResult();
-        queryResult.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": []
-          },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": [record1_n1a_n2a]
-          }
-        });
-        const results = queryResult.getResults();
-        expect(results.length).toEqual(0);
-      });
-
-      // NOTE: with the new generalized query handling, this case won't happen
-      test('should get 0 results when 0 records for edge: →⇢̊', () => {
-        const queryResult = new QueryResult();
-        queryResult.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": [record0_n0a_n1a]
-          },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": []
-          }
-        });
-        const results = queryResult.getResults();
-        expect(results.length).toEqual(0);
-      });
       
       test('should get 5k results when e0 has 100 records (50 connected, 50 not), and e1 has 10k (5k connected, 5k not)', () => {
         /**
@@ -2749,41 +2712,6 @@ describe('Testing QueryResults Module', () => {
         expect(results[0]).toHaveProperty('score');
       });
 
-      // NOTE: with the new generalized query handling, this case shouldn't happen.
-      // TODO: should we remove this test?
-      test('should get 0 results when 0 records for edge: ⇢̊←', () => {
-        const queryResult = new QueryResult();
-        queryResult.update({
-          "e0": {
-            "connected_to": ["e1_reversed"],
-            "records": []
-          },
-          "e1_reversed": {
-            "connected_to": ["e0"],
-            "records": [record1_n2a_n1a]
-          }
-        });
-        const results = queryResult.getResults();
-        expect(results.length).toEqual(0);
-      });
-
-      // NOTE: with the new generalized query handling, this case won't happen.
-      // TODO: should we remove this test?
-      test('should get 0 results when 0 records for edge: →⇠̊', () => {
-        const queryResult = new QueryResult();
-        queryResult.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": [record0_n0a_n1a]
-          },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": []
-          }
-        });
-        const results = queryResult.getResults();
-        expect(results.length).toEqual(0);
-      });
 
     });
 
@@ -2832,23 +2760,6 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(0);
       });
 
-      // NOTE: with the new generalized query handling, this case shouldn't happen.
-      // TODO: should we remove this test?
-      test('should get 0 results when 0 records for edge: ⇠̊→', () => {
-        const queryResult = new QueryResult();
-        queryResult.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": []
-          },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": [record1_n1a_n2a]
-          }
-        });
-        const results = queryResult.getResults();
-        expect(results.length).toEqual(0);
-      });
     });
 
     describe('query graph: -<', () => {
