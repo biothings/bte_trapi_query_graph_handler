@@ -190,20 +190,12 @@ module.exports = class QueryResult {
    * If it's true, then we only care about the QNode ID
    * (inputQueryNodeID or outputQueryNodeID), e.g., n1.
    *
-   * If it's false, then we need to take into account the primaryID
-   * (inputPrimaryID or outputPrimaryID) as well, e.g., n0-NCBIGene:3630.
+   * If it's false, then we additionally need to take into account the primaryID
+   * (inputPrimaryID or outputPrimaryID), e.g., n0-NCBIGene:3630.
    *
    * We will later use these uniqueNodeIDs to generate unique result IDs.
-   * The unique result IDs will be unique per result, but they will only
-   * contain the bare minimum of information required to make them unique.
-   *
-   * Examples of what these unique results IDs can look like
-   *   when is_set is specified for n1:
-   *     "n0-NCBIGene:3630-n1_&_n1-n2-PUBCHEM.COMPOUND:43815"
-   *
-   *   when is_set is NOT specified for n1:
-   *     "n0-NCBIGene:3630-n1-MONDO:0005068_&_n1-MONDO:0005068-n2-PUBCHEM.COMPOUND:43815"
-   *     "n0-NCBIGene:3630-n1-MONDO:0005010_&_n1-MONDO:0005010-n2-PUBCHEM.COMPOUND:43815"
+   * The unique result IDs will be unique per result and be made up of only
+   * the minimum information required to make them unique.
    *
    * @param {Set<string>} queryNodeIDsWithIsSet
    * @param {string} queryNodeID
@@ -331,11 +323,11 @@ module.exports = class QueryResult {
 
       const uniqueNodeIDs = [];
 
-      const firstRecord = preresult[0];
+      const record0 = preresult[0];
       // Add the input for the first record and then just add outputs after that.
       // The output for one record is the input for the subsequent record. 
       uniqueNodeIDs.push(
-        this._getUniqueNodeID(queryNodeIDsWithIsSet, firstRecord.inputQueryNodeID, firstRecord.inputPrimaryID)
+        this._getUniqueNodeID(queryNodeIDsWithIsSet, record0.inputQueryNodeID, record0.inputPrimaryID)
       );
 
       preresult.forEach(({
@@ -348,14 +340,17 @@ module.exports = class QueryResult {
         );
       });
 
+      // The separator can be anything that won't appear in the actual QNodeIDs or primaryIDs
       const uniqueResultID = uniqueNodeIDs.join("_&_");
+      // input_QNodeID-input_primaryID_&_output_QNodeID-_output_primaryID_&_...
+      //
       // Example uniqueResultIDs:
       //   when is_set specified for n1:
-      //     "n0-NCBIGene:3630-n1_&_n1-n2-PUBCHEM.COMPOUND:43815"
+      //     "n0-NCBIGene:3630_&_n1_&_n2-PUBCHEM.COMPOUND:43815"
       //
       //   when is_set NOT specified for n1:
-      //     "n0-NCBIGene:3630-n1-MONDO:0005068_&_n1-MONDO:0005068-n2-PUBCHEM.COMPOUND:43815"
-      //     "n0-NCBIGene:3630-n1-MONDO:0005010_&_n1-MONDO:0005010-n2-PUBCHEM.COMPOUND:43815"
+      //     "n0-NCBIGene:3630_&_n1-MONDO:0005068_&_n2-PUBCHEM.COMPOUND:43815"
+      //     "n0-NCBIGene:3630_&_n1-MONDO:0005010_&_n2-PUBCHEM.COMPOUND:43815"
 
       if (!preresultsByUniqueResultID.hasOwnProperty(uniqueResultID)) {
         preresultsByUniqueResultID[uniqueResultID] = [];
@@ -365,14 +360,15 @@ module.exports = class QueryResult {
 
     const consolidatedPreresults = values(preresultsByUniqueResultID).map(preresults => {
       // spread is like Fn.apply
+      // TODO: maybe just use ...
       return spread(zip)(preresults).map(preresultRecords => {
-        const firstPreresultRecord = preresultRecords[0];
+        const preresultRecord0 = preresultRecords[0];
         const consolidatedPreresultRecord = {
-          inputQueryNodeID: firstPreresultRecord.inputQueryNodeID,
-          outputQueryNodeID: firstPreresultRecord.outputQueryNodeID,
+          inputQueryNodeID: preresultRecord0.inputQueryNodeID,
+          outputQueryNodeID: preresultRecord0.outputQueryNodeID,
           inputPrimaryIDs: new Set(),
           outputPrimaryIDs: new Set(),
-          queryEdgeID: firstPreresultRecord.queryEdgeID,
+          queryEdgeID: preresultRecord0.queryEdgeID,
           kgEdgeIDs: new Set()
         };
         preresultRecords.forEach(({
