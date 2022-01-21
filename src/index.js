@@ -45,7 +45,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         knowledge_graph: this.knowledgeGraph.kg,
         results: this.queryResults.getResults(),
       },
-      logs: this.logs,
+      logs: this.logs.map(log => log.toJSON()),
     };
   }
 
@@ -142,8 +142,8 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       ? `[${edgesToLog.join(', ')}]`
       : `${edgesToLog.join(', ')}`
     if (len > 0) {
-      const terminateLog = `Query Edge${len > 1 ? 's' : ''} ${edgesToLog} ${
-        len > 1 ? 'have' : 'has'
+      const terminateLog = `Query Edge${len === 1 ? 's' : ''} ${edgesToLog} ${
+        len === 1 ? 'have' : 'has'
       } no SmartAPI edges. Your query terminates.`;
       debug(terminateLog);
       this.logs.push(new LogEntry('WARNING', null, terminateLog).getLog());
@@ -158,6 +158,15 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     debug('Start to load metakg.');
     const kg = this._loadMetaKG(this.smartapiID, this.team);
     debug('MetaKG successfully loaded!');
+    if (global.missingAPIs) {
+      this.logs.push(
+        new LogEntry(
+          'WARNING',
+          null,
+          `The following APIs were unavailable at the time of execution: ${global.missingAPIs.map(spec => spec.info.title).join(', ')}`
+        ).getLog()
+      )
+    }
     let queryEdges = await this._processQueryGraph(this.queryGraph);
     debug(`(3) All edges created ${JSON.stringify(queryEdges)}`);
     if (!(await this._edgesSupported(queryEdges, kg))) {
@@ -169,10 +178,38 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       let current_edge = manager.getNext();
       //crate queries from edge
       let handler = this._createBatchEdgeQueryHandlersForCurrent(current_edge, kg);
+      this.logs.push(
+        new LogEntry(
+          'INFO',
+          null,
+          `Executing ${current_edge.getID()}${current_edge.isReversed() ? ' (reversed)' : ''}: ${
+            current_edge.subject.id
+          } ${current_edge.isReversed() ? '<--' : '-->'} ${
+            current_edge.object.id
+          }`,
+        ).getLog(),
+      );
       debug(`(5) Executing current edge >> "${current_edge.getID()}"`);
       //execute current edge query
       let res = await handler.query(handler.qEdges);
       this.logs = [...this.logs, ...handler.logs];
+      // create an edge execution summary
+      let success = 0, fail = 0, total = 0;
+      let cached = this.logs.filter(({ data }) => data?.edge_id === current_edge.qEdge.id && data?.type === 'cacheHit').length;
+      this.logs
+        .filter(({ data }) => data?.edge_id === current_edge.qEdge.id && data?.type === 'query')
+        .forEach(({ data }) => {
+          !data.error ? success++ : fail++;
+          total++;
+        });
+      this.logs.push(
+        new LogEntry(
+          'INFO',
+          null,
+          `${current_edge.qEdge.id} execution: ${total} queries (${success} success/${fail} fail) and (${cached}) cached edges return (${res.length}) hits`,
+          {}
+        ).getLog()
+      );
       if (res.length === 0) {
         debug(`(X) Terminating..."${current_edge.getID()}" got 0 results.`);
         return;
@@ -194,6 +231,30 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     this.bteGraph.update(manager.getResults());
     //update query results
     this.queryResults.update(manager.getOrganizedResults());
+    this.bteGraph.notify();
+    const nodes = Object.keys(this.knowledgeGraph.nodes).length;
+    const edges = Object.keys(this.knowledgeGraph.edges).length;
+    const results = this.queryResults.getResults().length;
+    const resultQueries = this.logs.filter(({ data }) => data?.type === 'query' && data?.hits).length;
+    const queries = this.logs.filter(({ data }) => data?.type === 'query').length;
+    const sources = [...new Set(manager.results.map(res => res.$edge_metadata.api_name))];
+    let cached = this.logs.filter(({ data }) => data?.type === 'cacheHit').length;
+    this.logs.push(
+      new LogEntry(
+        'INFO',
+        null,
+        `Execution Summary: (${nodes}) nodes / (${edges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${cached ? ` (${cached} cached edges)` : ''} returned results from (${sources.length}) unique APIs ${
+          sources === 1 ? 's' : ''
+        }`,
+      ).getLog(),
+    );
+    this.logs.push(
+      new LogEntry(
+        'INFO',
+        null,
+        `APIs: ${sources.join(', ')}`,
+      ).getLog(),
+    );
     debug(`(14) TRAPI query finished.`);
     }
 };
