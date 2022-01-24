@@ -5,6 +5,41 @@ const { parentPort } = require('worker_threads');
 const _ = require('lodash');
 const async = require('async');
 const helper = require('./helper');
+const lz4 = require('lz4');
+const chunker = require('stream-chunker');
+const { Readable, Transform } = require('stream');
+
+class DelimitedChunks extends Transform {
+  constructor() {
+    super({ readableObjectMode: true });
+    this._buffer = '';
+  }
+
+  _transform(chunk, encoding, callback) {
+    this._buffer += chunk;
+    if (this._buffer.includes(',')) {
+      const parts = this._buffer.split(',');
+      this._buffer = parts.pop();
+      parts.forEach((part) => {
+        const parsedPart = JSON.parse(lz4.decode(Buffer.from(part, 'base64url')).toString());
+        this.push(parsedPart);
+      });
+      callback();
+    }
+  }
+
+  _flush(callback) {
+    try {
+      if (this._buffer.length) {
+        const final = JSON.parse(lz4.decode(Buffer.from(this._buffer, 'base64url')).toString());
+        callback(null, final);
+      }
+      callback();
+    } catch (error) {
+      callback(error);
+    }
+  }
+}
 
 module.exports = class {
   constructor(qEdges, caching, kg = undefined, logs = []) {
@@ -31,24 +66,38 @@ module.exports = class {
     }
     let nonCachedEdges = [];
     let cachedResults = [];
+    debug('Begin edge cache lookup...');
     for (let i = 0; i < qEdges.length; i++) {
       const hashedEdgeID = this._hashEdgeByKG(qEdges[i].getHashedEdgeRepresentation());
-      let cachedResJSON;
-      const unlock = await redisClient.lock('redisLock:' + hashedEdgeID);
-      try {
-        const redisID = "bte:edgeCache:" + hashedEdgeID;
-        const cachedRes = await redisClient.hgetallAsync(redisID);
-        cachedResJSON = cachedRes
-          ? Object.entries(cachedRes)
-            .sort(([key1], [key2]) => parseInt(key1) - parseInt(key2))
-            .map(([key, val]) => { return JSON.parse(val); }, [])
-          : null;
-      } catch (error) {
-        cachedResJSON = null;
-        debug(`Cache lookup/retrieval failed due to ${error}. Proceeding without cache.`);
-      } finally {
-        unlock();
-      }
+      const cachedResJSON = await new Promise(async (resolve) => {
+        const redisID = 'bte:edgeCache:' + hashedEdgeID;
+        const unlock = await redisClient.lock('redisLock:' + hashedEdgeID);
+        try {
+          const cachedRes = await redisClient.hgetallAsync(redisID);
+          if (cachedRes) {
+            const decodedRes = [];
+            const resSorted = Object.entries(cachedRes)
+              .sort(([key1], [key2]) => parseInt(key1) - parseInt(key2))
+              .map(([_key, val]) => {
+                return val;
+              });
+
+            const resStream = Readable.from(resSorted);
+            resStream
+              .pipe(this.createDecodeStream())
+              .on('data', (obj) => decodedRes.push(obj))
+              .on('end', () => resolve(decodedRes));
+          } else {
+            resolve(null);
+          }
+        } catch (error) {
+          resolve(null);
+          debug(`Cache lookup/retrieval failed due to ${error}. Proceeding without cache.`);
+        } finally {
+          unlock();
+        }
+      });
+
       if (cachedResJSON) {
         this.logs.push(
           new LogEntry(
@@ -68,6 +117,7 @@ module.exports = class {
       } else {
         nonCachedEdges.push(qEdges[i]);
       }
+      debug(`Found (${cachedResults.length}) cached results.`);
     }
     return { cachedResults, nonCachedEdges };
   }
@@ -133,6 +183,22 @@ module.exports = class {
     return groupedResult;
   }
 
+  createEncodeStream() {
+    return new Transform({
+      writableObjectMode: true,
+      transform: (chunk, encoding, callback) => {
+        callback(null, lz4.encode(JSON.stringify(chunk)).toString('base64url') + ',');
+      },
+      flush: (callback) => {
+        callback();
+      },
+    });
+  }
+
+  createDecodeStream() {
+    return new DelimitedChunks();
+  }
+
   async cacheEdges(queryResult) {
     if (this.cacheEnabled === false) {
       if (parentPort) {
@@ -150,14 +216,25 @@ module.exports = class {
       debug(`Number of hashed edges: ${hashedEdgeIDs.length}`);
       await async.eachSeries(hashedEdgeIDs, async (id) => {
         // lock to prevent caching to/reading from actively caching edge
-        const unlock = await redisClient.lock("redisLock:" + id);
+        const unlock = await redisClient.lock('redisLock:' + id);
         try {
-          const redisID = "bte:edgeCache:" + id;
+          const redisID = 'bte:edgeCache:' + id;
           await redisClient.delAsync(redisID); // prevents weird overwrite edge cases
-          await async.eachOfSeries(groupedQueryResult[id], async (edge, index) => {
-            await redisClient.hsetAsync(redisID, index.toString(), JSON.stringify(edge));
+          await new Promise((resolve) => {
+            let i = 0;
+            Readable.from(groupedQueryResult[id])
+              .pipe(this.createEncodeStream())
+              .pipe(chunker(100000, { flush: true }))
+              .on('data', async (chunk) => {
+                await redisClient.hsetAsync(redisID, String(i++), chunk);
+              })
+              .on('end', () => {
+                resolve();
+              });
           });
           await redisClient.expireAsync(redisID, process.env.REDIS_KEY_EXPIRE_TIME || 600);
+        } catch (error) {
+          console.log(error);
         } finally {
           unlock(); // release lock whether cache succeeded or not
         }
