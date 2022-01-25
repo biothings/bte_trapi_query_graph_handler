@@ -3,9 +3,30 @@ const QueryResult = require('../../src/query_results');
 jest.mock('results-a1_b2_a3_a4')
 jest.mock('results-a1_b1_a3_a4')
 jest.mock('results-is-set-false')
+jest.mock('organized_results')
  
 // const results = [];
 describe('Testing QueryResults Module', () => {
+
+    test('A2 query', () => {
+      const results = require('organized_results');
+      const queryResult = new QueryResult();
+      queryResult.update(results);
+      const query_results = queryResult.getResults();
+
+      expect(query_results.length).toEqual(4);
+
+      expect(Object.keys(query_results[0].node_bindings).sort()).toEqual([
+        'n0', 'n1'
+      ]);
+      expect(Object.keys(query_results[0].edge_bindings).sort()).toEqual([
+        'e00'
+      ]);
+
+      expect(query_results[0].edge_bindings['e00'].length).toEqual(1);
+
+      expect(query_results[0]).toHaveProperty('score');
+    });
 
     test('n0 is-set true, a1_b2_a3_a4', () => {
         const results = require('results-a1_b2_a3_a4');
