@@ -360,16 +360,14 @@ module.exports = class EdgeManager {
         //Combined: update query_graph
         this.results = combined_results;
         // var fs = require('fs');
-        // for (let index = 0; index < 10; index++) {
-        //     fs.writeFile("marcodata" + index +".json", JSON.stringify(combined_results[0], function( key, value) {
-        //         if( key == 'results') { return '$results'}
-        //         else {return value;}
-        //         }), function(err) {
-        //         if (err) {
-        //             console.log(err);
-        //         }
-        //     });
-        // }
+        // fs.writeFile("anders_results.json", JSON.stringify(combined_results, function( key, value) {
+        //     if( key == 'results') { return '$results'}
+        //     else {return value;}
+        //     }), function(err) {
+        //     if (err) {
+        //         console.log(err);
+        //     }
+        // });
         debug(`(12) Collected (${this.results.length}) results!`);
         this.logs.push(
             new LogEntry(

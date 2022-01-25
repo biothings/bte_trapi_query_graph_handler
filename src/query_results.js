@@ -357,7 +357,8 @@ module.exports = class QueryResult {
       }
       preresultsByUniqueResultID[uniqueResultID].push(preresult)
     });
-
+    debug(`PRERESULTS LENGTH ${preresults.length}`);
+    debug(`PRERESULTS BY ID ${JSON.stringify(Object.keys(preresultsByUniqueResultID))}`);
     const consolidatedPreresults = values(preresultsByUniqueResultID).map(preresults => {
       // spread is like Fn.apply
       // TODO: maybe just use ...
