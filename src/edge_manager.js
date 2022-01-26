@@ -63,7 +63,7 @@ module.exports = class EdgeManager {
         let current_sub_lowest = 0;
         available_edges.forEach((edge) => {
             if (
-                edge && 
+                edge &&
                 edge.object.entity_count
                 ) {
                 current_obj_lowest = edge.object.entity_count;
@@ -77,7 +77,7 @@ module.exports = class EdgeManager {
                 }
             }
             if (
-                edge && 
+                edge &&
                 edge.subject.entity_count &&
                 edge.subject.entity_count > 0
                 ) {
@@ -153,8 +153,8 @@ module.exports = class EdgeManager {
             //chose obj/suj lower entity count for query
             next.chooseLowerEntityValue();
             this.logs.push(
-                new LogEntry('DEBUG', 
-                null, 
+                new LogEntry('DEBUG',
+                null,
                 `Next edge will pick lower entity value to use for query.`).getLog(),
             );
         }
@@ -168,8 +168,8 @@ module.exports = class EdgeManager {
             next.reverse = next.subject.entity_count ? false : true;
         }
         this.logs.push(
-            new LogEntry('DEBUG', 
-            null, 
+            new LogEntry('DEBUG',
+            null,
             `Edge manager is sending next edge '${next.getID()}' for execution.`).getLog(),
         );
         this.logEntityCounts();
@@ -313,7 +313,7 @@ module.exports = class EdgeManager {
             if (filtered_res.length == 0) {
                 this.logs.push(
                     new LogEntry(
-                        'DEBUG',
+                        'WARNING',
                         null,
                         `Warning: Edge '${edge_ID}' resulted in (0) results.`
                     ).getLog(),
@@ -331,12 +331,12 @@ module.exports = class EdgeManager {
                 records: filtered_res,
                 connected_to: [...connections],
             }
-            debug(`(11) '${edge_ID}' keeps (${filtered_res.length}) results!`);
+            debug(`(11) '${edge_ID}' keeps (${filtered_res.length}) records!`);
             this.logs.push(
                 new LogEntry(
-                    'DEBUG',
+                    'INFO',
                     null,
-                    `'${edge_ID}' keeps (${filtered_res.length}) results!`
+                    `'${edge_ID}' keeps (${filtered_res.length}) records!`
                 ).getLog(),
             );
             debug(`----------`);
@@ -345,7 +345,7 @@ module.exports = class EdgeManager {
             results = {};
             this.logs.push(
                 new LogEntry(
-                    'DEBUG',
+                    'WARNING',
                     null,
                     `Edges ${JSON.stringify(brokenEdges)} ` +
                     `resulted in (0) results. No complete paths can be formed.`

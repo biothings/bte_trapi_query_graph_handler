@@ -3,7 +3,7 @@ const QEdge2BTEEdgeHandler = require('./qedge2bteedge');
 const NodesUpdateHandler = require('./update_nodes');
 const debug = require('debug')('bte:biothings-explorer-trapi:batch_edge_query');
 const CacheHandler = require('./cache_handler');
-const { parentPort } = require('worker_threads');
+const { parentPort, isMainThread } = require('worker_threads');
 
 module.exports = class BatchEdgeQueryHandler {
   constructor(kg, resolveOutputIDs = true, options) {
@@ -134,7 +134,11 @@ module.exports = class BatchEdgeQueryHandler {
       debug(`Filtering out any "undefined" items in (${query_res.length}) results`);
       query_res = query_res.filter((res) => res !== undefined);
       debug(`Total number of results is (${query_res.length})`);
-      cacheHandler.cacheEdges(query_res);
+      if (!isMainThread) {
+        cacheHandler.cacheEdges(query_res);
+      } else { // await caching if async so end of job doesn't cut it off
+        await cacheHandler.cacheEdges(query_res);
+      }
     }
     query_res = [...query_res, ...cachedResults];
     debug('Start to update nodes...');
