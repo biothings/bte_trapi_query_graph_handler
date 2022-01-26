@@ -291,6 +291,8 @@ module.exports = class QueryResult {
       initialQueryNodeIDToMatch,
     );
 
+    debug(`PRERESULTS LENGTH ${preresults.length}`);
+
     /**
      * Consolidation
      *
@@ -321,27 +323,27 @@ module.exports = class QueryResult {
       // Other items present in a presult but not shown above:
       // inputQueryNodeID, outputQueryNodeID, queryEdgeID, kgEdgeID
 
-      const uniqueNodeIDs = [];
-
-      const record0 = preresult[0];
-      // Add the input for the first record and then just add outputs after that.
-      // The output for one record is the input for the subsequent record. 
-      uniqueNodeIDs.push(
-        this._getUniqueNodeID(queryNodeIDsWithIsSet, record0.inputQueryNodeID, record0.inputPrimaryID)
-      );
+      // using a set so we don't repeat a previously entered input as an output or vice versa.
+      const uniqueNodeIDs = new Set();
 
       preresult.forEach(({
         inputQueryNodeID, outputQueryNodeID,
         inputPrimaryID, outputPrimaryID,
         queryEdgeID, kgEdgeID
       }) => {
-        uniqueNodeIDs.push(
+        uniqueNodeIDs.add(
+          this._getUniqueNodeID(queryNodeIDsWithIsSet, inputQueryNodeID, inputPrimaryID)
+        );
+        uniqueNodeIDs.add(
           this._getUniqueNodeID(queryNodeIDsWithIsSet, outputQueryNodeID, outputPrimaryID)
         );
       });
 
       // The separator can be anything that won't appear in the actual QNodeIDs or primaryIDs
-      const uniqueResultID = uniqueNodeIDs.join("_&_");
+      // Using .sort() because a JS Set is iterated in insertion order, and I haven't
+      // verified the preresults are always in the same order. However, they should be,
+      // so it's possible .sort() is not needed.
+      const uniqueResultID = Array.from(uniqueNodeIDs).sort().join("_&_");
       // input_QNodeID-input_primaryID_&_output_QNodeID-_output_primaryID_&_...
       //
       // Example uniqueResultIDs:
@@ -357,9 +359,9 @@ module.exports = class QueryResult {
       }
       preresultsByUniqueResultID[uniqueResultID].push(preresult)
     });
-    debug(`PRERESULTS LENGTH ${preresults.length}`);
-    debug(`PRERESULTS BY ID ${JSON.stringify(Object.keys(preresultsByUniqueResultID))}`);
-    const consolidatedPreresults = values(preresultsByUniqueResultID).map(preresults => {
+
+    const consolidatedPreresults = toPairs(preresultsByUniqueResultID).map(([uniqueResultID, preresults]) => {
+      debug(`result ID: ${uniqueResultID} has ${preresults.length}`)
       // spread is like Fn.apply
       // TODO: maybe just use ...
       return spread(zip)(preresults).map(preresultRecords => {
@@ -377,6 +379,7 @@ module.exports = class QueryResult {
           inputPrimaryID, outputPrimaryID,
           queryEdgeID, kgEdgeID
         }) => {
+          //debug(`  inputQueryNodeID: ${inputQueryNodeID}, inputPrimaryID: ${inputPrimaryID}, outputQueryNodeID ${outputQueryNodeID}, outputPrimaryID: ${outputPrimaryID}`)
           consolidatedPreresultRecord.inputPrimaryIDs.add(inputPrimaryID);
           consolidatedPreresultRecord.outputPrimaryIDs.add(outputPrimaryID);
           consolidatedPreresultRecord.kgEdgeIDs.add(kgEdgeID);
