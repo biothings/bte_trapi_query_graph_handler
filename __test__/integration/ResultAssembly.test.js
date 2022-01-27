@@ -8,7 +8,7 @@ jest.mock('organized_results')
 // const results = [];
 describe('Testing QueryResults Module', () => {
 
-    test('A2 query', () => {
+    test('A2a query', () => {
       const results = require('organized_results');
       const queryResult = new QueryResult();
       queryResult.update(results);

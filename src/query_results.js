@@ -38,18 +38,6 @@ const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
  * } Result
  */
 
-// TODO: if these are correct, they should probably be moved to helper.js
-function _getInputIsSet(record) {
-  return record.$edge_metadata.trapi_qEdge_obj.reverse
-    ? record.$edge_metadata.trapi_qEdge_obj.object.is_set
-    : record.$edge_metadata.trapi_qEdge_obj.subject.is_set;
-}
-function _getOutputIsSet(record) {
-  return record.$edge_metadata.trapi_qEdge_obj.reverse
-    ? record.$edge_metadata.trapi_qEdge_obj.subject.is_set
-    : record.$edge_metadata.trapi_qEdge_obj.object.is_set;
-}
-
 /**
  * Assemble a list of query results.
  *
@@ -231,12 +219,13 @@ module.exports = class QueryResult {
     // NOTE: is_set in the query graph and the JavaScript Set object below refer to different sets.
     const queryNodeIDsWithIsSet = new Set();
     toPairs(dataByEdge).forEach(([queryEdgeID, {connected_to, records}]) => {
+
       const inputQueryNodeID = helper._getInputQueryNodeID(records[0]);
       const outputQueryNodeID = helper._getOutputQueryNodeID(records[0]);
 
-      if (_getInputIsSet(records[0])) {
+      if (helper._getInputIsSet(records[0])) {
         queryNodeIDsWithIsSet.add(inputQueryNodeID)
-      } else if (_getOutputIsSet(records[0])) {
+      } else if (helper._getOutputIsSet(records[0])) {
         queryNodeIDsWithIsSet.add(outputQueryNodeID)
       }
     });
@@ -291,8 +280,6 @@ module.exports = class QueryResult {
       initialQueryNodeIDToMatch,
     );
 
-    debug(`PRERESULTS LENGTH ${preresults.length}`);
-
     /**
      * Consolidation
      *
@@ -312,7 +299,7 @@ module.exports = class QueryResult {
      */
 
     const preresultsByUniqueResultID = {};
-
+    debug(`Nodes with "is_set": ${JSON.stringify([...queryNodeIDsWithIsSet])}`)
     preresults.forEach((preresult) => {
       // example inputPrimaryID and outputPrimaryID in a preresult:
       // [

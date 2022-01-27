@@ -457,6 +457,8 @@ describe('Testing QueryResults Module', () => {
           },
         };
 
+        // NOTE: I had to switch $input and $output.
+        // Compare with first test of this type.
         const record2 = {
           $edge_metadata: {
             trapi_qEdge_obj: edge2,
@@ -465,6 +467,20 @@ describe('Testing QueryResults Module', () => {
           },
           publications: ['PMID:345', 'PMID:456'],
           $input: {
+            original: 'SYMBOL:TULP3',
+            obj: [
+              {
+                primaryID: 'NCBIGene:7289',
+                label: 'TULP3',
+                dbIDs: {
+                  SYMBOL: 'TULP3',
+                  NCBIGene: '7289',
+                },
+                curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
+              },
+            ],
+          },
+          $output: {
             original: 'MONDO:0011122',
             obj: [
               {
@@ -479,20 +495,6 @@ describe('Testing QueryResults Module', () => {
               },
             ],
           },
-          $output: {
-            original: 'SYMBOL:TULP3',
-            obj: [
-              {
-                primaryID: 'NCBIGene:7289',
-                label: 'TULP3',
-                dbIDs: {
-                  SYMBOL: 'TULP3',
-                  NCBIGene: '7289',
-                },
-                curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
-              },
-            ],
-          }
         };
 
         test('should get n1, n2, n3 and e01, e02', () => {
@@ -571,6 +573,8 @@ describe('Testing QueryResults Module', () => {
           },
         };
 
+        // NOTE: I had to switch $input and $output.
+        // Compare with first test of this type.
         const record2 = {
           $edge_metadata: {
             trapi_qEdge_obj: edge2,
@@ -579,6 +583,20 @@ describe('Testing QueryResults Module', () => {
           },
           publications: ['PMID:345', 'PMID:456'],
           $input: {
+            original: 'SYMBOL:TULP3',
+            obj: [
+              {
+                primaryID: 'NCBIGene:7289',
+                label: 'TULP3',
+                dbIDs: {
+                  SYMBOL: 'TULP3',
+                  NCBIGene: '7289',
+                },
+                curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
+              },
+            ],
+          },
+          $output: {
             original: 'MONDO:0011122',
             obj: [
               {
@@ -590,20 +608,6 @@ describe('Testing QueryResults Module', () => {
                   name: 'obesity disorder',
                 },
                 curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-              },
-            ],
-          },
-          $output: {
-            original: 'SYMBOL:TULP3',
-            obj: [
-              {
-                primaryID: 'NCBIGene:7289',
-                label: 'TULP3',
-                dbIDs: {
-                  SYMBOL: 'TULP3',
-                  NCBIGene: '7289',
-                },
-                curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
               },
             ],
           },

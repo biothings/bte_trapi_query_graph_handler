@@ -7,31 +7,42 @@ module.exports = class QueryGraphHelper {
   }
 
   _getInputQueryNodeID(record) {
-    return record.$edge_metadata.trapi_qEdge_obj.reverse
-      ? record.$edge_metadata.trapi_qEdge_obj.object.id
-      : record.$edge_metadata.trapi_qEdge_obj.subject.id;
+    return record.$edge_metadata.trapi_qEdge_obj.isReversed()
+      ? record.$edge_metadata.trapi_qEdge_obj.getObject().getID()
+      : record.$edge_metadata.trapi_qEdge_obj.getSubject().getID();
   }
 
   _getPredicate(record) {
-    return record.$edge_metadata.trapi_qEdge_obj.reverse
+    return record.$edge_metadata.trapi_qEdge_obj.isReversed()
       ? 'biolink:' + biolink.reverse(record.$edge_metadata.predicate)
       : 'biolink:' + record.$edge_metadata.predicate;
   }
 
   _getOutputQueryNodeID(record) {
-    return record.$edge_metadata.trapi_qEdge_obj.reverse
-      ? record.$edge_metadata.trapi_qEdge_obj.subject.id
-      : record.$edge_metadata.trapi_qEdge_obj.object.id;
+    return record.$edge_metadata.trapi_qEdge_obj.isReversed()
+      ? record.$edge_metadata.trapi_qEdge_obj.getSubject().getID()
+      : record.$edge_metadata.trapi_qEdge_obj.getObject().getID();
+  }
+
+  _getInputIsSet(record) {
+    return record.$edge_metadata.trapi_qEdge_obj.isReversed()
+      ? record.$edge_metadata.trapi_qEdge_obj.getObject().isSet()
+      : record.$edge_metadata.trapi_qEdge_obj.getSubject().isSet();
+  }
+  _getOutputIsSet(record) {
+    return record.$edge_metadata.trapi_qEdge_obj.isReversed()
+      ? record.$edge_metadata.trapi_qEdge_obj.getObject().isSet()
+      : record.$edge_metadata.trapi_qEdge_obj.getSubject().isSet();
   }
 
   _getOutputID(record) {
-    return record.$edge_metadata.trapi_qEdge_obj.reverse
+    return record.$edge_metadata.trapi_qEdge_obj.isReversed()
       ? record.$input.obj[0].primaryID
       : record.$output.obj[0].primaryID;
   }
 
   _getInputID(record) {
-    return record.$edge_metadata.trapi_qEdge_obj.reverse
+    return record.$edge_metadata.trapi_qEdge_obj.isReversed()
       ? record.$output.obj[0].primaryID
       : record.$input.obj[0].primaryID;
   }
@@ -66,32 +77,32 @@ module.exports = class QueryGraphHelper {
   }
 
   _getInputCategory(record) {
-    return record.$edge_metadata.trapi_qEdge_obj.reverse
+    return record.$edge_metadata.trapi_qEdge_obj.isReversed()
       ? record.$output.obj[0].semanticType
       : record.$input.obj[0].semanticType;
   }
 
   _getOutputCategory(record) {
-    return record.$edge_metadata.trapi_qEdge_obj.reverse
+    return record.$edge_metadata.trapi_qEdge_obj.isReversed()
       ? record.$input.obj[0].semanticType
       : record.$output.obj[0].semanticType;
   }
 
   _getOutputLabel(record) {
-    return record.$edge_metadata.trapi_qEdge_obj.reverse
+    return record.$edge_metadata.trapi_qEdge_obj.isReversed()
       ? record.$input.obj[0].label
       : record.$output.obj[0].label;
   }
 
   _getInputLabel(record) {
-    return record.$edge_metadata.trapi_qEdge_obj.reverse
+    return record.$edge_metadata.trapi_qEdge_obj.isReversed()
       ? record.$output.obj[0].label
       : record.$input.obj[0].label;
   }
 
   _getInputEquivalentIds(record) {
     try {
-      return record.$edge_metadata.trapi_qEdge_obj.reverse
+      return record.$edge_metadata.trapi_qEdge_obj.isReversed()
         ? record.$output.obj[0].curies
         : record.$input.obj[0].curies;
     } catch (err) {
@@ -101,7 +112,7 @@ module.exports = class QueryGraphHelper {
 
   _getInputNames(record) {
     try {
-      return record.$edge_metadata.trapi_qEdge_obj.reverse
+      return record.$edge_metadata.trapi_qEdge_obj.isReversed()
         ? record.$output.obj[0].dbIDs.name
         : record.$input.obj[0].dbIDs.name;
     } catch (err) {
@@ -111,7 +122,7 @@ module.exports = class QueryGraphHelper {
 
   _getInputAttributes(record) {
     try {
-      return record.$edge_metadata.trapi_qEdge_obj.reverse
+      return record.$edge_metadata.trapi_qEdge_obj.isReversed()
         ? record.$output.obj[0].attributes
         : record.$input.obj[0].attributes;
     } catch (err) {
@@ -121,7 +132,7 @@ module.exports = class QueryGraphHelper {
 
   _getOutputNames(record) {
     try {
-      return record.$edge_metadata.trapi_qEdge_obj.reverse
+      return record.$edge_metadata.trapi_qEdge_obj.isReversed()
         ? record.$input.obj[0].dbIDs.name
         : record.$output.obj[0].dbIDs.name;
     } catch (err) {
@@ -131,7 +142,7 @@ module.exports = class QueryGraphHelper {
 
   _getOutputEquivalentIds(record) {
     try {
-      return record.$edge_metadata.trapi_qEdge_obj.reverse
+      return record.$edge_metadata.trapi_qEdge_obj.isReversed()
         ? record.$input.obj[0].curies
         : record.$output.obj[0].curies;
     } catch (err) {
@@ -142,7 +153,7 @@ module.exports = class QueryGraphHelper {
 
   _getOutputAttributes(record) {
     try {
-      return record.$edge_metadata.trapi_qEdge_obj.reverse
+      return record.$edge_metadata.trapi_qEdge_obj.isReversed()
         ? record.$input.obj[0].attributes
         : record.$output.obj[0].attributes;
     } catch (err) {
