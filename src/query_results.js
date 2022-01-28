@@ -225,10 +225,13 @@ module.exports = class QueryResult {
 
       if (helper._getInputIsSet(records[0])) {
         queryNodeIDsWithIsSet.add(inputQueryNodeID)
-      } else if (helper._getOutputIsSet(records[0])) {
+      }
+      if (helper._getOutputIsSet(records[0])) {
         queryNodeIDsWithIsSet.add(outputQueryNodeID)
       }
     });
+
+    debug(`Nodes with "is_set": ${JSON.stringify([...queryNodeIDsWithIsSet])}`)
 
     // find a QNode having only one QEdge to use as the root node for tree traversal
     let initialQueryEdgeID, initialQueryNodeIDToMatch;
@@ -268,6 +271,8 @@ module.exports = class QueryResult {
       }
     });
 
+    debug(`initialQueryEdgeID: ${initialQueryEdgeID}, initialQueryNodeIDToMatch: ${initialQueryNodeIDToMatch}`);
+
     // 'preresult' just means it has the data needed to assemble a result,
     // but it's formatted differently for easier pre-processing.
     const preresults = [];
@@ -299,7 +304,6 @@ module.exports = class QueryResult {
      */
 
     const preresultsByUniqueResultID = {};
-    debug(`Nodes with "is_set": ${JSON.stringify([...queryNodeIDsWithIsSet])}`)
     preresults.forEach((preresult) => {
       // example inputPrimaryID and outputPrimaryID in a preresult:
       // [
