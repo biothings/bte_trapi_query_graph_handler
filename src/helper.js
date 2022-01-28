@@ -69,6 +69,7 @@ module.exports = class QueryGraphHelper {
   _getKGEdgeID(record) {
     const edgeMetaData = [
       this._getInputID(record),
+      this._getPredicate(record),
       this._getOutputID(record),
       this._getAPI(record),
       this._getSource(record),
