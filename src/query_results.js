@@ -199,11 +199,22 @@ module.exports = class QueryResult {
   }
 
   /**
-   * Transform a collection of records into query result(s).
-   * Cache the result(s) so they're ready for getResults().
+   * Assemble records into query results.
    *
-   * With the new generalized query handling, we can safely
-   * assume every call to update contains all the records.
+   * At a high level, this method does the following:
+   * 1. Create sets of records such that:
+   *    - each set has one record per QEdge and
+   *    - each record in a set has the same primaryID as its neighbor(s) at the same QNode.
+   *    We're calling each set a preresult, but this could be alternatively named atomicResult
+   *    or unconsolidatedResult. There can be one or more preresults per query result.
+   * 2. Group the sets by result ID. There will be one group per query result.
+   * 3. Consolidate each group. We're calling each consolidated group a consolidatedPreresult.
+   *    Each consolidatedPreresult becomes a query result.
+   * 4. Format consolidatedPreresults to match the translator standard for query results
+   *    and cache the query results to be called later by .getResults().
+   *
+   * Note: with the updated code for generalized query handling, we
+   * can safely assume every call to update contains all the records.
    *
    * @param {DataByEdge} dataByEdge
    * @return {undefined} nothing returned; just cache this._results
