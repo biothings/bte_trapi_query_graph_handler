@@ -121,6 +121,20 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       let current_edge = manager.getNext();
       const edgeConverter = new QEdge2BTEEdgeHandler([current_edge], kg);
       const sAPIEdges = edgeConverter.getSmartAPIEdges(current_edge);
+
+      if (this.options.dryrun) {
+        let apiNames = [...new Set(sAPIEdges.map((apiEdge) => apiEdge.association.api_name))];
+        let log_msg = `Edge ${current_edge.qEdge.id}: ${current_edge.qEdge.subject.category} > ${current_edge.qEdge.predicate ? `${current_edge.qEdge.predicate} > ` : ''}${current_edge.qEdge.object.category}`;
+        this.logs.push(new LogEntry("DEBUG", null, log_msg).getLog());
+        let log_msg_2 = `APIs called: ${apiNames.join(',')} (${sAPIEdges.length} queries total)`;
+        this.logs.push(new LogEntry("DEBUG", null, log_msg_2).getLog());
+
+        sAPIEdges.forEach(apiEdge => {
+          log_msg = `${apiEdge.association.api_name}: ${apiEdge.association.input_type} > ${apiEdge.association.predicate} > ${apiEdge.association.output_type}`;
+          this.logs.push(new LogEntry("DEBUG", null, log_msg).getLog());
+        });
+      }
+
       if (!sAPIEdges.length) {
         edgesMissingOps[current_edge.qEdge.id] = current_edge.reverse;
       }
@@ -129,6 +143,10 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       current_edge.object.entity_count = 1;
       current_edge.subject.entity_count = 1;
       // this.logs = [...this.logs, ...edgeConverter.logs];
+    }
+
+    if (this.options.dryrun) {
+      return false;
     }
 
     const len = Object.keys(edgesMissingOps).length;
