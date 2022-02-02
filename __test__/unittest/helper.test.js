@@ -312,7 +312,7 @@ describe("Test helper moduler", () => {
             },
         }
         const res = helper._getKGEdgeID(record);
-        expect(res).toEqual('6b49bd17fb00886e05ec1f16def3c0da')
+        expect(res).toEqual('b052708d75d94d55916ffce9f0ea3458')
     })
 
     describe("Test _getInputCategory function", () => {
