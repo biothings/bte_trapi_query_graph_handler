@@ -245,6 +245,18 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       manager.updateEdgeResults(current_edge);
       //update and filter neighbors
       manager.updateAllOtherEdges(current_edge);
+      // check that any results are kept
+      if (!current_edge.results.length) {
+        debug(`(X) Terminating..."${current_edge.getID()}" got 0 results.`);
+        this.logs.push(
+            new LogEntry(
+                'WARNING',
+                null,
+                `Edge (${current_edge.getID()}) kept 0 results. Your query terminates.`
+            ).getLog()
+        );
+        return;
+    }
       //edge all done
       current_edge.executed = true;
       debug(`(10) Edge successfully queried.`);

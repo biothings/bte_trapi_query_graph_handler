@@ -106,11 +106,11 @@ describe("Test graph class", () => {
         expect(g.nodes["inputPrimaryID-qg1"]._qgID).toEqual("qg1");
         expect(Array.from(g.nodes["inputPrimaryID-qg1"]._targetNodes)).toEqual(['outputPrimaryID-qg2']);
         expect(Array.from(g.nodes["inputPrimaryID-qg1"]._targetQGNodes)).toEqual(['qg2']);
-        expect(g.edges).toHaveProperty('0719696e40f7ef74a5899eaf308f5067');
-        expect(Array.from(g.edges['0719696e40f7ef74a5899eaf308f5067'].apis)).toEqual(['API1']);
-        expect(Array.from(g.edges['0719696e40f7ef74a5899eaf308f5067'].sources)).toEqual(['source1']);
-        expect(Array.from(g.edges['0719696e40f7ef74a5899eaf308f5067'].publications)).toEqual(['PMID:1', 'PMID:2']);
-        expect(g.edges['0719696e40f7ef74a5899eaf308f5067'].attributes).toHaveProperty('relation', 'relation1')
+        expect(g.edges).toHaveProperty('825db77d3c9a1336d647344dda35a106');
+        expect(Array.from(g.edges['825db77d3c9a1336d647344dda35a106'].apis)).toEqual(['API1']);
+        expect(Array.from(g.edges['825db77d3c9a1336d647344dda35a106'].sources)).toEqual(['source1']);
+        expect(Array.from(g.edges['825db77d3c9a1336d647344dda35a106'].publications)).toEqual(['PMID:1', 'PMID:2']);
+        expect(g.edges['825db77d3c9a1336d647344dda35a106'].attributes).toHaveProperty('relation', 'relation1')
     })
 
     test("Multiple query results are correctly updated for two edges having same input, predicate and output", () => {
@@ -127,17 +127,17 @@ describe("Test graph class", () => {
         expect(Array.from(g.nodes["inputPrimaryID-qg1"]._targetNodes)).toEqual(['outputPrimaryID-qg2']);
         expect(Array.from(g.nodes["inputPrimaryID-qg1"]._targetQGNodes)).toEqual(['qg2']);
 
-        expect(g.edges).toHaveProperty('0719696e40f7ef74a5899eaf308f5067');
-        expect(Array.from(g.edges['0719696e40f7ef74a5899eaf308f5067'].apis)).toEqual(['API1']);
-        expect(Array.from(g.edges['0719696e40f7ef74a5899eaf308f5067'].sources)).toEqual(['source1']);
-        expect(Array.from(g.edges['0719696e40f7ef74a5899eaf308f5067'].publications)).toEqual(['PMID:1', 'PMID:2']);
-        expect(g.edges['0719696e40f7ef74a5899eaf308f5067'].attributes).toHaveProperty('relation', 'relation1')
+        expect(g.edges).toHaveProperty('825db77d3c9a1336d647344dda35a106');
+        expect(Array.from(g.edges['825db77d3c9a1336d647344dda35a106'].apis)).toEqual(['API1']);
+        expect(Array.from(g.edges['825db77d3c9a1336d647344dda35a106'].sources)).toEqual(['source1']);
+        expect(Array.from(g.edges['825db77d3c9a1336d647344dda35a106'].publications)).toEqual(['PMID:1', 'PMID:2']);
+        expect(g.edges['825db77d3c9a1336d647344dda35a106'].attributes).toHaveProperty('relation', 'relation1')
 
-        expect(g.edges).toHaveProperty('00cc8c4fe1a391c243c3c3e762d1ea73');
-        expect(Array.from(g.edges['00cc8c4fe1a391c243c3c3e762d1ea73'].apis)).toEqual(['API2']);
-        expect(Array.from(g.edges['00cc8c4fe1a391c243c3c3e762d1ea73'].sources)).toEqual(['source2']);
-        expect(Array.from(g.edges['00cc8c4fe1a391c243c3c3e762d1ea73'].publications)).toEqual(['PMC:1', 'PMC:2']);
-        expect(g.edges['00cc8c4fe1a391c243c3c3e762d1ea73'].attributes).toHaveProperty('relation', 'relation2')
+        expect(g.edges).toHaveProperty('7e40c415eef659e5bf92bfb024a5b54b');
+        expect(Array.from(g.edges['7e40c415eef659e5bf92bfb024a5b54b'].apis)).toEqual(['API2']);
+        expect(Array.from(g.edges['7e40c415eef659e5bf92bfb024a5b54b'].sources)).toEqual(['source2']);
+        expect(Array.from(g.edges['7e40c415eef659e5bf92bfb024a5b54b'].publications)).toEqual(['PMC:1', 'PMC:2']);
+        expect(g.edges['7e40c415eef659e5bf92bfb024a5b54b'].attributes).toHaveProperty('relation', 'relation2')
     })
 
     test("Multiple query results for different edges are correctly updated", () => {
@@ -154,22 +154,22 @@ describe("Test graph class", () => {
         expect(Array.from(g.nodes["inputPrimaryID-qg1"]._targetNodes)).toEqual(['outputPrimaryID-qg2']);
         expect(Array.from(g.nodes["inputPrimaryID-qg1"]._targetQGNodes)).toEqual(['qg2']);
 
-        expect(g.edges).toHaveProperty('0719696e40f7ef74a5899eaf308f5067');
-        expect(Array.from(g.edges['0719696e40f7ef74a5899eaf308f5067'].apis)).toEqual(['API1']);
-        expect(Array.from(g.edges['0719696e40f7ef74a5899eaf308f5067'].sources)).toEqual(['source1']);
-        expect(Array.from(g.edges['0719696e40f7ef74a5899eaf308f5067'].publications)).toEqual(['PMID:1', 'PMID:2']);
-        expect(g.edges['0719696e40f7ef74a5899eaf308f5067'].attributes).toHaveProperty('relation', 'relation1')
+        expect(g.edges).toHaveProperty('825db77d3c9a1336d647344dda35a106');
+        expect(Array.from(g.edges['825db77d3c9a1336d647344dda35a106'].apis)).toEqual(['API1']);
+        expect(Array.from(g.edges['825db77d3c9a1336d647344dda35a106'].sources)).toEqual(['source1']);
+        expect(Array.from(g.edges['825db77d3c9a1336d647344dda35a106'].publications)).toEqual(['PMID:1', 'PMID:2']);
+        expect(g.edges['825db77d3c9a1336d647344dda35a106'].attributes).toHaveProperty('relation', 'relation1')
 
-        expect(g.edges).toHaveProperty('00cc8c4fe1a391c243c3c3e762d1ea73');
-        expect(Array.from(g.edges['00cc8c4fe1a391c243c3c3e762d1ea73'].apis)).toEqual(['API2']);
-        expect(Array.from(g.edges['00cc8c4fe1a391c243c3c3e762d1ea73'].sources)).toEqual(['source2']);
-        expect(Array.from(g.edges['00cc8c4fe1a391c243c3c3e762d1ea73'].publications)).toEqual(['PMC:1', 'PMC:2']);
-        expect(g.edges['00cc8c4fe1a391c243c3c3e762d1ea73'].attributes).toHaveProperty('relation', 'relation2')
+        expect(g.edges).toHaveProperty('7e40c415eef659e5bf92bfb024a5b54b');
+        expect(Array.from(g.edges['7e40c415eef659e5bf92bfb024a5b54b'].apis)).toEqual(['API2']);
+        expect(Array.from(g.edges['7e40c415eef659e5bf92bfb024a5b54b'].sources)).toEqual(['source2']);
+        expect(Array.from(g.edges['7e40c415eef659e5bf92bfb024a5b54b'].publications)).toEqual(['PMC:1', 'PMC:2']);
+        expect(g.edges['7e40c415eef659e5bf92bfb024a5b54b'].attributes).toHaveProperty('relation', 'relation2')
 
-        expect(g.edges).toHaveProperty('13219cef22cc15f78b115b3e5859f7e9');
-        expect(Array.from(g.edges['13219cef22cc15f78b115b3e5859f7e9'].apis)).toEqual(['API3']);
-        expect(Array.from(g.edges['13219cef22cc15f78b115b3e5859f7e9'].sources)).toEqual(['source3']);
-        expect(Array.from(g.edges['13219cef22cc15f78b115b3e5859f7e9'].publications)).toEqual(['PMC:3', 'PMC:4']);
-        expect(g.edges['13219cef22cc15f78b115b3e5859f7e9'].attributes).toHaveProperty('relation', 'relation3')
+        expect(g.edges).toHaveProperty('dbb359d0312bcc45db03f9e8eabc7c99');
+        expect(Array.from(g.edges['dbb359d0312bcc45db03f9e8eabc7c99'].apis)).toEqual(['API3']);
+        expect(Array.from(g.edges['dbb359d0312bcc45db03f9e8eabc7c99'].sources)).toEqual(['source3']);
+        expect(Array.from(g.edges['dbb359d0312bcc45db03f9e8eabc7c99'].publications)).toEqual(['PMC:3', 'PMC:4']);
+        expect(g.edges['dbb359d0312bcc45db03f9e8eabc7c99'].attributes).toHaveProperty('relation', 'relation3')
     })
 })

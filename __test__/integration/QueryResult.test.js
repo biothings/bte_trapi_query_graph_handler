@@ -1993,39 +1993,6 @@ describe('Testing QueryResults Module', () => {
         expect(results[0]).toHaveProperty('score');
       });
 
-      // NOTE: with the new generalized query handling, this case shouldn't happen
-      test('should get 0 results when 0 records for edge: ⇢̊→', () => {
-        const queryResult = new QueryResult();
-        queryResult.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": []
-          },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": [record1_n1a_n2a]
-          }
-        });
-        const results = queryResult.getResults();
-        expect(results.length).toEqual(0);
-      });
-
-      // NOTE: with the new generalized query handling, this case won't happen
-      test('should get 0 results when 0 records for edge: →⇢̊', () => {
-        const queryResult = new QueryResult();
-        queryResult.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": [record0_n0a_n1a]
-          },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": []
-          }
-        });
-        const results = queryResult.getResults();
-        expect(results.length).toEqual(0);
-      });
       
       test('should get 5k results when e0 has 100 records (50 connected, 50 not), and e1 has 10k (5k connected, 5k not)', () => {
         /**
@@ -2749,41 +2716,6 @@ describe('Testing QueryResults Module', () => {
         expect(results[0]).toHaveProperty('score');
       });
 
-      // NOTE: with the new generalized query handling, this case shouldn't happen.
-      // TODO: should we remove this test?
-      test('should get 0 results when 0 records for edge: ⇢̊←', () => {
-        const queryResult = new QueryResult();
-        queryResult.update({
-          "e0": {
-            "connected_to": ["e1_reversed"],
-            "records": []
-          },
-          "e1_reversed": {
-            "connected_to": ["e0"],
-            "records": [record1_n2a_n1a]
-          }
-        });
-        const results = queryResult.getResults();
-        expect(results.length).toEqual(0);
-      });
-
-      // NOTE: with the new generalized query handling, this case won't happen.
-      // TODO: should we remove this test?
-      test('should get 0 results when 0 records for edge: →⇠̊', () => {
-        const queryResult = new QueryResult();
-        queryResult.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": [record0_n0a_n1a]
-          },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": []
-          }
-        });
-        const results = queryResult.getResults();
-        expect(results.length).toEqual(0);
-      });
 
     });
 
@@ -2832,23 +2764,6 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(0);
       });
 
-      // NOTE: with the new generalized query handling, this case shouldn't happen.
-      // TODO: should we remove this test?
-      test('should get 0 results when 0 records for edge: ⇠̊→', () => {
-        const queryResult = new QueryResult();
-        queryResult.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": []
-          },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": [record1_n1a_n2a]
-          }
-        });
-        const results = queryResult.getResults();
-        expect(results.length).toEqual(0);
-      });
     });
 
     describe('query graph: -<', () => {

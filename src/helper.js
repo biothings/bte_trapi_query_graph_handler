@@ -24,6 +24,18 @@ module.exports = class QueryGraphHelper {
       : record.$edge_metadata.trapi_qEdge_obj.getObject().getID();
   }
 
+  _getInputIsSet(record) {
+    return record.$edge_metadata.trapi_qEdge_obj.isReversed()
+      ? record.$edge_metadata.trapi_qEdge_obj.getObject().isSet()
+      : record.$edge_metadata.trapi_qEdge_obj.getSubject().isSet();
+  }
+
+  _getOutputIsSet(record) {
+    return record.$edge_metadata.trapi_qEdge_obj.isReversed()
+      ? record.$edge_metadata.trapi_qEdge_obj.getSubject().isSet()
+      : record.$edge_metadata.trapi_qEdge_obj.getObject().isSet();
+  }
+
   _getOutputID(record) {
     return record.$edge_metadata.trapi_qEdge_obj.isReversed()
       ? record.$input.obj[0].primaryID
@@ -58,6 +70,7 @@ module.exports = class QueryGraphHelper {
   _getKGEdgeID(record) {
     const edgeMetaData = [
       this._getInputID(record),
+      this._getPredicate(record),
       this._getOutputID(record),
       this._getAPI(record),
       this._getSource(record),
