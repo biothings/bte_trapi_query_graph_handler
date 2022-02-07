@@ -124,14 +124,21 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
 
       if (this.options.dryrun) {
         let apiNames = [...new Set(sAPIEdges.map((apiEdge) => apiEdge.association.api_name))];
-        let log_msg = `Edge ${current_edge.qEdge.id}: ${current_edge.qEdge.subject.category} > ${current_edge.qEdge.predicate ? `${current_edge.qEdge.predicate} > ` : ''}${current_edge.qEdge.object.category}`;
-        this.logs.push(new LogEntry("DEBUG", null, log_msg).getLog());
+        
+        let log_msg;
+        if (current_edge.reverse) {
+          log_msg = `Edge ${current_edge.qEdge.id} (reversed): ${current_edge.qEdge.object.category} > ${current_edge.qEdge.predicate ? `${current_edge.qEdge.predicate} > ` : ''}${current_edge.qEdge.subject.category}`;
+        } else {
+          log_msg = `Edge ${current_edge.qEdge.id}: ${current_edge.qEdge.subject.category} > ${current_edge.qEdge.predicate ? `${current_edge.qEdge.predicate} > ` : ''}${current_edge.qEdge.object.category}`;
+        }
+        this.logs.push(new LogEntry("INFO", null, log_msg).getLog());
+
         let log_msg_2 = `APIs called: ${apiNames.join(',')} (${sAPIEdges.length} queries total)`;
-        this.logs.push(new LogEntry("DEBUG", null, log_msg_2).getLog());
+        this.logs.push(new LogEntry("INFO", null, log_msg_2).getLog());
 
         sAPIEdges.forEach(apiEdge => {
           log_msg = `${apiEdge.association.api_name}: ${apiEdge.association.input_type} > ${apiEdge.association.predicate} > ${apiEdge.association.output_type}`;
-          this.logs.push(new LogEntry("DEBUG", null, log_msg).getLog());
+          this.logs.push(new LogEntry("TRACE", null, log_msg).getLog());
         });
       }
 
