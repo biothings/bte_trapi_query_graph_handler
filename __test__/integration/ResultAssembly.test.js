@@ -73,26 +73,6 @@ class ResultMaker{
                     res['$output'].original = this.generateID();
                     res['$output'].obj[0].primaryID = this.generateID();
                 }
-
-                // if (inputNodeInfo?.ids) {
-                //     let randomID = inputNodeInfo?.ids[Math.floor(Math.random() * inputNodeInfo?.ids.length)];
-                //     // input
-                //     res['$input'].original = randomID;
-                //     res['$input'].obj[0].primaryID = randomID;
-                // }else{
-                //     res['$input'].original = this.generateID();
-                //     res['$input'].obj[0].primaryID = this.generateID();
-                // }
-
-                // if (outputNodeInfo?.ids) {
-                //     let randomID = outputNodeInfo?.ids[Math.floor(Math.random() * outputNodeInfo?.ids.length)];
-                //     // output
-                //     res['$output'].original = randomID;
-                //     res['$output'].obj[0].primaryID = randomID;
-                // }else{
-                //     res['$output'].original = this.generateID();
-                //     res['$output'].obj[0].primaryID = this.generateID();
-                // }
                 //generated result for current edge
                 this.results[E_ID]['records'].push(res);
             }
@@ -140,6 +120,49 @@ describe('Testing QueryResults', () => {
                             "e0": {
                                 "subject": "n0",
                                 "object": "n1",
+                                "predicates": ["PREDICATE-X"],
+                                //to make this easier include this new property
+                                "$connected_to": []
+                            }
+                        }
+                    }
+                }
+            }
+    
+            const rm =  new ResultMaker(query);
+            const organized_results = rm.getOrganizedResults;
+            const queryResult = new QueryResult();
+
+            queryResult.update(organized_results);
+            const results = queryResult.getResults();
+    
+            expect(results.length).toEqual(1);
+            expect(results[0].node_bindings).toHaveProperty('n0');
+            expect(results[0].node_bindings).toHaveProperty('n1');
+            expect(results[0].edge_bindings).toHaveProperty('e0');
+            expect(results[0]).toHaveProperty('score');
+        });
+
+        test('1 result reversed B-A', () => {
+            let query = {
+                "message": {
+                    "query_graph": {
+                        "nodes": {
+                            "n0": {
+                                "categories": ["CATEGORY-1"],
+                                "ids": [ "A"],
+                                "is_set": false
+                            },
+                            "n1": {
+                                "categories": ["CATEGORY-2"],
+                                "ids": [ "B"],
+                                "is_set": false
+                            }
+                        },
+                        "edges": {
+                            "e0": {
+                                "subject": "n1",
+                                "object": "n0",
                                 "predicates": ["PREDICATE-X"],
                                 //to make this easier include this new property
                                 "$connected_to": []
@@ -440,11 +463,71 @@ describe('Testing QueryResults', () => {
             expect(results[0]).toHaveProperty('score');
         });
 
+        test('1 result is_set A-(B,C)-D', () => {
+            let query = {
+                "message": {
+                    "query_graph": {
+                        "nodes": {
+                            "n0": {
+                                "categories": ["CATEGORY-1"],
+                                "ids": [ "A"],
+                                "is_set": false
+                            },
+                            "n1": {
+                                "categories": ["CATEGORY-2"],
+                                "ids": [ "B", "C"],
+                                "is_set": true
+                            },
+                            "n2": {
+                                "categories": ["CATEGORY-3"],
+                                "ids": [ "D"],
+                                "is_set": false
+                            }
+                        },
+                        "edges": {
+                            "e0": {
+                                "subject": "n0",
+                                "object": "n1",
+                                //to make this easier include this new property
+                                "$connected_to": ['e1']
+                            },
+                            "e1": {
+                                "subject": "n1",
+                                "object": "n2",
+                                //to make this easier include this new property
+                                "$connected_to": ['e0']
+                            }
+                        }
+                    }
+                }
+            }
+    
+            const rm =  new ResultMaker(query);
+            const organized_results = rm.getOrganizedResults;
+            const queryResult = new QueryResult();
+
+            queryResult.update(organized_results);
+            const results = queryResult.getResults();
+    
+            expect(results.length).toEqual(1);
+
+            expect(Object.keys(results[0].node_bindings).length).toEqual(3);
+            expect(results[0].node_bindings).toHaveProperty('n0');
+            expect(results[0].node_bindings).toHaveProperty('n1');
+            expect(results[0].node_bindings).toHaveProperty('n2');
+
+            expect(Object.keys(results[0].edge_bindings).length).toEqual(2);
+            expect(results[0].edge_bindings).toHaveProperty('e0');
+            expect(results[0].edge_bindings).toHaveProperty('e1');
+
+            expect(results[0]).toHaveProperty('score');
+        });
+
     });
 
     describe('1 hop branched Q', () => {
 
-        test('2 result [A-B-C, A-B-D]', () => {
+        test('2 results [A-B-C, A-B-D]', () => {
             let query = {
                 "message": {
                     "query_graph": {
@@ -513,6 +596,74 @@ describe('Testing QueryResults', () => {
             expect(results[1].edge_bindings).toHaveProperty('e1');
 
             expect(results[1]).toHaveProperty('score');
+        });
+
+    });
+
+    describe('2 hop Q', () => {
+
+        test('1 result A->B<-C->D', () => {
+            let query = {
+                "message": {
+                    "query_graph": {
+                        "nodes": {
+                            "n0": {
+                                "categories": ["CATEGORY-1"],
+                                "ids": [ "A"],
+                                "is_set": false
+                            },
+                            "n1": {
+                                "categories": ["CATEGORY-2"],
+                                "ids": [ "B"],
+                                "is_set": true
+                            },
+                            "n2": {
+                                "categories": ["CATEGORY-3"],
+                                "ids": [ "C"],
+                                "is_set": false
+                            },
+                            "n3": {
+                                "categories": ["CATEGORY-3"],
+                                "ids": [ "D"],
+                                "is_set": false
+                            }
+                        },
+                        "edges": {
+                            "e0": {
+                                "subject": "n0",
+                                "object": "n1",
+                                //to make this easier include this new property
+                                "$connected_to": ['e1']
+                            },
+                            "e1": {
+                                "subject": "n2",
+                                "object": "n1",
+                                //to make this easier include this new property
+                                "$connected_to": ['e0', 'e2']
+                            },
+                            "e2": {
+                                "subject": "n2",
+                                "object": "n3",
+                                //to make this easier include this new property
+                                "$connected_to": ['e1']
+                            }
+                        }
+                    }
+                }
+            }
+    
+            const rm =  new ResultMaker(query);
+            const organized_results = rm.getOrganizedResults;
+            const queryResult = new QueryResult();
+
+            queryResult.update(organized_results);
+            const results = queryResult.getResults();
+    
+            expect(results.length).toEqual(1);
+
+            expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2', 'n3']);
+            expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1', 'e2']);
+            expect(results[0]).toHaveProperty('score');
         });
 
     });
