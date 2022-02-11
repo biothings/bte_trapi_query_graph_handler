@@ -138,7 +138,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
 
         sAPIEdges.forEach(apiEdge => {
           log_msg = `${apiEdge.association.api_name}: ${apiEdge.association.input_type} > ${apiEdge.association.predicate} > ${apiEdge.association.output_type}`;
-          this.logs.push(new LogEntry("TRACE", null, log_msg).getLog());
+          this.logs.push(new LogEntry("DEBUG", null, log_msg).getLog());
         });
       }
 
