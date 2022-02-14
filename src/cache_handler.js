@@ -9,9 +9,13 @@ const lz4 = require('lz4');
 const chunker = require('stream-chunker');
 const { Readable, Transform } = require('stream');
 
-class DelimitedChunks extends Transform {
+class DelimitedChunksDecoder extends Transform {
   constructor() {
-    super({ readableObjectMode: true });
+    super({
+      readableObjectMode: true,
+      readableHighWaterMark: 32, // limited output reduces RAM usage slightly
+      writeableHighWaterMark: 100000,
+    });
     this._buffer = '';
   }
 
@@ -22,10 +26,14 @@ class DelimitedChunks extends Transform {
       this._buffer = parts.pop();
       parts.forEach((part) => {
         const parsedPart = JSON.parse(lz4.decode(Buffer.from(part, 'base64url')).toString());
-        this.push(parsedPart);
+        if (Array.isArray(parsedPart)) {
+          parsedPart.forEach(obj => this.push(obj));
+        } else { // backwards compatibility with previous implementation
+          this.push(parsedPart);
+        }
       });
-      callback();
     }
+    callback(); // callback *no matter what*
   }
 
   _flush(callback) {
@@ -33,6 +41,38 @@ class DelimitedChunks extends Transform {
       if (this._buffer.length) {
         const final = JSON.parse(lz4.decode(Buffer.from(this._buffer, 'base64url')).toString());
         callback(null, final);
+      }
+      callback();
+    } catch (error) {
+      callback(error);
+    }
+  }
+}
+
+class DelimitedChunksEncoder extends Transform {
+  constructor() {
+    super({
+      writableObjectMode: true,
+      writeableHighWaterMark: 128
+    });
+    this._buffer = [];
+  }
+
+  _transform(obj, encoding, callback) {
+    this._buffer.push(obj); // stringify/compress 64 objects at a time limits compress calls
+    if (this._buffer.length === 64) {
+      const compressedPart = lz4.encode(JSON.stringify(this._buffer)).toString('base64url') + ',';
+      this.push(compressedPart);
+      this._buffer = [];
+    }
+    callback();
+  }
+
+  _flush(callback) {
+    try {
+      if (this._buffer.length) {
+        callback(null, lz4.encode(JSON.stringify(this._buffer)).toString('base64url') + ',');
+        return;
       }
       callback();
     } catch (error) {
@@ -85,8 +125,12 @@ module.exports = class {
             const resStream = Readable.from(resSorted);
             resStream
               .pipe(this.createDecodeStream())
-              .on('data', (obj) => decodedRes.push(obj))
-              .on('end', () => resolve(decodedRes));
+              .on('data', (obj) => {
+                decodedRes.push(obj);
+              })
+              .on('end', () => {
+                resolve(decodedRes)
+              });
           } else {
             resolve(null);
           }
@@ -184,19 +228,11 @@ module.exports = class {
   }
 
   createEncodeStream() {
-    return new Transform({
-      writableObjectMode: true,
-      transform: (chunk, encoding, callback) => {
-        callback(null, lz4.encode(JSON.stringify(chunk)).toString('base64url') + ',');
-      },
-      flush: (callback) => {
-        callback();
-      },
-    });
+    return new DelimitedChunksEncoder();
   }
 
   createDecodeStream() {
-    return new DelimitedChunks();
+    return new DelimitedChunksDecoder();
   }
 
   async cacheEdges(queryResult) {
