@@ -4,7 +4,10 @@ const LogEntry = require('./log_entry');
 const ExeEdge = require('./query_execution_edge');
 const debug = require('debug')('bte:biothings-explorer-trapi:query_graph');
 const QNode = require('./query_node');
+const biolink = require('./biolink');
 const id_resolver = require('biomedical_id_resolver');
+const _ = require('lodash');
+const utils = require('./utils');
 
 module.exports = class QueryGraphHandler {
   constructor(queryGraph) {
@@ -53,13 +56,45 @@ module.exports = class QueryGraphHandler {
         if (Object.hasOwnProperty.call(category, ids[0])) {
             category = category[ids[0]][0]['semanticType'];
             return ["biolink:" + category];
-        }else{
+        } else {
             debug(`No category match found for ${JSON.stringify(ids)}.`);
             return [];
         }
-    }else{
-      debug(`(Error) Can't find category matches of multiple IDs.`);
-      return [];
+    } else {
+      const categories = await id_resolver.resolveSRI({unknown: ids});
+      const commonCategories = _.intersection(
+        ...Object.values(categories)
+        .map(curie => curie[0].semanticTypes)
+        .filter(semanticTypes => !semanticTypes.every(item => item === null))
+        .map(semanticTypes => semanticTypes.map(t => utils.removeBioLinkPrefix(t)))
+        );
+      if (!commonCategories.length) {
+        debug('Given IDs have no common categories. Cannot infer categories.');
+        this.logs.push('Unable to infer multi-ID category (no categories in common)');
+        return [];
+      }
+      const tree = biolink.biolink._biolink_class_tree._objects_in_tree
+      try {
+        const mostSpecificCommonCategory = commonCategories.reduce((prev, cat) => {
+          let parent = cat;
+          if (tree[cat]._children.includes(prev)) {
+            return prev;
+          }
+          while (parent) {
+            if (prev === parent || tree[prev]._children.includes(cat)) {
+              return cat;
+            } else if (tree[parent]._children.includes(prev)) {
+              return cat;
+            }
+            parent = tree[parent]._parent;
+          }
+          return prev;
+        }, commonCategories[0]);
+        return ["biolink:" + mostSpecificCommonCategory];
+      } catch (error) {
+        debug(`Unable to retrieve categories due to error ${error}`);
+        return [];
+      }
     }
   }
 
@@ -83,7 +118,7 @@ module.exports = class QueryGraphHandler {
           this.logs.push(
             new LogEntry(
             'DEBUG',
-            null, 
+            null,
             `Assigned missing node ID category: ${JSON.stringify(this.queryGraph.nodes[node_id])}`).getLog(),
           );
           nodes[node_id] = new QNode(node_id, this.queryGraph.nodes[node_id]);
@@ -91,7 +126,7 @@ module.exports = class QueryGraphHandler {
           debug(`Creating node...`);
           nodes[node_id] = new QNode(node_id, this.queryGraph.nodes[node_id]);
         }
-        
+
       }
       this.logs.push(
         new LogEntry('DEBUG', null, `BTE identified ${Object.keys(nodes).length} QNodes from your query graph`).getLog(),
@@ -143,7 +178,7 @@ module.exports = class QueryGraphHandler {
     for (const edge_id in this.edges) {
       edges[edge_index] = [
         // () ----> ()
-        this.edges[edge_id].object.curie ? 
+        this.edges[edge_id].object.curie ?
         new ExeEdge(this.edges[edge_id], true, undefined) :
         new ExeEdge(this.edges[edge_id], false, undefined)
         // reversed () <---- ()
