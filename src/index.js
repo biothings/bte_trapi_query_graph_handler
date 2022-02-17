@@ -124,7 +124,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
 
       if (this.options.dryrun) {
         let apiNames = [...new Set(sAPIEdges.map((apiEdge) => apiEdge.association.api_name))];
-        
+
         let log_msg;
         if (current_edge.reverse) {
           log_msg = `Edge ${current_edge.qEdge.id} (reversed): ${current_edge.qEdge.object.category} > ${current_edge.qEdge.predicate ? `${current_edge.qEdge.predicate} > ` : ''}${current_edge.qEdge.subject.category}`;
@@ -133,7 +133,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         }
         this.logs.push(new LogEntry("INFO", null, log_msg).getLog());
 
-        let log_msg_2 = `APIs called: ${apiNames.join(',')} (${sAPIEdges.length} queries total)`;
+        let log_msg_2 = `APIs to call: ${apiNames.join(',')} (${sAPIEdges.length} queries total)`;
         this.logs.push(new LogEntry("INFO", null, log_msg_2).getLog());
 
         sAPIEdges.forEach(apiEdge => {
