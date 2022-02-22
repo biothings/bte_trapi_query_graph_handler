@@ -39,9 +39,9 @@ module.exports = class BatchEdgeQueryHandler {
   /**
    * @private
    */
-  async _queryBTEEdges(bteEdges) {
+  async _queryBTEEdges(bteEdges, unavailableAPIs = {}) {
     let executor = new call_api(bteEdges);
-    const res = await executor.query(this.resolveOutputIDs);
+    const res = await executor.query(this.resolveOutputIDs, unavailableAPIs);
     this.logs = [...this.logs, ...executor.logs];
     return res;
   }
@@ -99,7 +99,7 @@ module.exports = class BatchEdgeQueryHandler {
     });
   }
 
-  async query(qEdges) {
+  async query(qEdges, unavailableAPIs = {}) {
     debug('Node Update Start');
     //it's now a single edge but convert to arr to simplify refactoring
     qEdges = Array.isArray(qEdges) ? qEdges : [qEdges];
@@ -129,7 +129,7 @@ module.exports = class BatchEdgeQueryHandler {
       }
       const expanded_bteEdges = this._expandBTEEdges(bteEdges);
       debug('Start to query BTEEdges....');
-      query_res = await this._queryBTEEdges(expanded_bteEdges);
+      query_res = await this._queryBTEEdges(expanded_bteEdges, unavailableAPIs);
       debug('BTEEdges are successfully queried....');
       debug(`Filtering out any "undefined" items in (${query_res.length}) results`);
       query_res = query_res.filter((res) => res !== undefined);

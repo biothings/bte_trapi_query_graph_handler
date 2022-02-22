@@ -153,6 +153,22 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     }
   }
 
+  async _logSkippedQueries(unavailableAPIs) {
+    Object.entries(unavailableAPIs).forEach(([api, skippedQueries]) => {
+      const skipMessage = `${skippedQueries} additional quer${skippedQueries > 1 ? "ies" : "y"} to ${api} ${
+        skippedQueries > 1 ? "were" : "was"
+      } skipped as the API was unavailable.`;
+      debug(skipMessage);
+      this.logs.push(
+        new LogEntry(
+          "WARNING",
+          null,
+          skipMessage
+        ).getLog()
+      );
+    });
+  }
+
   async query() {
     this._initializeResponse();
     debug('Start to load metakg.');
@@ -173,6 +189,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       return;
     }
     const manager = new EdgeManager(queryEdges);
+    const unavailableAPIs = {};
     while (manager.getEdgesNotExecuted()) {
       //next available/most efficient edge
       let current_edge = manager.getNext();
@@ -191,7 +208,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       );
       debug(`(5) Executing current edge >> "${current_edge.getID()}"`);
       //execute current edge query
-      let res = await handler.query(handler.qEdges);
+      let res = await handler.query(handler.qEdges, unavailableAPIs);
       this.logs = [...this.logs, ...handler.logs];
       // create an edge execution summary
       let success = 0, fail = 0, total = 0;
@@ -211,7 +228,15 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         ).getLog()
       );
       if (res.length === 0) {
+        this._logSkippedQueries(unavailableAPIs);
         debug(`(X) Terminating..."${current_edge.getID()}" got 0 results.`);
+        this.logs.push(
+          new LogEntry(
+              'WARNING',
+              null,
+              `Edge (${current_edge.getID()}) got 0 results. Your query terminates.`
+          ).getLog()
+        );
         return;
       }
       //storing results will trigger a node entity count update
@@ -222,7 +247,8 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       manager.updateAllOtherEdges(current_edge);
       // check that any results are kept
       if (!current_edge.results.length) {
-        debug(`(X) Terminating..."${current_edge.getID()}" got 0 results.`);
+        this._logSkippedQueries(unavailableAPIs);
+        debug(`(X) Terminating..."${current_edge.getID()}" kept 0 results.`);
         this.logs.push(
             new LogEntry(
                 'WARNING',
@@ -236,6 +262,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       current_edge.executed = true;
       debug(`(10) Edge successfully queried.`);
     };
+    this._logSkippedQueries(unavailableAPIs);
     //collect and organize results
     manager.collectResults();
     this.logs = [...this.logs, ...manager.logs];
