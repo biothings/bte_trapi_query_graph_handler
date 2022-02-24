@@ -133,8 +133,10 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         }
         this.logs.push(new LogEntry("INFO", null, log_msg).getLog());
 
-        let log_msg_2 = `APIs to call: ${apiNames.join(',')} (${sAPIEdges.length} queries total)`;
-        this.logs.push(new LogEntry("INFO", null, log_msg_2).getLog());
+        if (sAPIEdges.length) {
+          let log_msg_2 = `${sAPIEdges.length} total planned queries to following APIs: ${apiNames.join(',')}`;
+          this.logs.push(new LogEntry("INFO", null, log_msg_2).getLog());
+        }
 
         sAPIEdges.forEach(apiEdge => {
           log_msg = `${apiEdge.association.api_name}: ${apiEdge.association.input_type} > ${apiEdge.association.predicate} > ${apiEdge.association.output_type}`;
@@ -152,10 +154,6 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       // this.logs = [...this.logs, ...edgeConverter.logs];
     }
 
-    if (this.options.dryrun) {
-      return false;
-    }
-
     const len = Object.keys(edgesMissingOps).length;
     // this.logs = [...this.logs, ...manager.logs];
     let edgesToLog = Object.entries(edgesMissingOps).map(([edge, reversed]) => {
@@ -167,13 +165,16 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       ? `[${edgesToLog.join(', ')}]`
       : `${edgesToLog.join(', ')}`
     if (len > 0) {
-      const terminateLog = `Query Edge${len === 1 ? 's' : ''} ${edgesToLog} ${
-        len === 1 ? 'have' : 'has'
+      const terminateLog = `Query Edge${len !== 1 ? 's' : ''} ${edgesToLog} ${
+        len !== 1 ? 'have' : 'has'
       } no SmartAPI edges. Your query terminates.`;
       debug(terminateLog);
       this.logs.push(new LogEntry('WARNING', null, terminateLog).getLog());
       return false;
     } else {
+      if (this.options.dryrun) {
+        return false;
+      }
       return true;
     }
   }
