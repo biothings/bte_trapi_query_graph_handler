@@ -113,6 +113,12 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   }
 
   async _edgesSupported(qEdges, kg) {
+    if (this.options.dryrun)
+    {
+      let log_msg = "Running dryrun of query, no API calls will be performed. Actual query execution order may vary based on API responses received.";
+      this.logs.push(new LogEntry("INFO", null, log_msg).getLog());
+    }
+
     // _.cloneDeep() is resource-intensive but only runs once per query
     qEdges = _.cloneDeep(qEdges);
     const manager = new EdgeManager(qEdges);
@@ -149,9 +155,20 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       }
       // assume results so next edge may be reversed or not
       current_edge.executed = true;
-      current_edge.object.entity_count = 1;
-      current_edge.subject.entity_count = 1;
-      // this.logs = [...this.logs, ...edgeConverter.logs];
+
+      //use # of APIs as estimate of # of results
+      if (sAPIEdges.length) {
+        if (current_edge.reverse) {
+          current_edge.subject.entity_count = current_edge.object.entity_count * sAPIEdges.length;
+        }
+        else {
+          current_edge.object.entity_count = current_edge.subject.entity_count * sAPIEdges.length;
+        }
+
+      } else {
+        current_edge.object.entity_count = 1;
+        current_edge.subject.entity_count = 1;
+      }
     }
 
     const len = Object.keys(edgesMissingOps).length;
