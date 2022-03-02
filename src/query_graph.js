@@ -4,7 +4,10 @@ const LogEntry = require('./log_entry');
 const ExeEdge = require('./query_execution_edge');
 const debug = require('debug')('bte:biothings-explorer-trapi:query_graph');
 const QNode = require('./query_node');
+const biolink = require('./biolink');
 const id_resolver = require('biomedical_id_resolver');
+const _ = require('lodash');
+const utils = require('./utils');
 
 module.exports = class QueryGraphHandler {
   constructor(queryGraph) {
@@ -44,22 +47,111 @@ module.exports = class QueryGraphHandler {
   /**
    * @private
    */
-    async _findNodeCategories(ids) {
-      if (ids.length == 1) {
-        let category = await id_resolver.resolveSRI({
-            unknown: ids
-        });
-        debug(`Query node missing categories...Looking for match...`);
-        if (Object.hasOwnProperty.call(category, ids[0])) {
-            category = category[ids[0]][0]['semanticType'];
-            return ["biolink:" + category];
-        }else{
-            debug(`No category match found for ${JSON.stringify(ids)}.`);
-            return [];
+  async _findNodeCategories(ids) {
+    const noMatchMessage = `No category match found for ${JSON.stringify(ids)}.`;
+    if (ids.length == 1) {
+      let category = await id_resolver.resolveSRI({
+          unknown: ids
+      });
+      debug(`Query node missing categories...Looking for match...`);
+      if (Object.hasOwnProperty.call(category, ids[0])) {
+          category = category[ids[0]][0]['semanticType'];
+          return ["biolink:" + category];
+      } else {
+          debug(noMatchMessage);
+          this.logs.push(
+            new LogEntry(
+              'ERROR',
+              null,
+              noMatchMessage,
+            ).getLog()
+          );
+          return [];
+      }
+    } else {
+      try {
+        let finalCategories = [];
+        const tree = biolink.biolink._biolink_class_tree._objects_in_tree
+
+        // get array of all unique categories for all curies
+        const allCategories = [...Object.values(await id_resolver.resolveSRI({unknown: ids}))
+          .map(curie => curie[0].semanticTypes)
+          .filter(semanticTypes => !semanticTypes.every(item => item === null))
+          .map(semanticTypes => semanticTypes.map(t => utils.removeBioLinkPrefix(t)))
+          .reduce((set, arr) => new Set([...set, ...arr]), new Set())];
+
+        if (allCategories.length) {
+          finalCategories.push(allCategories[0]);
+        } else {
+          debug(noMatchMessage);
+          this.logs.push(
+            new LogEntry(
+              'ERROR',
+              null,
+              noMatchMessage,
+            ).getLog()
+          );
+          return [];
         }
-    }else{
-      debug(`(Error) Can't find category matches of multiple IDs.`);
-      return [];
+
+        allCategories.forEach((cat, i) => {
+          const keepSet = new Set();
+          const rmSet = new Set();
+          // check against each currently selected category
+          finalCategories.forEach(selected => {
+            if (tree[selected].is_mixin) { rmSet.add(selected) }
+            if (tree[cat].is_mixin) { rmSet.add(cat) }
+            if (cat === selected) { return keepSet.add(cat) }
+
+            let parent = cat;
+            while (parent) {
+              if (selected === parent || tree[selected]._children.includes(parent)) {
+                rmSet.add(selected);
+                return keepSet.add(cat);
+              }
+              parent = tree[parent]._parent;
+            }
+
+            parent = selected;
+            while (parent) {
+              if (cat === parent || tree[cat]._children.includes(parent)) {
+                rmSet.add(cat)
+                return keepSet.add(selected);
+              }
+              parent = tree[parent]._parent;
+            }
+            // add both if neither is ancestor of the other
+            keepSet.add(cat).add(selected);
+          });
+          finalCategories = [...keepSet].filter(cat => !rmSet.has(cat));
+          // in event no categories are kept (due to mixin shenanigans/etc)
+          if (!finalCategories.length && i < (allCategories.length - 1)) {
+            finalCategories = [allCategories[i + 1]];
+          }
+        });
+        if (!finalCategories.length) {
+          debug(noMatchMessage);
+          this.logs.push(
+            new LogEntry(
+              'ERROR',
+              null,
+              noMatchMessage,
+            ).getLog()
+          );
+        }
+        return [...finalCategories].map(cat => 'biolink:' + cat);
+      } catch (error) {
+          const errorMessage = `Unable to retrieve categories due to error ${error}`;
+          debug(errorMessage);
+          this.logs.push(
+            new LogEntry(
+              'ERROR',
+              null,
+              errorMessage,
+            ).getLog()
+          );
+          return [];
+        }
     }
   }
 
@@ -83,15 +175,17 @@ module.exports = class QueryGraphHandler {
           this.logs.push(
             new LogEntry(
             'DEBUG',
-            null, 
-            `Assigned missing node ID category: ${JSON.stringify(this.queryGraph.nodes[node_id])}`).getLog(),
+            null,
+            `Node (${node_id}) missing category. Assigned categor${category.length > 1 ? 'ies' : 'y'} [${category.join(', ')}] inferred from id${this.queryGraph.nodes[node_id].ids.length > 1 ? 's' : ''} [${this.queryGraph.nodes[node_id].ids.join(', ')}]`,
+            // `Assigned missing node ID category: ${JSON.stringify(this.queryGraph.nodes[node_id])}`).getLog(),
+            ).getLog()
           );
           nodes[node_id] = new QNode(node_id, this.queryGraph.nodes[node_id]);
         }else{
           debug(`Creating node...`);
           nodes[node_id] = new QNode(node_id, this.queryGraph.nodes[node_id]);
         }
-        
+
       }
       this.logs.push(
         new LogEntry('DEBUG', null, `BTE identified ${Object.keys(nodes).length} QNodes from your query graph`).getLog(),
@@ -143,7 +237,7 @@ module.exports = class QueryGraphHandler {
     for (const edge_id in this.edges) {
       edges[edge_index] = [
         // () ----> ()
-        this.edges[edge_id].object.curie ? 
+        this.edges[edge_id].object.curie ?
         new ExeEdge(this.edges[edge_id], true, undefined) :
         new ExeEdge(this.edges[edge_id], false, undefined)
         // reversed () <---- ()
