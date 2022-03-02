@@ -113,6 +113,12 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   }
 
   async _edgesSupported(qEdges, kg) {
+    if (this.options.dryrun)
+    {
+      let log_msg = "Running dryrun of query, no API calls will be performed. Actual query execution order may vary based on API responses received.";
+      this.logs.push(new LogEntry("INFO", null, log_msg).getLog());
+    }
+
     // _.cloneDeep() is resource-intensive but only runs once per query
     qEdges = _.cloneDeep(qEdges);
     const manager = new EdgeManager(qEdges);
@@ -121,14 +127,48 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       let current_edge = manager.getNext();
       const edgeConverter = new QEdge2BTEEdgeHandler([current_edge], kg);
       const sAPIEdges = edgeConverter.getSmartAPIEdges(current_edge);
+
+      if (this.options.dryrun) {
+        let apiNames = [...new Set(sAPIEdges.map((apiEdge) => apiEdge.association.api_name))];
+
+        let log_msg;
+        if (current_edge.reverse) {
+          log_msg = `Edge ${current_edge.qEdge.id} (reversed): ${current_edge.qEdge.object.category} > ${current_edge.qEdge.predicate ? `${current_edge.qEdge.predicate} > ` : ''}${current_edge.qEdge.subject.category}`;
+        } else {
+          log_msg = `Edge ${current_edge.qEdge.id}: ${current_edge.qEdge.subject.category} > ${current_edge.qEdge.predicate ? `${current_edge.qEdge.predicate} > ` : ''}${current_edge.qEdge.object.category}`;
+        }
+        this.logs.push(new LogEntry("INFO", null, log_msg).getLog());
+
+        if (sAPIEdges.length) {
+          let log_msg_2 = `${sAPIEdges.length} total planned queries to following APIs: ${apiNames.join(',')}`;
+          this.logs.push(new LogEntry("INFO", null, log_msg_2).getLog());
+        }
+
+        sAPIEdges.forEach(apiEdge => {
+          log_msg = `${apiEdge.association.api_name}: ${apiEdge.association.input_type} > ${apiEdge.association.predicate} > ${apiEdge.association.output_type}`;
+          this.logs.push(new LogEntry("DEBUG", null, log_msg).getLog());
+        });
+      }
+
       if (!sAPIEdges.length) {
         edgesMissingOps[current_edge.qEdge.id] = current_edge.reverse;
       }
       // assume results so next edge may be reversed or not
       current_edge.executed = true;
-      current_edge.object.entity_count = 1;
-      current_edge.subject.entity_count = 1;
-      // this.logs = [...this.logs, ...edgeConverter.logs];
+
+      //use # of APIs as estimate of # of results
+      if (sAPIEdges.length) {
+        if (current_edge.reverse) {
+          current_edge.subject.entity_count = current_edge.object.entity_count * sAPIEdges.length;
+        }
+        else {
+          current_edge.object.entity_count = current_edge.subject.entity_count * sAPIEdges.length;
+        }
+
+      } else {
+        current_edge.object.entity_count = 1;
+        current_edge.subject.entity_count = 1;
+      }
     }
 
     const len = Object.keys(edgesMissingOps).length;
@@ -142,13 +182,16 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       ? `[${edgesToLog.join(', ')}]`
       : `${edgesToLog.join(', ')}`
     if (len > 0) {
-      const terminateLog = `Query Edge${len === 1 ? 's' : ''} ${edgesToLog} ${
-        len === 1 ? 'have' : 'has'
+      const terminateLog = `Query Edge${len !== 1 ? 's' : ''} ${edgesToLog} ${
+        len !== 1 ? 'have' : 'has'
       } no SmartAPI edges. Your query terminates.`;
       debug(terminateLog);
       this.logs.push(new LogEntry('WARNING', null, terminateLog).getLog());
       return false;
     } else {
+      if (this.options.dryrun) {
+        return false;
+      }
       return true;
     }
   }
