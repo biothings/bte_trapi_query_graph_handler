@@ -176,7 +176,9 @@ module.exports = class QueryGraphHandler {
             new LogEntry(
             'DEBUG',
             null,
-            `Assigned missing node ID category: ${JSON.stringify(this.queryGraph.nodes[node_id])}`).getLog(),
+            `Node (${node_id}) missing category. Assigned categor${category.length > 1 ? 'ies' : 'y'} [${category.join(', ')}] inferred from id${this.queryGraph.nodes[node_id].ids.length > 1 ? 's' : ''} [${this.queryGraph.nodes[node_id].ids.join(', ')}]`,
+            // `Assigned missing node ID category: ${JSON.stringify(this.queryGraph.nodes[node_id])}`).getLog(),
+            ).getLog()
           );
           nodes[node_id] = new QNode(node_id, this.queryGraph.nodes[node_id]);
         }else{
