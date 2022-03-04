@@ -181,7 +181,7 @@ module.exports = class QueryGraphHandler {
             ).getLog()
           );
           nodes[qNodeID] = new QNode(qNodeID, this.queryGraph.nodes[qNodeID]);
-        }else{
+        } else {
           debug(`Creating node...`);
           nodes[qNodeID] = new QNode(qNodeID, this.queryGraph.nodes[qNodeID]);
         }

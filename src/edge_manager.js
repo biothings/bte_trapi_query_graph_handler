@@ -214,17 +214,17 @@ module.exports = class EdgeManager {
                                     if (single_alias.includes(':')) {
                                         //value already has prefix
                                         ids.add(single_alias);
-                                    }else{
+                                    } else {
                                         //concat with prefix
                                         ids.add(prefix + ':' + single_alias);
                                     }
                                 }
                             });
-                        }else{
+                        } else {
                             if (o._dbIDs[prefix].includes(':')) {
                                 //value already has prefix
                                 ids.add(o._dbIDs[prefix]);
-                            }else{
+                            } else {
                                 //concat with prefix
                                 ids.add(prefix + ':' + o._dbIDs[prefix]);
                             }
@@ -236,7 +236,7 @@ module.exports = class EdgeManager {
                     ids.add(o.curie);
                 }
                 //#3 last resort check original
-                else{
+                else {
                     ids.add(record.$input.original);
                 }
                 //check ids
@@ -255,17 +255,17 @@ module.exports = class EdgeManager {
                                     if (single_alias.includes(':')) {
                                         //value already has prefix
                                         o_ids.add(single_alias);
-                                    }else{
+                                    } else {
                                         //concat with prefix
                                         o_ids.add(prefix + ':' + single_alias);
                                     }
                                 }
                             });
-                        }else{
+                        } else {
                             if (o._dbIDs[prefix].includes(':')) {
                                 //value already has prefix
                                 o_ids.add(o._dbIDs[prefix]);
-                            }else{
+                            } else {
                                 //concat with prefix
                                 o_ids.add(prefix + ':' + o._dbIDs[prefix]);
                             }
@@ -277,7 +277,7 @@ module.exports = class EdgeManager {
                     o_ids.add(o.curie);
                 }
                 //#3 last resort check original
-                else{
+                else {
                     o_ids.add(record.$output.original);
                 }
                 //check ids

@@ -100,7 +100,7 @@ module.exports = class QNode {
             debug(`Node "${this.id}" saving (${Object.keys(curies).length}) curies...`);
             this.curie = Object.keys(curies);
             this.expanded_curie = curies;
-        }else{
+        } else {
             debug(`Node "${this.id}" intersecting (${this.curie.length})/(${Object.keys(curies).length}) curies...`);
             // let intersection = this.intersectCuries(this.curie, curies);
             // this.curie = intersection;
