@@ -156,7 +156,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       // assume results so next edge may be reversed or not
       currentEdge.executed = true;
 
-      //use # of APIs as estimate of # of results
+      //use # of APIs as estimate of # of records
       if (metaXEdges.length) {
         if (currentEdge.reverse) {
           currentEdge.subject.entity_count = currentEdge.object.entity_count * metaXEdges.length;
@@ -272,12 +272,12 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       );
       if (queryRecords.length === 0) {
         this._logSkippedQueries(unavailableAPIs);
-        debug(`(X) Terminating..."${currentEdge.getID()}" got 0 results.`);
+        debug(`(X) Terminating..."${currentEdge.getID()}" got 0 records.`);
         this.logs.push(
           new LogEntry(
               'WARNING',
               null,
-              `Edge (${currentEdge.getID()}) got 0 results. Your query terminates.`
+              `Edge (${currentEdge.getID()}) got 0 records. Your query terminates.`
           ).getLog()
         );
         return;
@@ -288,10 +288,10 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       manager.updateEdgeRecords(currentEdge);
       //update and filter neighbors
       manager.updateAllOtherEdges(currentEdge);
-      // check that any results are kept
-      if (!currentEdge.results.length) {
+      // check that any records are kept
+      if (!currentEdge.records.length) {
         this._logSkippedQueries(unavailableAPIs);
-        debug(`(X) Terminating..."${currentEdge.getID()}" kept 0 results.`);
+        debug(`(X) Terminating..."${currentEdge.getID()}" kept 0 records.`);
         this.logs.push(
             new LogEntry(
                 'WARNING',
@@ -306,7 +306,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       debug(`(10) Edge successfully queried.`);
     };
     this._logSkippedQueries(unavailableAPIs);
-    //collect and organize results
+    //collect and organize records
     manager.collectRecords();
     this.logs = [...this.logs, ...manager.logs];
     //update query graph
