@@ -42,9 +42,9 @@ class DelimitedChunks extends Transform {
 }
 
 module.exports = class {
-  constructor(qEdges, caching, kg = undefined, logs = []) {
-    this.qEdges = qEdges;
-    this.kg = kg;
+  constructor(qXEdges, caching, metaKG = undefined, logs = []) {
+    this.qXEdges = qXEdges;
+    this.metaKG = metaKG;
     this.logs = logs;
     this.cacheEnabled =
       caching === false
@@ -57,36 +57,36 @@ module.exports = class {
     );
   }
 
-  async categorizeEdges(qEdges) {
+  async categorizeEdges(qXEdges) {
     if (this.cacheEnabled === false) {
       return {
-        cachedResults: [],
-        nonCachedEdges: qEdges,
+        cachedRecords: [],
+        nonCachedQXEdges: qXEdges,
       };
     }
-    let nonCachedEdges = [];
-    let cachedResults = [];
+    let nonCachedQXEdges = [];
+    let cachedRecords = [];
     debug('Begin edge cache lookup...');
-    for (let i = 0; i < qEdges.length; i++) {
-      const hashedEdgeID = this._hashEdgeByKG(qEdges[i].getHashedEdgeRepresentation());
-      const cachedResJSON = await new Promise(async (resolve) => {
-        const redisID = 'bte:edgeCache:' + hashedEdgeID;
-        const unlock = await redisClient.lock('redisLock:' + hashedEdgeID);
+    for (let i = 0; i < qXEdges.length; i++) {
+      const qXEdgeKGHashes = this._hashEdgeByKG(qXEdges[i].getHashedEdgeRepresentation());
+      const cachedRecordJSON = await new Promise(async (resolve) => {
+        const redisID = 'bte:edgeCache:' + qXEdgeKGHashes;
+        const unlock = await redisClient.lock('redisLock:' + qXEdgeKGHashes);
         try {
-          const cachedRes = await redisClient.hgetallAsync(redisID);
-          if (cachedRes) {
-            const decodedRes = [];
-            const resSorted = Object.entries(cachedRes)
+          const cachedRecord = await redisClient.hgetallAsync(redisID);
+          if (cachedRecord) {
+            const decodedRecords = [];
+            const sortedRecords = Object.entries(cachedRecord)
               .sort(([key1], [key2]) => parseInt(key1) - parseInt(key2))
               .map(([_key, val]) => {
                 return val;
               });
 
-            const resStream = Readable.from(resSorted);
-            resStream
+            const recordStream = Readable.from(sortedRecords);
+            recordStream
               .pipe(this.createDecodeStream())
-              .on('data', (obj) => decodedRes.push(obj))
-              .on('end', () => resolve(decodedRes));
+              .on('data', (obj) => decodedRecords.push(obj))
+              .on('end', () => resolve(decodedRecords));
           } else {
             resolve(null);
           }
@@ -98,28 +98,28 @@ module.exports = class {
         }
       });
 
-      if (cachedResJSON) {
+      if (cachedRecordJSON) {
         this.logs.push(
           new LogEntry(
             'DEBUG',
             null,
-            `BTE finds cached results for ${qEdges[i].getID()}`,
+            `BTE finds cached records for ${qXEdges[i].getID()}`,
             {
               type: 'cacheHit',
-              edge_id: qEdges[i].getID(),
+              edge_id: qXEdges[i].getID(),
             }
           ).getLog()
         );
-        cachedResJSON.map((rec) => {
-          rec.$edge_metadata.trapi_qEdge_obj = qEdges[i];
+        cachedRecordJSON.map((rec) => {
+          rec.$edge_metadata.trapi_qEdge_obj = qXEdges[i];
         });
-        cachedResults = [...cachedResults, ...cachedResJSON];
+        cachedRecords = [...cachedRecords, ...cachedRecordJSON];
       } else {
-        nonCachedEdges.push(qEdges[i]);
+        nonCachedQXEdges.push(qXEdges[i]);
       }
-      debug(`Found (${cachedResults.length}) cached results.`);
+      debug(`Found (${cachedRecords.length}) cached records.`);
     }
-    return { cachedResults, nonCachedEdges };
+    return { cachedRecords, nonCachedQXEdges };
   }
 
   _copyRecord(record) {
@@ -158,29 +158,29 @@ module.exports = class {
     return returnVal;
   }
 
-  _hashEdgeByKG(hashedEdgeID) {
-    if (!this.kg) {
-      return hashedEdgeID;
+  _hashEdgeByKG(qXEdgeHash) {
+    if (!this.metaKG) {
+      return qXEdgeHash;
     }
-    const len = String(this.kg.ops.length);
-    const allIDs = Array.from(new Set(this.kg.ops.map((op) => op.association.smartapi.id))).join('');
-    return new helper()._generateHash(hashedEdgeID + len + allIDs);
+    const len = String(this.metaKG.ops.length);
+    const allIDs = Array.from(new Set(this.metaKG.ops.map((op) => op.association.smartapi.id))).join('');
+    return new helper()._generateHash(qXEdgeHash + len + allIDs);
   }
 
-  _groupQueryResultsByEdgeID(queryResult) {
-    let groupedResult = {};
-    queryResult.map((record) => {
+  _groupQueryRecordsByQXEdgeHash(queryRecords) {
+    let groupedRecords = {};
+    queryRecords.map((record) => {
       try {
-        const hashedEdgeID = this._hashEdgeByKG(record.$edge_metadata.trapi_qEdge_obj.getHashedEdgeRepresentation());
-        if (!(hashedEdgeID in groupedResult)) {
-          groupedResult[hashedEdgeID] = [];
+        const qXEdgeKGHash = this._hashEdgeByKG(record.$edge_metadata.trapi_qEdge_obj.getHashedEdgeRepresentation());
+        if (!(qXEdgeKGHash in groupedRecords)) {
+          groupedRecords[qXEdgeKGHash] = [];
         }
-        groupedResult[hashedEdgeID].push(this._copyRecord(record));
+        groupedRecords[qXEdgeKGHash].push(this._copyRecord(record));
       } catch (e) {
         debug('skipping malformed record');
       }
     });
-    return groupedResult;
+    return groupedRecords;
   }
 
   createEncodeStream() {
@@ -199,7 +199,7 @@ module.exports = class {
     return new DelimitedChunks();
   }
 
-  async cacheEdges(queryResult) {
+  async cacheEdges(queryRecords) {
     if (this.cacheEnabled === false) {
       if (parentPort) {
         parentPort.postMessage({ cacheDone: true });
@@ -209,20 +209,20 @@ module.exports = class {
     if (parentPort) {
       parentPort.postMessage({ cacheInProgress: 1 });
     }
-    debug('Start to cache query results.');
+    debug('Start to cache query records.');
     try {
-      const groupedQueryResult = this._groupQueryResultsByEdgeID(queryResult);
-      const hashedEdgeIDs = Array.from(Object.keys(groupedQueryResult));
-      debug(`Number of hashed edges: ${hashedEdgeIDs.length}`);
-      await async.eachSeries(hashedEdgeIDs, async (id) => {
+      const groupedRecords = this._groupQueryRecordsByQXEdgeHash(queryRecords);
+      const qXEdgeHashes = Array.from(Object.keys(groupedRecords));
+      debug(`Number of hashed edges: ${qXEdgeHashes.length}`);
+      await async.eachSeries(qXEdgeHashes, async (hash) => {
         // lock to prevent caching to/reading from actively caching edge
-        const unlock = await redisClient.lock('redisLock:' + id);
+        const unlock = await redisClient.lock('redisLock:' + hash);
         try {
-          const redisID = 'bte:edgeCache:' + id;
+          const redisID = 'bte:edgeCache:' + hash;
           await redisClient.delAsync(redisID); // prevents weird overwrite edge cases
           await new Promise((resolve) => {
             let i = 0;
-            Readable.from(groupedQueryResult[id])
+            Readable.from(groupedRecords[hash])
               .pipe(this.createEncodeStream())
               .pipe(chunker(100000, { flush: true }))
               .on('data', async (chunk) => {
@@ -239,7 +239,7 @@ module.exports = class {
           unlock(); // release lock whether cache succeeded or not
         }
       });
-      debug(`Successfully cached (${queryResult.length}) query results.`);
+      debug(`Successfully cached (${queryRecords.length}) query records.`);
     } catch (error) {
       debug(`Caching failed due to ${error}. This does not terminate the query.`);
     } finally {

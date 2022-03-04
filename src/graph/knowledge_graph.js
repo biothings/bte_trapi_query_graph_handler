@@ -45,12 +45,12 @@ module.exports = class KnowledgeGraph {
         },
         {
           attribute_type_id: 'source_qg_nodes',
-          value: Array.from(kgNode._sourceQGNodes),
+          value: Array.from(kgNode._sourceQNodeIDs),
           //value_type_id: 'bts:source_qg_nodes',
         },
         {
           attribute_type_id: 'target_qg_nodes',
-          value: Array.from(kgNode._targetQGNodes),
+          value: Array.from(kgNode._targetQNodeIDs),
           //value_type_id: 'bts:target_qg_nodes',
         },
       ],
@@ -77,7 +77,7 @@ module.exports = class KnowledgeGraph {
     if (kgEdge.attributes['edge-attributes']) { //handle TRAPI APIs (Situation A of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208) and APIs that define 'edge-atributes' in x-bte
       attributes = [...attributes, ...kgEdge.attributes['edge-attributes']];
     } else if ( //handle direct info providers (Situation C of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208)
-      [  
+      [
         'Clinical Risk KP API',
         'Text Mining Targeted Association API',
         'Multiomics Wellness KP API',
@@ -187,7 +187,7 @@ module.exports = class KnowledgeGraph {
 
   update(bteGraph) {
     Object.keys(bteGraph.nodes).map((node) => {
-      this.nodes[bteGraph.nodes[node]._primaryID] = this._createNode(bteGraph.nodes[node]);
+      this.nodes[bteGraph.nodes[node]._primaryCurie] = this._createNode(bteGraph.nodes[node]);
     });
     Object.keys(bteGraph.edges).map((edge) => {
       this.edges[edge] = this._createEdge(bteGraph.edges[edge]);

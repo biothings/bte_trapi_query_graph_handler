@@ -1,11 +1,11 @@
 const helper = require('./helper');
-const debug = require('debug')('bte:biothings-explorer-trapi:UpdatedExeEdge');
+const debug = require('debug')('bte:biothings-explorer-trapi:QueryExecutionEdge');
 const utils = require('./utils');
 const reverse = require('./biolink');
 
 //This is an edge class based on QExeEdge with more features
-module.exports = class UpdatedExeEdge {
-  /**
+module.exports = class QueryExecutionEdge {
+  /** // TODO fix this docstring to be accurate
    *
    * @param {string} id - QEdge ID
    * @param {object} info - QEdge info, e.g. subject, object, predicate
@@ -27,8 +27,8 @@ module.exports = class UpdatedExeEdge {
     this.executed = false;
     //run initial checks
     this.logs = [];
-    //this edges results
-    this.results = [];
+    //this edges query response records
+    this.records = [];
     debug(`(2) Created Edge` +
     ` ${JSON.stringify(this.qEdge.getID())} Reverse = ${this.reverse}`)
   }
@@ -57,12 +57,12 @@ module.exports = class UpdatedExeEdge {
         this.qEdge.subject.holdCurie();
         debug(`(8) Chose lower entity value in object (${this.qEdge.object.entity_count})`);
       }
-    }else{
+    } else {
       debug(`(8) Error: Edge must have both object and subject entity values.`);
     }
   }
 
-  extractCuriesFromResponse(res, isReversed) {
+  extractCuriesFromRecords(records, isReversed) {
     //will give you all curies found by semantic type, each type will have
     //a main ID and all of it's aliases
     debug(`(7) Updating Entities in "${this.qEdge.getID()}"`);
@@ -71,19 +71,19 @@ module.exports = class UpdatedExeEdge {
     this.qEdge.object.getCategories();
     debug(`(7) Collecting Types: "${JSON.stringify(typesToInclude)}"`);
     let all = {};
-    res.forEach((result) => {
+    records.forEach((record) => {
 
-      result.$input.obj.forEach((o) => {
+      record.$input.obj.forEach((o) => {
         //create semantic type if not included
         let type = o._leafSemanticType;
-        if (typesToInclude.includes(type) || 
+        if (typesToInclude.includes(type) ||
           typesToInclude.includes('NamedThing') ||
           typesToInclude.toString().includes(type)) {
           if (!Object.hasOwnProperty.call(all, type)) {
             all[type] = {};
           }
           //get original and aliases
-          let original = result.$input.original;
+          let original = record.$input.original;
           //#1 prefer equivalent ids
           if (Object.hasOwnProperty.call(o, '_dbIDs')) {
             let original_aliases = new Set();
@@ -95,17 +95,17 @@ module.exports = class UpdatedExeEdge {
                     if (single_alias.includes(':')) {
                       //value already has prefix
                       original_aliases.add(single_alias);
-                    }else{
+                    } else {
                       //concat with prefix
                       original_aliases.add(prefix + ':' + single_alias);
                     }
                   }
                 });
-              }else{
+              } else {
                 if (o._dbIDs[prefix].includes(':')) {
                   //value already has prefix
                   original_aliases.add(o._dbIDs[prefix]);
-                }else{
+                } else {
                   //concat with prefix
                   original_aliases.add(prefix + ':' + o._dbIDs[prefix]);
                 }
@@ -124,34 +124,34 @@ module.exports = class UpdatedExeEdge {
             }
           }
           //else #2 check curie
-          else if(Object.hasOwnProperty.call(o, 'curie')) {
+          else if (Object.hasOwnProperty.call(o, 'curie')) {
             if (Array.isArray( o.curie)) {
               all[type][original] = o.curie;
-            }else{
+            } else {
               all[type][original] = [o.curie];
             }
           }
           //#3 last resort check original
-          else{
+          else {
             all[type][original] = [original];
           }
         }
       });
 
-      result.$output.obj.forEach((o) => {
+      record.$output.obj.forEach((o) => {
         //create semantic type if not included
         let type = o._leafSemanticType;
-        if (typesToInclude.includes(type) || 
+        if (typesToInclude.includes(type) ||
           typesToInclude.includes('NamedThing') ||
           typesToInclude.toString().includes(type))  {
           if (!Object.hasOwnProperty.call(all, type)) {
             all[type] = {};
           }
           //get original and aliases
-          let original = result.$output.original;
-          
+          let original = record.$output.original;
+
           //#1 prefer equivalent ids
-          if (Object.hasOwnProperty.call(o, '_dbIDs')){
+          if (Object.hasOwnProperty.call(o, '_dbIDs')) {
             let original_aliases = new Set();
             for (const prefix in o._dbIDs) {
               //check if array
@@ -161,17 +161,17 @@ module.exports = class UpdatedExeEdge {
                     if (single_alias.includes(':')) {
                       //value already has prefix
                       original_aliases.add(single_alias);
-                    }else{
+                    } else {
                       //concat with prefix
                       original_aliases.add(prefix + ':' + single_alias);
                     }
                   }
                 });
-              }else{
+              } else {
                 if (o._dbIDs[prefix].includes(':')) {
                   //value already has prefix
                   original_aliases.add(o._dbIDs[prefix]);
-                }else{
+                } else {
                   //concat with prefix
                   original_aliases.add(prefix + ':' + o._dbIDs[prefix]);
                 }
@@ -190,23 +190,23 @@ module.exports = class UpdatedExeEdge {
             }
           }
           //else #2 check curie
-          else if(Object.hasOwnProperty.call(o, 'curie')) {
+          else if (Object.hasOwnProperty.call(o, 'curie')) {
             if (Array.isArray( o.curie)) {
               all[type][original] = o.curie;
-            }else{
+            } else {
               all[type][original] = [o.curie];
             }
           }
           //#3 last resort check original
-          else{
+          else {
             all[type][original] = [original];
           }
         }
       });
-      
+
     });
     // {Gene:{'id': ['alias']}}
-    debug(`Collected entity ids in results: ${JSON.stringify(Object.keys(all))}`);
+    debug(`Collected entity ids in records: ${JSON.stringify(Object.keys(all))}`);
     return all;
   }
 
@@ -223,15 +223,15 @@ module.exports = class UpdatedExeEdge {
     return combined;
   }
 
-  updateNodesCuries(res) {
+  updateNodesCuries(records) {
     //update node queried (1) ---> (update)
-    let curies_by_semantic_type = this.extractCuriesFromResponse(res, this.reverse);
+    let curies_by_semantic_type = this.extractCuriesFromRecords(records, this.reverse);
     let combined_curies = this._combineCuries(curies_by_semantic_type);
     this.reverse ?
     this.qEdge.subject.updateCuries(combined_curies) :
     this.qEdge.object.updateCuries(combined_curies);
     //update node used as input (1 [update]) ---> ()
-    let curies_by_semantic_type_2 = this.extractCuriesFromResponse(res, !this.reverse);
+    let curies_by_semantic_type_2 = this.extractCuriesFromRecords(records, !this.reverse);
     let combined_curies_2 = this._combineCuries(curies_by_semantic_type_2);
     !this.reverse ?
     this.qEdge.subject.updateCuries(combined_curies_2) :
@@ -239,7 +239,7 @@ module.exports = class UpdatedExeEdge {
   }
 
   applyNodeConstraints() {
-    debug(`(6) Applying Node Constraints to ${this.results.length} results.`);
+    debug(`(6) Applying Node Constraints to ${this.records.length} records.`);
     let kept = [];
     let save_kept = false;
     let sub_constraints = this.subject.constraints;
@@ -247,8 +247,8 @@ module.exports = class UpdatedExeEdge {
       let from = this.reverse ? '$output' : '$input';
       debug(`Node (subject) constraints: ${JSON.stringify(sub_constraints)}`);
       save_kept = true;
-      for (let i = 0; i < this.results.length; i++) {
-        const res = this.results[i];
+      for (let i = 0; i < this.records.length; i++) {
+        const res = this.records[i];
         let keep = true;
         //apply constraints
         for (let x = 0; x < sub_constraints.length; x++) {
@@ -267,8 +267,8 @@ module.exports = class UpdatedExeEdge {
       let from = this.reverse ? '$input' : '$output';
       debug(`Node (object) constraints: ${JSON.stringify(obj_constraints)}`);
       save_kept = true;
-      for (let i = 0; i < this.results.length; i++) {
-        const res = this.results[i];
+      for (let i = 0; i < this.records.length; i++) {
+        const res = this.records[i];
         let keep = true;
         //apply constraints
         for (let x = 0; x < obj_constraints.length; x++) {
@@ -282,33 +282,33 @@ module.exports = class UpdatedExeEdge {
       }
     }
     if (save_kept) {
-      //only override results if there was any filtering done.
-      this.results =  kept;
-      debug(`(6) Reduced to (${this.results.length}) results.`);
-    }else{
+      //only override recordss if there was any filtering done.
+      this.records =  kept;
+      debug(`(6) Reduced to (${this.records.length}) records.`);
+    } else {
       debug(`(6) No constraints. Skipping...`);
     }
   }
 
-  meetsConstraint(constraint, result, from) {
+  meetsConstraint(constraint, record, from) {
     //list of attribute ids in node
     let available_attributes = new Set();
-    for (const key in result[from].obj[0].attributes) {
+    for (const key in record[from].obj[0].attributes) {
       available_attributes.add(key)
     }
     available_attributes = [...available_attributes];
-    // debug(`ATTRS ${JSON.stringify(result[from].obj[0]._leafSemanticType)}` +
+    // debug(`ATTRS ${JSON.stringify(record[from].obj[0]._leafSemanticType)}` +
     // ` ${from} : ${JSON.stringify(available_attributes)}`);
     //determine if node even contains right attributes
     let filters_found = available_attributes.filter((attr) => attr == constraint.id);
     if (!filters_found.length) {
       //node doesn't have the attribute needed
       return false;
-    }else{
+    } else {
       //match attr by name, parse only attrs of interest
       let node_attributes = {};
       filters_found.forEach((filter) => {
-        node_attributes[filter] = result[from].obj[0].attributes[filter];
+        node_attributes[filter] = record[from].obj[0].attributes[filter];
       });
       switch (constraint.operator) {
         case "==":
@@ -319,19 +319,19 @@ module.exports = class UpdatedExeEdge {
                   node_attributes[key].includes(constraint.value.toString())) {
                     return true;
                   }
-                }else{
+                } else {
                   if (node_attributes[key] == constraint.value ||
                     node_attributes[key] == constraint.value.toString() ||
                     node_attributes[key] == parseInt(constraint.value)) {
                     return true;
                   }
                 }
-              }else{
+              } else {
                 if (Array.isArray(node_attributes[key])) {
                   if (node_attributes[key].includes(constraint.value)) {
                     return true;
                   }
-                }else{
+                } else {
                   if (node_attributes[key] == constraint.value ||
                     node_attributes[key] == constraint.value.toString() ||
                     node_attributes[key] == parseInt(constraint.value)) {
@@ -350,7 +350,7 @@ module.exports = class UpdatedExeEdge {
                     return true;
                   }
                 }
-              }else{
+              } else {
                 if (parseInt(node_attributes[key]) > parseInt(constraint.value)) {
                   return true;
                 }
@@ -366,7 +366,7 @@ module.exports = class UpdatedExeEdge {
                   return true;
                 }
               }
-            }else{
+            } else {
               if (parseInt(node_attributes[key]) >= parseInt(constraint.value)) {
                 return true;
               }
@@ -382,7 +382,7 @@ module.exports = class UpdatedExeEdge {
                   return true;
                 }
               }
-            }else{
+            } else {
               if (parseInt(node_attributes[key]) < parseInt(constraint.value)) {
                 return true;
               }
@@ -398,7 +398,7 @@ module.exports = class UpdatedExeEdge {
                   return true;
                 }
               }
-            }else{
+            } else {
               if (parseInt(node_attributes[key]) <= parseInt(constraint.value)) {
                 return true;
               }
@@ -412,14 +412,14 @@ module.exports = class UpdatedExeEdge {
     }
   }
 
-  storeResults(res) {
-    debug(`(6) Storing results...`);
-    //store new results in current edge
-    this.results = res;
-    //will update results if any constraints are found
+  storeRecords(records) {
+    debug(`(6) Storing records...`);
+    //store new records in current edge
+    this.records = records;
+    //will update records if any constraints are found
     this.applyNodeConstraints();
-    debug(`(7) Updating nodes based on edge results...`);
-    this.updateNodesCuries(res);
+    debug(`(7) Updating nodes based on edge records...`);
+    this.updateNodesCuries(records);
   }
 
   getID() {
@@ -496,4 +496,3 @@ module.exports = class UpdatedExeEdge {
     return this.qEdge.subject.hasInput();
   }
 };
-

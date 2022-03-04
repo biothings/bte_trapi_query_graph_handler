@@ -73,7 +73,7 @@ module.exports = class QueryResult {
    * assemble the actual results.
    *
    * This is a recursive function, and it traverses the query graph as a tree, with
-   * every recursion passing its output queryNodeID and primaryID to the next call
+   * every recursion passing its output queryNodeID and primaryCurie to the next call
    * to use as a matching criteria for its input.
    *
    * This graphic helps to explain how this works:
@@ -81,7 +81,7 @@ module.exports = class QueryResult {
    *
    * The preresults returned from this method are not at all consolidated. They are
    * analogous to the collection of sets in the lower left of the graphic, which
-   * represents every valid combination of primaryIDs and kgEdgeIDs but excludes
+   * represents every valid combination of primaryCuries and recordHashs but excludes
    * invalid combinations like B-1-Z, which is a dead-end.
    *
    * NOTE: this currently only works for trees (no cycles). If we want to handle cycles,
@@ -89,83 +89,83 @@ module.exports = class QueryResult {
    * But A.S. said we don't have to worry about cycles for now.
    *
    * @return {
-   *   inputQueryNodeID: string,
-   *   outputQueryNodeID: string,
-   *   inputPrimaryID: string,
-   *   outputPrimaryID: string,
-   *   queryEdgeID: string,
-   *   kgEdgeID: string,
+   *   inputQNodeID: string,
+   *   outputQNodeID: string,
+   *   inputPrimaryCurie: string,
+   *   outputPrimaryCurie: string,
+   *   qEdgeID: string,
+   *   recordHash: string,
    * }
    */
-  _getPreresults(
-    dataByEdge,
-    queryEdgeID,
+  _getUnconsolidatedResults(
+    recordsByQEdgeID,
+    qEdgeID,
     edgeCount,
-    preresults,
-    preresult,
-    queryNodeIDToMatch,
-    primaryIDToMatch
+    ucResults,
+    ucResult,
+    qNodeIDToMatch,
+    primaryCurieToMatch
   ) {
     //connected_to and records of starting edge of tree
-    const {connected_to, records} = dataByEdge[queryEdgeID];
+    const {connected_to, records} = recordsByQEdgeID[qEdgeID];
 
     //get a valid record from records to continue
     let record = records.find(rec => rec !== undefined);
 
     // queryNodeID example: 'n0'
-    const inputQueryNodeID = helper._getInputQueryNodeID(record);
-    const outputQueryNodeID = helper._getOutputQueryNodeID(record);
+    const inputQNodeID = helper._getInputQueryNodeID(record);
+    const outputQNodeID = helper._getOutputQueryNodeID(record);
 
-    let otherQueryNodeID, getMatchingPrimaryID, getOtherPrimaryID;
+    let otherQNodeID, getMatchingPrimaryCurie, getOtherPrimaryCurie;
 
-    if ([inputQueryNodeID, undefined].indexOf(queryNodeIDToMatch) > -1) {
-      queryNodeIDToMatch = inputQueryNodeID;
-      otherQueryNodeID = outputQueryNodeID;
-      getMatchingPrimaryID = helper._getInputID;
-      getOtherPrimaryID = helper._getOutputID;
-    } else if (queryNodeIDToMatch === outputQueryNodeID) {
-      otherQueryNodeID = inputQueryNodeID;
-      getMatchingPrimaryID = helper._getOutputID;
-      getOtherPrimaryID = helper._getInputID;
+    if ([inputQNodeID, undefined].indexOf(qNodeIDToMatch) > -1) {
+      qNodeIDToMatch = inputQNodeID;
+      otherQNodeID = outputQNodeID;
+      getMatchingPrimaryCurie = helper._getInputCurie;
+      getOtherPrimaryCurie = helper._getOutputCurie;
+    } else if (qNodeIDToMatch === outputQNodeID) {
+      otherQNodeID = inputQNodeID;
+      getMatchingPrimaryCurie = helper._getOutputCurie;
+      getOtherPrimaryCurie = helper._getInputCurie;
     } else {
       return;
     }
 
-    const preresultClone = [...preresult];
+    const ucResultClone = [...ucResult];
 
     records.filter((record) => {
-      return [getMatchingPrimaryID(record), undefined].indexOf(primaryIDToMatch) > -1 ;
+      return [getMatchingPrimaryCurie(record), undefined].indexOf(primaryCurieToMatch) > -1 ;
     }).forEach((record, i) => {
-      // primaryID example: 'NCBIGene:1234'
-      const matchingPrimaryID = getMatchingPrimaryID(record); //not used?
-      const otherPrimaryID = getOtherPrimaryID(record);
+      // primaryCurie example: 'NCBIGene:1234'
+      const matchingPrimaryCurie = getMatchingPrimaryCurie(record); //not used?
+      const otherPrimaryCurie = getOtherPrimaryCurie(record);
 
       if (i !== 0) {
-        preresult = [...preresultClone];
+        ucResult = [...ucResultClone];
       }
 
-      preresult.push({
-        inputQueryNodeID: helper._getInputQueryNodeID(record),
-        outputQueryNodeID: helper._getOutputQueryNodeID(record),
-        inputPrimaryID: helper._getInputID(record),
-        outputPrimaryID: helper._getOutputID(record),
-        queryEdgeID: queryEdgeID,
-        kgEdgeID: helper._getKGEdgeID(record),
+      ucResult.push({
+        inputQNodeID: helper._getInputQueryNodeID(record),
+        outputQNodeID: helper._getOutputQueryNodeID(record),
+        inputPrimaryCurie: helper._getInputCurie(record),
+        outputPrimaryCurie: helper._getOutputCurie(record),
+        qEdgeID: qEdgeID,
+        recordHash: helper._getRecordHash(record),
       });
 
-      if (preresult.length == edgeCount) {
-        preresults.push(preresult);
+      if (ucResult.length == edgeCount) {
+        ucResults.push(ucResult);
       }
 
-      connected_to.forEach((connectedQueryEdgeID) => {
-        this._getPreresults(
-          dataByEdge,
-          connectedQueryEdgeID,
+      connected_to.forEach((connectedQEdgeID) => {
+        this._getUnconsolidatedResults(
+          recordsByQEdgeID,
+          connectedQEdgeID,
           edgeCount,
-          preresults,
-          preresult,
-          otherQueryNodeID,
-          otherPrimaryID
+          ucResults,
+          ucResult,
+          otherQNodeID,
+          otherPrimaryCurie
         );
       });
     });
@@ -178,23 +178,23 @@ module.exports = class QueryResult {
    * If it's true, then we only care about the QNode ID
    * (inputQueryNodeID or outputQueryNodeID), e.g., n1.
    *
-   * If it's false, then we additionally need to take into account the primaryID
-   * (inputPrimaryID or outputPrimaryID), e.g., n0-NCBIGene:3630.
+   * If it's false, then we additionally need to take into account the primaryCurie
+   * (inputprimaryCurie or outputprimaryCurie), e.g., n0-NCBIGene:3630.
    *
    * We will later use these uniqueNodeIDs to generate unique result IDs.
    * The unique result IDs will be unique per result and be made up of only
    * the minimum information required to make them unique.
    *
-   * @param {Set<string>} queryNodeIDsWithIsSet
-   * @param {string} queryNodeID
-   * @param {string} primaryID
+   * @param {Set<string>} qNodeIDsWithIsSet
+   * @param {string} qNodeID
+   * @param {string} primaryCurie
    * @return {string} uniqueNodeID
    */
-  _getUniqueNodeID(queryNodeIDsWithIsSet, queryNodeID, primaryID) {
-    if (queryNodeIDsWithIsSet.has(queryNodeID)) {
-      return queryNodeID;
+  _getUniqueNodeID(qNodeIDsWithIsSet, qNodeID, primaryCurie) {
+    if (qNodeIDsWithIsSet.has(qNodeID)) {
+      return qNodeID;
     } else {
-      return `${queryNodeID}-${primaryID}`;
+      return `${qNodeID}-${primaryCurie}`;
     }
   }
 
@@ -204,7 +204,7 @@ module.exports = class QueryResult {
    * At a high level, this method does the following:
    * 1. Create sets of records such that:
    *    - each set has one record per QEdge and
-   *    - each record in a set has the same primaryID as its neighbor(s) at the same QNode.
+   *    - each record in a set has the same primaryCurie as its neighbor(s) at the same QNode.
    *    We're calling each set a preresult, but this could be alternatively named atomicResult
    *    or unconsolidatedResult. There can be one or more preresults per query result.
    * 2. Group the sets by result ID. There will be one group per query result.
@@ -216,58 +216,58 @@ module.exports = class QueryResult {
    * Note: with the updated code for generalized query handling, we
    * can safely assume every call to update contains all the records.
    *
-   * @param {DataByEdge} dataByEdge
+   * @param {DataByEdge} recordsByQEdgeID
    * @return {undefined} nothing returned; just cache this._results
    */
-  update(dataByEdge) {
+  update(recordsByQEdgeID) {
     debug(`Updating query results now!`);
     this._results = [];
 
-    const edges = new Set(keys(dataByEdge));
-    const edgeCount = edges.size;
+    const qEdgeIDs = new Set(keys(recordsByQEdgeID));
+    const qEdgeCount = qEdgeIDs.size;
 
     // find all QNodes having is_set params
     // NOTE: is_set in the query graph and the JavaScript Set object below refer to different sets.
-    const queryNodeIDsWithIsSet = new Set();
-    toPairs(dataByEdge).forEach(([queryEdgeID, {connected_to, records}]) => {
+    const qNodeIDsWithIsSet = new Set();
+    toPairs(recordsByQEdgeID).forEach(([qEdgeID, {connected_to, records}]) => {
 
-      const inputQueryNodeID = helper._getInputQueryNodeID(records[0]);
-      const outputQueryNodeID = helper._getOutputQueryNodeID(records[0]);
+      const inputQNodeID = helper._getInputQueryNodeID(records[0]);
+      const outputQNodeID = helper._getOutputQueryNodeID(records[0]);
 
       if (helper._getInputIsSet(records[0])) {
-        queryNodeIDsWithIsSet.add(inputQueryNodeID)
+        qNodeIDsWithIsSet.add(inputQNodeID)
       }
       if (helper._getOutputIsSet(records[0])) {
-        queryNodeIDsWithIsSet.add(outputQueryNodeID)
+        qNodeIDsWithIsSet.add(outputQNodeID)
       }
     });
 
-    debug(`Nodes with "is_set": ${JSON.stringify([...queryNodeIDsWithIsSet])}`)
+    debug(`Nodes with "is_set": ${JSON.stringify([...qNodeIDsWithIsSet])}`)
 
     // find a QNode having only one QEdge to use as the root node for tree traversal
-    let initialQueryEdgeID, initialQueryNodeIDToMatch;
-    toPairs(dataByEdge).some(([queryEdgeID, {connected_to, records}]) => {
-      const inputQueryNodeID = helper._getInputQueryNodeID(records[0]);
-      const outputQueryNodeID = helper._getOutputQueryNodeID(records[0]);
+    let initialQEdgeID, initialQNodeIDToMatch;
+    toPairs(recordsByQEdgeID).some(([queryEdgeID, {connected_to, records}]) => {
+      const inputQNodeID = helper._getInputQueryNodeID(records[0]);
+      const outputQNodeID = helper._getOutputQueryNodeID(records[0]);
 
       if (connected_to.length === 0) {
-        initialQueryEdgeID = queryEdgeID;
-        initialQueryNodeIDToMatch = inputQueryNodeID;
+        initialQEdgeID = queryEdgeID;
+        initialQNodeIDToMatch = inputQNodeID;
       } else {
         connected_to.some((c) => {
-          const nextEdge = dataByEdge[c];
-          const inputQueryNodeID1 = helper._getInputQueryNodeID(nextEdge.records[0]);
-          const outputQueryNodeID1 = helper._getOutputQueryNodeID(nextEdge.records[0]);
-          if (!initialQueryEdgeID) {
-            if ([inputQueryNodeID1, outputQueryNodeID1].indexOf(inputQueryNodeID) === -1) {
-              initialQueryEdgeID = queryEdgeID;
-              initialQueryNodeIDToMatch = inputQueryNodeID;
+          const nextEdge = recordsByQEdgeID[c];
+          const inputQNodeID_1 = helper._getInputQueryNodeID(nextEdge.records[0]);
+          const outputQNodeID_1 = helper._getOutputQueryNodeID(nextEdge.records[0]);
+          if (!initialQEdgeID) {
+            if ([inputQNodeID_1, outputQNodeID_1].indexOf(inputQNodeID) === -1) {
+              initialQEdgeID = queryEdgeID;
+              initialQNodeIDToMatch = inputQNodeID;
 
               // like calling break in a loop
               return true;
-            } else if ([outputQueryNodeID1, outputQueryNodeID1].indexOf(outputQueryNodeID) === -1) {
-              initialQueryEdgeID = queryEdgeID;
-              initialQueryNodeIDToMatch = outputQueryNodeID;
+            } else if ([outputQNodeID_1, outputQNodeID_1].indexOf(outputQNodeID) === -1) {
+              initialQEdgeID = queryEdgeID;
+              initialQNodeIDToMatch = outputQNodeID;
 
               // like calling break in a loop
               return true;
@@ -275,25 +275,25 @@ module.exports = class QueryResult {
           }
         });
 
-        if (initialQueryEdgeID) {
+        if (initialQEdgeID) {
           // like calling break in a loop
           return true;
         }
       }
     });
 
-    debug(`initialQueryEdgeID: ${initialQueryEdgeID}, initialQueryNodeIDToMatch: ${initialQueryNodeIDToMatch}`);
+    debug(`initialQEdgeID: ${initialQEdgeID}, initialQNodeIDToMatch: ${initialQNodeIDToMatch}`);
 
     // 'preresult' just means it has the data needed to assemble a result,
     // but it's formatted differently for easier pre-processing.
-    const preresults = [];
-    this._getPreresults(
-      dataByEdge,
-      initialQueryEdgeID,
-      edgeCount,
-      preresults,
+    const unconsolidatedResults = [];
+    this._getUnconsolidatedResults(
+      recordsByQEdgeID,
+      initialQEdgeID,
+      qEdgeCount,
+      unconsolidatedResults,
       [], // first preresult
-      initialQueryNodeIDToMatch,
+      initialQNodeIDToMatch,
     );
 
     /**
@@ -308,45 +308,45 @@ module.exports = class QueryResult {
      *
      * There are two cases where we need to consolidate preresults:
      * 1. one or more query nodes have an 'is_set' param
-     * 2. one or more primaryID pairs have multiple kgEdges each
+     * 2. one or more primaryCurie pairs have multiple kgEdges each
      *
      * We perform consolidation by first grouping preresults by uniqueResultID and
      * then merging each of those groups into a single consolidatedPreresult.
      */
 
-    const preresultsByUniqueResultID = {};
-    preresults.forEach((preresult) => {
-      // example inputPrimaryID and outputPrimaryID in a preresult:
+    const ucResultsByResultID = {};
+    unconsolidatedResults.forEach((ucResult) => {
+      // example inputprimaryCurie and outputprimaryCurie in a preresult:
       // [
-      //   {"inputPrimaryID": "NCBIGene:3630", "outputPrimaryID", "MONDO:0005068"},
-      //   {"inputPrimaryID": "MONDO:0005068", "outputPrimaryID", "PUBCHEM.COMPOUND:43815"}
+      //   {"inputprimaryCurie": "NCBIGene:3630", "outputprimaryCurie", "MONDO:0005068"},
+      //   {"inputprimaryCurie": "MONDO:0005068", "outputprimaryCurie", "PUBCHEM.COMPOUND:43815"}
       // ]
       //
       // Other items present in a presult but not shown above:
-      // inputQueryNodeID, outputQueryNodeID, queryEdgeID, kgEdgeID
+      // inputQNodeID, outputQNodeID, queryEdgeID, recordHash
 
       // using a set so we don't repeat a previously entered input as an output or vice versa.
       const uniqueNodeIDs = new Set();
 
-      preresult.forEach(({
-        inputQueryNodeID, outputQueryNodeID,
-        inputPrimaryID, outputPrimaryID,
-        queryEdgeID, kgEdgeID
+      ucResult.forEach(({
+        inputQNodeID, outputQNodeID,
+        inputPrimaryCurie, outputPrimaryCurie,
+        qEdgeID, recordHash
       }) => {
         uniqueNodeIDs.add(
-          this._getUniqueNodeID(queryNodeIDsWithIsSet, inputQueryNodeID, inputPrimaryID)
+          this._getUniqueNodeID(qNodeIDsWithIsSet, inputQNodeID, inputPrimaryCurie)
         );
         uniqueNodeIDs.add(
-          this._getUniqueNodeID(queryNodeIDsWithIsSet, outputQueryNodeID, outputPrimaryID)
+          this._getUniqueNodeID(qNodeIDsWithIsSet, outputQNodeID, outputPrimaryCurie)
         );
       });
 
-      // The separator can be anything that won't appear in the actual QNodeIDs or primaryIDs
+      // The separator can be anything that won't appear in the actual QNodeIDs or primaryCuries
       // Using .sort() because a JS Set is iterated in insertion order, and I haven't
       // verified the preresults are always in the same order. However, they should be,
       // so it's possible .sort() is not needed.
       const uniqueResultID = Array.from(uniqueNodeIDs).sort().join("_&_");
-      // input_QNodeID-input_primaryID_&_output_QNodeID-_output_primaryID_&_...
+      // input_QNodeID-input_primaryCurie_&_output_QNodeID-_output_primaryCurie_&_...
       //
       // Example uniqueResultIDs:
       //   when is_set specified for n1:
@@ -356,35 +356,35 @@ module.exports = class QueryResult {
       //     "n0-NCBIGene:3630_&_n1-MONDO:0005068_&_n2-PUBCHEM.COMPOUND:43815"
       //     "n0-NCBIGene:3630_&_n1-MONDO:0005010_&_n2-PUBCHEM.COMPOUND:43815"
 
-      if (!preresultsByUniqueResultID.hasOwnProperty(uniqueResultID)) {
-        preresultsByUniqueResultID[uniqueResultID] = [];
+      if (!ucResultsByResultID.hasOwnProperty(uniqueResultID)) {
+        ucResultsByResultID[uniqueResultID] = [];
       }
-      preresultsByUniqueResultID[uniqueResultID].push(preresult)
+      ucResultsByResultID[uniqueResultID].push(ucResult)
     });
 
-    const consolidatedPreresults = toPairs(preresultsByUniqueResultID).map(([uniqueResultID, preresults]) => {
-      debug(`result ID: ${uniqueResultID} has ${preresults.length}`)
+    const consolidatedResults = toPairs(ucResultsByResultID).map(([uniqueResultID, ucResults]) => {
+      debug(`result ID: ${uniqueResultID} has ${ucResults.length}`)
       // spread is like Fn.apply
       // TODO: maybe just use ...
-      return spread(zip)(preresults).map(preresultRecords => {
-        const preresultRecord0 = preresultRecords[0];
+      return spread(zip)(ucResults).map(ucResultRecords => {
+        const ucResultRecord_0 = ucResultRecords[0];
         const consolidatedPreresultRecord = {
-          inputQueryNodeID: preresultRecord0.inputQueryNodeID,
-          outputQueryNodeID: preresultRecord0.outputQueryNodeID,
-          inputPrimaryIDs: new Set(),
-          outputPrimaryIDs: new Set(),
-          queryEdgeID: preresultRecord0.queryEdgeID,
-          kgEdgeIDs: new Set()
+          inputQNodeID: ucResultRecord_0.inputQNodeID,
+          outputQNodeID: ucResultRecord_0.outputQNodeID,
+          inputPrimaryCuries: new Set(),
+          outputPrimaryCuries: new Set(),
+          qEdgeID: ucResultRecord_0.qEdgeID,
+          recordHashes: new Set()
         };
-        preresultRecords.forEach(({
-          inputQueryNodeID, outputQueryNodeID,
-          inputPrimaryID, outputPrimaryID,
-          queryEdgeID, kgEdgeID
+        ucResultRecords.forEach(({
+          inputQNodeID, outputQNodeID,
+          inputPrimaryCurie, outputPrimaryCurie,
+          qEdgeID, recordHash
         }) => {
-          //debug(`  inputQueryNodeID: ${inputQueryNodeID}, inputPrimaryID: ${inputPrimaryID}, outputQueryNodeID ${outputQueryNodeID}, outputPrimaryID: ${outputPrimaryID}`)
-          consolidatedPreresultRecord.inputPrimaryIDs.add(inputPrimaryID);
-          consolidatedPreresultRecord.outputPrimaryIDs.add(outputPrimaryID);
-          consolidatedPreresultRecord.kgEdgeIDs.add(kgEdgeID);
+          //debug(`  inputQNodeID: ${inputQNodeID}, inputprimaryCurie: ${inputprimaryCurie}, outputQNodeID ${outputQNodeID}, outputprimaryCurie: ${outputprimaryCurie}`)
+          consolidatedPreresultRecord.inputPrimaryCuries.add(inputPrimaryCurie);
+          consolidatedPreresultRecord.outputPrimaryCuries.add(outputPrimaryCurie);
+          consolidatedPreresultRecord.recordHashes.add(recordHash);
         });
         return consolidatedPreresultRecord;
       });
@@ -394,31 +394,31 @@ module.exports = class QueryResult {
      * The last step is to do the minor re-formatting to turn consolidatedPreresults
      * into the desired final results.
      */
-    this._results = consolidatedPreresults.map((consolidatedPreresult) => {
+    this._results = consolidatedResults.map((cResult) => {
 
       // TODO: calculate an actual score
       const result = {node_bindings: {}, edge_bindings: {}, score: 1.0};
 
-      consolidatedPreresult.forEach(({
-        inputQueryNodeID, outputQueryNodeID,
-        inputPrimaryIDs, outputPrimaryIDs,
-        queryEdgeID, kgEdgeIDs
+      cResult.forEach(({
+        inputQNodeID, outputQNodeID,
+        inputPrimaryCuries, outputPrimaryCuries,
+        qEdgeID, recordHashes
       }) => {
-        result.node_bindings[inputQueryNodeID] = Array.from(inputPrimaryIDs).map(inputPrimaryID => {
+        result.node_bindings[inputQNodeID] = Array.from(inputPrimaryCuries).map(inputprimaryCurie => {
           return {
-            id: inputPrimaryID
+            id: inputprimaryCurie
           };
         });
 
-        result.node_bindings[outputQueryNodeID] = Array.from(outputPrimaryIDs).map(outputPrimaryID => {
+        result.node_bindings[outputQNodeID] = Array.from(outputPrimaryCuries).map(outputprimaryCurie => {
           return {
-            id: outputPrimaryID
+            id: outputprimaryCurie
           };
         });
 
-        result.edge_bindings[queryEdgeID] = Array.from(kgEdgeIDs).map((kgEdgeID) => {
+        result.edge_bindings[qEdgeID] = Array.from(recordHashes).map((recordHash) => {
           return {
-            id: kgEdgeID
+            id: recordHash
           };
         });
       });

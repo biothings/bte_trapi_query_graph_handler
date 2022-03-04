@@ -8,31 +8,31 @@ const config = require('./config');
 module.exports = class EdgeManager {
     constructor(edges) {
         // flatten list of all edges available
-        this.edges = _.flatten(Object.values(edges));
+        this._qXEdges = _.flatten(Object.values(edges));
         this.logs = [];
-        this.results = [];
+        this._records = [];
         //organized by edge with refs to connected edges
-        this.organized_results = {};
+        this._organizedRecords = {};
         this.init();
     }
 
-    getResults() {
-        debug(`(13) Edge Manager reporting combined results...`);
-        return this.results;
+    getRecords() {
+        debug(`(13) Edge Manager reporting combined records...`);
+        return this._records;
     }
 
-    getOrganizedResults() {
-        debug(`(13) Edge Manager reporting organized results...`);
-        return this.organized_results;
+    getOrganizedRecords() {
+        debug(`(13) Edge Manager reporting organized records...`);
+        return this._organizedRecords;
     }
 
     init() {
-        debug(`(3) Edge manager is managing ${this.edges.length} edges.`);
+        debug(`(3) Edge manager is managing ${this._qXEdges.length} edges.`);
         this.logs.push(
             new LogEntry(
                 'DEBUG',
                 null,
-                `Edge manager is managing ${this.edges.length} edges.`,
+                `Edge manager is managing ${this._qXEdges.length} edges.`,
             ).getLog(),
         );
     }
@@ -41,8 +41,8 @@ module.exports = class EdgeManager {
         //returns next edge with lowest entity count on
         //either object or subject OR no count last
         // available not yet executed
-        let available_edges = this.edges
-        .filter(edge => !edge.executed);
+        let available_edges = this._qXEdges
+        .filter(qXEdge => !qXEdge.executed);
         //safeguard for making sure there's available
         //edges when calling getNext
         if (available_edges.length == 0) {
@@ -61,34 +61,34 @@ module.exports = class EdgeManager {
         let lowest_entity_count;
         let current_obj_lowest = 0;
         let current_sub_lowest = 0;
-        available_edges.forEach((edge) => {
+        available_edges.forEach((qXEdge) => {
             if (
-                edge &&
-                edge.object.entity_count
+                qXEdge &&
+                qXEdge.object.entity_count
                 ) {
-                current_obj_lowest = edge.object.entity_count;
+                current_obj_lowest = qXEdge.object.entity_count;
                 if (!lowest_entity_count) {
                     //set current lowest if none
                     lowest_entity_count = current_obj_lowest;
                 }
                 if (current_obj_lowest <= lowest_entity_count) {
                     //lowest is now object count
-                    next = edge;
+                    next = qXEdge;
                 }
             }
             if (
-                edge &&
-                edge.subject.entity_count &&
-                edge.subject.entity_count > 0
+                qXEdge &&
+                qXEdge.subject.entity_count &&
+                qXEdge.subject.entity_count > 0
                 ) {
-                current_sub_lowest = edge.subject.entity_count;
+                current_sub_lowest = qXEdge.subject.entity_count;
                 if (!lowest_entity_count) {
                     //set current lowest if none
                     lowest_entity_count = current_sub_lowest;
                 }
                 if (current_sub_lowest <= lowest_entity_count) {
                     //lowest is now subject count
-                    next = edge;
+                    next = qXEdge;
                 }
             }
         });
@@ -116,11 +116,11 @@ module.exports = class EdgeManager {
     }
 
     logEntityCounts() {
-        this.edges.forEach((edge) => {
-            debug(`'${edge.getID()}'` +
-            ` : (${edge.subject.entity_count || 0}) ` +
-            `${edge.reverse ? '<--' : '-->'}` +
-            ` (${edge.object.entity_count || 0})`);
+        this._qXEdges.forEach((qXEdge) => {
+            debug(`'${qXEdge.getID()}'` +
+            ` : (${qXEdge.subject.entity_count || 0}) ` +
+            `${qXEdge.reverse ? '<--' : '-->'}` +
+            ` (${qXEdge.object.entity_count || 0})`);
         });
     }
 
@@ -144,6 +144,7 @@ module.exports = class EdgeManager {
     }
 
     preSendOffCheck(next) {
+        // next: qXEdge
         //check that edge entities are or have potential to stay
         //under max limit
         this.checkEntityMax(next);
@@ -178,31 +179,31 @@ module.exports = class EdgeManager {
 
     getEdgesNotExecuted() {
         //simply returns a number of edges not marked as executed
-        let found = this.edges.filter(edge => !edge.executed);
+        let found = this._qXEdges.filter(edge => !edge.executed);
         let not_executed = found.length;
         if(not_executed) debug(`(4) Edges not yet executed = ${not_executed}`);
         return not_executed;
     }
 
-    _filterEdgeResults(edge) {
+    _filterEdgeRecords(qXEdge) {
         let keep = [];
-        let results = edge.results;
-        let sub_count = edge.subject.curie;
-        let obj_count = edge.object.curie;
-        debug(`'${edge.getID()}' Reversed[${edge.reverse}] (${JSON.stringify(sub_count.length || 0)})` +
-        `--(${JSON.stringify(obj_count.length || 0)}) entities / (${results.length}) results.`);
+        let records = qXEdge.records;
+        let sub_count = qXEdge.subject.curie;
+        let obj_count = qXEdge.object.curie;
+        debug(`'${qXEdge.getID()}' Reversed[${qXEdge.reverse}] (${JSON.stringify(sub_count.length || 0)})` +
+        `--(${JSON.stringify(obj_count.length || 0)}) entities / (${records.length}) records.`);
         // debug(`IDS SUB ${JSON.stringify(sub_count)}`)
         // debug(`IDS OBJ ${JSON.stringify(obj_count)}`)
-        let object_node_ids = edge.reverse ? sub_count : obj_count;
-        let subject_node_ids = edge.reverse ? obj_count : sub_count;
+        let object_node_ids = qXEdge.reverse ? sub_count : obj_count;
+        let subject_node_ids = qXEdge.reverse ? obj_count : sub_count;
 
-        results.forEach((res) => {
+        records.forEach((record) => {
             //check sub curies against $input ids
             let ids = new Set();
             let outputMatch = false;
             let inputMatch = false;
-            res.$input.obj.forEach((o) => {
-                //compare result I/O ids against edge node ids
+            record.$input.obj.forEach((o) => {
+                //compare record I/O ids against edge node ids
                 //#1 check equivalent ids
                 if (Object.hasOwnProperty.call(o, '_dbIDs')) {
                     for (const prefix in o._dbIDs) {
@@ -236,14 +237,14 @@ module.exports = class EdgeManager {
                 }
                 //#3 last resort check original
                 else{
-                    ids.add(res.$input.original);
+                    ids.add(record.$input.original);
                 }
                 //check ids
                 inputMatch = _.intersection([...ids], subject_node_ids).length;
             });
             //check obj curies against $output ids
             let o_ids = new Set();
-            res.$output.obj.forEach((o) => {
+            record.$output.obj.forEach((o) => {
                 //#1 check equivalent ids
                 if (Object.hasOwnProperty.call(o, '_dbIDs')) {
                     for (const prefix in o._dbIDs) {
@@ -277,115 +278,115 @@ module.exports = class EdgeManager {
                 }
                 //#3 last resort check original
                 else{
-                    o_ids.add(res.$output.original);
+                    o_ids.add(record.$output.original);
                 }
                 //check ids
                 outputMatch = _.intersection([...o_ids], object_node_ids).length;
             });
-            //if both ends match then keep result
+            //if both ends match then keep record
             if (inputMatch && outputMatch) {
-                keep.push(res);
+                keep.push(record);
             }
         });
-        debug(`'${edge.getID()}' dropped (${results.length - keep.length}) results.`);
+        debug(`'${qXEdge.getID()}' dropped (${records.length - keep.length}) records.`);
         this.logs.push(
             new LogEntry(
                 'DEBUG',
                 null,
-                `'${edge.getID()}' kept (${keep.length}) / dropped (${results.length - keep.length}) results.`
+                `'${qXEdge.getID()}' kept (${keep.length}) / dropped (${records.length - keep.length}) records.`
             ).getLog(),
         );
         return keep;
     }
 
-    collectResults() {
-        //go through edges and collect results organized by edge
-        let results = {};
+    collectRecords() {
+        //go through edges and collect records organized by edge
+        let recordsByQEdgeID = {};
         //all res merged
-        let combined_results = [];
+        let combinedRecords = [];
         let brokenChain = false;
         let brokenEdges = [];
-        debug(`(11) Collecting results...`);
+        debug(`(11) Collecting records...`);
         //First: go through edges and filter that each edge is holding
-        this.edges.forEach((edge) => {
-            let edge_ID = edge.getID();
-            let filtered_res = edge.results;
-            if (filtered_res.length == 0) {
+        this._qXEdges.forEach((qXEdge) => {
+            let qEdgeID = qXEdge.getID();
+            let filteredRecords = qXEdge.records;
+            if (filteredRecords.length == 0) {
                 this.logs.push(
                     new LogEntry(
                         'WARNING',
                         null,
-                        `Warning: Edge '${edge_ID}' resulted in (0) results.`
+                        `Warning: Edge '${qEdgeID}' resulted in (0) records.`
                     ).getLog(),
                 );
                 brokenChain = true;
-                brokenEdges.push(edge_ID);
+                brokenEdges.push(qEdgeID);
             }
-            this.logs = [...this.logs, ...edge.logs];
-            //collect results
-            combined_results= combined_results.concat(filtered_res);
-            let connections = edge.qEdge.subject.getConnections().concat(edge.qEdge.object.getConnections());
-            connections = connections.filter(id => id !== edge_ID);
+            this.logs = [...this.logs, ...qXEdge.logs];
+            //collect records
+            combinedRecords = combinedRecords.concat(filteredRecords);
+            let connections = qXEdge.qEdge.subject.getConnections().concat(qXEdge.qEdge.object.getConnections());
+            connections = connections.filter(id => id !== qEdgeID);
             connections = new Set(connections);
-            results[edge_ID] = {
-                records: filtered_res,
+            recordsByQEdgeID[qEdgeID] = {
+                records: filteredRecords,
                 connected_to: [...connections],
             }
-            debug(`(11) '${edge_ID}' keeps (${filtered_res.length}) records!`);
+            debug(`(11) '${qEdgeID}' keeps (${filteredRecords.length}) records!`);
             this.logs.push(
                 new LogEntry(
                     'INFO',
                     null,
-                    `'${edge_ID}' keeps (${filtered_res.length}) records!`
+                    `'${qEdgeID}' keeps (${filteredRecords.length}) records!`
                 ).getLog(),
             );
             debug(`----------`);
         });
         if (brokenChain) {
-            results = {};
+            recordsByQEdgeID = {};
             this.logs.push(
                 new LogEntry(
                     'WARNING',
                     null,
                     `Edges ${JSON.stringify(brokenEdges)} ` +
-                    `resulted in (0) results. No complete paths can be formed.`
+                    `resulted in (0) records. No complete paths can be formed.`
                 ).getLog(),
             );
             debug(`(12) Edges ${JSON.stringify(brokenEdges)} ` +
-            `resulted in (0) results. No complete paths can be formed.`);
+            `resulted in (0) records. No complete paths can be formed.`);
         }
-        //Organized by edge: update query results
-        this.organized_results = results;
-        debug(`(12) Collected results for: ${JSON.stringify(Object.keys(this.organized_results))}!`);
+        //Organized by edge: update query records
+        this._organizedRecords = recordsByQEdgeID;
+        debug(`(12) Collected records for: ${JSON.stringify(Object.keys(this._organizedRecords))}!`);
         //Combined: update query_graph
-        this.results = combined_results;
+        this._records = combinedRecords;
         // var fs = require('fs');
-        // fs.writeFile("organized_results.json", JSON.stringify(results, function( key, value) {
-        //     if( key == 'results') { return '$results'}
+        // fs.writeFile("organized_records.json", JSON.stringify(records, function( key, value) {
+        //     if( key == 'records') { return '$records'}
         //     else {return value;}
         //     }), function(err) {
         //     if (err) {
         //         console.log(err);
         //     }
         // });
-        debug(`(12) Collected (${this.results.length}) results!`);
+        debug(`(12) Collected (${this._records.length}) records!`);
         this.logs.push(
             new LogEntry(
                 'DEBUG',
                 null,
-                `Edge manager collected (${this.results.length}) results!`
+                `Edge manager collected (${this._records.length}) records!`
             ).getLog(),
         );
     }
 
-    updateEdgeResults(current_edge) {
-        //1. filter edge results based on current status
-        let filtered_res = this._filterEdgeResults(current_edge);
+    updateEdgeRecords(current_edge) {
+        //1. filter edge records based on current status
+        let filteredRecords = this._filterEdgeRecords(current_edge);
         //2.trigger node update / entity update based on new status
-        current_edge.storeResults(filtered_res);
+        current_edge.storeRecords(filteredRecords);
     }
 
-    updateNeighborsEdgeResults(current_edge) {
+    updateNeighborsEdgeRecords(current_edge) {
         //update and filter only immediate neighbors
         debug(`Updating neighbors...`);
         let not_this_edge = current_edge.getID();
@@ -399,11 +400,11 @@ module.exports = class EdgeManager {
         if (left_connections.length) {
             //find edge by id
             left_connections.forEach((neighbor_id) => {
-                let edge = this.edges.find((edge) => edge.getID() == neighbor_id);
-                if (edge && edge.results.length) {
+                let edge = this._qXEdges.find((edge) => edge.getID() == neighbor_id);
+                if (edge && edge.records.length) {
                     debug(`Updating "${edge.getID()}" neighbor edge of ${not_this_edge}`);
                     debug(`Updating neighbor (X)<----()`);
-                    this.updateEdgeResults(edge);
+                    this.updateEdgeRecords(edge);
                 }
             });
         }
@@ -411,11 +412,11 @@ module.exports = class EdgeManager {
         if (right_connections.length) {
             //find edge by id
             right_connections.forEach((neighbor_id) => {
-                let edge = this.edges.find((edge) => edge.getID() == neighbor_id);
-                if (edge && edge.results.length) {
+                let edge = this._qXEdges.find((edge) => edge.getID() == neighbor_id);
+                if (edge && edge.records.length) {
                     debug(`Updating "${edge.getID()}" neighbor edge of ${not_this_edge}`);
                     debug(`Updating neighbor ()---->(X)`);
-                    this.updateEdgeResults(edge);
+                    this.updateEdgeRecords(edge);
                 }
             });
         }
@@ -425,11 +426,11 @@ module.exports = class EdgeManager {
         //update and filter all other edges
         debug(`Updating all other edges...`);
         let not_this_edge = current_edge.getID();
-        this.edges.forEach((edge) => {
-            if (edge.getID() !== not_this_edge && edge.results.length) {
+        this._qXEdges.forEach((edge) => {
+            if (edge.getID() !== not_this_edge && edge.records.length) {
                 debug(`Updating "${edge.getID()}"...`);
-                this.updateEdgeResults(edge);
-                this.updateEdgeResults(current_edge);
+                this.updateEdgeRecords(edge);
+                this.updateEdgeRecords(current_edge);
             }
         });
     }

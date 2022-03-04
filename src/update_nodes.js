@@ -2,27 +2,27 @@ const id_resolver = require('biomedical_id_resolver');
 const debug = require('debug')('bte:biothings-explorer-trapi:nodeUpdateHandler');
 
 module.exports = class NodesUpdateHandler {
-  constructor(qEdges) {
-    this.qEdges = qEdges;
+  constructor(qXEdges) {
+    this.qXEdges = qXEdges;
   }
 
   /**
    * @private
    * s
    */
-  _getCuries(qEdges) {
+  _getCuries(qXEdges) {
     let curies = {};
-    qEdges.map((edge) => {
-      if (edge.hasInputResolved()) {
+    qXEdges.map((qXEdge) => {
+      if (qXEdge.hasInputResolved()) {
         return;
       }
-      if (edge.hasInput()) {
-        const inputCategories = edge.getSubject().getCategories();
+      if (qXEdge.hasInput()) {
+        const inputCategories = qXEdge.getSubject().getCategories();
         inputCategories.map((category) => {
           if (!(category in curies)) {
             curies[category] = [];
           }
-          curies[category] = [...curies[category], ...edge.getInputCurie()];
+          curies[category] = [...curies[category], ...qXEdge.getInputCurie()];
         });
       }
     });
@@ -40,20 +40,20 @@ module.exports = class NodesUpdateHandler {
     return equivalentIDs;
   }
 
-  async setEquivalentIDs(qEdges) {
+  async setEquivalentIDs(qXEdges) {
     debug(`Getting equivalent IDs...`);
-    const curies = this._getCuries(this.qEdges);
+    const curies = this._getCuries(this.qXEdges);
     debug(`curies: ${JSON.stringify(curies)}`);
     const equivalentIDs = await this._getEquivalentIDs(curies);
-    qEdges.map((edge) => {
+    qXEdges.map((qXEdge) => {
       const edgeEquivalentIDs = Object.keys(equivalentIDs)
-        .filter((key) => edge.getInputCurie().includes(key))
+        .filter((key) => qXEdge.getInputCurie().includes(key))
         .reduce((res, key) => {
           return { ...res, [key]: equivalentIDs[key] };
         }, {});
         debug(`Got Edge Equivalent IDs successfully.`);
       if (Object.keys(edgeEquivalentIDs).length > 0) {
-        edge.input_equivalent_identifiers = edgeEquivalentIDs;
+        qXEdge.input_equivalent_identifiers = edgeEquivalentIDs;
       }
     });
     return;
@@ -71,15 +71,15 @@ module.exports = class NodesUpdateHandler {
 
   /**
    * Update nodes with equivalent ids based on query response.
-   * @param {object} queryResult - query response
+   * @param {object} queryRecords - query response
    */
-  update(queryResult) {
-    // queryResult.map(record => {
+  update(queryRecords) {
+    // queryRecords.map(record => {
     //     record.$edge_metadata.trapi_qEdge_obj.getOutputNode().updateEquivalentIDs(
     //         this._createEquivalentIDsObject(record)
     //     );
     // })
-    queryResult.map((record) => {
+    queryRecords.map((record) => {
       if (
         record &&
         !(record.$output.obj[0].primaryID in record.$edge_metadata.trapi_qEdge_obj.output_equivalent_identifiers)

@@ -3,7 +3,7 @@ const kg_node = require('./kg_node');
 const helper = require('../helper');
 const debug = require('debug')('bte:biothings-explorer-trapi:Graph');
 
-module.exports = class Graph {
+module.exports = class BTEGraph { // TODO rename to bteGraph? seems to only be used for such.
   constructor() {
     this.nodes = {};
     this.edges = {};
@@ -12,59 +12,59 @@ module.exports = class Graph {
     this.subscribers = [];
   }
 
-  update(queryResult) {
+  update(queryRecords) {
     debug(`Updating BTE Graph now.`);
     const bteAttributes = ['name', 'label', 'id', 'api', 'provided_by', 'publications'];
-    queryResult.map((record) => {
+    queryRecords.map((record) => {
       if (record) {
-        const inputPrimaryID = this.helper._getInputID(record);
-        const inputQGID = this.helper._getInputQueryNodeID(record);
-        const inputID = inputPrimaryID + '-' + inputQGID;
-        const outputPrimaryID = this.helper._getOutputID(record);
-        const outputQGID = this.helper._getOutputQueryNodeID(record);
-        const outputID = outputPrimaryID + '-' + outputQGID;
-        const edgeID = this.helper._getKGEdgeID(record);
-        if (!(outputID in this.nodes)) {
-          this.nodes[outputID] = new kg_node(outputID, {
-            primaryID: outputPrimaryID,
-            qgID: outputQGID,
-            equivalentIDs: this.helper._getOutputEquivalentIds(record),
+        const inputPrimaryCurie = this.helper._getInputCurie(record);
+        const inputQNodeID = this.helper._getInputQueryNodeID(record);
+        const inputBTEGraphID = inputPrimaryCurie + '-' + inputQNodeID;
+        const outputPrimaryCurie = this.helper._getOutputCurie(record);
+        const outputQNodeID = this.helper._getOutputQueryNodeID(record);
+        const outputBTEGraphID = outputPrimaryCurie + '-' + outputQNodeID;
+        const recordEdgeHash = this.helper._getRecordHash(record);
+        if (!(outputBTEGraphID in this.nodes)) {
+          this.nodes[outputBTEGraphID] = new kg_node(outputBTEGraphID, {
+            primaryCurie: outputPrimaryCurie,
+            qNodeID: outputQNodeID,
+            equivalentCuries: this.helper._getOutputEquivalentIds(record),
             names: this.helper._getOutputNames(record),
             label: this.helper._getOutputLabel(record),
             category: this.helper._getOutputCategory(record),
             nodeAttributes: this.helper._getOutputAttributes(record),
           });
         }
-        if (!(inputID in this.nodes)) {
-          this.nodes[inputID] = new kg_node(inputID, {
-            primaryID: inputPrimaryID,
-            qgID: inputQGID,
-            equivalentIDs: this.helper._getInputEquivalentIds(record),
+        if (!(inputBTEGraphID in this.nodes)) {
+          this.nodes[inputBTEGraphID] = new kg_node(inputBTEGraphID, {
+            primaryCurie: inputPrimaryCurie,
+            qNodeID: inputQNodeID,
+            equivalentCuries: this.helper._getInputEquivalentCuries(record),
             names: this.helper._getInputNames(record),
             label: this.helper._getInputLabel(record),
             category: this.helper._getInputCategory(record),
             nodeAttributes: this.helper._getInputAttributes(record),
           });
         }
-        this.nodes[outputID].addSourceNode(inputID);
-        this.nodes[outputID].addSourceQGNode(inputQGID);
-        this.nodes[inputID].addTargetNode(outputID);
-        this.nodes[inputID].addTargetQGNode(outputQGID);
-        if (!(edgeID in this.edges)) {
-          this.edges[edgeID] = new kg_edge(edgeID, {
+        this.nodes[outputBTEGraphID].addSourceNode(inputBTEGraphID);
+        this.nodes[outputBTEGraphID].addSourceQNodeID(inputQNodeID);
+        this.nodes[inputBTEGraphID].addTargetNode(outputBTEGraphID);
+        this.nodes[inputBTEGraphID].addTargetQNodeID(outputQNodeID);
+        if (!(recordEdgeHash in this.edges)) {
+          this.edges[recordEdgeHash] = new kg_edge(recordEdgeHash, {
             predicate: this.helper._getPredicate(record),
-            subject: inputPrimaryID,
-            object: outputPrimaryID,
+            subject: inputPrimaryCurie,
+            object: outputPrimaryCurie,
           });
         }
-        this.edges[edgeID].addAPI(this.helper._getAPI(record));
-        this.edges[edgeID].addInforesCurie(this.helper._getInforesCurie(record));
-        this.edges[edgeID].addSource(this.helper._getSource(record));
-        this.edges[edgeID].addPublication(this.helper._getPublication(record));
+        this.edges[recordEdgeHash].addAPI(this.helper._getAPI(record));
+        this.edges[recordEdgeHash].addInforesCurie(this.helper._getInforesCurie(record));
+        this.edges[recordEdgeHash].addSource(this.helper._getSource(record));
+        this.edges[recordEdgeHash].addPublication(this.helper._getPublication(record));
         Object.keys(record)
           .filter((k) => !(bteAttributes.includes(k) || k.startsWith('$')))
           .map((item) => {
-            this.edges[edgeID].addAdditionalAttributes(item, record[item]);
+            this.edges[recordEdgeHash].addAdditionalAttributes(item, record[item]);
           });
       }
     });

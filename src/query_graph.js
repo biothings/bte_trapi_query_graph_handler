@@ -25,12 +25,12 @@ module.exports = class QueryGraphHandler {
   }
 
   _validateNodeEdgeCorrespondence(queryGraph) {
-    for (let edge_id in queryGraph.edges) {
-      if (!(this.queryGraph.edges[edge_id].subject in queryGraph.nodes)) {
-        throw new InvalidQueryGraphError(`The subject of edge ${edge_id} is not defined in the query graph.`);
+    for (let qEdgeID in queryGraph.edges) {
+      if (!(this.queryGraph.edges[qEdgeID].subject in queryGraph.nodes)) {
+        throw new InvalidQueryGraphError(`The subject of edge ${qEdgeID} is not defined in the query graph.`);
       }
-      if (!(this.queryGraph.edges[edge_id].object in queryGraph.nodes)) {
-        throw new InvalidQueryGraphError(`The object of edge ${edge_id} is not defined in the query graph.`);
+      if (!(this.queryGraph.edges[qEdgeID].object in queryGraph.nodes)) {
+        throw new InvalidQueryGraphError(`The object of edge ${qEdgeID} is not defined in the query graph.`);
       }
     }
   }
@@ -44,7 +44,7 @@ module.exports = class QueryGraphHandler {
   /**
    * @private
    */
-    async _findNodeCategories(ids) {
+    async _findNodeCategories(ids) { // TODO can ids be renamed to curies? can category be renamed to semantic type?
       if (ids.length == 1) {
         let category = await id_resolver.resolveSRI({
             unknown: ids
@@ -68,30 +68,30 @@ module.exports = class QueryGraphHandler {
    */
     async _storeNodes() {
       let nodes = {};
-      for (let node_id in this.queryGraph.nodes) {
+      for (let qNodeID in this.queryGraph.nodes) {
         //if node has ID but no categories
         if (
-          (!Object.hasOwnProperty.call(this.queryGraph.nodes[node_id], 'categories') &&
-          Object.hasOwnProperty.call(this.queryGraph.nodes[node_id], 'ids')) ||
-          (Object.hasOwnProperty.call(this.queryGraph.nodes[node_id], 'categories') &&
-          this.queryGraph.nodes[node_id].categories.length == 0 &&
-          Object.hasOwnProperty.call(this.queryGraph.nodes[node_id], 'ids'))
+          (!Object.hasOwnProperty.call(this.queryGraph.nodes[qNodeID], 'categories') &&
+          Object.hasOwnProperty.call(this.queryGraph.nodes[qNodeID], 'ids')) ||
+          (Object.hasOwnProperty.call(this.queryGraph.nodes[qNodeID], 'categories') &&
+          this.queryGraph.nodes[qNodeID].categories.length == 0 &&
+          Object.hasOwnProperty.call(this.queryGraph.nodes[qNodeID], 'ids'))
           ) {
-          let category = await this._findNodeCategories(this.queryGraph.nodes[node_id].ids);
-          this.queryGraph.nodes[node_id].categories = category;
-          debug(`Node category found. Assigning value: ${JSON.stringify(this.queryGraph.nodes[node_id])}`);
+          let category = await this._findNodeCategories(this.queryGraph.nodes[qNodeID].ids);
+          this.queryGraph.nodes[qNodeID].categories = category;
+          debug(`Node category found. Assigning value: ${JSON.stringify(this.queryGraph.nodes[qNodeID])}`);
           this.logs.push(
             new LogEntry(
             'DEBUG',
-            null, 
-            `Assigned missing node ID category: ${JSON.stringify(this.queryGraph.nodes[node_id])}`).getLog(),
+            null,
+            `Assigned missing node ID category: ${JSON.stringify(this.queryGraph.nodes[qNodeID])}`).getLog(),
           );
-          nodes[node_id] = new QNode(node_id, this.queryGraph.nodes[node_id]);
+          nodes[qNodeID] = new QNode(qNodeID, this.queryGraph.nodes[qNodeID]);
         }else{
           debug(`Creating node...`);
-          nodes[node_id] = new QNode(node_id, this.queryGraph.nodes[node_id]);
+          nodes[qNodeID] = new QNode(qNodeID, this.queryGraph.nodes[qNodeID]);
         }
-        
+
       }
       this.logs.push(
         new LogEntry('DEBUG', null, `BTE identified ${Object.keys(nodes).length} QNodes from your query graph`).getLog(),
@@ -107,19 +107,19 @@ module.exports = class QueryGraphHandler {
       this.nodes = await this._storeNodes();
     }
     let edges = {};
-    for (let edge_id in this.queryGraph.edges) {
+    for (let qEdgeID in this.queryGraph.edges) {
       let edge_info = {
-        ...this.queryGraph.edges[edge_id],
+        ...this.queryGraph.edges[qEdgeID],
         ...{
-          subject: this.nodes[this.queryGraph.edges[edge_id].subject],
-          object: this.nodes[this.queryGraph.edges[edge_id].object],
+          subject: this.nodes[this.queryGraph.edges[qEdgeID].subject],
+          object: this.nodes[this.queryGraph.edges[qEdgeID].object],
         },
       };
       //store in each node ids of edges connected to them
-      this.nodes[this.queryGraph.edges[edge_id].subject].updateConnection(edge_id);
-      this.nodes[this.queryGraph.edges[edge_id].object].updateConnection(edge_id);
+      this.nodes[this.queryGraph.edges[qEdgeID].subject].updateConnection(qEdgeID);
+      this.nodes[this.queryGraph.edges[qEdgeID].object].updateConnection(qEdgeID);
 
-      edges[edge_id] = new QEdge(edge_id, edge_info);
+      edges[qEdgeID] = new QEdge(qEdgeID, edge_info);
     }
     this.logs.push(
       new LogEntry('DEBUG', null, `BTE identified ${Object.keys(edges).length} QEdges from your query graph`).getLog(),
@@ -140,12 +140,12 @@ module.exports = class QueryGraphHandler {
     let edges = {};
     let edge_index = 0;
     //create a smart query edge per edge in query
-    for (const edge_id in this.edges) {
+    for (const qEdgeID in this.edges) {
       edges[edge_index] = [
         // () ----> ()
-        this.edges[edge_id].object.curie ? 
-        new ExeEdge(this.edges[edge_id], true, undefined) :
-        new ExeEdge(this.edges[edge_id], false, undefined)
+        this.edges[qEdgeID].object.curie ?
+          new ExeEdge(this.edges[qEdgeID], true, undefined) :
+          new ExeEdge(this.edges[qEdgeID], false, undefined)
         // reversed () <---- ()
       ];
       edge_index++;

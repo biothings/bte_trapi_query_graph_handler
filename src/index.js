@@ -9,7 +9,7 @@ const debug = require('debug')('bte:biothings-explorer-trapi:main');
 const Graph = require('./graph/graph');
 const EdgeManager = require('./edge_manager');
 const _ = require('lodash');
-const QEdge2BTEEdgeHandler = require('./qedge2bteedge');
+const QEdge2APIEdgeHandler = require('./qedge2apiedge');
 const LogEntry = require('./log_entry');
 const redisClient = require('./redis-client');
 
@@ -29,11 +29,11 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   }
 
   _loadMetaKG() {
-    const kg = new meta_kg.default(this.path, this.predicatePath);
+    const metaKG = new meta_kg.default(this.path, this.predicatePath);
     debug(`Query options are: ${JSON.stringify(this.options)}`);
     debug(`SmartAPI Specs read from path: ${this.path}`);
-    kg.constructMetaKGSync(this.includeReasoner, this.options);
-    return kg;
+    metaKG.constructMetaKGSync(this.includeReasoner, this.options);
+    return metaKG;
   }
 
   getResponse() {
@@ -83,9 +83,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
    async _processQueryGraph(queryGraph) {
     try {
       let queryGraphHandler = new QueryGraph(queryGraph);
-      let res = await queryGraphHandler.calculateEdges();
+      let qExeEdges = await queryGraphHandler.calculateEdges();
       this.logs = [...this.logs, ...queryGraphHandler.logs];
-      return res;
+      return qExeEdges;
     } catch (err) {
       if (err instanceof InvalidQueryGraphError) {
         throw err;
@@ -106,43 +106,43 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     return handlers;
   }
 
-  _createBatchEdgeQueryHandlersForCurrent(currentEdge, kg) {
-    let handler = new BatchEdgeQueryHandler(kg, this.resolveOutputIDs, {caching: this.options.caching });
+  _createBatchEdgeQueryHandlersForCurrent(currentEdge, metaKG) {
+    let handler = new BatchEdgeQueryHandler(metaKG, this.resolveOutputIDs, {caching: this.options.caching });
     handler.setEdges(currentEdge);
     return handler;
   }
 
-  async _edgesSupported(qEdges, kg) {
+  async _edgesSupported(qXEdges, metaKG) {
     // _.cloneDeep() is resource-intensive but only runs once per query
-    qEdges = _.cloneDeep(qEdges);
-    const manager = new EdgeManager(qEdges);
-    const edgesMissingOps = {};
+    qXEdges = _.cloneDeep(qXEdges);
+    const manager = new EdgeManager(qXEdges);
+    const qEdgesMissingOps = {};
     while (manager.getEdgesNotExecuted()) {
-      let current_edge = manager.getNext();
-      const edgeConverter = new QEdge2BTEEdgeHandler([current_edge], kg);
-      const sAPIEdges = edgeConverter.getSmartAPIEdges(current_edge);
-      if (!sAPIEdges.length) {
-        edgesMissingOps[current_edge.qEdge.id] = current_edge.reverse;
+      let currentEdge = manager.getNext();
+      const edgeConverter = new QEdge2APIEdgeHandler([currentEdge], metaKG);
+      const smartAPIEdges = edgeConverter.getMetaXEdges(currentEdge);
+      if (!smartAPIEdges.length) {
+        qEdgesMissingOps[currentEdge.qEdge.id] = currentEdge.reverse;
       }
       // assume results so next edge may be reversed or not
-      current_edge.executed = true;
-      current_edge.object.entity_count = 1;
-      current_edge.subject.entity_count = 1;
+      currentEdge.executed = true;
+      currentEdge.object.entity_count = 1;
+      currentEdge.subject.entity_count = 1;
       // this.logs = [...this.logs, ...edgeConverter.logs];
     }
 
-    const len = Object.keys(edgesMissingOps).length;
+    const len = Object.keys(qEdgesMissingOps).length;
     // this.logs = [...this.logs, ...manager.logs];
-    let edgesToLog = Object.entries(edgesMissingOps).map(([edge, reversed]) => {
+    let qEdgesToLog = Object.entries(qEdgesMissingOps).map(([qEdge, reversed]) => {
       return reversed
-        ? `(reversed ${edge})`
-        : `(${edge})`;
+        ? `(reversed ${qEdge})`
+        : `(${qEdge})`;
     });
-    edgesToLog = edgesToLog.length > 1
-      ? `[${edgesToLog.join(', ')}]`
-      : `${edgesToLog.join(', ')}`
+    qEdgesToLog = qEdgesToLog.length > 1
+      ? `[${qEdgesToLog.join(', ')}]`
+      : `${qEdgesToLog.join(', ')}`
     if (len > 0) {
-      const terminateLog = `Query Edge${len === 1 ? 's' : ''} ${edgesToLog} ${
+      const terminateLog = `Query Edge${len === 1 ? 's' : ''} ${qEdgesToLog} ${
         len === 1 ? 'have' : 'has'
       } no SmartAPI edges. Your query terminates.`;
       debug(terminateLog);
@@ -156,7 +156,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   async query() {
     this._initializeResponse();
     debug('Start to load metakg.');
-    const kg = this._loadMetaKG(this.smartapiID, this.team);
+    const metaKG = this._loadMetaKG(this.smartapiID, this.team);
     debug('MetaKG successfully loaded!');
     if (global.missingAPIs) {
       this.logs.push(
@@ -167,37 +167,37 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         ).getLog()
       )
     }
-    let queryEdges = await this._processQueryGraph(this.queryGraph);
-    debug(`(3) All edges created ${JSON.stringify(queryEdges)}`);
-    if (!(await this._edgesSupported(queryEdges, kg))) {
+    let queryExecutionEdges = await this._processQueryGraph(this.queryGraph);
+    debug(`(3) All edges created ${JSON.stringify(queryExecutionEdges)}`);
+    if (!(await this._edgesSupported(queryExecutionEdges, metaKG))) {
       return;
     }
-    const manager = new EdgeManager(queryEdges);
+    const manager = new EdgeManager(queryExecutionEdges);
     while (manager.getEdgesNotExecuted()) {
       //next available/most efficient edge
-      let current_edge = manager.getNext();
+      let currentEdge = manager.getNext();
       //crate queries from edge
-      let handler = this._createBatchEdgeQueryHandlersForCurrent(current_edge, kg);
+      let handler = this._createBatchEdgeQueryHandlersForCurrent(currentEdge, metaKG);
       this.logs.push(
         new LogEntry(
           'INFO',
           null,
-          `Executing ${current_edge.getID()}${current_edge.isReversed() ? ' (reversed)' : ''}: ${
-            current_edge.subject.id
-          } ${current_edge.isReversed() ? '<--' : '-->'} ${
-            current_edge.object.id
+          `Executing ${currentEdge.getID()}${currentEdge.isReversed() ? ' (reversed)' : ''}: ${
+            currentEdge.subject.id
+          } ${currentEdge.isReversed() ? '<--' : '-->'} ${
+            currentEdge.object.id
           }`,
         ).getLog(),
       );
-      debug(`(5) Executing current edge >> "${current_edge.getID()}"`);
+      debug(`(5) Executing current edge >> "${currentEdge.getID()}"`);
       //execute current edge query
-      let res = await handler.query(handler.qEdges);
+      let queryRecords = await handler.query(handler.qXEdges);
       this.logs = [...this.logs, ...handler.logs];
       // create an edge execution summary
       let success = 0, fail = 0, total = 0;
-      let cached = this.logs.filter(({ data }) => data?.edge_id === current_edge.qEdge.id && data?.type === 'cacheHit').length;
+      let cached = this.logs.filter(({ data }) => data?.edge_id === currentEdge.qEdge.id && data?.type === 'cacheHit').length;
       this.logs
-        .filter(({ data }) => data?.edge_id === current_edge.qEdge.id && data?.type === 'query')
+        .filter(({ data }) => data?.edge_id === currentEdge.qEdge.id && data?.type === 'query')
         .forEach(({ data }) => {
           !data.error ? success++ : fail++;
           total++;
@@ -206,56 +206,56 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         new LogEntry(
           'INFO',
           null,
-          `${current_edge.qEdge.id} execution: ${total} queries (${success} success/${fail} fail) and (${cached}) cached edges return (${res.length}) hits`,
+          `${currentEdge.qEdge.id} execution: ${total} queries (${success} success/${fail} fail) and (${cached}) cached edges return (${queryRecords.length}) records`,
           {}
         ).getLog()
       );
-      if (res.length === 0) {
-        debug(`(X) Terminating..."${current_edge.getID()}" got 0 results.`);
+      if (queryRecords.length === 0) {
+        debug(`(X) Terminating..."${currentEdge.getID()}" got 0 records.`);
         return;
       }
-      //storing results will trigger a node entity count update
-      current_edge.storeResults(res);
-      //filter results
-      manager.updateEdgeResults(current_edge);
+      //storing records will trigger a node entity count update
+      currentEdge.storeRecords(queryRecords);
+      //filter records
+      manager.updateEdgeRecords(currentEdge);
       //update and filter neighbors
-      manager.updateAllOtherEdges(current_edge);
-      // check that any results are kept
-      if (!current_edge.results.length) {
-        debug(`(X) Terminating..."${current_edge.getID()}" got 0 results.`);
+      manager.updateAllOtherEdges(currentEdge);
+      // check that any records are kept
+      if (!currentEdge.records.length) {
+        debug(`(X) Terminating..."${currentEdge.getID()}" got 0 records.`);
         this.logs.push(
             new LogEntry(
                 'WARNING',
                 null,
-                `Edge (${current_edge.getID()}) kept 0 results. Your query terminates.`
+                `Edge (${currentEdge.getID()}) kept 0 records. Your query terminates.`
             ).getLog()
         );
         return;
     }
       //edge all done
-      current_edge.executed = true;
+      currentEdge.executed = true;
       debug(`(10) Edge successfully queried.`);
     };
-    //collect and organize results
-    manager.collectResults();
+    //collect and organize records
+    manager.collectRecords();
     this.logs = [...this.logs, ...manager.logs];
     //update query graph
-    this.bteGraph.update(manager.getResults());
+    this.bteGraph.update(manager.getRecords());
     //update query results
-    this.queryResults.update(manager.getOrganizedResults());
+    this.queryResults.update(manager.getOrganizedRecords());
     this.bteGraph.notify();
-    const nodes = Object.keys(this.knowledgeGraph.nodes).length;
-    const edges = Object.keys(this.knowledgeGraph.edges).length;
+    const rKGNodes = Object.keys(this.knowledgeGraph.nodes).length;
+    const rKGEdges = Object.keys(this.knowledgeGraph.edges).length;
     const results = this.queryResults.getResults().length;
     const resultQueries = this.logs.filter(({ data }) => data?.type === 'query' && data?.hits).length;
     const queries = this.logs.filter(({ data }) => data?.type === 'query').length;
-    const sources = [...new Set(manager.results.map(res => res.$edge_metadata.api_name))];
+    const sources = [...new Set(manager._records.map(res => res.$edge_metadata.api_name))];
     let cached = this.logs.filter(({ data }) => data?.type === 'cacheHit').length;
     this.logs.push(
       new LogEntry(
         'INFO',
         null,
-        `Execution Summary: (${nodes}) nodes / (${edges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${cached ? ` (${cached} cached edges)` : ''} returned results from (${sources.length}) unique APIs ${
+        `Execution Summary: (${rKGNodes}) nodes / (${rKGEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${cached ? ` (${cached} cached edges)` : ''} returned results from (${sources.length}) unique APIs ${
           sources === 1 ? 's' : ''
         }`,
       ).getLog(),

@@ -1,13 +1,13 @@
 const call_api = require('@biothings-explorer/call-apis');
-const QEdge2BTEEdgeHandler = require('./qedge2bteedge');
+const QEdge2APIEdgeHandler = require('./qedge2apiedge');
 const NodesUpdateHandler = require('./update_nodes');
 const debug = require('debug')('bte:biothings-explorer-trapi:batch_edge_query');
 const CacheHandler = require('./cache_handler');
 const { parentPort, isMainThread } = require('worker_threads');
 
 module.exports = class BatchEdgeQueryHandler {
-  constructor(kg, resolveOutputIDs = true, options) {
-    this.kg = kg;
+  constructor(metaKG, resolveOutputIDs = true, options) {
+    this.metaKG = metaKG;
     this.subscribers = [];
     this.logs = [];
     this.caching = options && options.caching;
@@ -15,42 +15,42 @@ module.exports = class BatchEdgeQueryHandler {
   }
 
   /**
-   * @param {Array} qEdges - an array of TRAPI Query Edges;
+   * @param {Array} qXEdges - an array of TRAPI Query Edges;
    */
-  setEdges(qEdges) {
-    this.qEdges = qEdges;
+  setEdges(qXEdges) {
+    this.qXEdges = qXEdges;
   }
 
   /**
    *
    */
   getEdges() {
-    return this.qEdges;
+    return this.qXEdges;
   }
 
   /**
    * @private
    */
-  _expandBTEEdges(bteEdges) {
+  _expandAPIEdges(APIEdges) {
     // debug(`BTE EDGE ${JSON.stringify(this.qEdges)}`);
-    return bteEdges;
+    return APIEdges;
   }
 
   /**
    * @private
    */
-  async _queryBTEEdges(bteEdges) {
-    let executor = new call_api(bteEdges);
-    const res = await executor.query(this.resolveOutputIDs);
+  async _queryAPIEdges(APIEdges) {
+    let executor = new call_api(APIEdges);
+    const records = await executor.query(this.resolveOutputIDs);
     this.logs = [...this.logs, ...executor.logs];
-    return res;
+    return records;
   }
 
   /**
    * @private
    */
   async _postQueryFilter(response) {
-    debug(`Filtering out "undefined" items (${response.length}) results`);
+    debug(`Filtering out "undefined" items (${response.length}) records`);
     response = response.filter((res) => res !== undefined);
     return response;
   }
@@ -59,11 +59,11 @@ module.exports = class BatchEdgeQueryHandler {
    * Remove curies which resolve to the same thing, keeping the first.
    * @private
    */
-  async _rmEquivalentDuplicates(qEdges) {
-    Object.values(qEdges).forEach((qEdge) => {
+  async _rmEquivalentDuplicates(qXEdges) {
+    Object.values(qXEdges).forEach((qXEdge) => {
       const nodes = {
-        subject: qEdge.subject,
-        object: qEdge.object,
+        subject: qXEdge.subject,
+        object: qXEdge.object,
       };
       const strippedCuries = [];
       Object.entries(nodes).forEach(([nodeType, node]) => {
@@ -73,7 +73,7 @@ module.exports = class BatchEdgeQueryHandler {
         node.curie.forEach((curie) => {
           // if the curie is already present, or an equivalent is, remove it
           if (!reducedCuries.includes(curie)) {
-            const equivalentAlreadyIncluded = qEdge.input_equivalent_identifiers[curie][0].curies.some(
+            const equivalentAlreadyIncluded = qXEdge.input_equivalent_identifiers[curie][0].curies.some(
               (equivalentCurie) => reducedCuries.includes(equivalentCurie),
             );
             if (!equivalentAlreadyIncluded) {
@@ -94,57 +94,57 @@ module.exports = class BatchEdgeQueryHandler {
         }
       });
       strippedCuries.forEach((curie) => {
-        delete qEdge.input_equivalent_identifiers[curie];
+        delete qXEdge.input_equivalent_identifiers[curie];
       });
     });
   }
 
-  async query(qEdges) {
+  async query(qXEdges) {
     debug('Node Update Start');
     //it's now a single edge but convert to arr to simplify refactoring
-    qEdges = Array.isArray(qEdges) ? qEdges : [qEdges];
-    const nodeUpdate = new NodesUpdateHandler(qEdges);
+    qXEdges = Array.isArray(qXEdges) ? qXEdges : [qXEdges];
+    const nodeUpdate = new NodesUpdateHandler(qXEdges);
     //difference is there is no previous edge info anymore
-    await nodeUpdate.setEquivalentIDs(qEdges);
-    await this._rmEquivalentDuplicates(qEdges);
+    await nodeUpdate.setEquivalentIDs(qXEdges);
+    await this._rmEquivalentDuplicates(qXEdges);
     debug('Node Update Success');
-    const cacheHandler = new CacheHandler(qEdges, this.caching, this.kg);
-    const { cachedResults, nonCachedEdges } = await cacheHandler.categorizeEdges(qEdges);
+    const cacheHandler = new CacheHandler(qXEdges, this.caching, this.metaKG);
+    const { cachedRecords, nonCachedQXEdges } = await cacheHandler.categorizeEdges(qXEdges);
     this.logs = [...this.logs, ...cacheHandler.logs];
-    let query_res;
+    let queryRecords;
 
-    if (nonCachedEdges.length === 0) {
-      query_res = [];
+    if (nonCachedQXEdges.length === 0) {
+      queryRecords = [];
       if (parentPort) {
         parentPort.postMessage({ cacheDone: true });
       }
     } else {
-      debug('Start to convert qEdges into BTEEdges....');
-      const edgeConverter = new QEdge2BTEEdgeHandler(nonCachedEdges, this.kg);
-      const bteEdges = await edgeConverter.convert(nonCachedEdges);
-      debug(`qEdges are successfully converted into ${bteEdges.length} BTEEdges....`);
+      debug('Start to convert qXEdges into APIEdges....');
+      const edgeConverter = new QEdge2APIEdgeHandler(nonCachedQXEdges, this.metaKG);
+      const APIEdges = await edgeConverter.convert(nonCachedQXEdges);
+      debug(`qEdges are successfully converted into ${APIEdges.length} APIEdges....`);
       this.logs = [...this.logs, ...edgeConverter.logs];
-      if (bteEdges.length === 0 && cachedResults.length === 0) {
+      if (APIEdges.length === 0 && cachedRecords.length === 0) {
         return [];
       }
-      const expanded_bteEdges = this._expandBTEEdges(bteEdges);
-      debug('Start to query BTEEdges....');
-      query_res = await this._queryBTEEdges(expanded_bteEdges);
-      debug('BTEEdges are successfully queried....');
-      debug(`Filtering out any "undefined" items in (${query_res.length}) results`);
-      query_res = query_res.filter((res) => res !== undefined);
-      debug(`Total number of results is (${query_res.length})`);
+      const expanded_APIEdges = this._expandAPIEdges(APIEdges);
+      debug('Start to query APIEdges....');
+      queryRecords = await this._queryAPIEdges(expanded_APIEdges);
+      debug('APIEdges are successfully queried....');
+      debug(`Filtering out any "undefined" items in (${queryRecords.length}) records`);
+      queryRecords = queryRecords.filter((record) => record !== undefined);
+      debug(`Total number of records is (${queryRecords.length})`);
       if (!isMainThread) {
-        cacheHandler.cacheEdges(query_res);
+        cacheHandler.cacheEdges(queryRecords);
       } else { // await caching if async so end of job doesn't cut it off
-        await cacheHandler.cacheEdges(query_res);
+        await cacheHandler.cacheEdges(queryRecords);
       }
     }
-    query_res = [...query_res, ...cachedResults];
+    queryRecords = [...queryRecords, ...cachedRecords];
     debug('Start to update nodes...');
-    nodeUpdate.update(query_res);
+    nodeUpdate.update(queryRecords);
     debug('Update nodes completed!');
-    return query_res;
+    return queryRecords;
   }
 
   /**

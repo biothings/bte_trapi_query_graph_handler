@@ -1,17 +1,17 @@
 module.exports = class KGNode {
   constructor(id, info) {
     this.id = id;
-    this._primaryID = info.primaryID;
-    this._qgID = info.qgID;
-    this._curies = info.equivalentIDs;
+    this._primaryCurie = info.primaryCurie;
+    this._qNodeID = info.qNodeID;
+    this._curies = info.equivalentCuries;
     this._names = info.names;
     this._semanticType = info.category;
     this._nodeAttributes = info.nodeAttributes;
     this._label = info.label;
     this._sourceNodes = new Set();
     this._targetNodes = new Set();
-    this._sourceQGNodes = new Set();
-    this._targetQGNodes = new Set();
+    this._sourceQNodeIDs = new Set();
+    this._targetQNodeIDs = new Set();
   }
 
   addSourceNode(kgNode) {
@@ -22,11 +22,11 @@ module.exports = class KGNode {
     this._targetNodes.add(kgNode);
   }
 
-  addSourceQGNode(qgNode) {
-    this._sourceQGNodes.add(qgNode);
+  addSourceQNodeID(qNodeID) {
+    this._sourceQNodeIDs.add(qNodeID);
   }
 
-  addTargetQGNode(qgNode) {
-    this._targetQGNodes.add(qgNode);
+  addTargetQNodeID(qNodeID) {
+    this._targetQNodeIDs.add(qNodeID);
   }
 };
