@@ -151,7 +151,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       }
 
       if (!metaXEdges.length) {
-        edgesMissingOps[currentEdge.qEdge.id] = currentEdge.reverse;
+        qEdgesMissingOps[currentEdge.qEdge.id] = currentEdge.reverse;
       }
       // assume results so next edge may be reversed or not
       currentEdge.executed = true;
