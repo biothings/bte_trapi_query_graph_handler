@@ -21,7 +21,7 @@ const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
  *
  * @typedef {string} QueryEdgeID
  *
- * @typedef {Object.<string, EdgeData>} DataByEdge
+ * @typedef {Object.<string, EdgeData>} recordsByQEdgeID
  *
  * @typedef {
  *   id: string,
@@ -69,7 +69,7 @@ module.exports = class QueryResult {
    * with each hop having one associated record and every associated record being linked
    * to its neighbor as per the query graph.
    *
-   * These combinations are called preresults, because they hold the data used to
+   * These combinations are called queryGraphSolutions, because they hold the data used to
    * assemble the actual results.
    *
    * This is a recursive function, and it traverses the query graph as a tree, with
@@ -79,9 +79,9 @@ module.exports = class QueryResult {
    * This graphic helps to explain how this works:
    * https://github.com/biothings/BioThings_Explorer_TRAPI/issues/341#issuecomment-972140186
    *
-   * The preresults returned from this method are not at all consolidated. They are
+   * The queryGraphSolutions returned from this method are not at all consolidated. They are
    * analogous to the collection of sets in the lower left of the graphic, which
-   * represents every valid combination of primaryCuries and recordHashs but excludes
+   * represents every valid combination of primaryCuries and recordHashes but excludes
    * invalid combinations like B-1-Z, which is a dead-end.
    *
    * NOTE: this currently only works for trees (no cycles). If we want to handle cycles,
@@ -97,12 +97,12 @@ module.exports = class QueryResult {
    *   recordHash: string,
    * }
    */
-  _getUnconsolidatedResults(
+  _getqueryGraphSolutions(
     recordsByQEdgeID,
     qEdgeID,
     edgeCount,
-    ucResults,
-    ucResult,
+    solutions,
+    solution,
     qNodeIDToMatch,
     primaryCurieToMatch
   ) {
@@ -131,7 +131,7 @@ module.exports = class QueryResult {
       return;
     }
 
-    const ucResultClone = [...ucResult];
+    const solutionClone = [...solution];
 
     records.filter((record) => {
       return [getMatchingPrimaryCurie(record), undefined].indexOf(primaryCurieToMatch) > -1 ;
@@ -141,10 +141,10 @@ module.exports = class QueryResult {
       const otherPrimaryCurie = getOtherPrimaryCurie(record);
 
       if (i !== 0) {
-        ucResult = [...ucResultClone];
+        solution = [...solutionClone];
       }
 
-      ucResult.push({
+      solution.push({
         inputQNodeID: helper._getInputQueryNodeID(record),
         outputQNodeID: helper._getOutputQueryNodeID(record),
         inputPrimaryCurie: helper._getInputCurie(record),
@@ -153,17 +153,17 @@ module.exports = class QueryResult {
         recordHash: helper._getRecordHash(record),
       });
 
-      if (ucResult.length == edgeCount) {
-        ucResults.push(ucResult);
+      if (solution.length == edgeCount) {
+        solutions.push(solution);
       }
 
       connected_to.forEach((connectedQEdgeID) => {
-        this._getUnconsolidatedResults(
+        this._getqueryGraphSolutions(
           recordsByQEdgeID,
           connectedQEdgeID,
           edgeCount,
-          ucResults,
-          ucResult,
+          solutions,
+          solution,
           otherQNodeID,
           otherPrimaryCurie
         );
@@ -179,7 +179,7 @@ module.exports = class QueryResult {
    * (inputQueryNodeID or outputQueryNodeID), e.g., n1.
    *
    * If it's false, then we additionally need to take into account the primaryCurie
-   * (inputprimaryCurie or outputprimaryCurie), e.g., n0-NCBIGene:3630.
+   * (inputPrimaryCurie or outputprimaryCurie), e.g., n0-NCBIGene:3630.
    *
    * We will later use these uniqueNodeIDs to generate unique result IDs.
    * The unique result IDs will be unique per result and be made up of only
@@ -205,18 +205,17 @@ module.exports = class QueryResult {
    * 1. Create sets of records such that:
    *    - each set has one record per QEdge and
    *    - each record in a set has the same primaryCurie as its neighbor(s) at the same QNode.
-   *    We're calling each set a preresult, but this could be alternatively named atomicResult
-   *    or unconsolidatedResult. There can be one or more preresults per query result.
+   *    We're calling each set a queryGraphSolution.
    * 2. Group the sets by result ID. There will be one group per query result.
-   * 3. Consolidate each group. We're calling each consolidated group a consolidatedPreresult.
-   *    Each consolidatedPreresult becomes a query result.
-   * 4. Format consolidatedPreresults to match the translator standard for query results
+   * 3. Consolidate each group. We're calling each consolidated group a consolidatedResults.
+   *    Each consolidatedResult becomes a query result.
+   * 4. Format consolidatedResults to match the translator standard for query results
    *    and cache the query results to be called later by .getResults().
    *
    * Note: with the updated code for generalized query handling, we
    * can safely assume every call to update contains all the records.
    *
-   * @param {DataByEdge} recordsByQEdgeID
+   * @param {recordsByQEdgeID} recordsByQEdgeID
    * @return {undefined} nothing returned; just cache this._results
    */
   update(recordsByQEdgeID) {
@@ -284,15 +283,15 @@ module.exports = class QueryResult {
 
     debug(`initialQEdgeID: ${initialQEdgeID}, initialQNodeIDToMatch: ${initialQNodeIDToMatch}`);
 
-    // 'preresult' just means it has the data needed to assemble a result,
+    // 'queryGraphSolution' just means it has the data needed to assemble a result,
     // but it's formatted differently for easier pre-processing.
-    const unconsolidatedResults = [];
-    this._getUnconsolidatedResults(
+    const queryGraphSolutions = [];
+    this._getqueryGraphSolutions(
       recordsByQEdgeID,
       initialQEdgeID,
       qEdgeCount,
-      unconsolidatedResults,
-      [], // first preresult
+      queryGraphSolutions,
+      [], // first queryGraphSolution
       initialQNodeIDToMatch,
     );
 
@@ -301,25 +300,25 @@ module.exports = class QueryResult {
      *
      * With reference to this graphic:
      * https://github.com/biothings/BioThings_Explorer_TRAPI/issues/341#issuecomment-972140186
-     * The preresults are analogous to the collection of sets in the lower left. Now we want
-     * to consolidate the preresults as indicated by the the large blue arrow in the graphic
-     * to get consolidatedPreresults, which are almost identical the the final results, except
+     * The queryGraphSolutions are analogous to the collection of sets in the lower left. Now we want
+     * to consolidate the queryGraphSolutions as indicated by the the large blue arrow in the graphic
+     * to get consolidatedResults, which are almost identical the the final results, except
      * for some minor differences that make it easier to perform the consolidation.
      *
-     * There are two cases where we need to consolidate preresults:
+     * There are two cases where we need to consolidate queryGraphSolutions:
      * 1. one or more query nodes have an 'is_set' param
      * 2. one or more primaryCurie pairs have multiple kgEdges each
      *
-     * We perform consolidation by first grouping preresults by uniqueResultID and
-     * then merging each of those groups into a single consolidatedPreresult.
+     * We perform consolidation by first grouping queryGraphSolutions by uniqueResultID and
+     * then merging each of those groups into a single consolidatedResult.
      */
 
-    const ucResultsByResultID = {};
-    unconsolidatedResults.forEach((ucResult) => {
-      // example inputprimaryCurie and outputprimaryCurie in a preresult:
+    const solutionsByResultID = {};
+    queryGraphSolutions.forEach((solution) => {
+      // example inputPrimaryCurie and outputprimaryCurie in a queryGraphSolution:
       // [
-      //   {"inputprimaryCurie": "NCBIGene:3630", "outputprimaryCurie", "MONDO:0005068"},
-      //   {"inputprimaryCurie": "MONDO:0005068", "outputprimaryCurie", "PUBCHEM.COMPOUND:43815"}
+      //   {"inputPrimaryCurie": "NCBIGene:3630", "outputprimaryCurie", "MONDO:0005068"},
+      //   {"inputPrimaryCurie": "MONDO:0005068", "outputprimaryCurie", "PUBCHEM.COMPOUND:43815"}
       // ]
       //
       // Other items present in a presult but not shown above:
@@ -328,7 +327,7 @@ module.exports = class QueryResult {
       // using a set so we don't repeat a previously entered input as an output or vice versa.
       const uniqueNodeIDs = new Set();
 
-      ucResult.forEach(({
+      solution.forEach(({
         inputQNodeID, outputQNodeID,
         inputPrimaryCurie, outputPrimaryCurie,
         qEdgeID, recordHash
@@ -343,7 +342,7 @@ module.exports = class QueryResult {
 
       // The separator can be anything that won't appear in the actual QNodeIDs or primaryCuries
       // Using .sort() because a JS Set is iterated in insertion order, and I haven't
-      // verified the preresults are always in the same order. However, they should be,
+      // verified the queryGraphSolutions are always in the same order. However, they should be,
       // so it's possible .sort() is not needed.
       const uniqueResultID = Array.from(uniqueNodeIDs).sort().join("_&_");
       // input_QNodeID-input_primaryCurie_&_output_QNodeID-_output_primaryCurie_&_...
@@ -356,57 +355,57 @@ module.exports = class QueryResult {
       //     "n0-NCBIGene:3630_&_n1-MONDO:0005068_&_n2-PUBCHEM.COMPOUND:43815"
       //     "n0-NCBIGene:3630_&_n1-MONDO:0005010_&_n2-PUBCHEM.COMPOUND:43815"
 
-      if (!ucResultsByResultID.hasOwnProperty(uniqueResultID)) {
-        ucResultsByResultID[uniqueResultID] = [];
+      if (!solutionsByResultID.hasOwnProperty(uniqueResultID)) {
+        solutionsByResultID[uniqueResultID] = [];
       }
-      ucResultsByResultID[uniqueResultID].push(ucResult)
+      solutionsByResultID[uniqueResultID].push(solution)
     });
 
-    const consolidatedResults = toPairs(ucResultsByResultID).map(([uniqueResultID, ucResults]) => {
-      debug(`result ID: ${uniqueResultID} has ${ucResults.length}`)
+    const consolidatedResults = toPairs(solutionsByResultID).map(([uniqueResultID, queryGraphSolutions]) => {
+      debug(`result ID: ${uniqueResultID} has ${queryGraphSolutions.length}`)
       // spread is like Fn.apply
       // TODO: maybe just use ...
-      return spread(zip)(ucResults).map(ucResultRecords => {
-        const ucResultRecord_0 = ucResultRecords[0];
-        const consolidatedPreresultRecord = {
-          inputQNodeID: ucResultRecord_0.inputQNodeID,
-          outputQNodeID: ucResultRecord_0.outputQNodeID,
+      return spread(zip)(queryGraphSolutions).map(solutionRecords => {
+        const solutionRecord_0 = solutionRecords[0];
+        const consolidatedRecord = {
+          inputQNodeID: solutionRecord_0.inputQNodeID,
+          outputQNodeID: solutionRecord_0.outputQNodeID,
           inputPrimaryCuries: new Set(),
           outputPrimaryCuries: new Set(),
-          qEdgeID: ucResultRecord_0.qEdgeID,
+          qEdgeID: solutionRecord_0.qEdgeID,
           recordHashes: new Set()
         };
-        ucResultRecords.forEach(({
+        solutionRecords.forEach(({
           inputQNodeID, outputQNodeID,
           inputPrimaryCurie, outputPrimaryCurie,
           qEdgeID, recordHash
         }) => {
-          //debug(`  inputQNodeID: ${inputQNodeID}, inputprimaryCurie: ${inputprimaryCurie}, outputQNodeID ${outputQNodeID}, outputprimaryCurie: ${outputprimaryCurie}`)
-          consolidatedPreresultRecord.inputPrimaryCuries.add(inputPrimaryCurie);
-          consolidatedPreresultRecord.outputPrimaryCuries.add(outputPrimaryCurie);
-          consolidatedPreresultRecord.recordHashes.add(recordHash);
+          //debug(`  inputQNodeID: ${inputQNodeID}, inputPrimaryCurie: ${inputPrimaryCurie}, outputQNodeID ${outputQNodeID}, outputprimaryCurie: ${outputprimaryCurie}`)
+          consolidatedRecord.inputPrimaryCuries.add(inputPrimaryCurie);
+          consolidatedRecord.outputPrimaryCuries.add(outputPrimaryCurie);
+          consolidatedRecord.recordHashes.add(recordHash);
         });
-        return consolidatedPreresultRecord;
+        return consolidatedRecord;
       });
     });
 
     /**
-     * The last step is to do the minor re-formatting to turn consolidatedPreresults
+     * The last step is to do the minor re-formatting to turn consolidatedRecords
      * into the desired final results.
      */
-    this._results = consolidatedResults.map((cResult) => {
+    this._results = consolidatedResults.map((consolidatedResult) => {
 
       // TODO: calculate an actual score
       const result = {node_bindings: {}, edge_bindings: {}, score: 1.0};
 
-      cResult.forEach(({
+      consolidatedResult.forEach(({
         inputQNodeID, outputQNodeID,
         inputPrimaryCuries, outputPrimaryCuries,
         qEdgeID, recordHashes
       }) => {
-        result.node_bindings[inputQNodeID] = Array.from(inputPrimaryCuries).map(inputprimaryCurie => {
+        result.node_bindings[inputQNodeID] = Array.from(inputPrimaryCuries).map(inputPrimaryCurie => {
           return {
-            id: inputprimaryCurie
+            id: inputPrimaryCurie
           };
         });
 
