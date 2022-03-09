@@ -21,7 +21,7 @@ const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
  *
  * @typedef {string} QueryEdgeID
  *
- * @typedef {Object.<string, EdgeData>} recordsByQEdgeID
+ * @typedef {Object.<string, EdgeData>} RecordsByQEdgeID
  *
  * @typedef {
  *   id: string,
@@ -215,7 +215,7 @@ module.exports = class QueryResult {
    * Note: with the updated code for generalized query handling, we
    * can safely assume every call to update contains all the records.
    *
-   * @param {recordsByQEdgeID} recordsByQEdgeID
+   * @param {RecordsByQEdgeID} recordsByQEdgeID
    * @return {undefined} nothing returned; just cache this._results
    */
   update(recordsByQEdgeID) {
