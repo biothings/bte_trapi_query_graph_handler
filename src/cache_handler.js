@@ -108,10 +108,10 @@ module.exports = class {
     let cachedRecords = [];
     debug('Begin edge cache lookup...');
     for (let i = 0; i < qXEdges.length; i++) {
-      const qXEdgeKGHashes = this._hashEdgeByKG(qXEdges[i].getHashedEdgeRepresentation());
+      const qXEdgeMetaKGHashes = this._hashEdgeByMetaKG(qXEdges[i].getHashedEdgeRepresentation());
       const cachedRecordJSON = await new Promise(async (resolve) => {
-        const redisID = 'bte:edgeCache:' + qXEdgeKGHashes;
-        const unlock = await redisClient.lock('redisLock:' + qXEdgeKGHashes);
+        const redisID = 'bte:edgeCache:' + qXEdgeMetaKGHashes;
+        const unlock = await redisClient.lock('redisLock:' + qXEdgeMetaKGHashes);
         try {
           const cachedRecord = await redisClient.hgetallAsync(redisID);
           if (cachedRecord) {
@@ -198,7 +198,7 @@ module.exports = class {
     return returnVal;
   }
 
-  _hashEdgeByKG(qXEdgeHash) {
+  _hashEdgeByMetaKG(qXEdgeHash) {
     if (!this.metaKG) {
       return qXEdgeHash;
     }
@@ -211,11 +211,11 @@ module.exports = class {
     let groupedRecords = {};
     queryRecords.map((record) => {
       try {
-        const qXEdgeKGHash = this._hashEdgeByKG(record.$edge_metadata.trapi_qEdge_obj.getHashedEdgeRepresentation());
-        if (!(qXEdgeKGHash in groupedRecords)) {
-          groupedRecords[qXEdgeKGHash] = [];
+        const qXEdgeMetaKGHash = this._hashEdgeByMetaKG(record.$edge_metadata.trapi_qEdge_obj.getHashedEdgeRepresentation());
+        if (!(qXEdgeMetaKGHash in groupedRecords)) {
+          groupedRecords[qXEdgeMetaKGHash] = [];
         }
-        groupedRecords[qXEdgeKGHash].push(this._copyRecord(record));
+        groupedRecords[qXEdgeMetaKGHash].push(this._copyRecord(record));
       } catch (e) {
         debug('skipping malformed record');
       }
