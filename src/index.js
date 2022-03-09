@@ -3,7 +3,7 @@ var path = require('path');
 const BatchEdgeQueryHandler = require('./batch_edge_query');
 const QueryGraph = require('./query_graph');
 const KnowledgeGraph = require('./graph/knowledge_graph');
-const QueryResults = require('./query_results');
+const TrapiResultsAssembler = require('./query_results');
 const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error');
 const debug = require('debug')('bte:biothings-explorer-trapi:main');
 const Graph = require('./graph/graph');
@@ -43,7 +43,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       message: {
         query_graph: this.queryGraph,
         knowledge_graph: this.knowledgeGraph.kg,
-        results: this.queryResults.getResults(),
+        results: this.trapiResultsAssembler.getResults(),
       },
       logs: this.logs.map(log => log.toJSON()),
     };
@@ -71,7 +71,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
 
   _initializeResponse() {
     this.knowledgeGraph = new KnowledgeGraph();
-    this.queryResults = new QueryResults();
+    this.trapiResultsAssembler = new TrapiResultsAssembler();
     this.bteGraph = new Graph();
     this.bteGraph.subscribe(this.knowledgeGraph);
   }
@@ -100,7 +100,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     for (const index in queryPaths) {
       handlers[index] = new BatchEdgeQueryHandler(kg, this.resolveOutputIDs, { caching: this.options.caching });
       handlers[index].setEdges(queryPaths[index]);
-      handlers[index].subscribe(this.queryResults);
+      handlers[index].subscribe(this.trapiResultsAssembler);
       handlers[index].subscribe(this.bteGraph);
     }
     return handlers;
@@ -312,11 +312,11 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     //update query graph
     this.bteGraph.update(manager.getRecords());
     //update query results
-    this.queryResults.update(manager.getOrganizedRecords());
+    this.trapiResultsAssembler.update(manager.getOrganizedRecords());
     this.bteGraph.notify();
     const rKGNodes = Object.keys(this.knowledgeGraph.nodes).length;
     const rKGEdges = Object.keys(this.knowledgeGraph.edges).length;
-    const results = this.queryResults.getResults().length;
+    const results = this.trapiResultsAssembler.getResults().length;
     const resultQueries = this.logs.filter(({ data }) => data?.type === 'query' && data?.hits).length;
     const queries = this.logs.filter(({ data }) => data?.type === 'query').length;
     const sources = [...new Set(manager._records.map(res => res.$edge_metadata.api_name))];

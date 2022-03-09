@@ -43,12 +43,8 @@ const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
  *
  * When we query a bte-trapi server, we see this list
  * in the response as message.results.
- *
- * This class could be renamed something like QueryResultsHandler,
- * because when you create an instance and update it, the actual
- * query results are stored in the _results property.
  */
-module.exports = class QueryResult {
+module.exports = class TrapiResultsAssembler {
   /**
    * Create a QueryResult instance.
    */
@@ -319,7 +315,7 @@ module.exports = class QueryResult {
       //   {"inputPrimaryCurie": "MONDO:0005068", "outputPrimaryCurie", "PUBCHEM.COMPOUND:43815"}
       // ]
       //
-      // Other items present in a presult but not shown above:
+      // Other items present in a queryGraphSolution but not shown above:
       // inputQNodeID, outputQNodeID, queryEdgeID, recordHash
 
       // using a set so we don't repeat a previously entered input as an output or vice versa.
@@ -388,7 +384,7 @@ module.exports = class QueryResult {
     });
 
     /**
-     * The last step is to do the minor re-formatting to turn consolidatedSolutionRecords
+     * The last step is to do the minor re-formatting to turn consolidatedSolutions
      * into the desired final results.
      */
     this._results = consolidatedSolutions.map((consolidatedSolution) => {
