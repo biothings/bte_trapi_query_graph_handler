@@ -283,8 +283,6 @@ module.exports = class QueryResult {
 
     debug(`initialQEdgeID: ${initialQEdgeID}, initialQNodeIDToMatch: ${initialQNodeIDToMatch}`);
 
-    // 'queryGraphSolution' just means it has the data needed to assemble a result,
-    // but it's formatted differently for easier pre-processing.
     const queryGraphSolutions = [];
     this._getQueryGraphSolutions(
       recordsByQEdgeID,
