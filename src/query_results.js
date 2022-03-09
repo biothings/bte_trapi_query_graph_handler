@@ -97,12 +97,12 @@ module.exports = class QueryResult {
    *   recordHash: string,
    * }
    */
-  _getqueryGraphSolutions(
+  _getQueryGraphSolutions(
     recordsByQEdgeID,
     qEdgeID,
     edgeCount,
-    solutions,
-    solution,
+    queryGraphSolutions,
+    queryGraphSolution,
     qNodeIDToMatch,
     primaryCurieToMatch
   ) {
@@ -131,7 +131,7 @@ module.exports = class QueryResult {
       return;
     }
 
-    const solutionClone = [...solution];
+    const solutionClone = [...queryGraphSolution];
 
     records.filter((record) => {
       return [getMatchingPrimaryCurie(record), undefined].indexOf(primaryCurieToMatch) > -1 ;
@@ -141,10 +141,10 @@ module.exports = class QueryResult {
       const otherPrimaryCurie = getOtherPrimaryCurie(record);
 
       if (i !== 0) {
-        solution = [...solutionClone];
+        queryGraphSolution = [...solutionClone];
       }
 
-      solution.push({
+      queryGraphSolution.push({
         inputQNodeID: helper._getInputQueryNodeID(record),
         outputQNodeID: helper._getOutputQueryNodeID(record),
         inputPrimaryCurie: helper._getInputCurie(record),
@@ -153,17 +153,17 @@ module.exports = class QueryResult {
         recordHash: helper._getRecordHash(record),
       });
 
-      if (solution.length == edgeCount) {
-        solutions.push(solution);
+      if (queryGraphSolution.length == edgeCount) {
+        queryGraphSolutions.push(queryGraphSolution);
       }
 
       connected_to.forEach((connectedQEdgeID) => {
-        this._getqueryGraphSolutions(
+        this._getQueryGraphSolutions(
           recordsByQEdgeID,
           connectedQEdgeID,
           edgeCount,
-          solutions,
-          solution,
+          queryGraphSolutions,
+          queryGraphSolution,
           otherQNodeID,
           otherPrimaryCurie
         );
@@ -179,7 +179,7 @@ module.exports = class QueryResult {
    * (inputQueryNodeID or outputQueryNodeID), e.g., n1.
    *
    * If it's false, then we additionally need to take into account the primaryCurie
-   * (inputPrimaryCurie or outputprimaryCurie), e.g., n0-NCBIGene:3630.
+   * (inputPrimaryCurie or outputPrimaryCurie), e.g., n0-NCBIGene:3630.
    *
    * We will later use these uniqueNodeIDs to generate unique result IDs.
    * The unique result IDs will be unique per result and be made up of only
@@ -207,9 +207,9 @@ module.exports = class QueryResult {
    *    - each record in a set has the same primaryCurie as its neighbor(s) at the same QNode.
    *    We're calling each set a queryGraphSolution.
    * 2. Group the sets by result ID. There will be one group per query result.
-   * 3. Consolidate each group. We're calling each consolidated group a consolidatedResults.
-   *    Each consolidatedResult becomes a query result.
-   * 4. Format consolidatedResults to match the translator standard for query results
+   * 3. Consolidate each group. We're calling each consolidated group a consolidatedSolutions.
+   *    Each consolidatedSolution becomes a query result.
+   * 4. Format consolidatedSolutions to match the translator standard for query results
    *    and cache the query results to be called later by .getResults().
    *
    * Note: with the updated code for generalized query handling, we
@@ -286,7 +286,7 @@ module.exports = class QueryResult {
     // 'queryGraphSolution' just means it has the data needed to assemble a result,
     // but it's formatted differently for easier pre-processing.
     const queryGraphSolutions = [];
-    this._getqueryGraphSolutions(
+    this._getQueryGraphSolutions(
       recordsByQEdgeID,
       initialQEdgeID,
       qEdgeCount,
@@ -302,23 +302,23 @@ module.exports = class QueryResult {
      * https://github.com/biothings/BioThings_Explorer_TRAPI/issues/341#issuecomment-972140186
      * The queryGraphSolutions are analogous to the collection of sets in the lower left. Now we want
      * to consolidate the queryGraphSolutions as indicated by the the large blue arrow in the graphic
-     * to get consolidatedResults, which are almost identical the the final results, except
+     * to get consolidatedSolutions, which are almost identical the the final results, except
      * for some minor differences that make it easier to perform the consolidation.
      *
      * There are two cases where we need to consolidate queryGraphSolutions:
      * 1. one or more query nodes have an 'is_set' param
      * 2. one or more primaryCurie pairs have multiple kgEdges each
      *
-     * We perform consolidation by first grouping queryGraphSolutions by uniqueResultID and
-     * then merging each of those groups into a single consolidatedResult.
+     * We perform consolidation by first grouping queryGraphSolutions by trapiResultID and
+     * then merging each of those groups into a single consolidatedSolution.
      */
 
-    const solutionsByResultID = {};
-    queryGraphSolutions.forEach((solution) => {
-      // example inputPrimaryCurie and outputprimaryCurie in a queryGraphSolution:
+    const solutionsByTrapiResultID = {};
+    queryGraphSolutions.forEach((queryGraphSolution) => {
+      // example inputPrimaryCurie and outputPrimaryCurie in a queryGraphSolution:
       // [
-      //   {"inputPrimaryCurie": "NCBIGene:3630", "outputprimaryCurie", "MONDO:0005068"},
-      //   {"inputPrimaryCurie": "MONDO:0005068", "outputprimaryCurie", "PUBCHEM.COMPOUND:43815"}
+      //   {"inputPrimaryCurie": "NCBIGene:3630", "outputPrimaryCurie", "MONDO:0005068"},
+      //   {"inputPrimaryCurie": "MONDO:0005068", "outputPrimaryCurie", "PUBCHEM.COMPOUND:43815"}
       // ]
       //
       // Other items present in a presult but not shown above:
@@ -327,7 +327,7 @@ module.exports = class QueryResult {
       // using a set so we don't repeat a previously entered input as an output or vice versa.
       const uniqueNodeIDs = new Set();
 
-      solution.forEach(({
+      queryGraphSolution.forEach(({
         inputQNodeID, outputQNodeID,
         inputPrimaryCurie, outputPrimaryCurie,
         qEdgeID, recordHash
@@ -344,10 +344,10 @@ module.exports = class QueryResult {
       // Using .sort() because a JS Set is iterated in insertion order, and I haven't
       // verified the queryGraphSolutions are always in the same order. However, they should be,
       // so it's possible .sort() is not needed.
-      const uniqueResultID = Array.from(uniqueNodeIDs).sort().join("_&_");
+      const trapiResultID = Array.from(uniqueNodeIDs).sort().join("_&_");
       // input_QNodeID-input_primaryCurie_&_output_QNodeID-_output_primaryCurie_&_...
       //
-      // Example uniqueResultIDs:
+      // Example trapiResultIDs:
       //   when is_set specified for n1:
       //     "n0-NCBIGene:3630_&_n1_&_n2-PUBCHEM.COMPOUND:43815"
       //
@@ -355,19 +355,19 @@ module.exports = class QueryResult {
       //     "n0-NCBIGene:3630_&_n1-MONDO:0005068_&_n2-PUBCHEM.COMPOUND:43815"
       //     "n0-NCBIGene:3630_&_n1-MONDO:0005010_&_n2-PUBCHEM.COMPOUND:43815"
 
-      if (!solutionsByResultID.hasOwnProperty(uniqueResultID)) {
-        solutionsByResultID[uniqueResultID] = [];
+      if (!solutionsByTrapiResultID.hasOwnProperty(trapiResultID)) {
+        solutionsByTrapiResultID[trapiResultID] = [];
       }
-      solutionsByResultID[uniqueResultID].push(solution)
+      solutionsByTrapiResultID[trapiResultID].push(queryGraphSolution)
     });
 
-    const consolidatedResults = toPairs(solutionsByResultID).map(([uniqueResultID, queryGraphSolutions]) => {
-      debug(`result ID: ${uniqueResultID} has ${queryGraphSolutions.length}`)
+    const consolidatedSolutions = toPairs(solutionsByTrapiResultID).map(([trapiResultID, queryGraphSolutions]) => {
+      debug(`result ID: ${trapiResultID} has ${queryGraphSolutions.length}`)
       // spread is like Fn.apply
       // TODO: maybe just use ...
       return spread(zip)(queryGraphSolutions).map(solutionRecords => {
         const solutionRecord_0 = solutionRecords[0];
-        const consolidatedRecord = {
+        const consolidatedSolutionRecord = {
           inputQNodeID: solutionRecord_0.inputQNodeID,
           outputQNodeID: solutionRecord_0.outputQNodeID,
           inputPrimaryCuries: new Set(),
@@ -380,25 +380,25 @@ module.exports = class QueryResult {
           inputPrimaryCurie, outputPrimaryCurie,
           qEdgeID, recordHash
         }) => {
-          //debug(`  inputQNodeID: ${inputQNodeID}, inputPrimaryCurie: ${inputPrimaryCurie}, outputQNodeID ${outputQNodeID}, outputprimaryCurie: ${outputprimaryCurie}`)
-          consolidatedRecord.inputPrimaryCuries.add(inputPrimaryCurie);
-          consolidatedRecord.outputPrimaryCuries.add(outputPrimaryCurie);
-          consolidatedRecord.recordHashes.add(recordHash);
+          //debug(`  inputQNodeID: ${inputQNodeID}, inputPrimaryCurie: ${inputPrimaryCurie}, outputQNodeID ${outputQNodeID}, outputPrimaryCurie: ${outputPrimaryCurie}`)
+          consolidatedSolutionRecord.inputPrimaryCuries.add(inputPrimaryCurie);
+          consolidatedSolutionRecord.outputPrimaryCuries.add(outputPrimaryCurie);
+          consolidatedSolutionRecord.recordHashes.add(recordHash);
         });
-        return consolidatedRecord;
+        return consolidatedSolutionRecord;
       });
     });
 
     /**
-     * The last step is to do the minor re-formatting to turn consolidatedRecords
+     * The last step is to do the minor re-formatting to turn consolidatedSolutionRecords
      * into the desired final results.
      */
-    this._results = consolidatedResults.map((consolidatedResult) => {
+    this._results = consolidatedSolutions.map((consolidatedSolution) => {
 
       // TODO: calculate an actual score
       const result = {node_bindings: {}, edge_bindings: {}, score: 1.0};
 
-      consolidatedResult.forEach(({
+      consolidatedSolution.forEach(({
         inputQNodeID, outputQNodeID,
         inputPrimaryCuries, outputPrimaryCuries,
         qEdgeID, recordHashes
@@ -409,9 +409,9 @@ module.exports = class QueryResult {
           };
         });
 
-        result.node_bindings[outputQNodeID] = Array.from(outputPrimaryCuries).map(outputprimaryCurie => {
+        result.node_bindings[outputQNodeID] = Array.from(outputPrimaryCuries).map(outputPrimaryCurie => {
           return {
-            id: outputprimaryCurie
+            id: outputPrimaryCurie
           };
         });
 
