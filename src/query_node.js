@@ -63,8 +63,8 @@ module.exports = class QNode {
         }
     }
 
-    updateConnection(edge_id) {
-        this.connected_to.add(edge_id);
+    updateConnection(qEdgeID) {
+        this.connected_to.add(qEdgeID);
         debug(`"${this.id}" connected to "${[...this.connected_to]}"`);
     }
 

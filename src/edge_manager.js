@@ -5,7 +5,7 @@ const debug = require('debug')('bte:biothings-explorer-trapi:edge-manager');
 const config = require('./config');
 
 
-module.exports = class EdgeManager {
+module.exports = class QueryExecutionEdgeManager {
     constructor(edges) {
         // flatten list of all edges available
         this._qXEdges = _.flatten(Object.values(edges));
@@ -57,7 +57,7 @@ module.exports = class EdgeManager {
             );
         }
         //begin search
-        let next;
+        let nextQXEdge;
         let lowest_entity_count;
         let current_obj_lowest = 0;
         let current_sub_lowest = 0;
@@ -73,7 +73,7 @@ module.exports = class EdgeManager {
                 }
                 if (current_obj_lowest <= lowest_entity_count) {
                     //lowest is now object count
-                    next = qXEdge;
+                    nextQXEdge = qXEdge;
                 }
             }
             if (
@@ -88,11 +88,11 @@ module.exports = class EdgeManager {
                 }
                 if (current_sub_lowest <= lowest_entity_count) {
                     //lowest is now subject count
-                    next = qXEdge;
+                    nextQXEdge = qXEdge;
                 }
             }
         });
-        if (!next) {
+        if (!nextQXEdge) {
             //if no edge with count found pick the first empty
             //edge available
             let all_empty = available_edges
@@ -110,9 +110,9 @@ module.exports = class EdgeManager {
             debug(`(5) Sending next edge '${all_empty[0].getID()}' with NO entity count.`);
             return this.preSendOffCheck(all_empty[0]);
         }
-        debug(`(5) Sending next edge '${next.getID()}' ` +
-        `WITH entity count...(${next.subject.entity_count || next.object.entity_count})`);
-        return this.preSendOffCheck(next);
+        debug(`(5) Sending next edge '${nextQXEdge.getID()}' ` +
+        `WITH entity count...(${nextQXEdge.subject.entity_count || nextQXEdge.object.entity_count})`);
+        return this.preSendOffCheck(nextQXEdge);
     }
 
     logEntityCounts() {
@@ -124,13 +124,13 @@ module.exports = class EdgeManager {
         });
     }
 
-    checkEntityMax(next) {
+    checkEntityMax(nextQXedge) {
         const max = config.ENTITY_MAX;
         //(MAX) --- (0) not allowed
         //(MAX) --- (MAX) not allowed
         //(MAX) --- (2) allowed, (2 will be used)
-        let sub_count = next.object.getEntityCount();
-        let obj_count = next.subject.getEntityCount();
+        let sub_count = nextQXedge.object.getEntityCount();
+        let obj_count = nextQXedge.subject.getEntityCount();
         debug(`Checking entity max : (${sub_count})--(${obj_count})`);
         if (
             (obj_count == 0 && sub_count > max) ||
@@ -138,21 +138,21 @@ module.exports = class EdgeManager {
             (obj_count > max && sub_count > max)
         ) {
             throw new BTEError(
-                `Max number of entities exceeded (${max}) in '${next.getID()}'`
+                `Max number of entities exceeded (${max}) in '${nextQXedge.getID()}'`
                 );
         }
     }
 
-    preSendOffCheck(next) {
+    preSendOffCheck(nextQXEdge) {
         // next: qXEdge
         //check that edge entities are or have potential to stay
         //under max limit
-        this.checkEntityMax(next);
-        if (next.object.entity_count && next.subject.entity_count) {
+        this.checkEntityMax(nextQXEdge);
+        if (nextQXEdge.object.entity_count && nextQXEdge.subject.entity_count) {
             //if at the time of being queried the edge has both
             //obj and sub entity counts
             //chose obj/suj lower entity count for query
-            next.chooseLowerEntityValue();
+            nextQXEdge.chooseLowerEntityValue();
             this.logs.push(
                 new LogEntry('DEBUG',
                 null,
@@ -160,21 +160,21 @@ module.exports = class EdgeManager {
             );
         }
         else if (
-            (next.object.entity_count && !next.subject.entity_count) ||
-            (!next.object.entity_count && !next.subject.entity_count)
+            (nextQXEdge.object.entity_count && !nextQXEdge.subject.entity_count) ||
+            (!nextQXEdge.object.entity_count && !nextQXEdge.subject.entity_count)
         ) {
             debug(`(5) Checking direction of edge with one set of entities...`);
             //check direction is correct if edge only has one set of entities
             //before sending off
-            next.reverse = next.subject.entity_count ? false : true;
+            nextQXEdge.reverse = nextQXEdge.subject.entity_count ? false : true;
         }
         this.logs.push(
             new LogEntry('DEBUG',
             null,
-            `Edge manager is sending next edge '${next.getID()}' for execution.`).getLog(),
+            `Edge manager is sending next edge '${nextQXEdge.getID()}' for execution.`).getLog(),
         );
         this.logEntityCounts();
-        return next;
+        return nextQXEdge;
     }
 
     getEdgesNotExecuted() {
@@ -379,30 +379,30 @@ module.exports = class EdgeManager {
         );
     }
 
-    updateEdgeRecords(current_edge) {
+    updateEdgeRecords(currentQXEdge) {
         //1. filter edge records based on current status
-        let filteredRecords = this._filterEdgeRecords(current_edge);
+        let filteredRecords = this._filterEdgeRecords(currentQXEdge);
         //2.trigger node update / entity update based on new status
-        current_edge.storeRecords(filteredRecords);
+        currentQXEdge.storeRecords(filteredRecords);
     }
 
-    updateNeighborsEdgeRecords(current_edge) {
+    updateNeighborsEdgeRecords(currentQXEdge) {
         //update and filter only immediate neighbors
         debug(`Updating neighbors...`);
-        let not_this_edge = current_edge.getID();
+        let currentQEdgeID = currentQXEdge.getID();
         //get neighbors of this edges subject that are not this edge
-        let left_connections = current_edge.qEdge.subject.getConnections();
-        left_connections = left_connections.filter((edge_id) => edge_id !== not_this_edge);
+        let left_connections = currentQXEdge.qEdge.subject.getConnections();
+        left_connections = left_connections.filter((qEdgeID) => qEdgeID !== currentQEdgeID);
         //get neighbors of this edges object that are not this edge
-        let right_connections = current_edge.qEdge.object.getConnections();
-        right_connections = right_connections.filter((edge_id) => edge_id !== not_this_edge);
+        let right_connections = currentQXEdge.qEdge.object.getConnections();
+        right_connections = right_connections.filter((qEdgeID) => qEdgeID !== currentQEdgeID);
         debug(`(${left_connections})<--edge neighbors-->(${right_connections})`);
         if (left_connections.length) {
             //find edge by id
-            left_connections.forEach((neighbor_id) => {
-                let edge = this._qXEdges.find((edge) => edge.getID() == neighbor_id);
+            left_connections.forEach((qEdgeID) => {
+                let edge = this._qXEdges.find((edge) => edge.getID() == qEdgeID);
                 if (edge && edge.records.length) {
-                    debug(`Updating "${edge.getID()}" neighbor edge of ${not_this_edge}`);
+                    debug(`Updating "${edge.getID()}" neighbor edge of ${currentQEdgeID}`);
                     debug(`Updating neighbor (X)<----()`);
                     this.updateEdgeRecords(edge);
                 }
@@ -414,7 +414,7 @@ module.exports = class EdgeManager {
             right_connections.forEach((neighbor_id) => {
                 let edge = this._qXEdges.find((edge) => edge.getID() == neighbor_id);
                 if (edge && edge.records.length) {
-                    debug(`Updating "${edge.getID()}" neighbor edge of ${not_this_edge}`);
+                    debug(`Updating "${edge.getID()}" neighbor edge of ${currentQEdgeID}`);
                     debug(`Updating neighbor ()---->(X)`);
                     this.updateEdgeRecords(edge);
                 }
@@ -422,15 +422,15 @@ module.exports = class EdgeManager {
         }
     }
 
-    updateAllOtherEdges(current_edge) {
+    updateAllOtherEdges(currentQXEdge) {
         //update and filter all other edges
         debug(`Updating all other edges...`);
-        let not_this_edge = current_edge.getID();
-        this._qXEdges.forEach((edge) => {
-            if (edge.getID() !== not_this_edge && edge.records.length) {
-                debug(`Updating "${edge.getID()}"...`);
-                this.updateEdgeRecords(edge);
-                this.updateEdgeRecords(current_edge);
+        let currentQEdgeID = currentQXEdge.getID();
+        this._qXEdges.forEach((qXEdge) => {
+            if (qXEdge.getID() !== currentQEdgeID && qXEdge.records.length) {
+                debug(`Updating "${qXEdge.getID()}"...`);
+                this.updateEdgeRecords(qXEdge);
+                this.updateEdgeRecords(currentQXEdge);
             }
         });
     }

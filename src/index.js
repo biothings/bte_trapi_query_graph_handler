@@ -124,18 +124,18 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     const manager = new EdgeManager(qXEdges);
     const qEdgesMissingOps = {};
     while (manager.getEdgesNotExecuted()) {
-      let currentEdge = manager.getNext();
-      const edgeConverter = new QEdge2APIEdgeHandler([currentEdge], metaKG);
-      const metaXEdges = edgeConverter.getMetaXEdges(currentEdge);
+      let currentQXEdge = manager.getNext();
+      const edgeConverter = new QEdge2APIEdgeHandler([currentQXEdge], metaKG);
+      const metaXEdges = edgeConverter.getMetaXEdges(currentQXEdge);
 
       if (this.options.dryrun) {
         let apiNames = [...new Set(metaXEdges.map((metaXEdge) => metaXEdge.association.api_name))];
 
         let log_msg;
-        if (currentEdge.reverse) {
-          log_msg = `Edge ${currentEdge.qEdge.id} (reversed): ${currentEdge.qEdge.object.category} > ${currentEdge.qEdge.predicate ? `${currentEdge.qEdge.predicate} > ` : ''}${currentEdge.qEdge.subject.category}`;
+        if (currentQXEdge.reverse) {
+          log_msg = `Edge ${currentQXEdge.qEdge.id} (reversed): ${currentQXEdge.qEdge.object.category} > ${currentQXEdge.qEdge.predicate ? `${currentQXEdge.qEdge.predicate} > ` : ''}${currentQXEdge.qEdge.subject.category}`;
         } else {
-          log_msg = `Edge ${currentEdge.qEdge.id}: ${currentEdge.qEdge.subject.category} > ${currentEdge.qEdge.predicate ? `${currentEdge.qEdge.predicate} > ` : ''}${currentEdge.qEdge.object.category}`;
+          log_msg = `Edge ${currentQXEdge.qEdge.id}: ${currentQXEdge.qEdge.subject.category} > ${currentQXEdge.qEdge.predicate ? `${currentQXEdge.qEdge.predicate} > ` : ''}${currentQXEdge.qEdge.object.category}`;
         }
         this.logs.push(new LogEntry("INFO", null, log_msg).getLog());
 
@@ -151,23 +151,23 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       }
 
       if (!metaXEdges.length) {
-        qEdgesMissingOps[currentEdge.qEdge.id] = currentEdge.reverse;
+        qEdgesMissingOps[currentQXEdge.qEdge.id] = currentQXEdge.reverse;
       }
       // assume results so next edge may be reversed or not
-      currentEdge.executed = true;
+      currentQXEdge.executed = true;
 
       //use # of APIs as estimate of # of records
       if (metaXEdges.length) {
-        if (currentEdge.reverse) {
-          currentEdge.subject.entity_count = currentEdge.object.entity_count * metaXEdges.length;
+        if (currentQXEdge.reverse) {
+          currentQXEdge.subject.entity_count = currentQXEdge.object.entity_count * metaXEdges.length;
         }
         else {
-          currentEdge.object.entity_count = currentEdge.subject.entity_count * metaXEdges.length;
+          currentQXEdge.object.entity_count = currentQXEdge.subject.entity_count * metaXEdges.length;
         }
 
       } else {
-        currentEdge.object.entity_count = 1;
-        currentEdge.subject.entity_count = 1;
+        currentQXEdge.object.entity_count = 1;
+        currentQXEdge.subject.entity_count = 1;
       }
     }
 
@@ -255,9 +255,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       this.logs = [...this.logs, ...handler.logs];
       // create an edge execution summary
       let success = 0, fail = 0, total = 0;
-      let cached = this.logs.filter(({ data }) => data?.edge_id === currentEdge.qEdge.id && data?.type === 'cacheHit').length;
+      let cached = this.logs.filter(({ data }) => data?.qEdgeID === currentEdge.qEdge.id && data?.type === 'cacheHit').length;
       this.logs
-        .filter(({ data }) => data?.edge_id === currentEdge.qEdge.id && data?.type === 'query')
+        .filter(({ data }) => data?.qEdgeID === currentEdge.qEdge.id && data?.type === 'query')
         .forEach(({ data }) => {
           !data.error ? success++ : fail++;
           total++;

@@ -146,7 +146,7 @@ module.exports = class {
             `BTE finds cached records for ${qXEdges[i].getID()}`,
             {
               type: 'cacheHit',
-              edge_id: qXEdges[i].getID(),
+              qEdgeID: qXEdges[i].getID(),
             }
           ).getLog()
         );
