@@ -27,12 +27,12 @@ module.exports = class QueryExecutionEdgeManager {
     }
 
     init() {
-        debug(`(3) Edge manager is managing ${this._qXEdges.length} edges.`);
+        debug(`(3) Edge manager is managing ${this._qXEdges.length} qEdges.`);
         this.logs.push(
             new LogEntry(
                 'DEBUG',
                 null,
-                `Edge manager is managing ${this._qXEdges.length} edges.`,
+                `Edge manager is managing ${this._qXEdges.length} qEdges.`,
             ).getLog(),
         );
     }
@@ -46,13 +46,13 @@ module.exports = class QueryExecutionEdgeManager {
         //safeguard for making sure there's available
         //edges when calling getNext
         if (available_edges.length == 0) {
-            debug(`(5) Error: ${available_edges} available edges found.`);
+            debug(`(5) Error: ${available_edges} available qXEdges found.`);
             this.logs.push(
                 new LogEntry(
                     'DEBUG',
                     null,
-                    `Edge manager cannot get next edge, ` +
-                    `(${available_edges} )available edges found.`,
+                    `Edge manager cannot get next qEdge, ` +
+                    `(${available_edges}) available edges found.`,
                 ).getLog(),
             );
         }
@@ -98,12 +98,12 @@ module.exports = class QueryExecutionEdgeManager {
             let all_empty = available_edges
             .filter((edge) => !edge.object.entity_count && !edge.subject.entity_count);
             if (all_empty.length == 0) {
-                debug(`(5) Error: No available edges found.`);
+                debug(`(5) Error: No available qXEdges found.`);
                 this.logs.push(
                     new LogEntry(
                         'DEBUG',
                         null,
-                        `Cannot get next edge, No available edges found.`,
+                        `Cannot get next edge, No available qEdges found.`,
                     ).getLog(),
                 );
             }
@@ -156,7 +156,7 @@ module.exports = class QueryExecutionEdgeManager {
             this.logs.push(
                 new LogEntry('DEBUG',
                 null,
-                `Next edge will pick lower entity value to use for query.`).getLog(),
+                `Next qEdge will pick lower entity value to use for query.`).getLog(),
             );
         }
         else if (
@@ -171,7 +171,7 @@ module.exports = class QueryExecutionEdgeManager {
         this.logs.push(
             new LogEntry('DEBUG',
             null,
-            `Edge manager is sending next edge '${nextQXEdge.getID()}' for execution.`).getLog(),
+            `Edge manager is sending next qEdge '${nextQXEdge.getID()}' for execution.`).getLog(),
         );
         this.logEntityCounts();
         return nextQXEdge;
@@ -316,7 +316,7 @@ module.exports = class QueryExecutionEdgeManager {
                     new LogEntry(
                         'WARNING',
                         null,
-                        `Warning: Edge '${qEdgeID}' resulted in (0) records.`
+                        `Warning: qEdge '${qEdgeID}' resulted in (0) records.`
                     ).getLog(),
                 );
                 brokenChain = true;
@@ -348,11 +348,11 @@ module.exports = class QueryExecutionEdgeManager {
                 new LogEntry(
                     'WARNING',
                     null,
-                    `Edges ${JSON.stringify(brokenEdges)} ` +
+                    `qEdges ${JSON.stringify(brokenEdges)} ` +
                     `resulted in (0) records. No complete paths can be formed.`
                 ).getLog(),
             );
-            debug(`(12) Edges ${JSON.stringify(brokenEdges)} ` +
+            debug(`(12) qXEdges ${JSON.stringify(brokenEdges)} ` +
             `resulted in (0) records. No complete paths can be formed.`);
         }
         //Organized by edge: update query records

@@ -133,9 +133,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
 
         let log_msg;
         if (currentQXEdge.reverse) {
-          log_msg = `Edge ${currentQXEdge.qEdge.id} (reversed): ${currentQXEdge.qEdge.object.category} > ${currentQXEdge.qEdge.predicate ? `${currentQXEdge.qEdge.predicate} > ` : ''}${currentQXEdge.qEdge.subject.category}`;
+          log_msg = `qEdge ${currentQXEdge.qEdge.id} (reversed): ${currentQXEdge.qEdge.object.category} > ${currentQXEdge.qEdge.predicate ? `${currentQXEdge.qEdge.predicate} > ` : ''}${currentQXEdge.qEdge.subject.category}`;
         } else {
-          log_msg = `Edge ${currentQXEdge.qEdge.id}: ${currentQXEdge.qEdge.subject.category} > ${currentQXEdge.qEdge.predicate ? `${currentQXEdge.qEdge.predicate} > ` : ''}${currentQXEdge.qEdge.object.category}`;
+          log_msg = `qEdge ${currentQXEdge.qEdge.id}: ${currentQXEdge.qEdge.subject.category} > ${currentQXEdge.qEdge.predicate ? `${currentQXEdge.qEdge.predicate} > ` : ''}${currentQXEdge.qEdge.object.category}`;
         }
         this.logs.push(new LogEntry("INFO", null, log_msg).getLog());
 
@@ -184,7 +184,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     if (len > 0) {
       const terminateLog = `Query Edge${len !== 1 ? 's' : ''} ${qEdgesToLog} ${
         len !== 1 ? 'have' : 'has'
-      } no SmartAPI edges. Your query terminates.`;
+      } no MetaKG edges. Your query terminates.`;
       debug(terminateLog);
       this.logs.push(new LogEntry('WARNING', null, terminateLog).getLog());
       return false;
@@ -266,7 +266,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         new LogEntry(
           'INFO',
           null,
-          `${currentQXEdge.qEdge.id} execution: ${total} queries (${success} success/${fail} fail) and (${cached}) cached edges return (${queryRecords.length}) records`,
+          `${currentQXEdge.qEdge.id} execution: ${total} queries (${success} success/${fail} fail) and (${cached}) cached qEdges return (${queryRecords.length}) records`,
           {}
         ).getLog()
       );
@@ -277,7 +277,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
           new LogEntry(
               'WARNING',
               null,
-              `Edge (${currentQXEdge.getID()}) got 0 records. Your query terminates.`
+              `qEdge (${currentQXEdge.getID()}) got 0 records. Your query terminates.`
           ).getLog()
         );
         return;
@@ -296,7 +296,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
             new LogEntry(
                 'WARNING',
                 null,
-                `Edge (${currentQXEdge.getID()}) kept 0 records. Your query terminates.`
+                `qEdge (${currentQXEdge.getID()}) kept 0 records. Your query terminates.`
             ).getLog()
         );
         return;
@@ -325,7 +325,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       new LogEntry(
         'INFO',
         null,
-        `Execution Summary: (${KGNodes}) nodes / (${kgEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${cached ? ` (${cached} cached edges)` : ''} returned results from (${sources.length}) unique APIs ${
+        `Execution Summary: (${KGNodes}) nodes / (${kgEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${cached ? ` (${cached} cached qEdges)` : ''} returned results from (${sources.length}) unique APIs ${
           sources === 1 ? 's' : ''
         }`,
       ).getLog(),

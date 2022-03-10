@@ -188,7 +188,7 @@ module.exports = class QueryGraphHandler {
 
       }
       this.logs.push(
-        new LogEntry('DEBUG', null, `BTE identified ${Object.keys(nodes).length} QNodes from your query graph`).getLog(),
+        new LogEntry('DEBUG', null, `BTE identified ${Object.keys(nodes).length} qNodes from your query graph`).getLog(),
       );
       return nodes;
     }
@@ -216,7 +216,7 @@ module.exports = class QueryGraphHandler {
       edges[qEdgeID] = new QEdge(qEdgeID, edge_info);
     }
     this.logs.push(
-      new LogEntry('DEBUG', null, `BTE identified ${Object.keys(edges).length} QEdges from your query graph`).getLog(),
+      new LogEntry('DEBUG', null, `BTE identified ${Object.keys(edges).length} qEdges from your query graph`).getLog(),
     );
     return edges;
   }

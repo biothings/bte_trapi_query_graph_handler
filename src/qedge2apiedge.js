@@ -38,7 +38,7 @@ module.exports = class QEdge2APIEdgeHandler {
       new LogEntry(
         'DEBUG',
         null,
-        `BTE is trying to find SmartAPI edges connecting from ${qXEdge.getSubject().getCategories()} to ${qXEdge
+        `BTE is trying to find metaKG edges connecting from ${qXEdge.getSubject().getCategories()} to ${qXEdge
           .getObject()
           .getCategories()} with predicate ${qXEdge.getPredicate()}`,
       ).getLog(),
@@ -56,7 +56,7 @@ module.exports = class QEdge2APIEdgeHandler {
     if (metaXEdges.length === 0) {
       debug(`No smartapi edge found for ${qXEdge.getID()}`);
       this.logs.push(
-        new LogEntry('WARNING', null, `BTE didn't find any smartapi edges corresponding to ${qXEdge.getID()}`).getLog(),
+        new LogEntry('WARNING', null, `BTE didn't find any metaKG edges corresponding to ${qXEdge.getID()}`).getLog(),
       );
     } else {
       this.logs.push(
@@ -65,7 +65,7 @@ module.exports = class QEdge2APIEdgeHandler {
           null,
           `BTE found ${
             metaXEdges.length
-          } smartapi edges corresponding to ${qXEdge.getID()}. These smartaip edges comes from ${
+          } metaKG edges corresponding to ${qXEdge.getID()}. These metaKG edges comes from ${
             new Set(this._findAPIsFromMetaEdges(metaXEdges)).size
           } unique APIs. They are ${Array.from(new Set(this._findAPIsFromMetaEdges(metaXEdges))).join(',')}`,
         ).getLog(),
@@ -324,7 +324,7 @@ module.exports = class QEdge2APIEdgeHandler {
       debug(`${metaXedges.length} SmartAPI edges are retrieved....`);
       await Promise.all(metaXedges.map(async (metaXEdge) => {
         let newEdges = await this._createAPIEdges(metaXEdge);
-        debug(`${newEdges.length} subqueryOperations are created....`);
+        debug(`${newEdges.length} metaKG are created....`);
         newEdges = newEdges.map((e) => {
           e.filter = qXEdge.filter;
           return e;
@@ -333,13 +333,13 @@ module.exports = class QEdge2APIEdgeHandler {
       }));
     }));
     if (APIEdges.length === 0) {
-      debug(`No subquery operations found for this query batch.`);
+      debug(`No metaKG found for this query batch.`);
       this.logs.push(
-        new LogEntry('WARNING', null, `BTE didn't find any subquery operations for this batch. Your query terminates.`).getLog(),
+        new LogEntry('WARNING', null, `BTE didn't find any metaKG for this batch. Your query terminates.`).getLog(),
       );
     } else {
-      debug(`BTE found ${APIEdges.length} subquery operations for this batch.`);
-      this.logs.push(new LogEntry('DEBUG', null, `BTE found ${APIEdges.length} subquery operations for this batch.`).getLog());
+      debug(`BTE found ${APIEdges.length} metaKG for this batch.`);
+      this.logs.push(new LogEntry('DEBUG', null, `BTE found ${APIEdges.length} metaKG for this batch.`).getLog());
     }
     return APIEdges;
   }
