@@ -106,9 +106,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     return handlers;
   }
 
-  _createBatchEdgeQueryHandlersForCurrent(currentEdge, metaKG) {
+  _createBatchEdgeQueryHandlersForCurrent(currentQXEdge, metaKG) {
     let handler = new BatchEdgeQueryHandler(metaKG, this.resolveOutputIDs, {caching: this.options.caching });
-    handler.setEdges(currentEdge);
+    handler.setEdges(currentQXEdge);
     return handler;
   }
 
@@ -235,29 +235,29 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     const unavailableAPIs = {};
     while (manager.getEdgesNotExecuted()) {
       //next available/most efficient edge
-      let currentEdge = manager.getNext();
+      let currentQXEdge = manager.getNext();
       //crate queries from edge
-      let handler = this._createBatchEdgeQueryHandlersForCurrent(currentEdge, metaKG);
+      let handler = this._createBatchEdgeQueryHandlersForCurrent(currentQXEdge, metaKG);
       this.logs.push(
         new LogEntry(
           'INFO',
           null,
-          `Executing ${currentEdge.getID()}${currentEdge.isReversed() ? ' (reversed)' : ''}: ${
-            currentEdge.subject.id
-          } ${currentEdge.isReversed() ? '<--' : '-->'} ${
-            currentEdge.object.id
+          `Executing ${currentQXEdge.getID()}${currentQXEdge.isReversed() ? ' (reversed)' : ''}: ${
+            currentQXEdge.subject.id
+          } ${currentQXEdge.isReversed() ? '<--' : '-->'} ${
+            currentQXEdge.object.id
           }`,
         ).getLog(),
       );
-      debug(`(5) Executing current edge >> "${currentEdge.getID()}"`);
+      debug(`(5) Executing current edge >> "${currentQXEdge.getID()}"`);
       //execute current edge query
       let queryRecords = await handler.query(handler.qXEdges, unavailableAPIs);
       this.logs = [...this.logs, ...handler.logs];
       // create an edge execution summary
       let success = 0, fail = 0, total = 0;
-      let cached = this.logs.filter(({ data }) => data?.qEdgeID === currentEdge.qEdge.id && data?.type === 'cacheHit').length;
+      let cached = this.logs.filter(({ data }) => data?.qEdgeID === currentQXEdge.qEdge.id && data?.type === 'cacheHit').length;
       this.logs
-        .filter(({ data }) => data?.qEdgeID === currentEdge.qEdge.id && data?.type === 'query')
+        .filter(({ data }) => data?.qEdgeID === currentQXEdge.qEdge.id && data?.type === 'query')
         .forEach(({ data }) => {
           !data.error ? success++ : fail++;
           total++;
@@ -266,43 +266,43 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         new LogEntry(
           'INFO',
           null,
-          `${currentEdge.qEdge.id} execution: ${total} queries (${success} success/${fail} fail) and (${cached}) cached edges return (${queryRecords.length}) records`,
+          `${currentQXEdge.qEdge.id} execution: ${total} queries (${success} success/${fail} fail) and (${cached}) cached edges return (${queryRecords.length}) records`,
           {}
         ).getLog()
       );
       if (queryRecords.length === 0) {
         this._logSkippedQueries(unavailableAPIs);
-        debug(`(X) Terminating..."${currentEdge.getID()}" got 0 records.`);
+        debug(`(X) Terminating..."${currentQXEdge.getID()}" got 0 records.`);
         this.logs.push(
           new LogEntry(
               'WARNING',
               null,
-              `Edge (${currentEdge.getID()}) got 0 records. Your query terminates.`
+              `Edge (${currentQXEdge.getID()}) got 0 records. Your query terminates.`
           ).getLog()
         );
         return;
       }
       //storing records will trigger a node entity count update
-      currentEdge.storeRecords(queryRecords);
+      currentQXEdge.storeRecords(queryRecords);
       //filter records
-      manager.updateEdgeRecords(currentEdge);
+      manager.updateEdgeRecords(currentQXEdge);
       //update and filter neighbors
-      manager.updateAllOtherEdges(currentEdge);
+      manager.updateAllOtherEdges(currentQXEdge);
       // check that any records are kept
-      if (!currentEdge.records.length) {
+      if (!currentQXEdge.records.length) {
         this._logSkippedQueries(unavailableAPIs);
-        debug(`(X) Terminating..."${currentEdge.getID()}" kept 0 records.`);
+        debug(`(X) Terminating..."${currentQXEdge.getID()}" kept 0 records.`);
         this.logs.push(
             new LogEntry(
                 'WARNING',
                 null,
-                `Edge (${currentEdge.getID()}) kept 0 records. Your query terminates.`
+                `Edge (${currentQXEdge.getID()}) kept 0 records. Your query terminates.`
             ).getLog()
         );
         return;
     }
       //edge all done
-      currentEdge.executed = true;
+      currentQXEdge.executed = true;
       debug(`(10) Edge successfully queried.`);
     };
     this._logSkippedQueries(unavailableAPIs);
