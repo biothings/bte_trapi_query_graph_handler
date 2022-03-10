@@ -5,7 +5,7 @@ const reverse = require('./biolink');
 
 //This is an edge class based on QExeEdge with more features
 module.exports = class QueryExecutionEdge {
-  /** // TODO fix this docstring to be accurate
+  /**
    *
    * @param {string} id - QEdge ID
    * @param {object} info - QEdge info, e.g. subject, object, predicate
