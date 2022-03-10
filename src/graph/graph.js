@@ -23,7 +23,7 @@ module.exports = class BTEGraph { // TODO rename to bteGraph? seems to only be u
         const outputPrimaryCurie = this.helper._getOutputCurie(record);
         const outputQNodeID = this.helper._getOutputQueryNodeID(record);
         const outputBTEGraphID = outputPrimaryCurie + '-' + outputQNodeID;
-        const recordEdgeHash = this.helper._getRecordHash(record);
+        const recordHash = this.helper._getRecordHash(record);
         if (!(outputBTEGraphID in this.nodes)) {
           this.nodes[outputBTEGraphID] = new kg_node(outputBTEGraphID, {
             primaryCurie: outputPrimaryCurie,
@@ -50,21 +50,21 @@ module.exports = class BTEGraph { // TODO rename to bteGraph? seems to only be u
         this.nodes[outputBTEGraphID].addSourceQNodeID(inputQNodeID);
         this.nodes[inputBTEGraphID].addTargetNode(outputBTEGraphID);
         this.nodes[inputBTEGraphID].addTargetQNodeID(outputQNodeID);
-        if (!(recordEdgeHash in this.edges)) {
-          this.edges[recordEdgeHash] = new kg_edge(recordEdgeHash, {
+        if (!(recordHash in this.edges)) {
+          this.edges[recordHash] = new kg_edge(recordHash, {
             predicate: this.helper._getPredicate(record),
             subject: inputPrimaryCurie,
             object: outputPrimaryCurie,
           });
         }
-        this.edges[recordEdgeHash].addAPI(this.helper._getAPI(record));
-        this.edges[recordEdgeHash].addInforesCurie(this.helper._getInforesCurie(record));
-        this.edges[recordEdgeHash].addSource(this.helper._getSource(record));
-        this.edges[recordEdgeHash].addPublication(this.helper._getPublication(record));
+        this.edges[recordHash].addAPI(this.helper._getAPI(record));
+        this.edges[recordHash].addInforesCurie(this.helper._getInforesCurie(record));
+        this.edges[recordHash].addSource(this.helper._getSource(record));
+        this.edges[recordHash].addPublication(this.helper._getPublication(record));
         Object.keys(record)
           .filter((k) => !(bteAttributes.includes(k) || k.startsWith('$')))
           .map((item) => {
-            this.edges[recordEdgeHash].addAdditionalAttributes(item, record[item]);
+            this.edges[recordHash].addAdditionalAttributes(item, record[item]);
           });
       }
     });
