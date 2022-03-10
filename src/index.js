@@ -314,8 +314,8 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     //update query results
     this.trapiResultsAssembler.update(manager.getOrganizedRecords());
     this.bteGraph.notify();
-    const rKGNodes = Object.keys(this.knowledgeGraph.nodes).length;
-    const rKGEdges = Object.keys(this.knowledgeGraph.edges).length;
+    const KGNodes = Object.keys(this.knowledgeGraph.nodes).length;
+    const kgEdges = Object.keys(this.knowledgeGraph.edges).length;
     const results = this.trapiResultsAssembler.getResults().length;
     const resultQueries = this.logs.filter(({ data }) => data?.type === 'query' && data?.hits).length;
     const queries = this.logs.filter(({ data }) => data?.type === 'query').length;
@@ -325,7 +325,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       new LogEntry(
         'INFO',
         null,
-        `Execution Summary: (${rKGNodes}) nodes / (${rKGEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${cached ? ` (${cached} cached edges)` : ''} returned results from (${sources.length}) unique APIs ${
+        `Execution Summary: (${KGNodes}) nodes / (${kgEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${cached ? ` (${cached} cached edges)` : ''} returned results from (${sources.length}) unique APIs ${
           sources === 1 ? 's' : ''
         }`,
       ).getLog(),
