@@ -3,7 +3,6 @@ const debug = require('debug')('bte:biothings-explorer-trapi:QueryExecutionEdge'
 const utils = require('./utils');
 const reverse = require('./biolink');
 
-//This is an edge class based on QExeEdge with more features
 module.exports = class QueryExecutionEdge {
   /**
    *

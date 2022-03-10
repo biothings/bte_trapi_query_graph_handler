@@ -83,9 +83,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
    async _processQueryGraph(queryGraph) {
     try {
       let queryGraphHandler = new QueryGraph(queryGraph);
-      let qExeEdges = await queryGraphHandler.calculateEdges();
+      let queryExecutionEdges = await queryGraphHandler.calculateEdges();
       this.logs = [...this.logs, ...queryGraphHandler.logs];
-      return qExeEdges;
+      return queryExecutionEdges;
     } catch (err) {
       if (err instanceof InvalidQueryGraphError) {
         throw err;
