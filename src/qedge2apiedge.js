@@ -38,7 +38,7 @@ module.exports = class QEdge2APIEdgeHandler {
       new LogEntry(
         'DEBUG',
         null,
-        `BTE is trying to find metaKG edges connecting from ${qXEdge.getSubject().getCategories()} to ${qXEdge
+        `BTE is trying to find metaKG edges (smartAPI registry, x-bte annotation) connecting from ${qXEdge.getSubject().getCategories()} to ${qXEdge
           .getObject()
           .getCategories()} with predicate ${qXEdge.getPredicate()}`,
       ).getLog(),
