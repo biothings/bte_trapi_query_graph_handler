@@ -6,7 +6,7 @@ describe("Testing KnowledgeGraph Module", () => {
     const nodeInput = {
         "id": "PUBCHEM.COMPOUND:2662-n0",
         "_primaryID": "PUBCHEM.COMPOUND:2662",
-        "_qgID": "n0",
+        "_qNodeID": "n0",
         "_curies": [
             "PUBCHEM.COMPOUND:2662",
             "CHEMBL.COMPOUND:CHEMBL118",
@@ -35,8 +35,8 @@ describe("Testing KnowledgeGraph Module", () => {
         "_label": "Celecoxib",
         "_sourceNodes": {},
         "_targetNodes": {},
-        "_sourceQGNodes": {},
-        "_targetQGNodes": {}
+        "_sourceQNodeIDs": {},
+        "_targetQNodeIDs": {}
     }
     const trapiEdgeInput = {
         id: 'PUBCHEM.COMPOUND:2662-biolink:activity_decreased_by-NCBIGene:771',

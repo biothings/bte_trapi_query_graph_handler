@@ -1,18 +1,18 @@
 const graph = require("../../../src/graph/graph");
 
 describe("Test graph class", () => {
-    const qgNode1 = {
+    const qNode1 = {
         getID() { return "qg1" }
     }
-    const qgNode2 = {
+    const qNode2 = {
         getID() { return "qg2" }
     }
     const record1 = {
         $edge_metadata: {
             trapi_qEdge_obj: {
                 isReversed() { return false },
-                getSubject() { return qgNode1 },
-                getObject() { return qgNode2 }
+                getSubject() { return qNode1 },
+                getObject() { return qNode2 }
             },
             api_name: "API1",
             source: "source1",
@@ -22,14 +22,14 @@ describe("Test graph class", () => {
         $output: {
             obj: [
                 {
-                    primaryID: "outputPrimaryID"
+                    primaryID: "outputPrimaryCurie"
                 }
             ]
         },
         $input: {
             obj: [
                 {
-                    primaryID: "inputPrimaryID"
+                    primaryID: "inputPrimaryCurie"
                 }
             ]
         },
@@ -40,8 +40,8 @@ describe("Test graph class", () => {
         $edge_metadata: {
             trapi_qEdge_obj: {
                 isReversed() { return false },
-                getSubject() { return qgNode1 },
-                getObject() { return qgNode2 }
+                getSubject() { return qNode1 },
+                getObject() { return qNode2 }
             },
             api_name: "API2",
             source: "source2",
@@ -51,14 +51,14 @@ describe("Test graph class", () => {
         $output: {
             obj: [
                 {
-                    primaryID: "outputPrimaryID"
+                    primaryID: "outputPrimaryCurie"
                 }
             ]
         },
         $input: {
             obj: [
                 {
-                    primaryID: "inputPrimaryID"
+                    primaryID: "inputPrimaryCurie"
                 }
             ]
         },
@@ -69,8 +69,8 @@ describe("Test graph class", () => {
         $edge_metadata: {
             trapi_qEdge_obj: {
                 isReversed() { return false },
-                getSubject() { return qgNode1 },
-                getObject() { return qgNode2 }
+                getSubject() { return qNode1 },
+                getObject() { return qNode2 }
             },
             api_name: "API3",
             source: "source3",
@@ -80,14 +80,14 @@ describe("Test graph class", () => {
         $output: {
             obj: [
                 {
-                    primaryID: "outputPrimaryID"
+                    primaryID: "outputPrimaryCurie"
                 }
             ]
         },
         $input: {
             obj: [
                 {
-                    primaryID: "inputPrimaryID"
+                    primaryID: "inputPrimaryCurie"
                 }
             ]
         },
@@ -96,80 +96,80 @@ describe("Test graph class", () => {
     test("A single query result is correctly updated.", () => {
         const g = new graph();
         g.update([record1]);
-        expect(g.nodes).toHaveProperty("outputPrimaryID-qg2");
-        expect(g.nodes).toHaveProperty("inputPrimaryID-qg1");
-        expect(g.nodes["outputPrimaryID-qg2"]._primaryID).toEqual("outputPrimaryID");
-        expect(g.nodes["outputPrimaryID-qg2"]._qgID).toEqual("qg2");
-        expect(Array.from(g.nodes["outputPrimaryID-qg2"]._sourceNodes)).toEqual(['inputPrimaryID-qg1']);
-        expect(Array.from(g.nodes["outputPrimaryID-qg2"]._sourceQGNodes)).toEqual(['qg1']);
-        expect(g.nodes["inputPrimaryID-qg1"]._primaryID).toEqual("inputPrimaryID");
-        expect(g.nodes["inputPrimaryID-qg1"]._qgID).toEqual("qg1");
-        expect(Array.from(g.nodes["inputPrimaryID-qg1"]._targetNodes)).toEqual(['outputPrimaryID-qg2']);
-        expect(Array.from(g.nodes["inputPrimaryID-qg1"]._targetQGNodes)).toEqual(['qg2']);
-        expect(g.edges).toHaveProperty('825db77d3c9a1336d647344dda35a106');
-        expect(Array.from(g.edges['825db77d3c9a1336d647344dda35a106'].apis)).toEqual(['API1']);
-        expect(Array.from(g.edges['825db77d3c9a1336d647344dda35a106'].sources)).toEqual(['source1']);
-        expect(Array.from(g.edges['825db77d3c9a1336d647344dda35a106'].publications)).toEqual(['PMID:1', 'PMID:2']);
-        expect(g.edges['825db77d3c9a1336d647344dda35a106'].attributes).toHaveProperty('relation', 'relation1')
+        expect(g.nodes).toHaveProperty("outputPrimaryCurie-qg2");
+        expect(g.nodes).toHaveProperty("inputPrimaryCurie-qg1");
+        expect(g.nodes["outputPrimaryCurie-qg2"]._primaryCurie).toEqual("outputPrimaryCurie");
+        expect(g.nodes["outputPrimaryCurie-qg2"]._qNodeID).toEqual("qg2");
+        expect(Array.from(g.nodes["outputPrimaryCurie-qg2"]._sourceNodes)).toEqual(['inputPrimaryCurie-qg1']);
+        expect(Array.from(g.nodes["outputPrimaryCurie-qg2"]._sourceQNodeIDs)).toEqual(['qg1']);
+        expect(g.nodes["inputPrimaryCurie-qg1"]._primaryCurie).toEqual("inputPrimaryCurie");
+        expect(g.nodes["inputPrimaryCurie-qg1"]._qNodeID).toEqual("qg1");
+        expect(Array.from(g.nodes["inputPrimaryCurie-qg1"]._targetNodes)).toEqual(['outputPrimaryCurie-qg2']);
+        expect(Array.from(g.nodes["inputPrimaryCurie-qg1"]._targetQNodeIDs)).toEqual(['qg2']);
+        expect(g.edges).toHaveProperty('bbc3f6312167f869deadb1e092963ce3');
+        expect(Array.from(g.edges['bbc3f6312167f869deadb1e092963ce3'].apis)).toEqual(['API1']);
+        expect(Array.from(g.edges['bbc3f6312167f869deadb1e092963ce3'].sources)).toEqual(['source1']);
+        expect(Array.from(g.edges['bbc3f6312167f869deadb1e092963ce3'].publications)).toEqual(['PMID:1', 'PMID:2']);
+        expect(g.edges['bbc3f6312167f869deadb1e092963ce3'].attributes).toHaveProperty('relation', 'relation1')
     })
 
     test("Multiple query results are correctly updated for two edges having same input, predicate and output", () => {
         const g = new graph();
         g.update([record1, record2]);
-        expect(g.nodes).toHaveProperty("outputPrimaryID-qg2");
-        expect(g.nodes).toHaveProperty("inputPrimaryID-qg1");
-        expect(g.nodes["outputPrimaryID-qg2"]._primaryID).toEqual("outputPrimaryID");
-        expect(g.nodes["outputPrimaryID-qg2"]._qgID).toEqual("qg2");
-        expect(Array.from(g.nodes["outputPrimaryID-qg2"]._sourceNodes)).toEqual(['inputPrimaryID-qg1']);
-        expect(Array.from(g.nodes["outputPrimaryID-qg2"]._sourceQGNodes)).toEqual(['qg1']);
-        expect(g.nodes["inputPrimaryID-qg1"]._primaryID).toEqual("inputPrimaryID");
-        expect(g.nodes["inputPrimaryID-qg1"]._qgID).toEqual("qg1");
-        expect(Array.from(g.nodes["inputPrimaryID-qg1"]._targetNodes)).toEqual(['outputPrimaryID-qg2']);
-        expect(Array.from(g.nodes["inputPrimaryID-qg1"]._targetQGNodes)).toEqual(['qg2']);
+        expect(g.nodes).toHaveProperty("outputPrimaryCurie-qg2");
+        expect(g.nodes).toHaveProperty("inputPrimaryCurie-qg1");
+        expect(g.nodes["outputPrimaryCurie-qg2"]._primaryCurie).toEqual("outputPrimaryCurie");
+        expect(g.nodes["outputPrimaryCurie-qg2"]._qNodeID).toEqual("qg2");
+        expect(Array.from(g.nodes["outputPrimaryCurie-qg2"]._sourceNodes)).toEqual(['inputPrimaryCurie-qg1']);
+        expect(Array.from(g.nodes["outputPrimaryCurie-qg2"]._sourceQNodeIDs)).toEqual(['qg1']);
+        expect(g.nodes["inputPrimaryCurie-qg1"]._primaryCurie).toEqual("inputPrimaryCurie");
+        expect(g.nodes["inputPrimaryCurie-qg1"]._qNodeID).toEqual("qg1");
+        expect(Array.from(g.nodes["inputPrimaryCurie-qg1"]._targetNodes)).toEqual(['outputPrimaryCurie-qg2']);
+        expect(Array.from(g.nodes["inputPrimaryCurie-qg1"]._targetQNodeIDs)).toEqual(['qg2']);
 
-        expect(g.edges).toHaveProperty('825db77d3c9a1336d647344dda35a106');
-        expect(Array.from(g.edges['825db77d3c9a1336d647344dda35a106'].apis)).toEqual(['API1']);
-        expect(Array.from(g.edges['825db77d3c9a1336d647344dda35a106'].sources)).toEqual(['source1']);
-        expect(Array.from(g.edges['825db77d3c9a1336d647344dda35a106'].publications)).toEqual(['PMID:1', 'PMID:2']);
-        expect(g.edges['825db77d3c9a1336d647344dda35a106'].attributes).toHaveProperty('relation', 'relation1')
+        expect(g.edges).toHaveProperty('bbc3f6312167f869deadb1e092963ce3');
+        expect(Array.from(g.edges['bbc3f6312167f869deadb1e092963ce3'].apis)).toEqual(['API1']);
+        expect(Array.from(g.edges['bbc3f6312167f869deadb1e092963ce3'].sources)).toEqual(['source1']);
+        expect(Array.from(g.edges['bbc3f6312167f869deadb1e092963ce3'].publications)).toEqual(['PMID:1', 'PMID:2']);
+        expect(g.edges['bbc3f6312167f869deadb1e092963ce3'].attributes).toHaveProperty('relation', 'relation1')
 
-        expect(g.edges).toHaveProperty('7e40c415eef659e5bf92bfb024a5b54b');
-        expect(Array.from(g.edges['7e40c415eef659e5bf92bfb024a5b54b'].apis)).toEqual(['API2']);
-        expect(Array.from(g.edges['7e40c415eef659e5bf92bfb024a5b54b'].sources)).toEqual(['source2']);
-        expect(Array.from(g.edges['7e40c415eef659e5bf92bfb024a5b54b'].publications)).toEqual(['PMC:1', 'PMC:2']);
-        expect(g.edges['7e40c415eef659e5bf92bfb024a5b54b'].attributes).toHaveProperty('relation', 'relation2')
+        expect(g.edges).toHaveProperty('eb2323486762cf2292c689b13e330fed');
+        expect(Array.from(g.edges['eb2323486762cf2292c689b13e330fed'].apis)).toEqual(['API2']);
+        expect(Array.from(g.edges['eb2323486762cf2292c689b13e330fed'].sources)).toEqual(['source2']);
+        expect(Array.from(g.edges['eb2323486762cf2292c689b13e330fed'].publications)).toEqual(['PMC:1', 'PMC:2']);
+        expect(g.edges['eb2323486762cf2292c689b13e330fed'].attributes).toHaveProperty('relation', 'relation2')
     })
 
     test("Multiple query results for different edges are correctly updated", () => {
         const g = new graph();
         g.update([record1, record2, record3]);
-        expect(g.nodes).toHaveProperty("outputPrimaryID-qg2");
-        expect(g.nodes).toHaveProperty("inputPrimaryID-qg1");
-        expect(g.nodes["outputPrimaryID-qg2"]._primaryID).toEqual("outputPrimaryID");
-        expect(g.nodes["outputPrimaryID-qg2"]._qgID).toEqual("qg2");
-        expect(Array.from(g.nodes["outputPrimaryID-qg2"]._sourceNodes)).toEqual(['inputPrimaryID-qg1']);
-        expect(Array.from(g.nodes["outputPrimaryID-qg2"]._sourceQGNodes)).toEqual(['qg1']);
-        expect(g.nodes["inputPrimaryID-qg1"]._primaryID).toEqual("inputPrimaryID");
-        expect(g.nodes["inputPrimaryID-qg1"]._qgID).toEqual("qg1");
-        expect(Array.from(g.nodes["inputPrimaryID-qg1"]._targetNodes)).toEqual(['outputPrimaryID-qg2']);
-        expect(Array.from(g.nodes["inputPrimaryID-qg1"]._targetQGNodes)).toEqual(['qg2']);
+        expect(g.nodes).toHaveProperty("outputPrimaryCurie-qg2");
+        expect(g.nodes).toHaveProperty("inputPrimaryCurie-qg1");
+        expect(g.nodes["outputPrimaryCurie-qg2"]._primaryCurie).toEqual("outputPrimaryCurie");
+        expect(g.nodes["outputPrimaryCurie-qg2"]._qNodeID).toEqual("qg2");
+        expect(Array.from(g.nodes["outputPrimaryCurie-qg2"]._sourceNodes)).toEqual(['inputPrimaryCurie-qg1']);
+        expect(Array.from(g.nodes["outputPrimaryCurie-qg2"]._sourceQNodeIDs)).toEqual(['qg1']);
+        expect(g.nodes["inputPrimaryCurie-qg1"]._primaryCurie).toEqual("inputPrimaryCurie");
+        expect(g.nodes["inputPrimaryCurie-qg1"]._qNodeID).toEqual("qg1");
+        expect(Array.from(g.nodes["inputPrimaryCurie-qg1"]._targetNodes)).toEqual(['outputPrimaryCurie-qg2']);
+        expect(Array.from(g.nodes["inputPrimaryCurie-qg1"]._targetQNodeIDs)).toEqual(['qg2']);
 
-        expect(g.edges).toHaveProperty('825db77d3c9a1336d647344dda35a106');
-        expect(Array.from(g.edges['825db77d3c9a1336d647344dda35a106'].apis)).toEqual(['API1']);
-        expect(Array.from(g.edges['825db77d3c9a1336d647344dda35a106'].sources)).toEqual(['source1']);
-        expect(Array.from(g.edges['825db77d3c9a1336d647344dda35a106'].publications)).toEqual(['PMID:1', 'PMID:2']);
-        expect(g.edges['825db77d3c9a1336d647344dda35a106'].attributes).toHaveProperty('relation', 'relation1')
+        expect(g.edges).toHaveProperty('bbc3f6312167f869deadb1e092963ce3');
+        expect(Array.from(g.edges['bbc3f6312167f869deadb1e092963ce3'].apis)).toEqual(['API1']);
+        expect(Array.from(g.edges['bbc3f6312167f869deadb1e092963ce3'].sources)).toEqual(['source1']);
+        expect(Array.from(g.edges['bbc3f6312167f869deadb1e092963ce3'].publications)).toEqual(['PMID:1', 'PMID:2']);
+        expect(g.edges['bbc3f6312167f869deadb1e092963ce3'].attributes).toHaveProperty('relation', 'relation1')
 
-        expect(g.edges).toHaveProperty('7e40c415eef659e5bf92bfb024a5b54b');
-        expect(Array.from(g.edges['7e40c415eef659e5bf92bfb024a5b54b'].apis)).toEqual(['API2']);
-        expect(Array.from(g.edges['7e40c415eef659e5bf92bfb024a5b54b'].sources)).toEqual(['source2']);
-        expect(Array.from(g.edges['7e40c415eef659e5bf92bfb024a5b54b'].publications)).toEqual(['PMC:1', 'PMC:2']);
-        expect(g.edges['7e40c415eef659e5bf92bfb024a5b54b'].attributes).toHaveProperty('relation', 'relation2')
+        expect(g.edges).toHaveProperty('eb2323486762cf2292c689b13e330fed');
+        expect(Array.from(g.edges['eb2323486762cf2292c689b13e330fed'].apis)).toEqual(['API2']);
+        expect(Array.from(g.edges['eb2323486762cf2292c689b13e330fed'].sources)).toEqual(['source2']);
+        expect(Array.from(g.edges['eb2323486762cf2292c689b13e330fed'].publications)).toEqual(['PMC:1', 'PMC:2']);
+        expect(g.edges['eb2323486762cf2292c689b13e330fed'].attributes).toHaveProperty('relation', 'relation2')
 
-        expect(g.edges).toHaveProperty('dbb359d0312bcc45db03f9e8eabc7c99');
-        expect(Array.from(g.edges['dbb359d0312bcc45db03f9e8eabc7c99'].apis)).toEqual(['API3']);
-        expect(Array.from(g.edges['dbb359d0312bcc45db03f9e8eabc7c99'].sources)).toEqual(['source3']);
-        expect(Array.from(g.edges['dbb359d0312bcc45db03f9e8eabc7c99'].publications)).toEqual(['PMC:3', 'PMC:4']);
-        expect(g.edges['dbb359d0312bcc45db03f9e8eabc7c99'].attributes).toHaveProperty('relation', 'relation3')
+        expect(g.edges).toHaveProperty('ffca0bf654c9ff5811e4c22a5b21c9b8');
+        expect(Array.from(g.edges['ffca0bf654c9ff5811e4c22a5b21c9b8'].apis)).toEqual(['API3']);
+        expect(Array.from(g.edges['ffca0bf654c9ff5811e4c22a5b21c9b8'].sources)).toEqual(['source3']);
+        expect(Array.from(g.edges['ffca0bf654c9ff5811e4c22a5b21c9b8'].publications)).toEqual(['PMC:3', 'PMC:4']);
+        expect(g.edges['ffca0bf654c9ff5811e4c22a5b21c9b8'].attributes).toHaveProperty('relation', 'relation3')
     })
 })
