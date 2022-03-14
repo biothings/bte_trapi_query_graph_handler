@@ -166,20 +166,37 @@ module.exports = class QueryGraphHandler {
           (!Object.hasOwnProperty.call(this.queryGraph.nodes[qNodeID], 'categories') &&
           Object.hasOwnProperty.call(this.queryGraph.nodes[qNodeID], 'ids')) ||
           (Object.hasOwnProperty.call(this.queryGraph.nodes[qNodeID], 'categories') &&
-          this.queryGraph.nodes[qNodeID].categories.length == 0 &&
+          // this.queryGraph.nodes[qNodeID].categories.length == 0 &&
           Object.hasOwnProperty.call(this.queryGraph.nodes[qNodeID], 'ids'))
           ) {
-          let category = await this._findNodeCategories(this.queryGraph.nodes[qNodeID].ids);
-          this.queryGraph.nodes[qNodeID].categories = category;
-          debug(`Node category found. Assigning value: ${JSON.stringify(this.queryGraph.nodes[qNodeID])}`);
-          this.logs.push(
-            new LogEntry(
-            'DEBUG',
-            null,
-            `Node (${qNodeID}) missing category. Assigned categor${category.length > 1 ? 'ies' : 'y'} [${category.join(', ')}] inferred from id${this.queryGraph.nodes[qNodeID].ids.length > 1 ? 's' : ''} [${this.queryGraph.nodes[qNodeID].ids.join(', ')}]`,
-            // `Assigned missing node ID category: ${JSON.stringify(this.queryGraph.nodes[qNodeID])}`).getLog(),
-            ).getLog()
-          );
+          let userAssignedCategories = this.queryGraph.nodes[qNodeID].categories;
+          let categories = await this._findNodeCategories(this.queryGraph.nodes[qNodeID].ids)
+          if (typeof userAssignedCategories !== 'undefined') {
+            userAssignedCategories = [...userAssignedCategories]; // new Array for accurate logging after node updated
+            categories = categories.filter((category) => !userAssignedCategories.includes(category));
+          }
+          if (categories.length) {
+            if (!this.queryGraph.nodes[qNodeID].categories) {
+              this.queryGraph.nodes[qNodeID].categories = categories;
+            } else {
+              this.queryGraph.nodes[qNodeID].categories.push(...categories);
+            }
+            debug(`Node categories found. Assigning value: ${JSON.stringify(this.queryGraph.nodes[qNodeID])}`);
+            this.logs.push(
+              new LogEntry(
+                'DEBUG',
+                null,
+                `${
+                  (typeof userAssignedCategories !== 'undefined' && userAssignedCategories.length)
+                    ? `User-assigned categor${userAssignedCategories.length === 1 ? 'y' : 'ies'} [${userAssignedCategories.join(', ')}] augmented with`
+                    : `Assigned`
+                } categor${categories.length > 1 ? 'ies' : 'y'} [${categories.join(', ')}] inferred from id${
+                  this.queryGraph.nodes[qNodeID].ids.length > 1 ? 's' : ''
+                } [${this.queryGraph.nodes[qNodeID].ids.join(', ')}]`,
+                // `Assigned missing node ID category: ${JSON.stringify(this.queryGraph.nodes[qNodeID])}`).getLog(),
+              ).getLog(),
+            );
+          }
           nodes[qNodeID] = new QNode(qNodeID, this.queryGraph.nodes[qNodeID]);
         } else {
           debug(`Creating node...`);
