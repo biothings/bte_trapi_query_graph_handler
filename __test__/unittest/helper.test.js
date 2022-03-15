@@ -111,7 +111,7 @@ describe("Test helper moduler", () => {
             expect(res).toEqual('n01')
         })
     })
-    describe("Test _getInputID function", () => {
+    describe("Test _getInputCurie function", () => {
 
         test("If edge is reversed, should return the primary ID of the output", () => {
 
@@ -135,7 +135,7 @@ describe("Test helper moduler", () => {
                     }]
                 },
             }
-            const res = helper._getInputID(record);
+            const res = helper._getInputCurie(record);
             expect(res).toEqual('output')
         })
 
@@ -161,12 +161,12 @@ describe("Test helper moduler", () => {
                     }]
                 },
             }
-            const res = helper._getInputID(record);
+            const res = helper._getInputCurie(record);
             expect(res).toEqual('input')
         })
     })
 
-    describe("Test _getOutputID function", () => {
+    describe("Test _getOutputCurie function", () => {
 
         test("If edge is reversed, should return the node ID of the subject", () => {
 
@@ -190,7 +190,7 @@ describe("Test helper moduler", () => {
                     }]
                 },
             }
-            const res = helper._getOutputID(record);
+            const res = helper._getOutputCurie(record);
             expect(res).toEqual('input')
         })
     })
@@ -217,7 +217,7 @@ describe("Test helper moduler", () => {
                 }]
             },
         }
-        const res = helper._getOutputID(record);
+        const res = helper._getOutputCurie(record);
         expect(res).toEqual('output')
     })
 
@@ -288,7 +288,7 @@ describe("Test helper moduler", () => {
         })
     })
 
-    describe("Test _getKGEdgeID function", () => {
+    describe("Test _getRecordHash function", () => {
         const edgeObject = {
             isReversed() {
                 return false;
@@ -311,7 +311,7 @@ describe("Test helper moduler", () => {
                 }]
             },
         }
-        const res = helper._getKGEdgeID(record);
+        const res = helper._getRecordHash(record);
         expect(res).toEqual('b052708d75d94d55916ffce9f0ea3458')
     })
 
@@ -617,7 +617,7 @@ describe("Test helper moduler", () => {
                     }],
                 },
             }
-            const res = helper._getInputEquivalentIds(record);
+            const res = helper._getInputEquivalentCuries(record);
             expect(res).toEqual(['789'])
         })
 
@@ -649,7 +649,7 @@ describe("Test helper moduler", () => {
                     },
                 },
             }
-            const res = helper._getInputEquivalentIds(record);
+            const res = helper._getInputEquivalentCuries(record);
             expect(res).toBeNull;
         })
 
@@ -681,7 +681,7 @@ describe("Test helper moduler", () => {
                     }],
                 },
             }
-            const res = helper._getInputEquivalentIds(record);
+            const res = helper._getInputEquivalentCuries(record);
             expect(res).toEqual(['123', '456'])
         })
     })
