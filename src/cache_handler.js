@@ -252,13 +252,22 @@ module.exports = class {
         try {
           const redisID = 'bte:edgeCache:' + hash;
           await redisClient.delAsync(redisID); // prevents weird overwrite edge cases
-          await new Promise((resolve) => {
+          await new Promise((resolve, reject) => {
             let i = 0;
             Readable.from(groupedRecords[hash])
               .pipe(this.createEncodeStream())
               .pipe(chunker(100000, { flush: true }))
               .on('data', async (chunk) => {
-                await redisClient.hsetAsync(redisID, String(i++), chunk);
+                try {
+                  await redisClient.hsetAsync(redisID, String(i++), chunk);
+                } catch (error) {
+                  reject(error);
+                  try {
+                    await redisClient.delAsync(redisID);
+                  } catch (e) {
+                    debug(`Unable to remove partial cache ${redisID} from redis during cache failure due to error ${error}. This may result in failed or improper cache retrieval of this qXEdge.`)
+                  }
+                }
               })
               .on('end', () => {
                 resolve();
@@ -266,7 +275,7 @@ module.exports = class {
           });
           await redisClient.expireAsync(redisID, process.env.REDIS_KEY_EXPIRE_TIME || 600);
         } catch (error) {
-          console.log(error);
+          debug(`Failed to cache qXEdge ${hash} records due to error ${error}. This does not stop other edges from caching nor terminate the query.`)
         } finally {
           unlock(); // release lock whether cache succeeded or not
         }
