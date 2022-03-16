@@ -184,19 +184,20 @@ module.exports = class QueryGraphHandler {
             debug(`Node categories found. Assigning value: ${JSON.stringify(this.queryGraph.nodes[qNodeID])}`);
             this.logs.push(
               new LogEntry(
-                'DEBUG',
+                'INFO',
                 null,
                 [
                   `Node ${qNodeID} `,
                   `with id${this.queryGraph.nodes[qNodeID].ids.length > 1 ? 's' : ''} `,
-                  ``,
+                  `[${this.queryGraph.nodes[qNodeID].ids.join(', ')}] `,
                   `${
                     typeof userAssignedCategories !== 'undefined' && userAssignedCategories.length
                     ? `and categor${userAssignedCategories.length === 1 ? 'y' : 'ies'} [${userAssignedCategories.join(', ')}] augmented with`
-                    : `Assigned`
+                    : `assigned`
                   } `,
-                  `inferred categor${categories.length > 1 ? 'ies' : 'y'} `,
-                  `[${categories.join(', ')}]`
+                  `categor${categories.length > 1 ? 'ies' : 'y'} `,
+                  `[${categories.join(', ')}] inferred from `,
+                  `id${this.queryGraph.nodes[qNodeID].ids.length > 1 ? 's' : ''}.`,
                 ].join('')
               ).getLog(),
             );
