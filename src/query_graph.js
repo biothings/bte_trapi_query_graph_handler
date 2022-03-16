@@ -186,14 +186,18 @@ module.exports = class QueryGraphHandler {
               new LogEntry(
                 'DEBUG',
                 null,
-                `${
-                  (typeof userAssignedCategories !== 'undefined' && userAssignedCategories.length)
-                    ? `User-assigned categor${userAssignedCategories.length === 1 ? 'y' : 'ies'} [${userAssignedCategories.join(', ')}] augmented with`
+                [
+                  `Node ${qNodeID} `,
+                  `with id${this.queryGraph.nodes[qNodeID].ids.length > 1 ? 's' : ''} `,
+                  ``,
+                  `${
+                    typeof userAssignedCategories !== 'undefined' && userAssignedCategories.length
+                    ? `and categor${userAssignedCategories.length === 1 ? 'y' : 'ies'} [${userAssignedCategories.join(', ')}] augmented with`
                     : `Assigned`
-                } categor${categories.length > 1 ? 'ies' : 'y'} [${categories.join(', ')}] inferred from id${
-                  this.queryGraph.nodes[qNodeID].ids.length > 1 ? 's' : ''
-                } [${this.queryGraph.nodes[qNodeID].ids.join(', ')}]`,
-                // `Assigned missing node ID category: ${JSON.stringify(this.queryGraph.nodes[qNodeID])}`).getLog(),
+                  } `,
+                  `inferred categor${categories.length > 1 ? 'ies' : 'y'} `,
+                  `[${categories.join(', ')}]`
+                ].join('')
               ).getLog(),
             );
           }
