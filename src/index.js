@@ -37,7 +37,6 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   }
 
   getResponse() {
-    this.bteGraph.notify();
     return {
       workflow: [{ id: 'lookup' }],
       message: {
@@ -301,19 +300,22 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         );
         return;
     }
-      //edge all done
+      // edge all done
       currentQXEdge.executed = true;
       debug(`(10) Edge successfully queried.`);
     };
     this._logSkippedQueries(unavailableAPIs);
-    //collect and organize records
+    // collect and organize records
     manager.collectRecords();
     this.logs = [...this.logs, ...manager.logs];
-    //update query graph
+    // update query graph
     this.bteGraph.update(manager.getRecords());
-    //update query results
+    // update query results
     this.trapiResultsAssembler.update(manager.getOrganizedRecords());
+    // prune bteGraph
+    this.bteGraph.prune(this.trapiResultsAssembler.getResults());
     this.bteGraph.notify();
+    // finishing logs
     const KGNodes = Object.keys(this.knowledgeGraph.nodes).length;
     const kgEdges = Object.keys(this.knowledgeGraph.edges).length;
     const results = this.trapiResultsAssembler.getResults().length;
