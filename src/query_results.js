@@ -2,6 +2,7 @@ const { cloneDeep, keys, spread, toPairs, values, zip } = require('lodash');
 const GraphHelper = require('./helper');
 const helper = new GraphHelper();
 const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
+const { getScores, calculateScore } = require('./score');
 
 /**
  * @typedef {
@@ -145,6 +146,8 @@ module.exports = class TrapiResultsAssembler {
         outputQNodeID: helper._getOutputQueryNodeID(record),
         inputPrimaryCurie: helper._getInputCurie(record),
         outputPrimaryCurie: helper._getOutputCurie(record),
+        inputUMLS: helper._getInputUMLS(record), //add umls for scoring
+        outputUMLS: helper._getOutputUMLS(record), //add umls for scoring
         qEdgeID: qEdgeID,
         recordHash: helper._getRecordHash(record),
       });
@@ -214,8 +217,17 @@ module.exports = class TrapiResultsAssembler {
    * @param {RecordsByQEdgeID} recordsByQEdgeID
    * @return {undefined} nothing returned; just cache this._results
    */
-  update(recordsByQEdgeID) {
+  async update(recordsByQEdgeID) {
     debug(`Updating query results now!`);
+
+    let scoreCombos = [];
+    try {
+      scoreCombos = await getScores(recordsByQEdgeID);
+      debug(`Successfully got ${scoreCombos.length} score combos.`);
+    } catch (err) {
+      debug("Error getting scores: ", err);
+    }
+
     this._results = [];
 
     const qEdgeIDs = new Set(keys(recordsByQEdgeID));
@@ -364,6 +376,8 @@ module.exports = class TrapiResultsAssembler {
         const consolidatedSolutionRecord = {
           inputQNodeID: solutionRecord_0.inputQNodeID,
           outputQNodeID: solutionRecord_0.outputQNodeID,
+          inputUMLS: solutionRecord_0.inputUMLS,
+          outputUMLS: solutionRecord_0.outputUMLS,
           inputPrimaryCuries: new Set(),
           outputPrimaryCuries: new Set(),
           qEdgeID: solutionRecord_0.qEdgeID,
@@ -389,8 +403,8 @@ module.exports = class TrapiResultsAssembler {
      */
     this._results = consolidatedSolutions.map((consolidatedSolution) => {
 
-      // TODO: calculate an actual score
-      const result = {node_bindings: {}, edge_bindings: {}, score: 1.0};
+      // TODO: replace with better score implementation later
+      const result = {node_bindings: {}, edge_bindings: {}, score: calculateScore(consolidatedSolution, scoreCombos)};
 
       consolidatedSolution.forEach(({
         inputQNodeID, outputQNodeID,
@@ -417,6 +431,7 @@ module.exports = class TrapiResultsAssembler {
       });
 
       return result;
-    });
+    })
+    .sort((result1, result2) => (result2.score - result1.score)); //sort by decreasing score
   }
 };

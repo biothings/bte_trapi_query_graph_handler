@@ -51,9 +51,9 @@ describe('Testing QueryResults Module', () => {
         },
       };
 
-      test('should get n1, n2 and e01', () => {
+      test('should get n1, n2 and e01', async () => {
         const queryResult = new QueryResult();
-        queryResult.update({
+        await queryResult.update({
           "e01": {
             "connected_to": [],
             "records": [record]
@@ -152,10 +152,10 @@ describe('Testing QueryResults Module', () => {
           },
         };
 
-        test('should get n1, n2, n3 and e01, e02', () => {
+        test('should get n1, n2, n3 and e01, e02', async () => {
           const queryResult = new QueryResult();
 
-          queryResult.update({
+          await queryResult.update({
             "e01": {
               "connected_to": ["e02"],
               "records": [record1]
@@ -267,9 +267,9 @@ describe('Testing QueryResults Module', () => {
           },
         };
 
-        test('should get n1, n2, n3 and e01, e02', () => {
+        test('should get n1, n2, n3 and e01, e02', async () => {
           const queryResult = new QueryResult();
-          queryResult.update({
+          await queryResult.update({
             "e01": {
               "connected_to": ["e02"],
               "records": [record1]
@@ -381,9 +381,9 @@ describe('Testing QueryResults Module', () => {
           },
         };
 
-        test('should get n1, n2, n3 and e01, e02', () => {
+        test('should get n1, n2, n3 and e01, e02', async () => {
           const queryResult = new QueryResult();
-          queryResult.update({
+          await queryResult.update({
             "e01": {
               "connected_to": ["e02"],
               "records": [record1]
@@ -497,9 +497,9 @@ describe('Testing QueryResults Module', () => {
           },
         };
 
-        test('should get n1, n2, n3 and e01, e02', () => {
+        test('should get n1, n2, n3 and e01, e02', async () => {
           const queryResult = new QueryResult();
-          queryResult.update({
+          await queryResult.update({
             "e01": {
               "connected_to": ["e02"],
               "records": [record1]
@@ -613,9 +613,9 @@ describe('Testing QueryResults Module', () => {
           },
         };
 
-        test('should get n1, n2, n3 and e01, e02', () => {
+        test('should get n1, n2, n3 and e01, e02', async () => {
           const queryResult = new QueryResult();
-          queryResult.update({
+          await queryResult.update({
             "e01": {
               "connected_to": ["e02"],
               "records": [record1]
@@ -767,10 +767,10 @@ describe('Testing QueryResults Module', () => {
         },
       };
 
-      test('should get 2 results when query graph is -- and records are -<', () => {
+      test('should get 2 results when query graph is -- and records are -<', async () => {
         const queryResult = new QueryResult();
 
-        queryResult.update({
+        await queryResult.update({
           "e01": {
             "connected_to": ["e02"],
             "records": [record1]
@@ -1332,7 +1332,7 @@ describe('Testing QueryResults Module', () => {
     // start of synthetic record tests
 
     describe('repeat calls', () => {
-      test('should get 0 results for update (0) & getResults (1)', () => {
+      test('should get 0 results for update (0) & getResults (1)', async () => {
         const queryResultInner = new QueryResult();
         const resultsInner = queryResultInner.getResults();
         expect(JSON.stringify(resultsInner)).toEqual(JSON.stringify([]));
@@ -1341,21 +1341,9 @@ describe('Testing QueryResults Module', () => {
       // inputs all the same below here
 
       const queryResultOuter = new QueryResult();
-      queryResultOuter.update({
-        "e0": {
-          "connected_to": ["e1"],
-          "records": [record0_n0a_n1a]
-        },
-        "e1": {
-          "connected_to": ["e0"],
-          "records": [record1_n1a_n2a]
-        }
-      });
-      const resultsOuter = queryResultOuter.getResults();
-
-      test('should get same results: update (1) & getResults (1) vs. update (2) & getResults (1)', () => {
-        const queryResultInner = new QueryResult();
-        queryResultInner.update({
+      let resultsOuter;
+      test('just wrapping for async', async() => {
+        await queryResultOuter.update({
           "e0": {
             "connected_to": ["e1"],
             "records": [record0_n0a_n1a]
@@ -1365,7 +1353,22 @@ describe('Testing QueryResults Module', () => {
             "records": [record1_n1a_n2a]
           }
         });
-        queryResultInner.update({
+        resultsOuter = queryResultOuter.getResults();
+      });
+
+      test('should get same results: update (1) & getResults (1) vs. update (2) & getResults (1)', async () => {
+        const queryResultInner = new QueryResult();
+        await queryResultInner.update({
+          "e0": {
+            "connected_to": ["e1"],
+            "records": [record0_n0a_n1a]
+          },
+          "e1": {
+            "connected_to": ["e0"],
+            "records": [record1_n1a_n2a]
+          }
+        });
+        await queryResultInner.update({
           "e0": {
             "connected_to": ["e1"],
             "records": [record0_n0a_n1a]
@@ -1379,9 +1382,9 @@ describe('Testing QueryResults Module', () => {
         expect(JSON.stringify(resultsOuter)).toEqual(JSON.stringify(resultsInner));
       });
 
-      test('should get same results: update (1) & getResults (1) vs. update (2) & getResults (2)', () => {
+      test('should get same results: update (1) & getResults (1) vs. update (2) & getResults (2)', async () => {
         const queryResultInner = new QueryResult();
-        queryResultInner.update({
+        await queryResultInner.update({
           "e0": {
             "connected_to": ["e1"],
             "records": [record0_n0a_n1a]
@@ -1391,7 +1394,7 @@ describe('Testing QueryResults Module', () => {
             "records": [record1_n1a_n2a]
           }
         });
-        queryResultInner.update({
+        await queryResultInner.update({
           "e0": {
             "connected_to": ["e1"],
             "records": [record0_n0a_n1a]
@@ -1406,9 +1409,9 @@ describe('Testing QueryResults Module', () => {
         expect(JSON.stringify(resultsOuter)).toEqual(JSON.stringify(resultsInner));
       });
 
-      test('should get same results: update (1) & getResults (1) vs. update (1) & getResults (2)', () => {
+      test('should get same results: update (1) & getResults (1) vs. update (1) & getResults (2)', async () => {
         const queryResultInner = new QueryResult();
-        queryResultInner.update({
+        await queryResultInner.update({
           "e0": {
             "connected_to": ["e1"],
             "records": [record0_n0a_n1a]
@@ -1425,9 +1428,9 @@ describe('Testing QueryResults Module', () => {
     });
       
     describe('query graph: →', () => {
-      test('should get 1 result with record: →', () => {
+      test('should get 1 result with record: →', async () => {
         const queryResult = new QueryResult();
-        queryResult.update({
+        await queryResult.update({
           "e0": {
             "connected_to": [],
             "records": [record0_n0a_n1a]
@@ -1446,9 +1449,9 @@ describe('Testing QueryResults Module', () => {
         expect(results[0]).toHaveProperty('score');
       });
 
-      test('should get 4 results for 4 different records per edge: 𝍬', () => {
+      test('should get 4 results for 4 different records per edge: 𝍬', async () => {
         const queryResult = new QueryResult();
-        queryResult.update({
+        await queryResult.update({
           "e0": {
             "connected_to": [],
             "records": [record0_n0a_n1a, record0_n0a_n1b, record0_n0b_n1a, record0_n0b_n1b]
@@ -1492,9 +1495,9 @@ describe('Testing QueryResults Module', () => {
       });
 
       // TODO: Do we want to test for removing duplicates?
-      test('should get 1 result for the same record repeated 4 times: 𝍬', () => {
+      test('should get 1 result for the same record repeated 4 times: 𝍬', async () => {
         const queryResult = new QueryResult();
-        queryResult.update({
+        await queryResult.update({
           "e0": {
             "connected_to": [],
             "records": [record0_n0a_n1a, record0_n0a_n1a, record0_n0a_n1a, record0_n0a_n1a]
@@ -1514,9 +1517,9 @@ describe('Testing QueryResults Module', () => {
       });
 
 //      // TODO: this test fails. Do we need to handle this case?
-//      test('should get 1 result for the same record repeated twice and reversed twice: 𝍬', () => {
+//      test('should get 1 result for the same record repeated twice and reversed twice: 𝍬', async () => {
 //        const queryResult = new QueryResult();
-//        queryResult.update({
+//        await queryResult.update({
 //          "e1": {
 //            "connected_to": [],
 //            "records": [record1_n1a_n2a, record1_n1a_n2a, record1_n2a_n1a, record1_n2a_n1a]
@@ -1536,9 +1539,9 @@ describe('Testing QueryResults Module', () => {
 //      });
 //
 //      // TODO: this one fails. Do we need to worry about this case?
-//      test('should get 2 results for the same record repeated twice and reversed twice: ⇉⇇', () => {
+//      test('should get 2 results for the same record repeated twice and reversed twice: ⇉⇇', async () => {
 //        const queryResult = new QueryResult();
-//        queryResult.update({
+//        await queryResult.update({
 //          "e1": {
 //            "connected_to": ["e1_reversed"],
 //            "records": [record1_n1a_n2a, record1_n1a_n2a]
@@ -1569,9 +1572,9 @@ describe('Testing QueryResults Module', () => {
 //        expect(results[1]).toHaveProperty('score');
 //      });
 
-      test('should get 1 result with 2 edge mappings when predicates differ: ⇉', () => {
+      test('should get 1 result with 2 edge mappings when predicates differ: ⇉', async () => {
         const queryResult = new QueryResult();
-        queryResult.update({
+        await queryResult.update({
           "e0": {
             "connected_to": [],
             "records": [record0_n0a_n1a_pred0_api1, record0_n0a_n1a_pred1_api1]
@@ -1596,9 +1599,9 @@ describe('Testing QueryResults Module', () => {
       // These two tests won't work until the KG edge ID assignment system is updated,
       // b/c we need it to take into account the API source.
       /*
-      test('should get 1 result with 2 edge mappings when API sources differ: ⇉', () => {
+      test('should get 1 result with 2 edge mappings when API sources differ: ⇉', async () => {
         const queryResult = new QueryResult();
-        queryResult.update({
+        await queryResult.update({
           "e0": {
             "connected_to": [],
             "records": [record0_n0a_n1a_pred1_api0, record0_n0a_n1a_pred1_api1]
@@ -1620,9 +1623,9 @@ describe('Testing QueryResults Module', () => {
         expect(results[0]).toHaveProperty('score');
       });
 
-      test('should get 1 result with 4 edge mappings when predicates & API sources differ: 𝍬', () => {
+      test('should get 1 result with 4 edge mappings when predicates & API sources differ: 𝍬', async () => {
         const queryResult = new QueryResult();
-        queryResult.update({
+        await queryResult.update({
           "e0": {
             "connected_to": [],
             "records": [
@@ -1653,9 +1656,9 @@ describe('Testing QueryResults Module', () => {
     });
 
     describe('query graph: →→', () => {
-      test('should get 1 result with records: →→', () => {
+      test('should get 1 result with records: →→', async () => {
         const queryResult = new QueryResult();
-        queryResult.update({
+        await queryResult.update({
           "e0": {
             "connected_to": ["e1"],
             "records": [record0_n0a_n1a]
@@ -1678,9 +1681,9 @@ describe('Testing QueryResults Module', () => {
         expect(results[0]).toHaveProperty('score');
       });
       
-      test('should get 2 results with records: >-', () => {
+      test('should get 2 results with records: >-', async () => {
         const queryResult = new QueryResult();
-        queryResult.update({
+        await queryResult.update({
           "e0": {
             "connected_to": ["e1"],
             "records": [record0_n0a_n1a, record0_n0b_n1a]
@@ -1711,9 +1714,9 @@ describe('Testing QueryResults Module', () => {
         expect(results[1]).toHaveProperty('score');
       });
       
-      test('should get 4 results with records: ><', () => {
+      test('should get 4 results with records: ><', async () => {
         const queryResult = new QueryResult();
-        queryResult.update({
+        await queryResult.update({
           "e0": {
             "connected_to": ["e1"],
             "records": [record0_n0a_n1a, record0_n0b_n1a]
@@ -1760,9 +1763,9 @@ describe('Testing QueryResults Module', () => {
         expect(results[3]).toHaveProperty('score');
       });
       
-      test('should get 2 results with records: >< (is_set for n0)', () => {
+      test('should get 2 results with records: >< (is_set for n0)', async () => {
         const queryResult = new QueryResult();
-        queryResult.update({
+        await queryResult.update({
           "e0_left_is_set": {
             "connected_to": ["e1"],
             "records": [record0_n0a_n1a_left_is_set, record0_n0b_n1a_left_is_set]
@@ -1793,9 +1796,9 @@ describe('Testing QueryResults Module', () => {
         expect(results[1]).toHaveProperty('score');
       });
       
-      test('should get 4 results with records: >< (is_set for n1)', () => {
+      test('should get 4 results with records: >< (is_set for n1)', async () => {
         const queryResult = new QueryResult();
-        queryResult.update({
+        await queryResult.update({
           "e0_right_is_set": {
             "connected_to": ["e1_left_is_set"],
             "records": [record0_n0a_n1a_right_is_set, record0_n0b_n1a_right_is_set]
@@ -1826,9 +1829,9 @@ describe('Testing QueryResults Module', () => {
         expect(results[1]).toHaveProperty('score');
       });
 
-      test('should get 1 result with records: >< (is_set for n0 and n2)', () => {
+      test('should get 1 result with records: >< (is_set for n0 and n2)', async () => {
         const queryResult = new QueryResult();
-        queryResult.update({
+        await queryResult.update({
           "e0_left_is_set": {
             "connected_to": ["e1_reversed_left_is_set"],
             "records": [record0_n0a_n1a_left_is_set, record0_n0b_n1a_left_is_set]
@@ -1851,9 +1854,9 @@ describe('Testing QueryResults Module', () => {
         expect(results[0]).toHaveProperty('score');
       });
 
-      test('should get 1 result with records: >< (is_set for n0, n1 and n2)', () => {
+      test('should get 1 result with records: >< (is_set for n0, n1 and n2)', async () => {
         const queryResult = new QueryResult();
-        queryResult.update({
+        await queryResult.update({
           "e0_both_is_set": {
             "connected_to": ["e1_both_is_set"],
             "records": [record0_n0a_n1a_both_is_set, record0_n0b_n1a_both_is_set]
@@ -1876,9 +1879,9 @@ describe('Testing QueryResults Module', () => {
         expect(results[0]).toHaveProperty('score');
       });
 
-      test('should get 2 results with records: ⇉⇉', () => {
+      test('should get 2 results with records: ⇉⇉', async () => {
         const queryResult = new QueryResult();
-        queryResult.update({
+        await queryResult.update({
           "e0": {
             "connected_to": ["e1"],
             "records": [record0_n0a_n1a, record0_n0a_n1b]
@@ -1910,9 +1913,9 @@ describe('Testing QueryResults Module', () => {
       });
       
       // TODO: Do we want to test for removing duplicates?
-      test('should get 1 result with records: ⇉⇉ (duplicates)', () => {
+      test('should get 1 result with records: ⇉⇉ (duplicates)', async () => {
         const queryResult = new QueryResult();
-        queryResult.update({
+        await queryResult.update({
           "e0": {
             "connected_to": ["e1"],
             "records": [record0_n0a_n1a, record0_n0a_n1a]
@@ -1935,9 +1938,9 @@ describe('Testing QueryResults Module', () => {
         expect(results[0]).toHaveProperty('score');
       });
       
-      test('should get 2 results with records: -<', () => {
+      test('should get 2 results with records: -<', async () => {
         const queryResult = new QueryResult();
-        queryResult.update({
+        await queryResult.update({
           "e0": {
             "connected_to": ["e1"],
             "records": [record0_n0a_n1a]
@@ -1968,9 +1971,9 @@ describe('Testing QueryResults Module', () => {
         expect(results[1]).toHaveProperty('score');
       });
       
-      test('should get 1 result with records: →← (directionality does not match query graph)', () => {
+      test('should get 1 result with records: →← (directionality does not match query graph)', async () => {
         const queryResult = new QueryResult();
-        queryResult.update({
+        await queryResult.update({
           "e0": {
             "connected_to": ["e1_reversed"],
             "records": [record0_n0a_n1a]
@@ -1994,7 +1997,7 @@ describe('Testing QueryResults Module', () => {
       });
 
       
-      test('should get 5k results when e0 has 100 records (50 connected, 50 not), and e1 has 10k (5k connected, 5k not)', () => {
+      test('should get 5k results when e0 has 100 records (50 connected, 50 not), and e1 has 10k (5k connected, 5k not)', async () => {
         /**
          * This test is intended to assess performance when handling a larger number of records.
          *
@@ -2129,7 +2132,7 @@ describe('Testing QueryResults Module', () => {
         });
 
         const queryResult = new QueryResult();
-        queryResult.update({
+        await queryResult.update({
           "e0": {
             "connected_to": ["e1"],
             "records": e0Records
@@ -2160,7 +2163,7 @@ describe('Testing QueryResults Module', () => {
         expect(results[1]).toHaveProperty('score');
       });
       
-      test('should get 1 result when e0 has 1 record, and e1 has 50k + 1 (1 connected, 50k not)', () => {
+      test('should get 1 result when e0 has 1 record, and e1 has 50k + 1 (1 connected, 50k not)', async () => {
         /**
          * n0 -e0-> n1 -e1-> n2
          *
@@ -2255,7 +2258,7 @@ describe('Testing QueryResults Module', () => {
         });
 
         const queryResult = new QueryResult();
-        queryResult.update({
+        await queryResult.update({
           "e0": {
             "connected_to": ["e1"],
             "records": e0Records
@@ -2360,7 +2363,7 @@ describe('Testing QueryResults Module', () => {
           });
 
           const queryResult = new QueryResult();
-          queryResult.update({
+          await queryResult.update({
             "e0": {
               "connected_to": ["e1"],
               "records": e0Records
@@ -2523,7 +2526,7 @@ describe('Testing QueryResults Module', () => {
           });
 
           const queryResult = new QueryResult();
-          queryResult.update({
+          await queryResult.update({
             "e0": {
               "connected_to": ["e1"],
               "records": e0Records
@@ -2630,7 +2633,7 @@ describe('Testing QueryResults Module', () => {
           });
 
           const queryResult = new QueryResult();
-          queryResult.update({
+          await queryResult.update({
             "e0": {
               "connected_to": ["e1"],
               "records": e0Records
@@ -2666,9 +2669,9 @@ describe('Testing QueryResults Module', () => {
     });
 
     describe('query graph: →←', () => {
-      test('should get 1 result with records: →←', () => {
+      test('should get 1 result with records: →←', async () => {
         const queryResult = new QueryResult();
-        queryResult.update({
+        await queryResult.update({
           "e0": {
             "connected_to": ["e1_reversed"],
             "records": [record0_n0a_n1a]
@@ -2691,9 +2694,9 @@ describe('Testing QueryResults Module', () => {
         expect(results[0]).toHaveProperty('score');
       });
 
-      test('should get 1 result with records: →→ (directionality does not match query graph)', () => {
+      test('should get 1 result with records: →→ (directionality does not match query graph)', async () => {
         const queryResult = new QueryResult();
-        queryResult.update({
+        await queryResult.update({
           "e0": {
             "connected_to": ["e1"],
             "records": [record0_n0a_n1a]
@@ -2720,9 +2723,9 @@ describe('Testing QueryResults Module', () => {
     });
 
     describe('query graph: ←→', () => {
-      test('should get 1 result for 1 record per edge: ←→', () => {
+      test('should get 1 result for 1 record per edge: ←→', async () => {
         const queryResult = new QueryResult();
-        queryResult.update({
+        await queryResult.update({
           "e1_reversed": {
             "connected_to": ["e4"],
             "records": [record1_n2a_n1a]
@@ -2745,10 +2748,10 @@ describe('Testing QueryResults Module', () => {
         expect(results[0]).toHaveProperty('score');
       });
 
-      test('should get 0 results due to unconnected record: ←̽→', () => {
+      test('should get 0 results due to unconnected record: ←̽→', async () => {
         const queryResult = new QueryResult();
 
-        queryResult.update({
+        await queryResult.update({
           "e1_reversed": {
             "connected_to": ["e4"],
             "records": [record1_n2b_n1a]
@@ -2772,10 +2775,10 @@ describe('Testing QueryResults Module', () => {
        *   n0 -e0-> n1
        *               -e2-> n3
        */
-      test('should get 1 result for 1 record per edge: →⇉⮆', () => {
+      test('should get 1 result for 1 record per edge: →⇉⮆', async () => {
         const queryResult = new QueryResult();
 
-        queryResult.update({
+        await queryResult.update({
           "e0": {
             "connected_to": ["e1", "e2"],
             "records": [record0_n0a_n1a]
@@ -2810,10 +2813,10 @@ describe('Testing QueryResults Module', () => {
 //       *   n0 <-e0- n1
 //       *               -e2-> n3
 //       */
-//      test('should get 1 result for 1 record per edge: ←⇉⮆', () => {
+//      test('should get 1 result for 1 record per edge: ←⇉⮆', async () => {
 //        const queryResult = new QueryResult();
 //
-//        queryResult.update({
+//        await queryResult.update({
 //          "e0_reversed": {
 //            "connected_to": ["e1", "e2"],
 //            "records": [record0_n1a_n0a]
@@ -2847,10 +2850,10 @@ describe('Testing QueryResults Module', () => {
        *   n0 -e0-> n1
        *               -e2-> n3
        */
-      test('should get 1 result for 1 record per edge: →⇆⮆', () => {
+      test('should get 1 result for 1 record per edge: →⇆⮆', async () => {
         const queryResult = new QueryResult();
 
-        queryResult.update({
+        await queryResult.update({
           "e0": {
             "connected_to": ["e1_reversed", "e2"],
             "records": [record0_n0a_n1a]
@@ -2884,10 +2887,10 @@ describe('Testing QueryResults Module', () => {
        *   n0 -e0-> n1
        *               <-e2- n3
        */
-      test('should get 1 result for 1 record per edge: →⇇⮆', () => {
+      test('should get 1 result for 1 record per edge: →⇇⮆', async () => {
         const queryResult = new QueryResult();
 
-        queryResult.update({
+        await queryResult.update({
           "e0": {
             "connected_to": ["e1_reversed", "e2_reversed"],
             "records": [record0_n0a_n1a]
@@ -2921,10 +2924,10 @@ describe('Testing QueryResults Module', () => {
        *   n0 ---> n1
        *               ---> n2
        */
-      test('should get 0 results due to unconnected record: -<̽', () => {
+      test('should get 0 results due to unconnected record: -<̽', async () => {
         const queryResult = new QueryResult();
 
-        queryResult.update({
+        await queryResult.update({
           "e0": {
             "connected_to": ["e1", "e2"],
             "records": [record0_n0a_n1a]
@@ -2954,10 +2957,10 @@ describe('Testing QueryResults Module', () => {
 //       *               -e3-> n4 -e6->
 //       */
 //
-////      test('should get 1 result for 1 record per edge', () => {
+////      test('should get 1 result for 1 record per edge', async () => {
 ////        const queryResult = new QueryResult();
 ////
-////        queryResult.update({
+////        await queryResult.update({
 ////          "e0": {
 ////            "connected_to": ["e1", "e2", "e3"],
 ////            "records": [record0_n0a_n1a]
@@ -3001,10 +3004,10 @@ describe('Testing QueryResults Module', () => {
 ////        expect(results[0]).toHaveProperty('score');
 ////      });
 //
-////      test('should get 2 results for 2 records per edge at n0', () => {
+////      test('should get 2 results for 2 records per edge at n0', async () => {
 ////        const queryResult = new QueryResult();
 ////
-////        queryResult.update({
+////        await queryResult.update({
 ////          "e0": {
 ////            "connected_to": ["e1", "e2", "e3"],
 ////            "records": [record0_n0a_n1a, record0_n0b_n1a]
@@ -3056,10 +3059,10 @@ describe('Testing QueryResults Module', () => {
 ////        expect(results[1]).toHaveProperty('score');
 ////      });
 ////
-////      test('should get 2 results for 2 records per edge at n1', () => {
+////      test('should get 2 results for 2 records per edge at n1', async () => {
 ////        const queryResult = new QueryResult();
 ////
-////        queryResult.update({
+////        await queryResult.update({
 ////          "e0": {
 ////            "connected_to": ["e1", "e2", "e3"],
 ////            "records": [record0_n0a_n1a, record0_n0a_n1b]
@@ -3126,10 +3129,10 @@ describe('Testing QueryResults Module', () => {
 ////       *   n0b -e0-> n1a -e2-> n3a -e5-> n5a
 ////       *                 -e3-> n4a -e6->
 ////       */
-////      test('should get 3 results for n0a→n1a, n0a→n1b, n0b→n1a', () => {
+////      test('should get 3 results for n0a→n1a, n0a→n1b, n0b→n1a', async () => {
 ////        const queryResult = new QueryResult();
 ////
-////        queryResult.update({
+////        await queryResult.update({
 ////          "e0": {
 ////            "connected_to": ["e1", "e2", "e3"],
 ////            "records": [record0_n0a_n1a, record0_n0a_n1b, record0_n0b_n1a]
@@ -3209,10 +3212,10 @@ describe('Testing QueryResults Module', () => {
 ////       *   n0b -e0-> n1b -e2-> n3a -e5-> n5a
 ////       *                 -e3-> n4a -e6->
 ////       */
-////      test('should get 4 results for n0a→n1a, n0a→n1b, n0b→n1a, n0b→n1b', () => {
+////      test('should get 4 results for n0a→n1a, n0a→n1b, n0b→n1a, n0b→n1b', async () => {
 ////        const queryResult = new QueryResult();
 ////
-////        queryResult.update({
+////        await queryResult.update({
 ////          "e0": {
 ////            "connected_to": ["e1", "e2", "e3"],
 ////            "records": [record0_n0a_n1a, record0_n0a_n1b, record0_n0b_n1a, record0_n0b_n1b]
@@ -3280,10 +3283,10 @@ describe('Testing QueryResults Module', () => {
 ////        expect(results[3]).toHaveProperty('score');
 ////      });
 //
-//      test('should get 0 results due to unconnected record at n1 (n1a vs. n1b)', () => {
+//      test('should get 0 results due to unconnected record at n1 (n1a vs. n1b)', async () => {
 //        const queryResult = new QueryResult();
 //
-//        queryResult.update({
+//        await queryResult.update({
 //          "e0": {
 //            "connected_to": ["e1", "e2", "e3"],
 //            "records": [record0_n0a_n1a]
@@ -3319,10 +3322,10 @@ describe('Testing QueryResults Module', () => {
 //        expect(results.length).toEqual(0);
 //      });
 //
-////      test('should get 1 result & ignore unconnected record', () => {
+////      test('should get 1 result & ignore unconnected record', async () => {
 ////        const queryResult = new QueryResult();
 ////
-////        queryResult.update({
+////        await queryResult.update({
 ////          "e0": {
 ////            "connected_to": ["e1", "e2", "e3"],
 ////            "records": [record0_n0a_n1a]
@@ -3366,10 +3369,10 @@ describe('Testing QueryResults Module', () => {
 ////        expect(results[0]).toHaveProperty('score');
 ////      });
 ////
-////      test('should get 1 result & ignore 4 unconnected records', () => {
+////      test('should get 1 result & ignore 4 unconnected records', async () => {
 ////        const queryResult = new QueryResult();
 ////
-////        queryResult.update({
+////        await queryResult.update({
 ////          "e0": {
 ////            "connected_to": ["e1", "e2", "e3"],
 ////            "records": [record0_n0a_n1a, record0_n0a_n1b]

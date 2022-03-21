@@ -312,7 +312,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     //update query graph
     this.bteGraph.update(manager.getRecords());
     //update query results
-    this.trapiResultsAssembler.update(manager.getOrganizedRecords());
+    await this.trapiResultsAssembler.update(manager.getOrganizedRecords());
     this.bteGraph.notify();
     const KGNodes = Object.keys(this.knowledgeGraph.nodes).length;
     const kgEdges = Object.keys(this.knowledgeGraph.edges).length;
@@ -338,5 +338,5 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       ).getLog(),
     );
     debug(`(14) TRAPI query finished.`);
-    }
+  }
 };
