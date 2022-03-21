@@ -47,7 +47,7 @@ const redisClient =
         hgetallAsync: timeoutFunc(promisify(client.hgetall).bind(client)),
         expireAsync: timeoutFunc(promisify(client.expire).bind(client)),
         delAsync: timeoutFunc(promisify(client.del).bind(client)),
-        lock: timeoutFunc(promisify(redisLock(client)), 20 * 60 * 1000),
+        lock: timeoutFunc(promisify(redisLock(client)), 5 * 60000),
         hmsetAsync: timeoutFunc(promisify(client.hmset).bind(client)),
         keysAsync: timeoutFunc(promisify(client.keys).bind(client)),
         existsAsync: timeoutFunc(promisify(client.exists).bind(client)),
