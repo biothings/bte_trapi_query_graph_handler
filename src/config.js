@@ -17,5 +17,9 @@ exports.API_BATCH_SIZE = [
   },
 ];
 
-//max node IDs an edge with no other IDs can have
+// max node IDs an edge with no other IDs can have
 exports.ENTITY_MAX = 1000
+
+exports.EDGE_ATTRIBUTES_USED_IN_RECORD_HASH = [
+  "biolink:has_disease_context",
+];
