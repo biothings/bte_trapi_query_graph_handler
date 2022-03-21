@@ -108,11 +108,12 @@ module.exports = class {
     let cachedRecords = [];
     debug('Begin edge cache lookup...');
     for (let i = 0; i < qXEdges.length; i++) {
-      const qXEdgeMetaKGHashes = this._hashEdgeByMetaKG(qXEdges[i].getHashedEdgeRepresentation());
+      const qXEdgeMetaKGHash = this._hashEdgeByMetaKG(qXEdges[i].getHashedEdgeRepresentation());
       const cachedRecordJSON = await new Promise(async (resolve) => {
-        const redisID = 'bte:edgeCache:' + qXEdgeMetaKGHashes;
-        const unlock = await redisClient.lock('redisLock:' + qXEdgeMetaKGHashes);
+        let unlock = () => null;
         try {
+          const redisID = 'bte:edgeCache:' + qXEdgeMetaKGHash;
+          unlock = await redisClient.lock('redisLock:' + redisID);
           const cachedRecord = await redisClient.hgetallAsync(redisID);
           if (cachedRecord) {
             const decodedRecords = [];
@@ -246,11 +247,13 @@ module.exports = class {
       const groupedRecords = this._groupQueryRecordsByQXEdgeHash(queryRecords);
       const qXEdgeHashes = Array.from(Object.keys(groupedRecords));
       debug(`Number of hashed edges: ${qXEdgeHashes.length}`);
+      const failedHashes = [];
       await async.eachSeries(qXEdgeHashes, async (hash) => {
         // lock to prevent caching to/reading from actively caching edge
-        const unlock = await redisClient.lock('redisLock:' + hash);
+        let unlock = () => null;
         try {
           const redisID = 'bte:edgeCache:' + hash;
+          unlock = await redisClient.lock('redisLock:' + redisID);
           await redisClient.delAsync(redisID); // prevents weird overwrite edge cases
           await new Promise((resolve, reject) => {
             let i = 0;
@@ -275,12 +278,20 @@ module.exports = class {
           });
           await redisClient.expireAsync(redisID, process.env.REDIS_KEY_EXPIRE_TIME || 600);
         } catch (error) {
+          failedHashes.push(hash);
           debug(`Failed to cache qXEdge ${hash} records due to error ${error}. This does not stop other edges from caching nor terminate the query.`)
         } finally {
           unlock(); // release lock whether cache succeeded or not
         }
       });
-      debug(`Successfully cached (${queryRecords.length}) query records.`);
+      const successCount = Object.entries(groupedRecords).reduce((acc, [hash, records]) => {
+        return failedHashes.includes(hash) ? acc : acc + records.length;
+      }, 0);
+      if (successCount) {
+        debug(`Successfully cached (${successCount}) query records.`);
+      } else {
+        debug(`qXEdge caching failed.`);
+      }
     } catch (error) {
       debug(`Caching failed due to ${error}. This does not terminate the query.`);
     } finally {
