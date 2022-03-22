@@ -82,11 +82,11 @@ module.exports = class QueryGraphHelper {
 
   _getConfiguredEdgeAttributesForHash(record) {
     return this._getEdgeAttributes(record)
-      .filter((record) => {
-        return config.EDGE_ATTRIBUTES_USED_IN_RECORD_HASH.includes(record.attribute_type_id);
+      .filter((attribute) => {
+        return config.EDGE_ATTRIBUTES_USED_IN_RECORD_HASH.includes(attribute.attribute_type_id);
       })
       .reduce((acc, attribute) => {
-        return [acc, ...`${attribute.attribute_type_id}:${attribute.value}`];
+        return [...acc, `${attribute.attribute_type_id}:${attribute.value}`];
       }, [])
       .join(',');
   }
