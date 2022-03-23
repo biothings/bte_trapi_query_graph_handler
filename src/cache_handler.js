@@ -98,7 +98,7 @@ module.exports = class {
   }
 
   async categorizeEdges(qXEdges) {
-    if (this.cacheEnabled === false) {
+    if (this.cacheEnabled === false || process.env.INTERNAL_DISABLE_REDIS) {
       return {
         cachedRecords: [],
         nonCachedQXEdges: qXEdges,
@@ -233,7 +233,7 @@ module.exports = class {
   }
 
   async cacheEdges(queryRecords) {
-    if (this.cacheEnabled === false) {
+    if (this.cacheEnabled === false || process.env.INTERNAL_DISABLE_REDIS) {
       if (parentPort) {
         parentPort.postMessage({ cacheDone: true });
       }
@@ -251,8 +251,11 @@ module.exports = class {
       await async.eachSeries(qXEdgeHashes, async (hash) => {
         // lock to prevent caching to/reading from actively caching edge
         let unlock = () => null;
+        const redisID = 'bte:edgeCache:' + hash;
+        if (parentPort) {
+          parentPort.postMessage({ addCacheKey: redisID });
+        }
         try {
-          const redisID = 'bte:edgeCache:' + hash;
           unlock = await redisClient.lock('redisLock:' + redisID);
           await redisClient.delAsync(redisID); // prevents weird overwrite edge cases
           await new Promise((resolve, reject) => {
@@ -282,6 +285,9 @@ module.exports = class {
           debug(`Failed to cache qXEdge ${hash} records due to error ${error}. This does not stop other edges from caching nor terminate the query.`)
         } finally {
           unlock(); // release lock whether cache succeeded or not
+          if (parentPort) {
+            parentPort.postMessage({ completeCacheKey: redisID });
+          }
         }
       });
       const successCount = Object.entries(groupedRecords).reduce((acc, [hash, records]) => {
