@@ -2,6 +2,7 @@ const { cloneDeep, keys, spread, toPairs, values, zip } = require('lodash');
 const GraphHelper = require('./helper');
 const helper = new GraphHelper();
 const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
+const LogEntry = require('./log_entry');
 const { getScores, calculateScore } = require('./score');
 
 /**
@@ -55,6 +56,7 @@ module.exports = class TrapiResultsAssembler {
      * @private
      */
     this._results = [];
+    this.logs = [];
   }
 
   getResults() {
@@ -397,6 +399,8 @@ module.exports = class TrapiResultsAssembler {
       });
     });
 
+    let resultsWithoutScore = 0;
+    let resultsWithScore = 0;
     /**
      * The last step is to do the minor re-formatting to turn consolidatedSolutions
      * into the desired final results.
@@ -405,6 +409,11 @@ module.exports = class TrapiResultsAssembler {
 
       // TODO: replace with better score implementation later
       const result = {node_bindings: {}, edge_bindings: {}, score: calculateScore(consolidatedSolution, scoreCombos)};
+      if (result.score == 0) {
+        resultsWithoutScore++;
+      } else {
+        resultsWithScore++;
+      }
 
       consolidatedSolution.forEach(({
         inputQNodeID, outputQNodeID,
@@ -433,5 +442,10 @@ module.exports = class TrapiResultsAssembler {
       return result;
     })
     .sort((result1, result2) => (result2.score - result1.score)); //sort by decreasing score
+    
+    debug(`Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`);
+    this.logs.push(
+      new LogEntry('DEBUG', null, `Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`).getLog(),
+    );
   }
 };

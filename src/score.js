@@ -3,13 +3,38 @@ const axios = require('axios');
 const GraphHelper = require('./helper');
 const helper = new GraphHelper();
 
-async function getScores (dataByEdge) {
+const _ = require('lodash');
+
+async function query(queryPairs) {
+  const url = 'http://biothings.ncats.io/semmeddb/query/ngd';
+  const batchSize = 1000;
+
+  debug("Querying", queryPairs.length, "combos.");
+
+  let chunked_input = _.chunk(queryPairs, batchSize);
+  try {
+    let axios_queries = chunked_input.map((input) => {
+      return axios.post(
+        url,
+        {umls: input},
+      );
+    });
+    //convert res array into single object with all curies
+    let res = await Promise.all(axios_queries);
+    res = res.map(r => r.data.filter(combo => Number.isFinite(combo.ngd))).flat(); // get numerical scores and flatten array
+    return res;
+  } catch (err) {
+    debug("Failed to query for scores: ", err);
+  }
+}
+
+async function getScores (recordsByQEdgeID) {
   let pairs = {};
 
-  let combosWithoutResults = 0;
+  let combosWithoutIDs = 0;
 
-  Object.keys(dataByEdge).forEach((edge_key) => {
-    dataByEdge[edge_key].records.forEach((record) => {
+  Object.keys(recordsByQEdgeID).forEach((edge_key) => {
+    recordsByQEdgeID[edge_key].records.forEach((record) => {
       let inputUMLS = helper._getInputUMLS(record) || [];
       let outputUMLS = helper._getOutputUMLS(record) || [];
 
@@ -24,7 +49,7 @@ async function getScores (dataByEdge) {
       
       if (inputUMLS.length == 0 || outputUMLS.length == 0) {
         // debug("NO RESULT", helper._getInputCurie(record), helper._getInputUMLS(record), helper._getOutputCurie(record), helper._getOutputUMLS(record))
-        combosWithoutResults++;
+        combosWithoutIDs++;
       }
     });
   });
@@ -34,12 +59,9 @@ async function getScores (dataByEdge) {
   }).flat();
 
 
-  let results = await axios.post("http://biothings.ncats.io/semmeddb/query/ngd", {umls: queries});
+  let results = await query(queries);
 
-  debug("Combos no UMLS ID (on input and/or output): ", combosWithoutResults);
-  results = results.data.filter(combo => Number.isFinite(combo.ngd));
-  debug("Combos with scores: ", results.length);
-
+  debug("Combos no UMLS ID: ", combosWithoutIDs);
   return results;
 }
 
