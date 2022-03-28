@@ -61,6 +61,38 @@ module.exports = class TrapiResultsAssembler {
   }
 
   /**
+   * Find all QNodes having only one QEdge, sorted by least records first
+   * @return {string[][]}
+   */
+  _getValidInitialPairs(recordsByQEdgeID) {
+    // qNodeID: set{qEdgeID} for node: edges using node
+    const qNodeEdgeCounts = toPairs(recordsByQEdgeID).reduce(
+      (qNodeCounts, [queryEdgeID, { connected_to, records }]) => {
+        [
+          helper._getInputQueryNodeID(records[0]),
+          helper._getOutputQueryNodeID(records[0])
+        ].forEach((qNodeID) => {
+          if (!qNodeCounts[qNodeID]) {
+            qNodeCounts[qNodeID] = new Set();
+          }
+          qNodeCounts[qNodeID].add(queryEdgeID);
+        });
+        return qNodeCounts;
+      },
+      {},
+    );
+    // qNodeID: qEdgeID for valid 'leaf' nodes, sorted by # records ascending
+    const validNodes = toPairs(qNodeEdgeCounts)
+      .filter(([qNodeID, qEdgeIDs]) => qEdgeIDs.size < 2)
+      .map(([qNodeID, qEdgeIDs]) => [qNodeID, [...qEdgeIDs][0]])
+      .sort(([qNodeID_0, qEdgeID_0], [qNodeID_1, qEdgeID_1]) => {
+        return recordsByQEdgeID[qEdgeID_0].records.length - recordsByQEdgeID[qEdgeID_1].records.length;
+      });
+
+    return validNodes;
+  }
+
+  /**
    * Create combinations of record data where each combination satisfies the query graph,
    * with each hop having one associated record and every associated record being linked
    * to its neighbor as per the query graph.
@@ -240,32 +272,7 @@ module.exports = class TrapiResultsAssembler {
     debug(`Nodes with "is_set": ${JSON.stringify([...qNodeIDsWithIsSet])}`)
 
     // find a QNode having only one QEdge to use as the root node for tree traversal
-
-    // qNodeID: set{qEdgeID} for node: edges using node
-    const qNodeEdgeCounts = toPairs(recordsByQEdgeID).reduce(
-      (qNodeCounts, [queryEdgeID, { connected_to, records }]) => {
-        [
-          helper._getInputQueryNodeID(records[0]),
-          helper._getOutputQueryNodeID(records[0])
-        ].forEach((qNodeID) => {
-          if (!qNodeCounts[qNodeID]) {
-            qNodeCounts[qNodeID] = new Set();
-          }
-          qNodeCounts[qNodeID].add(queryEdgeID);
-        });
-        return qNodeCounts;
-      },
-      {},
-    );
-    // qNodeID: qEdgeID for valid 'leaf' nodes, sorted by # records ascending
-    const validNodes = toPairs(qNodeEdgeCounts)
-      .filter(([qNodeID, qEdgeIDs]) => qEdgeIDs.size < 2)
-      .map(([qNodeID, qEdgeIDs]) => [qNodeID, [...qEdgeIDs][0]])
-      .sort(([qNodeID_0, qEdgeID_0], [qNodeID_1, qEdgeID_1]) => {
-        return recordsByQEdgeID[qEdgeID_0].records.length - recordsByQEdgeID[qEdgeID_1].records.length;
-      });
-
-    let [initialQNodeIDToMatch, initialQEdgeID] = validNodes[0];
+    let [initialQNodeIDToMatch, initialQEdgeID] = this._getInitialPairs(recordsByQEdgeID)[0];
 
     debug(`initialQEdgeID: ${initialQEdgeID}, initialQNodeIDToMatch: ${initialQNodeIDToMatch}`);
 
