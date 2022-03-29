@@ -272,7 +272,7 @@ module.exports = class TrapiResultsAssembler {
     debug(`Nodes with "is_set": ${JSON.stringify([...qNodeIDsWithIsSet])}`)
 
     // find a QNode having only one QEdge to use as the root node for tree traversal
-    let [initialQNodeIDToMatch, initialQEdgeID] = this._getInitialPairs(recordsByQEdgeID)[0];
+    let [initialQNodeIDToMatch, initialQEdgeID] = this._getValidInitialPairs(recordsByQEdgeID)[0];
 
     debug(`initialQEdgeID: ${initialQEdgeID}, initialQNodeIDToMatch: ${initialQNodeIDToMatch}`);
 
