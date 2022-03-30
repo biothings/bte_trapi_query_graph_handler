@@ -3,7 +3,7 @@ const kg_node = require('./kg_node');
 const helper = require('../helper');
 const debug = require('debug')('bte:biothings-explorer-trapi:Graph');
 
-module.exports = class BTEGraph { // TODO rename to bteGraph? seems to only be used for such.
+module.exports = class BTEGraph {
   constructor() {
     this.nodes = {};
     this.edges = {};
@@ -19,13 +19,13 @@ module.exports = class BTEGraph { // TODO rename to bteGraph? seems to only be u
       if (record) {
         const inputPrimaryCurie = this.helper._getInputCurie(record);
         const inputQNodeID = this.helper._getInputQueryNodeID(record);
-        const inputBTEGraphID = inputPrimaryCurie + '-' + inputQNodeID;
+        const inputBTENodeID = inputPrimaryCurie + '-' + inputQNodeID;
         const outputPrimaryCurie = this.helper._getOutputCurie(record);
         const outputQNodeID = this.helper._getOutputQueryNodeID(record);
-        const outputBTEGraphID = outputPrimaryCurie + '-' + outputQNodeID;
+        const outputBTENodeID = outputPrimaryCurie + '-' + outputQNodeID;
         const recordHash = this.helper._getRecordHash(record);
-        if (!(outputBTEGraphID in this.nodes)) {
-          this.nodes[outputBTEGraphID] = new kg_node(outputBTEGraphID, {
+        if (!(outputBTENodeID in this.nodes)) {
+          this.nodes[outputBTENodeID] = new kg_node(outputBTENodeID, {
             primaryCurie: outputPrimaryCurie,
             qNodeID: outputQNodeID,
             equivalentCuries: this.helper._getOutputEquivalentIds(record),
@@ -35,8 +35,8 @@ module.exports = class BTEGraph { // TODO rename to bteGraph? seems to only be u
             nodeAttributes: this.helper._getOutputAttributes(record),
           });
         }
-        if (!(inputBTEGraphID in this.nodes)) {
-          this.nodes[inputBTEGraphID] = new kg_node(inputBTEGraphID, {
+        if (!(inputBTENodeID in this.nodes)) {
+          this.nodes[inputBTENodeID] = new kg_node(inputBTENodeID, {
             primaryCurie: inputPrimaryCurie,
             qNodeID: inputQNodeID,
             equivalentCuries: this.helper._getInputEquivalentCuries(record),
@@ -46,10 +46,10 @@ module.exports = class BTEGraph { // TODO rename to bteGraph? seems to only be u
             nodeAttributes: this.helper._getInputAttributes(record),
           });
         }
-        this.nodes[outputBTEGraphID].addSourceNode(inputBTEGraphID);
-        this.nodes[outputBTEGraphID].addSourceQNodeID(inputQNodeID);
-        this.nodes[inputBTEGraphID].addTargetNode(outputBTEGraphID);
-        this.nodes[inputBTEGraphID].addTargetQNodeID(outputQNodeID);
+        this.nodes[outputBTENodeID].addSourceNode(inputBTENodeID);
+        this.nodes[outputBTENodeID].addSourceQNodeID(inputQNodeID);
+        this.nodes[inputBTENodeID].addTargetNode(outputBTENodeID);
+        this.nodes[inputBTENodeID].addTargetQNodeID(outputQNodeID);
         if (!(recordHash in this.edges)) {
           this.edges[recordHash] = new kg_edge(recordHash, {
             predicate: this.helper._getPredicate(record),
@@ -68,6 +68,29 @@ module.exports = class BTEGraph { // TODO rename to bteGraph? seems to only be u
           });
       }
     });
+  }
+
+  prune(results) {
+    debug('pruning BTEGraph nodes/edges...');
+    const resultsBoundNodes = new Set();
+    const resultsBoundEdges = new Set();
+
+    results.forEach((result) => {
+      Object.entries(result.node_bindings).forEach(([node, bindings]) => {
+        bindings.forEach((binding) => resultsBoundNodes.add(`${binding.id}-${node}`));
+      });
+      Object.entries(result.edge_bindings).forEach(([edge, bindings]) => {
+        bindings.forEach((binding) => resultsBoundEdges.add(binding.id));
+      });
+    });
+
+    const nodesToDelete = Object.keys(this.nodes)
+      .filter((bteNodeID) => !resultsBoundNodes.has(bteNodeID));
+    nodesToDelete.forEach((unusedBTENodeID) => delete this.nodes[unusedBTENodeID]);
+    const edgesToDelete = Object.keys(this.edges)
+      .filter((recordHash) => !resultsBoundEdges.has(recordHash));
+    edgesToDelete.forEach((unusedRecordHash) => delete this.edges[unusedRecordHash]);
+    debug(`pruned ${nodesToDelete.length} nodes and ${edgesToDelete.length} edges from BTEGraph.`);
   }
 
   /**

@@ -15,7 +15,17 @@ exports.API_BATCH_SIZE = [
     name: 'Multiomics Wellness KP API',
     max: 100,
   },
+  {
+    id: 'adf20dd6ff23dfe18e8e012bde686e31',
+    name: 'Multiomics BigGIM-DrugResponse KP API',
+    max: 100,
+  },
 ];
 
-//max node IDs an edge with no other IDs can have
+// max node IDs an edge with no other IDs can have
 exports.ENTITY_MAX = 1000
+
+exports.EDGE_ATTRIBUTES_USED_IN_RECORD_HASH = [
+  "biolink:has_disease_context",
+  "biolink:GeneToDrugAssociation",
+];

@@ -1426,7 +1426,7 @@ describe('Testing QueryResults Module', () => {
         expect(JSON.stringify(resultsOuter)).toEqual(JSON.stringify(resultsInner));
       });
     });
-      
+
     describe('query graph: →', () => {
       test('should get 1 result with record: →', async () => {
         const queryResult = new QueryResult();
@@ -1680,7 +1680,6 @@ describe('Testing QueryResults Module', () => {
         ]);
         expect(results[0]).toHaveProperty('score');
       });
-      
       test('should get 2 results with records: >-', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
@@ -1713,7 +1712,6 @@ describe('Testing QueryResults Module', () => {
         ]);
         expect(results[1]).toHaveProperty('score');
       });
-      
       test('should get 4 results with records: ><', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
@@ -1761,8 +1759,7 @@ describe('Testing QueryResults Module', () => {
           'e0', 'e1'
         ]);
         expect(results[3]).toHaveProperty('score');
-      });
-      
+      });   
       test('should get 2 results with records: >< (is_set for n0)', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
@@ -1794,8 +1791,7 @@ describe('Testing QueryResults Module', () => {
           'e0_left_is_set', 'e1'
         ]);
         expect(results[1]).toHaveProperty('score');
-      });
-      
+      });    
       test('should get 4 results with records: >< (is_set for n1)', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
@@ -1911,7 +1907,7 @@ describe('Testing QueryResults Module', () => {
         ]);
         expect(results[1]).toHaveProperty('score');
       });
-      
+
       // TODO: Do we want to test for removing duplicates?
       test('should get 1 result with records: ⇉⇉ (duplicates)', async () => {
         const queryResult = new QueryResult();
@@ -1937,7 +1933,6 @@ describe('Testing QueryResults Module', () => {
         ]);
         expect(results[0]).toHaveProperty('score');
       });
-      
       test('should get 2 results with records: -<', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
@@ -1970,7 +1965,6 @@ describe('Testing QueryResults Module', () => {
         ]);
         expect(results[1]).toHaveProperty('score');
       });
-      
       test('should get 1 result with records: →← (directionality does not match query graph)', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
@@ -1996,7 +1990,6 @@ describe('Testing QueryResults Module', () => {
         expect(results[0]).toHaveProperty('score');
       });
 
-      
       test('should get 5k results when e0 has 100 records (50 connected, 50 not), and e1 has 10k (5k connected, 5k not)', async () => {
         /**
          * This test is intended to assess performance when handling a larger number of records.
@@ -2162,7 +2155,7 @@ describe('Testing QueryResults Module', () => {
         ]);
         expect(results[1]).toHaveProperty('score');
       });
-      
+
       test('should get 1 result when e0 has 1 record, and e1 has 50k + 1 (1 connected, 50k not)', async () => {
         /**
          * n0 -e0-> n1 -e1-> n2
@@ -2280,7 +2273,7 @@ describe('Testing QueryResults Module', () => {
         ]);
         expect(results[0]).toHaveProperty('score');
       });
-      
+
       /*
       describe('test large numbers of records', () => {
         // This group of tests is commented out, b/c they're too slow for regular testing.
@@ -2393,7 +2386,7 @@ describe('Testing QueryResults Module', () => {
           ]);
           expect(results[1]).toHaveProperty('score');
         });
-        
+
         test('should get 50k results when e0 has 1k records (500 connected, 500 not), and e1 has 100k (50k connected, 50k not)', () => {
           // n0 -e0-> n1 -e1-> n2
           //
@@ -3417,5 +3410,88 @@ describe('Testing QueryResults Module', () => {
 ////      });
 //    });
 
+  });
+
+  describe('Graph structure', () => {
+    describe('Initial QNode ID selection', () => {
+      const exampleRecordsByQEdgeID = {
+        e0: {
+          connected_to: ['e1', 'e2'],
+          records: [{
+            $edge_metadata: {
+              trapi_qEdge_obj: {
+                isReversed() { return false; },
+                getSubject() {
+                  return {
+                    getID() { return 'n2' }
+                  }
+                },
+                getObject() {
+                  return {
+                    getID() { return 'n1' }
+                  };
+                },
+              }
+            }
+          }]
+        },
+        e1: {
+          connected_to: ['e0'],
+          records: [{
+            $edge_metadata: {
+              trapi_qEdge_obj: {
+                isReversed() { return false; },
+                getSubject() {
+                  return {
+                    getID() { return 'n2' }
+                  }
+                },
+                getObject() {
+                  return {
+                    getID() { return 'n3' }
+                  };
+                },
+              }
+            }
+          }]
+        },
+        e2: {
+          connected_to: ['e0'],
+          records: [{
+            $edge_metadata: {
+              trapi_qEdge_obj: {
+                isReversed() { return false; },
+                getSubject() {
+                  return {
+                    getID() { return 'n0' }
+                  }
+                },
+                getObject() {
+                  return {
+                    getID() { return 'n1' }
+                  };
+                },
+              }
+            }
+          }]
+        },
+
+      }
+
+      test('Should select leaf node', () => {
+        const queryResult = new QueryResult();
+        const [initialNode, initialEdge] = queryResult._getInitialQNodeIDToMatch(exampleRecordsByQEdgeID);
+        expect(initialNode).toEqual('n3');
+        expect(initialEdge).toEqual('e1');
+      });
+      test('Should select leaf node with fewest records on associated edge', () => {
+        const queryResult = new QueryResult();
+        const example = cloneDeep(exampleRecordsByQEdgeID);
+        example.e1.records.push({fake: true});
+        const [initialNode, initialEdge] = queryResult._getInitialQNodeIDToMatch(example);
+        expect(initialNode).toEqual('n0');
+        expect(initialEdge).toEqual('e2');
+      });
+    });
   });
 });
