@@ -310,8 +310,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     this.logs = [...this.logs, ...manager.logs];
     // update query graph
     this.bteGraph.update(manager.getRecords());
-    // update query results
-    this.trapiResultsAssembler.update(manager.getOrganizedRecords());
+    //update query results
+    await this.trapiResultsAssembler.update(manager.getOrganizedRecords());
+    this.logs = [...this.logs, ...this.trapiResultsAssembler.logs];
     // prune bteGraph
     this.bteGraph.prune(this.trapiResultsAssembler.getResults());
     this.bteGraph.notify();
@@ -340,5 +341,5 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       ).getLog(),
     );
     debug(`(14) TRAPI query finished.`);
-    }
+  }
 };
