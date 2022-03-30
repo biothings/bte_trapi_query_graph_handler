@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const biolink = require('./biolink');
+const config = require('./config.js');
 
 module.exports = class QueryGraphHelper {
   _generateHash(stringToBeHashed) {
@@ -74,8 +75,31 @@ module.exports = class QueryGraphHelper {
       this._getOutputCurie(record),
       this._getAPI(record),
       this._getSource(record),
+      this._getConfiguredEdgeAttributesForHash(record),
     ];
     return this._generateHash(edgeMetaData.join('-'));
+  }
+
+  _getConfiguredEdgeAttributesForHash(record) {
+    return this._getEdgeAttributes(record)
+      .filter((attribute) => {
+        return config.EDGE_ATTRIBUTES_USED_IN_RECORD_HASH.includes(attribute.attribute_type_id);
+      })
+      .reduce((acc, attribute) => {
+        return [...acc, `${attribute.attribute_type_id}:${attribute.value}`];
+      }, [])
+      .join(',');
+  }
+
+  _getEdgeAttributes(record) {
+    return record['edge-attributes']
+      ? record['edge-attributes'].reduce((arr, attribute) => {
+          attribute.attributes
+            ? arr.push(attribute, ...this._getEdgeAttributes(attribute))
+            : arr.push(attribute);
+          return arr;
+        }, [])
+      : [];
   }
 
   _getInputCategory(record) {
@@ -151,7 +175,6 @@ module.exports = class QueryGraphHelper {
       return null;
     }
   }
-
 
   _getOutputAttributes(record) {
     try {
