@@ -1,20 +1,11 @@
 const { cloneDeep, keys, spread, toPairs, values, zip } = require('lodash');
-const GraphHelper = require('./helper');
-const helper = new GraphHelper();
 const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
 const LogEntry = require('./log_entry');
 const { getScores, calculateScore } = require('./score');
+const { Record } = require('@biothings-explorer/api-response-transform');
 
 /**
- * @typedef {
- *   $edge_metadata: Object<string, *>,
- *   publications: string[],
- *   relation: string,
- *   source: string,
- *   score: number,
- *   $input: Object<string, *>,
- *   $output: Object<string, *>
- * } Record
+ * @type { Record }
  *
  * @typedef {
  *   connected_to: string[],
@@ -48,7 +39,7 @@ const { getScores, calculateScore } = require('./score');
  */
 module.exports = class TrapiResultsAssembler {
   /**
-   * Create a QueryResult instance.
+   * Create a QueryResult i9nstance.
    */
   constructor() {
     /**
@@ -72,8 +63,8 @@ module.exports = class TrapiResultsAssembler {
     const qNodeEdgeCounts = toPairs(recordsByQEdgeID).reduce(
       (qNodeCounts, [queryEdgeID, { connected_to, records }]) => {
         [
-          helper._getInputQueryNodeID(records[0]),
-          helper._getOutputQueryNodeID(records[0])
+          records[0].subject.qNodeID,
+          records[0].object.qNodeID,
         ].forEach((qNodeID) => {
           if (!qNodeCounts[qNodeID]) {
             qNodeCounts[qNodeID] = new Set();
@@ -144,20 +135,20 @@ module.exports = class TrapiResultsAssembler {
     let record = records.find(rec => rec !== undefined);
 
     // queryNodeID example: 'n0'
-    const inputQNodeID = helper._getInputQueryNodeID(record);
-    const outputQNodeID = helper._getOutputQueryNodeID(record);
+    const inputQNodeID = record.subject.qNodeID;
+    const outputQNodeID = record.object.qNodeID;
 
     let otherQNodeID, getMatchingPrimaryCurie, getOtherPrimaryCurie;
 
     if ([inputQNodeID, undefined].indexOf(qNodeIDToMatch) > -1) {
       qNodeIDToMatch = inputQNodeID;
       otherQNodeID = outputQNodeID;
-      getMatchingPrimaryCurie = helper._getInputCurie;
-      getOtherPrimaryCurie = helper._getOutputCurie;
+      getMatchingPrimaryCurie = (record) => record.subject.curie;
+      getOtherPrimaryCurie = (record) => record.object.curie;
     } else if (qNodeIDToMatch === outputQNodeID) {
       otherQNodeID = inputQNodeID;
-      getMatchingPrimaryCurie = helper._getOutputCurie;
-      getOtherPrimaryCurie = helper._getInputCurie;
+      getMatchingPrimaryCurie = (record) => record.object.curie;
+      getOtherPrimaryCurie = (record) => record.subject.curie;
     } else {
       return;
     }
@@ -176,14 +167,14 @@ module.exports = class TrapiResultsAssembler {
       }
 
       queryGraphSolution.push({
-        inputQNodeID: helper._getInputQueryNodeID(record),
-        outputQNodeID: helper._getOutputQueryNodeID(record),
-        inputPrimaryCurie: helper._getInputCurie(record),
-        outputPrimaryCurie: helper._getOutputCurie(record),
-        inputUMLS: helper._getInputUMLS(record), //add umls for scoring
-        outputUMLS: helper._getOutputUMLS(record), //add umls for scoring
+        inputQNodeID: record.subject.qNodeID,
+        outputQNodeID: record.object.qNodeID,
+        inputPrimaryCurie: record.subject.curie,
+        outputPrimaryCurie: record.object.curie,
+        inputUMLS: record.object.UMLS, //add umls for scoring
+        outputUMLS: record.object.UMLS, //add umls for scoring
         qEdgeID: qEdgeID,
-        recordHash: helper._getRecordHash(record),
+        recordHash: record.recordHash,
       });
 
       if (queryGraphSolution.length == edgeCount) {
@@ -272,13 +263,13 @@ module.exports = class TrapiResultsAssembler {
     const qNodeIDsWithIsSet = new Set();
     toPairs(recordsByQEdgeID).forEach(([qEdgeID, {connected_to, records}]) => {
 
-      const inputQNodeID = helper._getInputQueryNodeID(records[0]);
-      const outputQNodeID = helper._getOutputQueryNodeID(records[0]);
+      const inputQNodeID = records[0].subject.qNodeID;
+      const outputQNodeID = records[0].object.qNodeID;
 
-      if (helper._getInputIsSet(records[0])) {
+      if (records[0].subject.isSet) {
         qNodeIDsWithIsSet.add(inputQNodeID)
       }
-      if (helper._getOutputIsSet(records[0])) {
+      if (records[0].object.isSet) {
         qNodeIDsWithIsSet.add(outputQNodeID)
       }
     });
@@ -439,7 +430,7 @@ module.exports = class TrapiResultsAssembler {
       return result;
     })
     .sort((result1, result2) => (result2.score - result1.score)); //sort by decreasing score
-    
+
     debug(`Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`);
     this.logs.push(
       new LogEntry('DEBUG', null, `Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`).getLog(),

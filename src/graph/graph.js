@@ -1,6 +1,5 @@
 const kg_edge = require('./kg_edge');
 const kg_node = require('./kg_node');
-const helper = require('../helper');
 const debug = require('debug')('bte:biothings-explorer-trapi:Graph');
 
 module.exports = class BTEGraph {
@@ -8,7 +7,6 @@ module.exports = class BTEGraph {
     this.nodes = {};
     this.edges = {};
     this.paths = {};
-    this.helper = new helper();
     this.subscribers = [];
   }
 
@@ -17,33 +15,33 @@ module.exports = class BTEGraph {
     const bteAttributes = ['name', 'label', 'id', 'api', 'provided_by', 'publications'];
     queryRecords.map((record) => {
       if (record) {
-        const inputPrimaryCurie = this.helper._getInputCurie(record);
-        const inputQNodeID = this.helper._getInputQueryNodeID(record);
+        const inputPrimaryCurie = record.subject.curie;
+        const inputQNodeID = record.subject.qNodeID;
         const inputBTENodeID = inputPrimaryCurie + '-' + inputQNodeID;
-        const outputPrimaryCurie = this.helper._getOutputCurie(record);
-        const outputQNodeID = this.helper._getOutputQueryNodeID(record);
+        const outputPrimaryCurie = record.object.curie;
+        const outputQNodeID = record.object.qNodeID;
         const outputBTENodeID = outputPrimaryCurie + '-' + outputQNodeID;
-        const recordHash = this.helper._getRecordHash(record);
+        const recordHash = record.recordHash;
         if (!(outputBTENodeID in this.nodes)) {
           this.nodes[outputBTENodeID] = new kg_node(outputBTENodeID, {
             primaryCurie: outputPrimaryCurie,
             qNodeID: outputQNodeID,
-            equivalentCuries: this.helper._getOutputEquivalentIds(record),
-            names: this.helper._getOutputNames(record),
-            label: this.helper._getOutputLabel(record),
-            category: this.helper._getOutputCategory(record),
-            nodeAttributes: this.helper._getOutputAttributes(record),
+            equivalentCuries: record.object.equivalentCuries,
+            names: record.object.names,
+            label: record.object.label,
+            category: record.object.semanticType,
+            nodeAttributes: record.object.attributes,
           });
         }
         if (!(inputBTENodeID in this.nodes)) {
           this.nodes[inputBTENodeID] = new kg_node(inputBTENodeID, {
             primaryCurie: inputPrimaryCurie,
             qNodeID: inputQNodeID,
-            equivalentCuries: this.helper._getInputEquivalentCuries(record),
-            names: this.helper._getInputNames(record),
-            label: this.helper._getInputLabel(record),
-            category: this.helper._getInputCategory(record),
-            nodeAttributes: this.helper._getInputAttributes(record),
+            equivalentCuries: record.subject.equivalentCuries,
+            names: record.subject.names,
+            label: record.subject.label,
+            category: record.subject.semanticType,
+            nodeAttributes: record.subject.attributes,
           });
         }
         this.nodes[outputBTENodeID].addSourceNode(inputBTENodeID);
@@ -52,19 +50,19 @@ module.exports = class BTEGraph {
         this.nodes[inputBTENodeID].addTargetQNodeID(outputQNodeID);
         if (!(recordHash in this.edges)) {
           this.edges[recordHash] = new kg_edge(recordHash, {
-            predicate: this.helper._getPredicate(record),
+            predicate: record.predicate,
             subject: inputPrimaryCurie,
             object: outputPrimaryCurie,
           });
         }
-        this.edges[recordHash].addAPI(this.helper._getAPI(record));
-        this.edges[recordHash].addInforesCurie(this.helper._getInforesCurie(record));
-        this.edges[recordHash].addSource(this.helper._getSource(record));
-        this.edges[recordHash].addPublication(this.helper._getPublication(record));
-        Object.keys(record)
+        this.edges[recordHash].addAPI(record.api);
+        this.edges[recordHash].addInforesCurie(record.apiInforesCurie);
+        this.edges[recordHash].addSource(record.metaEdgeSource);
+        this.edges[recordHash].addPublication(record.publications);
+        Object.keys(record.mappedResponse)
           .filter((k) => !(bteAttributes.includes(k) || k.startsWith('$')))
           .map((item) => {
-            this.edges[recordHash].addAdditionalAttributes(item, record[item]);
+            this.edges[recordHash].addAdditionalAttributes(item, record.mappedResponse[item]);
           });
       }
     });

@@ -12,6 +12,7 @@ const _ = require('lodash');
 const QEdge2APIEdgeHandler = require('./qedge2apiedge');
 const LogEntry = require('./log_entry');
 const redisClient = require('./redis-client');
+const config = require('./config')
 
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 exports.redisClient = redisClient;
@@ -44,7 +45,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         knowledge_graph: this.knowledgeGraph.kg,
         results: this.trapiResultsAssembler.getResults(),
       },
-      logs: this.logs.map(log => log.toJSON()),
+      logs: this.logs.map((log) => log.toJSON()),
     };
   }
 
@@ -57,10 +58,12 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       if (Object.hasOwnProperty.call(queryGraph.nodes, nodeId)) {
         const currentNode = queryGraph.nodes[nodeId];
         if (Object.hasOwnProperty.call(currentNode, 'categories')) {
-          if (currentNode['categories'].includes("biolink:Protein") &&
-          !currentNode['categories'].includes("biolink:Gene")) {
+          if (
+            currentNode['categories'].includes('biolink:Protein') &&
+            !currentNode['categories'].includes('biolink:Gene')
+          ) {
             debug(`(0) Adding "Gene" category to "Protein" node.`);
-            currentNode['categories'].push("biolink:Gene");
+            currentNode['categories'].push('biolink:Gene');
           }
         }
       }
@@ -79,7 +82,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
    * @private
    * @param {object} queryGraph - TRAPI Query Graph Object
    */
-   async _processQueryGraph(queryGraph) {
+  async _processQueryGraph(queryGraph) {
     try {
       let queryGraphHandler = new QueryGraph(queryGraph);
       let queryExecutionEdges = await queryGraphHandler.calculateEdges();
@@ -94,28 +97,32 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     }
   }
 
-  _createBatchEdgeQueryHandlers(queryPaths, kg) {
-    let handlers = {};
-    for (const index in queryPaths) {
-      handlers[index] = new BatchEdgeQueryHandler(kg, this.resolveOutputIDs, { caching: this.options.caching });
-      handlers[index].setEdges(queryPaths[index]);
-      handlers[index].subscribe(this.trapiResultsAssembler);
-      handlers[index].subscribe(this.bteGraph);
-    }
-    return handlers;
-  }
+  // DEPRECATED
+  // _createBatchEdgeQueryHandlers(queryPaths, kg) {
+  //   let handlers = {};
+  //   for (const index in queryPaths) {
+  //     handlers[index] = new BatchEdgeQueryHandler(kg, this.resolveOutputIDs, { caching: this.options.caching });
+  //     handlers[index].setEdges(queryPaths[index]);
+  //     handlers[index].subscribe(this.trapiResultsAssembler);
+  //     handlers[index].subscribe(this.bteGraph);
+  //   }
+  //   return handlers;
+  // }
 
   _createBatchEdgeQueryHandlersForCurrent(currentQXEdge, metaKG) {
-    let handler = new BatchEdgeQueryHandler(metaKG, this.resolveOutputIDs, {caching: this.options.caching });
+    let handler = new BatchEdgeQueryHandler(metaKG, this.resolveOutputIDs, {
+      caching: this.options.caching,
+      recordHashEdgeAttributes: config.EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,
+    });
     handler.setEdges(currentQXEdge);
     return handler;
   }
 
   async _edgesSupported(qXEdges, metaKG) {
-    if (this.options.dryrun)
-    {
-      let log_msg = "Running dryrun of query, no API calls will be performed. Actual query execution order may vary based on API responses received.";
-      this.logs.push(new LogEntry("INFO", null, log_msg).getLog());
+    if (this.options.dryrun) {
+      let log_msg =
+        'Running dryrun of query, no API calls will be performed. Actual query execution order may vary based on API responses received.';
+      this.logs.push(new LogEntry('INFO', null, log_msg).getLog());
     }
 
     // _.cloneDeep() is resource-intensive but only runs once per query
@@ -132,20 +139,24 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
 
         let log_msg;
         if (currentQXEdge.reverse) {
-          log_msg = `qEdge ${currentQXEdge.qEdge.id} (reversed): ${currentQXEdge.qEdge.object.category} > ${currentQXEdge.qEdge.predicate ? `${currentQXEdge.qEdge.predicate} > ` : ''}${currentQXEdge.qEdge.subject.category}`;
+          log_msg = `qEdge ${currentQXEdge.qEdge.id} (reversed): ${currentQXEdge.qEdge.object.category} > ${
+            currentQXEdge.qEdge.predicate ? `${currentQXEdge.qEdge.predicate} > ` : ''
+          }${currentQXEdge.qEdge.subject.category}`;
         } else {
-          log_msg = `qEdge ${currentQXEdge.qEdge.id}: ${currentQXEdge.qEdge.subject.category} > ${currentQXEdge.qEdge.predicate ? `${currentQXEdge.qEdge.predicate} > ` : ''}${currentQXEdge.qEdge.object.category}`;
+          log_msg = `qEdge ${currentQXEdge.qEdge.id}: ${currentQXEdge.qEdge.subject.category} > ${
+            currentQXEdge.qEdge.predicate ? `${currentQXEdge.qEdge.predicate} > ` : ''
+          }${currentQXEdge.qEdge.object.category}`;
         }
-        this.logs.push(new LogEntry("INFO", null, log_msg).getLog());
+        this.logs.push(new LogEntry('INFO', null, log_msg).getLog());
 
         if (metaXEdges.length) {
           let log_msg_2 = `${metaXEdges.length} total planned queries to following APIs: ${apiNames.join(',')}`;
-          this.logs.push(new LogEntry("INFO", null, log_msg_2).getLog());
+          this.logs.push(new LogEntry('INFO', null, log_msg_2).getLog());
         }
 
-        metaXEdges.forEach(metaXEdge => {
+        metaXEdges.forEach((metaXEdge) => {
           log_msg = `${metaXEdge.association.api_name}: ${metaXEdge.association.input_type} > ${metaXEdge.association.predicate} > ${metaXEdge.association.output_type}`;
-          this.logs.push(new LogEntry("DEBUG", null, log_msg).getLog());
+          this.logs.push(new LogEntry('DEBUG', null, log_msg).getLog());
         });
       }
 
@@ -159,11 +170,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       if (metaXEdges.length) {
         if (currentQXEdge.reverse) {
           currentQXEdge.subject.entity_count = currentQXEdge.object.entity_count * metaXEdges.length;
-        }
-        else {
+        } else {
           currentQXEdge.object.entity_count = currentQXEdge.subject.entity_count * metaXEdges.length;
         }
-
       } else {
         currentQXEdge.object.entity_count = 1;
         currentQXEdge.subject.entity_count = 1;
@@ -173,13 +182,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     const len = Object.keys(qEdgesMissingOps).length;
     // this.logs = [...this.logs, ...manager.logs];
     let qEdgesToLog = Object.entries(qEdgesMissingOps).map(([qEdge, reversed]) => {
-      return reversed
-        ? `(reversed ${qEdge})`
-        : `(${qEdge})`;
+      return reversed ? `(reversed ${qEdge})` : `(${qEdge})`;
     });
-    qEdgesToLog = qEdgesToLog.length > 1
-      ? `[${qEdgesToLog.join(', ')}]`
-      : `${qEdgesToLog.join(', ')}`
+    qEdgesToLog = qEdgesToLog.length > 1 ? `[${qEdgesToLog.join(', ')}]` : `${qEdgesToLog.join(', ')}`;
     if (len > 0) {
       const terminateLog = `Query Edge${len !== 1 ? 's' : ''} ${qEdgesToLog} ${
         len !== 1 ? 'have' : 'has'
@@ -197,17 +202,11 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
 
   async _logSkippedQueries(unavailableAPIs) {
     Object.entries(unavailableAPIs).forEach(([api, skippedQueries]) => {
-      const skipMessage = `${skippedQueries} additional quer${skippedQueries > 1 ? "ies" : "y"} to ${api} ${
-        skippedQueries > 1 ? "were" : "was"
+      const skipMessage = `${skippedQueries} additional quer${skippedQueries > 1 ? 'ies' : 'y'} to ${api} ${
+        skippedQueries > 1 ? 'were' : 'was'
       } skipped as the API was unavailable.`;
       debug(skipMessage);
-      this.logs.push(
-        new LogEntry(
-          "WARNING",
-          null,
-          skipMessage
-        ).getLog()
-      );
+      this.logs.push(new LogEntry('WARNING', null, skipMessage).getLog());
     });
   }
 
@@ -221,9 +220,11 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         new LogEntry(
           'WARNING',
           null,
-          `The following APIs were unavailable at the time of execution: ${global.missingAPIs.map(spec => spec.info.title).join(', ')}`
-        ).getLog()
-      )
+          `The following APIs were unavailable at the time of execution: ${global.missingAPIs
+            .map((spec) => spec.info.title)
+            .join(', ')}`,
+        ).getLog(),
+      );
     }
     let queryExecutionEdges = await this._processQueryGraph(this.queryGraph);
     debug(`(3) All edges created ${JSON.stringify(queryExecutionEdges)}`);
@@ -243,9 +244,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
           null,
           `Executing ${currentQXEdge.getID()}${currentQXEdge.isReversed() ? ' (reversed)' : ''}: ${
             currentQXEdge.subject.id
-          } ${currentQXEdge.isReversed() ? '<--' : '-->'} ${
-            currentQXEdge.object.id
-          }`,
+          } ${currentQXEdge.isReversed() ? '<--' : '-->'} ${currentQXEdge.object.id}`,
         ).getLog(),
       );
       debug(`(5) Executing current edge >> "${currentQXEdge.getID()}"`);
@@ -253,8 +252,12 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       let queryRecords = await handler.query(handler.qXEdges, unavailableAPIs);
       this.logs = [...this.logs, ...handler.logs];
       // create an edge execution summary
-      let success = 0, fail = 0, total = 0;
-      let cached = this.logs.filter(({ data }) => data?.qEdgeID === currentQXEdge.qEdge.id && data?.type === 'cacheHit').length;
+      let success = 0,
+        fail = 0,
+        total = 0;
+      let cached = this.logs.filter(
+        ({ data }) => data?.qEdgeID === currentQXEdge.qEdge.id && data?.type === 'cacheHit',
+      ).length;
       this.logs
         .filter(({ data }) => data?.qEdgeID === currentQXEdge.qEdge.id && data?.type === 'query')
         .forEach(({ data }) => {
@@ -266,18 +269,18 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
           'INFO',
           null,
           `${currentQXEdge.qEdge.id} execution: ${total} queries (${success} success/${fail} fail) and (${cached}) cached qEdges return (${queryRecords.length}) records`,
-          {}
-        ).getLog()
+          {},
+        ).getLog(),
       );
       if (queryRecords.length === 0) {
         this._logSkippedQueries(unavailableAPIs);
         debug(`(X) Terminating..."${currentQXEdge.getID()}" got 0 records.`);
         this.logs.push(
           new LogEntry(
-              'WARNING',
-              null,
-              `qEdge (${currentQXEdge.getID()}) got 0 records. Your query terminates.`
-          ).getLog()
+            'WARNING',
+            null,
+            `qEdge (${currentQXEdge.getID()}) got 0 records. Your query terminates.`,
+          ).getLog(),
         );
         return;
       }
@@ -292,18 +295,18 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         this._logSkippedQueries(unavailableAPIs);
         debug(`(X) Terminating..."${currentQXEdge.getID()}" kept 0 records.`);
         this.logs.push(
-            new LogEntry(
-                'WARNING',
-                null,
-                `qEdge (${currentQXEdge.getID()}) kept 0 records. Your query terminates.`
-            ).getLog()
+          new LogEntry(
+            'WARNING',
+            null,
+            `qEdge (${currentQXEdge.getID()}) kept 0 records. Your query terminates.`,
+          ).getLog(),
         );
         return;
-    }
+      }
       // edge all done
       currentQXEdge.executed = true;
       debug(`(10) Edge successfully queried.`);
-    };
+    }
     this._logSkippedQueries(unavailableAPIs);
     // collect and organize records
     manager.collectRecords();
@@ -322,24 +325,18 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     const results = this.trapiResultsAssembler.getResults().length;
     const resultQueries = this.logs.filter(({ data }) => data?.type === 'query' && data?.hits).length;
     const queries = this.logs.filter(({ data }) => data?.type === 'query').length;
-    const sources = [...new Set(manager._records.map(res => res.$edge_metadata.api_name))];
+    const sources = [...new Set(manager._records.map((res) => res.apiEdge.api_name))];
     let cached = this.logs.filter(({ data }) => data?.type === 'cacheHit').length;
     this.logs.push(
       new LogEntry(
         'INFO',
         null,
-        `Execution Summary: (${KGNodes}) nodes / (${kgEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${cached ? ` (${cached} cached qEdges)` : ''} returned results from (${sources.length}) unique APIs ${
-          sources === 1 ? 's' : ''
-        }`,
+        `Execution Summary: (${KGNodes}) nodes / (${kgEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${
+          cached ? ` (${cached} cached qEdges)` : ''
+        } returned results from (${sources.length}) unique APIs ${sources === 1 ? 's' : ''}`,
       ).getLog(),
     );
-    this.logs.push(
-      new LogEntry(
-        'INFO',
-        null,
-        `APIs: ${sources.join(', ')}`,
-      ).getLog(),
-    );
+    this.logs.push(new LogEntry('INFO', null, `APIs: ${sources.join(', ')}`).getLog());
     debug(`(14) TRAPI query finished.`);
   }
 };

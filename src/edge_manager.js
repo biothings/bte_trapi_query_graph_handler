@@ -200,9 +200,9 @@ module.exports = class QueryExecutionEdgeManager {
         records.forEach((record) => {
             //check sub curies against $input ids
             let ids = new Set();
-            let outputMatch = false;
-            let inputMatch = false;
-            record.$input.obj.forEach((o) => {
+            let objectMatch = false;
+            let subjectMatch = false;
+            record.subject.normalizedInfo.forEach((o) => {
                 //compare record I/O ids against edge node ids
                 //#1 check equivalent ids
                 if (Object.hasOwnProperty.call(o, '_dbIDs')) {
@@ -237,14 +237,14 @@ module.exports = class QueryExecutionEdgeManager {
                 }
                 //#3 last resort check original
                 else {
-                    ids.add(record.$input.original);
+                    ids.add(record.subject.original);
                 }
                 //check ids
-                inputMatch = _.intersection([...ids], subject_node_ids).length;
+                subjectMatch = _.intersection([...ids], subject_node_ids).length;
             });
-            //check obj curies against $output ids
+            //check obj curies against object ids
             let o_ids = new Set();
-            record.$output.obj.forEach((o) => {
+            record.object.normalizedInfo.forEach((o) => {
                 //#1 check equivalent ids
                 if (Object.hasOwnProperty.call(o, '_dbIDs')) {
                     for (const prefix in o._dbIDs) {
@@ -278,13 +278,13 @@ module.exports = class QueryExecutionEdgeManager {
                 }
                 //#3 last resort check original
                 else {
-                    o_ids.add(record.$output.original);
+                    o_ids.add(record.object.original);
                 }
                 //check ids
-                outputMatch = _.intersection([...o_ids], object_node_ids).length;
+                objectMatch = _.intersection([...o_ids], object_node_ids).length;
             });
             //if both ends match then keep record
-            if (inputMatch && outputMatch) {
+            if (subjectMatch && objectMatch) {
                 keep.push(record);
             }
         });
