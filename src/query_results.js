@@ -171,7 +171,7 @@ module.exports = class TrapiResultsAssembler {
         outputQNodeID: record.object.qNodeID,
         inputPrimaryCurie: record.subject.curie,
         outputPrimaryCurie: record.object.curie,
-        inputUMLS: record.object.UMLS, //add umls for scoring
+        inputUMLS: record.subject.UMLS, //add umls for scoring
         outputUMLS: record.object.UMLS, //add umls for scoring
         qEdgeID: qEdgeID,
         recordHash: record.recordHash,
