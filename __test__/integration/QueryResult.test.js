@@ -2,6 +2,8 @@ const { cloneDeep, range } = require('lodash');
 const QNode = require('../../src/query_node');
 const QEdge = require('../../src/query_edge');
 const QueryResult = require('../../src/query_results');
+const { Record } = require('@biothings-explorer/api-response-transform');
+const config = require('../../src/config.js');
 
 describe('Testing QueryResults Module', () => {
   describe('"Real" Records', () => {
@@ -9,55 +11,60 @@ describe('Testing QueryResults Module', () => {
       const gene_node1 = new QNode('n1', { categories: ['Gene'], ids: ['NCBIGene:632'] });
       const chemical_node1 = new QNode('n2', { categories: ['ChemicalSubstance'] });
       const edge1 = new QEdge('e01', { subject: gene_node1, object: chemical_node1 });
-      const record = {
-        $edge_metadata: {
-          trapi_qEdge_obj: edge1,
+      const record = new Record(
+        {
+          publications: ['PMID:8366144', 'PMID:8381250'],
+          mappedResponse: {
+            relation: 'antagonist',
+            source: 'DrugBank',
+            score: '0.9',
+          },
+          subject: {
+            original: 'SYMBOL:BGLAP',
+            normalizedInfo: [
+              {
+                primaryID: 'NCBIGene:632',
+                label: 'BGLAP',
+                dbIDs: {
+                  SYMBOL: 'BGLAP',
+                  NCBIGene: '632',
+                },
+                curies: ['SYMBOL:BGLAP', 'NCBIGene:632'],
+              },
+            ],
+          },
+          object: {
+            original: 'CHEMBL.COMPOUND:CHEMBL1200983',
+            normalizedInfo: [
+              {
+                primaryID: 'CHEMBL.COMPOUND:CHEMBL1200983',
+                label: 'GALLIUM NITRATE',
+                dbIDs: {
+                  'CHEMBL.COMPOUND': 'CHEMBL1200983',
+                  'PUBCHEM.COMPOUND': '5282394',
+                  name: 'GALLIUM NITRATE',
+                },
+                curies: ['CHEMBL.COMPOUND:CHEMBL1200983', 'PUBCHEM.COMPOUND:5282394', 'name:GALLIUM NITRATE'],
+              },
+            ],
+          },
+        },
+        config,
+        {
           predicate: 'biolink:physically_interacts_with',
           source: 'DGIdb',
           api_name: 'BioThings DGIDB API',
         },
-        publications: ['PMID:8366144', 'PMID:8381250'],
-        relation: 'antagonist',
-        source: 'DrugBank',
-        score: '0.9',
-        $input: {
-          original: 'SYMBOL:BGLAP',
-          obj: [
-            {
-              primaryID: 'NCBIGene:632',
-              label: 'BGLAP',
-              dbIDs: {
-                SYMBOL: 'BGLAP',
-                NCBIGene: '632',
-              },
-              curies: ['SYMBOL:BGLAP', 'NCBIGene:632'],
-            },
-          ],
-        },
-        $output: {
-          original: 'CHEMBL.COMPOUND:CHEMBL1200983',
-          obj: [
-            {
-              primaryID: 'CHEMBL.COMPOUND:CHEMBL1200983',
-              label: 'GALLIUM NITRATE',
-              dbIDs: {
-                'CHEMBL.COMPOUND': 'CHEMBL1200983',
-                'PUBCHEM.COMPOUND': '5282394',
-                name: 'GALLIUM NITRATE',
-              },
-              curies: ['CHEMBL.COMPOUND:CHEMBL1200983', 'PUBCHEM.COMPOUND:5282394', 'name:GALLIUM NITRATE'],
-            },
-          ],
-        },
-      };
+        edge1,
+      );
 
       test('should get n1, n2 and e01', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
-          "e01": {
-            "connected_to": [],
-            "records": [record]
-          }
+          e01: {
+            connected_to: [],
+            records: [new Record(record, config)],
+          },
         });
         expect(queryResult.getResults().length).toEqual(1);
         expect(queryResult.getResults()[0].node_bindings).toHaveProperty('n1');
@@ -76,94 +83,100 @@ describe('Testing QueryResults Module', () => {
         const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
         const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
 
-        const record1 = {
-          $edge_metadata: {
-            trapi_qEdge_obj: edge1,
+        const record1 = new Record(
+          {
+            publications: ['PMID:123', 'PMID:1234'],
+            subject: {
+              original: 'SYMBOL:KCNMA1',
+              normalizedInfo: [
+                {
+                  primaryID: 'NCBIGene:3778',
+                  label: 'KCNMA1',
+                  dbIDs: {
+                    SYMBOL: 'KCNMA1',
+                    NCBIGene: '3778',
+                  },
+                  curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
+                },
+              ],
+            },
+            object: {
+              original: 'MONDO:0011122',
+              normalizedInfo: [
+                {
+                  primaryID: 'MONDO:0011122',
+                  label: 'obesity disorder',
+                  dbIDs: {
+                    MONDO: '0011122',
+                    MESH: 'D009765',
+                    name: 'obesity disorder',
+                  },
+                  curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+                },
+              ],
+            },
+          },
+          config,
+          {
             predicate: 'biolink:gene_associated_with_condition',
             api_name: 'Automat Pharos',
           },
-          publications: ['PMID:123', 'PMID:1234'],
-          $input: {
-            original: 'SYMBOL:KCNMA1',
-            obj: [
-              {
-                primaryID: 'NCBIGene:3778',
-                label: 'KCNMA1',
-                dbIDs: {
-                  SYMBOL: 'KCNMA1',
-                  NCBIGene: '3778',
-                },
-                curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
-              },
-            ],
-          },
-          $output: {
-            original: 'MONDO:0011122',
-            obj: [
-              {
-                primaryID: 'MONDO:0011122',
-                label: 'obesity disorder',
-                dbIDs: {
-                  MONDO: '0011122',
-                  MESH: 'D009765',
-                  name: 'obesity disorder',
-                },
-                curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-              },
-            ],
-          },
-        };
+          edge1,
+        );
 
-        const record2 = {
-          $edge_metadata: {
-            trapi_qEdge_obj: edge2,
+        const record2 = new Record(
+          {
+            publications: ['PMID:345', 'PMID:456'],
+            subject: {
+              original: 'MONDO:0011122',
+              normalizedInfo: [
+                {
+                  primaryID: 'MONDO:0011122',
+                  label: 'obesity disorder',
+                  dbIDs: {
+                    MONDO: '0011122',
+                    MESH: 'D009765',
+                    name: 'obesity disorder',
+                  },
+                  curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+                },
+              ],
+            },
+            object: {
+              original: 'SYMBOL:KCNMA1',
+              normalizedInfo: [
+                {
+                  primaryID: 'NCBIGene:3778',
+                  label: 'KCNMA1',
+                  dbIDs: {
+                    SYMBOL: 'KCNMA1',
+                    NCBIGene: '3778',
+                  },
+                  curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
+                },
+              ],
+            },
+          },
+          config,
+          {
             predicate: 'biolink:condition_associated_with_gene',
             api_name: 'Automat Hetio',
           },
-          publications: ['PMID:345', 'PMID:456'],
-          $input: {
-            original: 'MONDO:0011122',
-            obj: [
-              {
-                primaryID: 'MONDO:0011122',
-                label: 'obesity disorder',
-                dbIDs: {
-                  MONDO: '0011122',
-                  MESH: 'D009765',
-                  name: 'obesity disorder',
-                },
-                curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-              },
-            ],
-          },
-          $output: {
-            original: 'SYMBOL:KCNMA1',
-            obj: [
-              {
-                primaryID: 'NCBIGene:3778',
-                label: 'KCNMA1',
-                dbIDs: {
-                  SYMBOL: 'KCNMA1',
-                  NCBIGene: '3778',
-                },
-                curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
-              },
-            ],
-          },
-        };
+          edge2,
+        );
 
         test('should get n1, n2, n3 and e01, e02', async () => {
           const queryResult = new QueryResult();
 
           await queryResult.update({
-            "e01": {
-              "connected_to": ["e02"],
-              "records": [record1]
+            e01: {
+              connected_to: ['e02'],
+              records: [record1],
             },
-            "e02": {
-              "connected_to": ["e01"],
-              "records": [record2]
-            }
+            e02: {
+              connected_to: ['e01'],
+              records: [record2],
+            },
           });
 
           const results = queryResult.getResults();
@@ -191,93 +204,99 @@ describe('Testing QueryResults Module', () => {
         const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
         const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
 
-        const record1 = {
-          $edge_metadata: {
-            trapi_qEdge_obj: edge1,
+        const record1 = new Record(
+          {
+            publications: ['PMID:123', 'PMID:1234'],
+            subject: {
+              original: 'SYMBOL:KCNMA1',
+              normalizedInfo: [
+                {
+                  primaryID: 'NCBIGene:3778',
+                  label: 'KCNMA1',
+                  dbIDs: {
+                    SYMBOL: 'KCNMA1',
+                    NCBIGene: '3778',
+                  },
+                  curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
+                },
+              ],
+            },
+            object: {
+              original: 'MONDO:0011122',
+              normalizedInfo: [
+                {
+                  primaryID: 'MONDO:0011122',
+                  label: 'obesity disorder',
+                  dbIDs: {
+                    MONDO: '0011122',
+                    MESH: 'D009765',
+                    name: 'obesity disorder',
+                  },
+                  curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+                },
+              ],
+            },
+          },
+          config,
+          {
             predicate: 'biolink:gene_associated_with_condition',
             api_name: 'Automat Pharos',
           },
-          publications: ['PMID:123', 'PMID:1234'],
-          $input: {
-            original: 'SYMBOL:KCNMA1',
-            obj: [
-              {
-                primaryID: 'NCBIGene:3778',
-                label: 'KCNMA1',
-                dbIDs: {
-                  SYMBOL: 'KCNMA1',
-                  NCBIGene: '3778',
-                },
-                curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
-              },
-            ],
-          },
-          $output: {
-            original: 'MONDO:0011122',
-            obj: [
-              {
-                primaryID: 'MONDO:0011122',
-                label: 'obesity disorder',
-                dbIDs: {
-                  MONDO: '0011122',
-                  MESH: 'D009765',
-                  name: 'obesity disorder',
-                },
-                curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-              },
-            ],
-          },
-        };
+          edge1,
+        );
 
-        const record2 = {
-          $edge_metadata: {
-            trapi_qEdge_obj: edge2,
+        const record2 = new Record(
+          {
+            publications: ['PMID:345', 'PMID:456'],
+            subject: {
+              original: 'MONDO:0011122',
+              normalizedInfo: [
+                {
+                  primaryID: 'MONDO:0011122',
+                  label: 'obesity disorder',
+                  dbIDs: {
+                    MONDO: '0011122',
+                    MESH: 'D009765',
+                    name: 'obesity disorder',
+                  },
+                  curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+                },
+              ],
+            },
+            object: {
+              original: 'SYMBOL:TULP3',
+              normalizedInfo: [
+                {
+                  primaryID: 'NCBIGene:7289',
+                  label: 'TULP3',
+                  dbIDs: {
+                    SYMBOL: 'TULP3',
+                    NCBIGene: '7289',
+                  },
+                  curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
+                },
+              ],
+            },
+          },
+          config,
+          {
             predicate: 'biolink:condition_associated_with_gene',
             api_name: 'Automat Hetio',
           },
-          publications: ['PMID:345', 'PMID:456'],
-          $input: {
-            original: 'MONDO:0011122',
-            obj: [
-              {
-                primaryID: 'MONDO:0011122',
-                label: 'obesity disorder',
-                dbIDs: {
-                  MONDO: '0011122',
-                  MESH: 'D009765',
-                  name: 'obesity disorder',
-                },
-                curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-              },
-            ],
-          },
-          $output: {
-            original: 'SYMBOL:TULP3',
-            obj: [
-              {
-                primaryID: 'NCBIGene:7289',
-                label: 'TULP3',
-                dbIDs: {
-                  SYMBOL: 'TULP3',
-                  NCBIGene: '7289',
-                },
-                curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
-              },
-            ],
-          },
-        };
+          edge2,
+        );
 
         test('should get n1, n2, n3 and e01, e02', async () => {
           const queryResult = new QueryResult();
           await queryResult.update({
-            "e01": {
-              "connected_to": ["e02"],
-              "records": [record1]
+            e01: {
+              connected_to: ['e02'],
+              records: [record1],
             },
-            "e02": {
-              "connected_to": ["e01"],
-              "records": [record2]
-            }
+            e02: {
+              connected_to: ['e01'],
+              records: [record2],
+            },
           });
 
           const results = queryResult.getResults();
@@ -305,93 +324,99 @@ describe('Testing QueryResults Module', () => {
         const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
         const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
 
-        const record1 = {
-          $edge_metadata: {
-            trapi_qEdge_obj: edge1,
+        const record1 = new Record(
+          {
+            publications: ['PMID:123', 'PMID:1234'],
+            subject: {
+              original: 'SYMBOL:KCNMA1',
+              normalizedInfo: [
+                {
+                  primaryID: 'NCBIGene:3778',
+                  label: 'KCNMA1',
+                  dbIDs: {
+                    SYMBOL: 'KCNMA1',
+                    NCBIGene: '3778',
+                  },
+                  curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
+                },
+              ],
+            },
+            object: {
+              original: 'MONDO:0011122',
+              normalizedInfo: [
+                {
+                  primaryID: 'MONDO:0011122',
+                  label: 'obesity disorder',
+                  dbIDs: {
+                    MONDO: '0011122',
+                    MESH: 'D009765',
+                    name: 'obesity disorder',
+                  },
+                  curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+                },
+              ],
+            },
+          },
+          config,
+          {
             predicate: 'biolink:gene_associated_with_condition',
             api_name: 'Automat Pharos',
           },
-          publications: ['PMID:123', 'PMID:1234'],
-          $input: {
-            original: 'SYMBOL:KCNMA1',
-            obj: [
-              {
-                primaryID: 'NCBIGene:3778',
-                label: 'KCNMA1',
-                dbIDs: {
-                  SYMBOL: 'KCNMA1',
-                  NCBIGene: '3778',
-                },
-                curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
-              },
-            ],
-          },
-          $output: {
-            original: 'MONDO:0011122',
-            obj: [
-              {
-                primaryID: 'MONDO:0011122',
-                label: 'obesity disorder',
-                dbIDs: {
-                  MONDO: '0011122',
-                  MESH: 'D009765',
-                  name: 'obesity disorder',
-                },
-                curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-              },
-            ],
-          },
-        };
+          edge1,
+        );
 
-        const record2 = {
-          $edge_metadata: {
-            trapi_qEdge_obj: edge2,
+        const record2 = new Record(
+          {
+            publications: ['PMID:345', 'PMID:456'],
+            subject: {
+              original: 'MONDO:0011122',
+              normalizedInfo: [
+                {
+                  primaryID: 'MONDO:0011122',
+                  label: 'obesity disorder',
+                  dbIDs: {
+                    MONDO: '0011122',
+                    MESH: 'D009765',
+                    name: 'obesity disorder',
+                  },
+                  curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+                },
+              ],
+            },
+            object: {
+              original: 'SYMBOL:TULP3',
+              normalizedInfo: [
+                {
+                  primaryID: 'NCBIGene:7289',
+                  label: 'TULP3',
+                  dbIDs: {
+                    SYMBOL: 'TULP3',
+                    NCBIGene: '7289',
+                  },
+                  curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
+                },
+              ],
+            },
+          },
+          config,
+          {
             predicate: 'biolink:condition_associated_with_gene',
             api_name: 'Automat Hetio',
           },
-          publications: ['PMID:345', 'PMID:456'],
-          $input: {
-            original: 'MONDO:0011122',
-            obj: [
-              {
-                primaryID: 'MONDO:0011122',
-                label: 'obesity disorder',
-                dbIDs: {
-                  MONDO: '0011122',
-                  MESH: 'D009765',
-                  name: 'obesity disorder',
-                },
-                curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-              },
-            ],
-          },
-          $output: {
-            original: 'SYMBOL:TULP3',
-            obj: [
-              {
-                primaryID: 'NCBIGene:7289',
-                label: 'TULP3',
-                dbIDs: {
-                  SYMBOL: 'TULP3',
-                  NCBIGene: '7289',
-                },
-                curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
-              },
-            ],
-          },
-        };
+          edge2,
+        );
 
         test('should get n1, n2, n3 and e01, e02', async () => {
           const queryResult = new QueryResult();
           await queryResult.update({
-            "e01": {
-              "connected_to": ["e02"],
-              "records": [record1]
+            e01: {
+              connected_to: ['e02'],
+              records: [record1],
             },
-            "e02": {
-              "connected_to": ["e01"],
-              "records": [record2]
-            }
+            e02: {
+              connected_to: ['e01'],
+              records: [record2],
+            },
           });
 
           const results = queryResult.getResults();
@@ -419,95 +444,101 @@ describe('Testing QueryResults Module', () => {
         const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
         const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
 
-        const record1 = {
-          $edge_metadata: {
-            trapi_qEdge_obj: edge1,
+        const record1 = new Record(
+          {
+            publications: ['PMID:123', 'PMID:1234'],
+            subject: {
+              original: 'SYMBOL:KCNMA1',
+              normalizedInfo: [
+                {
+                  primaryID: 'NCBIGene:3778',
+                  label: 'KCNMA1',
+                  dbIDs: {
+                    SYMBOL: 'KCNMA1',
+                    NCBIGene: '3778',
+                  },
+                  curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
+                },
+              ],
+            },
+            object: {
+              original: 'MONDO:0011122',
+              normalizedInfo: [
+                {
+                  primaryID: 'MONDO:0011122',
+                  label: 'obesity disorder',
+                  dbIDs: {
+                    MONDO: '0011122',
+                    MESH: 'D009765',
+                    name: 'obesity disorder',
+                  },
+                  curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+                },
+              ],
+            },
+          },
+          config,
+          {
             predicate: 'biolink:gene_associated_with_condition',
             api_name: 'Automat Pharos',
           },
-          publications: ['PMID:123', 'PMID:1234'],
-          $input: {
-            original: 'SYMBOL:KCNMA1',
-            obj: [
-              {
-                primaryID: 'NCBIGene:3778',
-                label: 'KCNMA1',
-                dbIDs: {
-                  SYMBOL: 'KCNMA1',
-                  NCBIGene: '3778',
-                },
-                curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
-              },
-            ],
-          },
-          $output: {
-            original: 'MONDO:0011122',
-            obj: [
-              {
-                primaryID: 'MONDO:0011122',
-                label: 'obesity disorder',
-                dbIDs: {
-                  MONDO: '0011122',
-                  MESH: 'D009765',
-                  name: 'obesity disorder',
-                },
-                curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-              },
-            ],
-          },
-        };
+          edge1,
+        );
 
-        // NOTE: I had to switch $input and $output.
+        // NOTE: I had to switch subject and object.
         // Compare with first test of this type.
-        const record2 = {
-          $edge_metadata: {
-            trapi_qEdge_obj: edge2,
+        const record2 = new Record(
+          {
+            publications: ['PMID:345', 'PMID:456'],
+            subject: {
+              original: 'SYMBOL:TULP3',
+              normalizedInfo: [
+                {
+                  primaryID: 'NCBIGene:7289',
+                  label: 'TULP3',
+                  dbIDs: {
+                    SYMBOL: 'TULP3',
+                    NCBIGene: '7289',
+                  },
+                  curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
+                },
+              ],
+            },
+            object: {
+              original: 'MONDO:0011122',
+              normalizedInfo: [
+                {
+                  primaryID: 'MONDO:0011122',
+                  label: 'obesity disorder',
+                  dbIDs: {
+                    MONDO: '0011122',
+                    MESH: 'D009765',
+                    name: 'obesity disorder',
+                  },
+                  curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+                },
+              ],
+            },
+          },
+          config,
+          {
             predicate: 'biolink:condition_associated_with_gene',
             api_name: 'Automat Hetio',
           },
-          publications: ['PMID:345', 'PMID:456'],
-          $input: {
-            original: 'SYMBOL:TULP3',
-            obj: [
-              {
-                primaryID: 'NCBIGene:7289',
-                label: 'TULP3',
-                dbIDs: {
-                  SYMBOL: 'TULP3',
-                  NCBIGene: '7289',
-                },
-                curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
-              },
-            ],
-          },
-          $output: {
-            original: 'MONDO:0011122',
-            obj: [
-              {
-                primaryID: 'MONDO:0011122',
-                label: 'obesity disorder',
-                dbIDs: {
-                  MONDO: '0011122',
-                  MESH: 'D009765',
-                  name: 'obesity disorder',
-                },
-                curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-              },
-            ],
-          },
-        };
+          edge2,
+        );
 
         test('should get n1, n2, n3 and e01, e02', async () => {
           const queryResult = new QueryResult();
           await queryResult.update({
-            "e01": {
-              "connected_to": ["e02"],
-              "records": [record1]
+            e01: {
+              connected_to: ['e02'],
+              records: [record1],
             },
-            "e02": {
-              "connected_to": ["e01"],
-              "records": [record2]
-            }
+            e02: {
+              connected_to: ['e01'],
+              records: [record2],
+            },
           });
 
           const results = queryResult.getResults();
@@ -535,95 +566,101 @@ describe('Testing QueryResults Module', () => {
         const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
         const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
 
-        const record1 = {
-          $edge_metadata: {
-            trapi_qEdge_obj: edge1,
+        const record1 = new Record(
+          {
+            publications: ['PMID:123', 'PMID:1234'],
+            subject: {
+              original: 'SYMBOL:KCNMA1',
+              normalizedInfo: [
+                {
+                  primaryID: 'NCBIGene:3778',
+                  label: 'KCNMA1',
+                  dbIDs: {
+                    SYMBOL: 'KCNMA1',
+                    NCBIGene: '3778',
+                  },
+                  curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
+                },
+              ],
+            },
+            object: {
+              original: 'MONDO:0011122',
+              normalizedInfo: [
+                {
+                  primaryID: 'MONDO:0011122',
+                  label: 'obesity disorder',
+                  dbIDs: {
+                    MONDO: '0011122',
+                    MESH: 'D009765',
+                    name: 'obesity disorder',
+                  },
+                  curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+                },
+              ],
+            },
+          },
+          config,
+          {
             predicate: 'biolink:gene_associated_with_condition',
             api_name: 'Automat Pharos',
           },
-          publications: ['PMID:123', 'PMID:1234'],
-          $input: {
-            original: 'SYMBOL:KCNMA1',
-            obj: [
-              {
-                primaryID: 'NCBIGene:3778',
-                label: 'KCNMA1',
-                dbIDs: {
-                  SYMBOL: 'KCNMA1',
-                  NCBIGene: '3778',
-                },
-                curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
-              },
-            ],
-          },
-          $output: {
-            original: 'MONDO:0011122',
-            obj: [
-              {
-                primaryID: 'MONDO:0011122',
-                label: 'obesity disorder',
-                dbIDs: {
-                  MONDO: '0011122',
-                  MESH: 'D009765',
-                  name: 'obesity disorder',
-                },
-                curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-              },
-            ],
-          },
-        };
+          edge1,
+        );
 
-        // NOTE: I had to switch $input and $output.
+        // NOTE: I had to switch subject and object.
         // Compare with first test of this type.
-        const record2 = {
-          $edge_metadata: {
-            trapi_qEdge_obj: edge2,
+        const record2 = new Record(
+          {
+            publications: ['PMID:345', 'PMID:456'],
+            subject: {
+              original: 'SYMBOL:TULP3',
+              normalizedInfo: [
+                {
+                  primaryID: 'NCBIGene:7289',
+                  label: 'TULP3',
+                  dbIDs: {
+                    SYMBOL: 'TULP3',
+                    NCBIGene: '7289',
+                  },
+                  curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
+                },
+              ],
+            },
+            object: {
+              original: 'MONDO:0011122',
+              normalizedInfo: [
+                {
+                  primaryID: 'MONDO:0011122',
+                  label: 'obesity disorder',
+                  dbIDs: {
+                    MONDO: '0011122',
+                    MESH: 'D009765',
+                    name: 'obesity disorder',
+                  },
+                  curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+                },
+              ],
+            },
+          },
+          config,
+          {
             predicate: 'biolink:condition_associated_with_gene',
             api_name: 'Automat Hetio',
           },
-          publications: ['PMID:345', 'PMID:456'],
-          $input: {
-            original: 'SYMBOL:TULP3',
-            obj: [
-              {
-                primaryID: 'NCBIGene:7289',
-                label: 'TULP3',
-                dbIDs: {
-                  SYMBOL: 'TULP3',
-                  NCBIGene: '7289',
-                },
-                curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
-              },
-            ],
-          },
-          $output: {
-            original: 'MONDO:0011122',
-            obj: [
-              {
-                primaryID: 'MONDO:0011122',
-                label: 'obesity disorder',
-                dbIDs: {
-                  MONDO: '0011122',
-                  MESH: 'D009765',
-                  name: 'obesity disorder',
-                },
-                curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-              },
-            ],
-          },
-        };
+          edge2,
+        );
 
         test('should get n1, n2, n3 and e01, e02', async () => {
           const queryResult = new QueryResult();
           await queryResult.update({
-            "e01": {
-              "connected_to": ["e02"],
-              "records": [record1]
+            e01: {
+              connected_to: ['e02'],
+              records: [record1],
             },
-            "e02": {
-              "connected_to": ["e01"],
-              "records": [record2]
-            }
+            e02: {
+              connected_to: ['e01'],
+              records: [record2],
+            },
           });
 
           const results = queryResult.getResults();
@@ -642,7 +679,6 @@ describe('Testing QueryResults Module', () => {
           expect(results[0]).toHaveProperty('score');
         });
       });
-
     });
 
     describe('Three Records', () => {
@@ -653,132 +689,141 @@ describe('Testing QueryResults Module', () => {
       const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
       const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
 
-      const record1 = {
-        $edge_metadata: {
-          trapi_qEdge_obj: edge1,
+      const record1 = new Record(
+        {
+          publications: ['PMID:123', 'PMID:1234'],
+          subject: {
+            original: 'SYMBOL:KCNMA1',
+            normalizedInfo: [
+              {
+                primaryID: 'NCBIGene:3778',
+                label: 'KCNMA1',
+                dbIDs: {
+                  SYMBOL: 'KCNMA1',
+                  NCBIGene: '3778',
+                },
+                curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
+              },
+            ],
+          },
+          object: {
+            original: 'MONDO:0011122',
+            normalizedInfo: [
+              {
+                primaryID: 'MONDO:0011122',
+                label: 'obesity disorder',
+                dbIDs: {
+                  MONDO: '0011122',
+                  MESH: 'D009765',
+                  name: 'obesity disorder',
+                },
+                curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+              },
+            ],
+          },
+        },
+        config,
+        {
           predicate: 'biolink:gene_associated_with_condition',
           api_name: 'Automat Pharos',
         },
-        publications: ['PMID:123', 'PMID:1234'],
-        $input: {
-          original: 'SYMBOL:KCNMA1',
-          obj: [
-            {
-              primaryID: 'NCBIGene:3778',
-              label: 'KCNMA1',
-              dbIDs: {
-                SYMBOL: 'KCNMA1',
-                NCBIGene: '3778',
-              },
-              curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
-            },
-          ],
-        },
-        $output: {
-          original: 'MONDO:0011122',
-          obj: [
-            {
-              primaryID: 'MONDO:0011122',
-              label: 'obesity disorder',
-              dbIDs: {
-                MONDO: '0011122',
-                MESH: 'D009765',
-                name: 'obesity disorder',
-              },
-              curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-            },
-          ],
-        },
-      };
+        edge1,
+      );
 
-      const record2 = {
-        $edge_metadata: {
-          trapi_qEdge_obj: edge2,
+      const record2 = new Record(
+        {
+          publications: ['PMID:345', 'PMID:456'],
+          subject: {
+            original: 'MONDO:0011122',
+            normalizedInfo: [
+              {
+                primaryID: 'MONDO:0011122',
+                label: 'obesity disorder',
+                dbIDs: {
+                  MONDO: '0011122',
+                  MESH: 'D009765',
+                  name: 'obesity disorder',
+                },
+                curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+              },
+            ],
+          },
+          object: {
+            original: 'SYMBOL:TULP3',
+            normalizedInfo: [
+              {
+                primaryID: 'NCBIGene:7289',
+                label: 'TULP3',
+                dbIDs: {
+                  SYMBOL: 'TULP3',
+                  NCBIGene: '7289',
+                },
+                curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
+              },
+            ],
+          },
+        },
+        config,
+        {
           predicate: 'biolink:condition_associated_with_gene',
           api_name: 'Automat Hetio',
         },
-        publications: ['PMID:345', 'PMID:456'],
-        $input: {
-          original: 'MONDO:0011122',
-          obj: [
-            {
-              primaryID: 'MONDO:0011122',
-              label: 'obesity disorder',
-              dbIDs: {
-                MONDO: '0011122',
-                MESH: 'D009765',
-                name: 'obesity disorder',
-              },
-              curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-            },
-          ],
-        },
-        $output: {
-          original: 'SYMBOL:TULP3',
-          obj: [
-            {
-              primaryID: 'NCBIGene:7289',
-              label: 'TULP3',
-              dbIDs: {
-                SYMBOL: 'TULP3',
-                NCBIGene: '7289',
-              },
-              curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
-            },
-          ],
-        },
-      };
+        edge2,
+      );
 
-      const record3 = {
-        $edge_metadata: {
-          trapi_qEdge_obj: edge2,
+      const record3 = new Record(
+        {
+          publications: ['PMID:987', 'PMID:876'],
+          subject: {
+            original: 'MONDO:0011122',
+            normalizedInfo: [
+              {
+                primaryID: 'MONDO:0011122',
+                label: 'obesity disorder',
+                dbIDs: {
+                  MONDO: '0011122',
+                  MESH: 'D009765',
+                  name: 'obesity disorder',
+                },
+                curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+              },
+            ],
+          },
+          object: {
+            original: 'SYMBOL:TECR',
+            normalizedInfo: [
+              {
+                primaryID: 'NCBIGene:9524',
+                label: 'TECR',
+                dbIDs: {
+                  SYMBOL: 'TECR',
+                  NCBIGene: '9524',
+                },
+                curies: ['SYMBOL:TECR', 'NCBIGene:9524'],
+              },
+            ],
+          },
+        },
+        config,
+        {
           predicate: 'biolink:condition_associated_with_gene',
           api_name: 'Automat Hetio',
         },
-        publications: ['PMID:987', 'PMID:876'],
-        $input: {
-          original: 'MONDO:0011122',
-          obj: [
-            {
-              primaryID: 'MONDO:0011122',
-              label: 'obesity disorder',
-              dbIDs: {
-                MONDO: '0011122',
-                MESH: 'D009765',
-                name: 'obesity disorder',
-              },
-              curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-            },
-          ],
-        },
-        $output: {
-          original: 'SYMBOL:TECR',
-          obj: [
-            {
-              primaryID: 'NCBIGene:9524',
-              label: 'TECR',
-              dbIDs: {
-                SYMBOL: 'TECR',
-                NCBIGene: '9524',
-              },
-              curies: ['SYMBOL:TECR', 'NCBIGene:9524'],
-            },
-          ],
-        },
-      };
+        edge2,
+      );
 
       test('should get 2 results when query graph is -- and records are -<', async () => {
         const queryResult = new QueryResult();
 
         await queryResult.update({
-          "e01": {
-            "connected_to": ["e02"],
-            "records": [record1]
+          e01: {
+            connected_to: ['e02'],
+            records: [record1],
           },
-          "e02": {
-            "connected_to": ["e01"],
-            "records": [record2, record3]
-          }
+          e02: {
+            connected_to: ['e01'],
+            records: [record2, new Record(record3, config)],
+          },
         });
 
         const results = queryResult.getResults();
@@ -811,523 +856,304 @@ describe('Testing QueryResults Module', () => {
   });
 
   describe('"Synthetic" Records', () => {
-    const n0 = new QNode('n0', { categories: ['category_n0_n2'], ids: ['n0a'] });
-    const n0_with_is_set = new QNode('n0_with_is_set', { categories: ['category_n0_n2'], ids: ['n0a', 'n0b'], is_set: true });
-    const n1 = new QNode('n1', { categories: ['category_n1'] });
-    const n1_with_is_set = new QNode('n1_with_is_set', { categories: ['category_n1'], is_set: true });
-    const n2 = new QNode('n2', { categories: ['category_n0_n2'] });
-    const n2_with_is_set = new QNode('n2_with_is_set', { categories: ['category_n0_n2'], ids: ['n2a', 'n2b'], is_set: true });
-    const n3 = new QNode('n3', { categories: ['biolink:category_n3'] });
-    const n4 = new QNode('n4', { categories: ['category_n4'] });
-    const n5 = new QNode('n5', { categories: ['category_n5'] });
-
-    const e0 = new QEdge('e0', { subject: n0, object: n1 });
-    const e0_left_is_set = new QEdge('e0_left_is_set', { subject: n0_with_is_set, object: n1 });
-    const e0_right_is_set = new QEdge('e0_right_is_set', { subject: n0, object: n1_with_is_set });
-    const e0_both_is_set = new QEdge('e0_both_is_set', { subject: n0_with_is_set, object: n1_with_is_set });
-
-    const e1 = new QEdge('e1', { subject: n1, object: n2 });
     // TODO: the tests will fail if we switch the subject and object. Is there a way to format the
     // query graph and/or the records such that the tests would still pass?
-    const e1_left_is_set = new QEdge('e1_left_is_set', { subject: n1_with_is_set, object: n2 });
-    const e1_reversed_left_is_set = new QEdge('e1_reversed_left_is_set', { subject: n2_with_is_set, object: n1 });
-    const e1_both_is_set = new QEdge('e1_both_is_set', { subject: n2_with_is_set, object: n1_with_is_set });
 
-    const e2 = new QEdge('e2', { subject: n1, object: n3 });
-    const e3 = new QEdge('e3', { subject: n1, object: n4 });
-
-    const e4 = new QEdge('e4', { subject: n2, object: n5 });
-    const e5 = new QEdge('e5', { subject: n3, object: n5 });
-    const e6 = new QEdge('e6', { subject: n4, object: n5 });
+    const [n0, n1, n2, n3, n4, n5] = Array(6)
+      .fill(0)
+      .map((s, i) => {
+        return {
+          a: {
+            qNodeID: `n${i}`,
+            curie: `n${i}a`,
+          },
+          b: {
+            qNodeID: `n${i}`,
+            curie: `n${i}b`,
+          },
+        };
+      });
+    const [source0, source1] = Array(2)
+      .fill(0)
+      .map((s, i) => {
+        return { source: `source${i}` };
+      });
+    const [api0, api1] = Array(2)
+      .fill(0)
+      .map((s, i) => {
+        return { api: `api${i}` };
+      });
+    const recordPred = Array(7)
+      .fill(0)
+      .map((s, i) => {
+        return { predicate: `biolink:record${i}_pred` };
+      });
+    const set = (node) => {
+      return {
+        qNodeID: `${node.qNodeID}_with_is_set`,
+        curie: node.curie,
+        isSet: true,
+      };
+    };
 
     // AKA record0_n0a_n1a_pred0_api0
     const record0_n0a_n1a = {
-      $edge_metadata: {
-        trapi_qEdge_obj: e0,
-        predicate: 'biolink:record0_pred0',
-        source: 'source0',
-        api_name: 'api0',
-      },
-      // n0
-      $input: {
-        obj: [
-          {
-            primaryID: 'n0a',
-          },
-        ],
-      },
-      // n1
-      $output: {
-        obj: [
-          {
-            primaryID: 'n1a',
-          },
-        ],
-      },
+      subject: { ...n0.a },
+      object: { ...n1.a },
+      predicate: 'biolink:record0_pred0',
+      ...source0,
+      ...api0,
     };
 
-    const e0_reversed = new QEdge('e0_reversed', { subject: n1, object: n0 });
-    const record0_n1a_n0a = cloneDeep(record0_n0a_n1a);
-    record0_n1a_n0a.$edge_metadata.trapi_qEdge_obj = e0_reversed;
-    record0_n1a_n0a.$input = cloneDeep(record0_n0a_n1a.$output)
-    record0_n1a_n0a.$output = cloneDeep(record0_n0a_n1a.$input)
+    const record0_n1a_n0a = {
+      ...record0_n0a_n1a,
+      subject: { ...n1.a },
+      object: { ...n0.a },
+    };
 
-    const record0_n0a_n1a_pred0_api1 = cloneDeep(record0_n0a_n1a);
-    record0_n0a_n1a_pred0_api1.$edge_metadata.source = 'source1';
-    record0_n0a_n1a_pred0_api1.$edge_metadata.api_name = 'api1';
+    const record0_n0a_n1a_pred0_api1 = {
+      ...record0_n0a_n1a,
+      ...source1,
+      ...api1,
+    };
 
-    const record0_n0a_n1a_pred1_api0 = cloneDeep(record0_n0a_n1a);
-    record0_n0a_n1a_pred1_api0.$edge_metadata.predicate = 'biolink:record0_pred1';
+    const record0_n0a_n1a_pred1_api0 = {
+      ...record0_n0a_n1a,
+      predicate: 'biolink:record0_pred1',
+    };
 
-    const record0_n0a_n1a_pred1_api1 = cloneDeep(record0_n0a_n1a);
-    record0_n0a_n1a_pred1_api1.$edge_metadata.predicate = 'biolink:record0_pred1';
-    record0_n0a_n1a_pred0_api1.$edge_metadata.source = 'source1';
-    record0_n0a_n1a_pred1_api1.$edge_metadata.api_name = 'api1';
+    const record0_n0a_n1a_pred1_api1 = {
+      ...record0_n0a_n1a,
+      predicate: 'biolink:record0_pred1',
+      ...source1,
+      ...api1,
+    };
 
     const record0_n0a_n1b = {
-      $edge_metadata: {
-        trapi_qEdge_obj: e0,
-        predicate: 'biolink:record0_pred',
-        source: 'source0',
-        api_name: 'api0',
-      },
-      // n0
-      $input: {
-        obj: [
-          {
-            primaryID: 'n0a',
-          },
-        ],
-      },
-      // n1
-      $output: {
-        obj: [
-          {
-            primaryID: 'n1b',
-          },
-        ],
-      },
+      subject: { ...n0.a },
+      object: { ...n1.b },
+      ...recordPred[0],
+      ...source0,
+      ...api0,
     };
 
     const record0_n0b_n1a = {
-      $edge_metadata: {
-        trapi_qEdge_obj: e0,
-        predicate: 'biolink:record0_pred',
-        source: 'source0',
-        api_name: 'api0',
-      },
-      // n0
-      $input: {
-        obj: [
-          {
-            primaryID: 'n0b',
-          },
-        ],
-      },
-      // n1
-      $output: {
-        obj: [
-          {
-            primaryID: 'n1a',
-          },
-        ],
-      },
+      subject: { ...n0.b },
+      object: { ...n1.a },
+      ...recordPred[0],
+      ...source0,
+      ...api0,
     };
 
     const record0_n0b_n1b = {
-      $edge_metadata: {
-        trapi_qEdge_obj: e0,
-        predicate: 'biolink:record0_pred',
-        source: 'source0',
-        api_name: 'api0',
-      },
-      // n0
-      $input: {
-        obj: [
-          {
-            primaryID: 'n0b',
-          },
-        ],
-      },
-      // n1
-      $output: {
-        obj: [
-          {
-            primaryID: 'n1b',
-          },
-        ],
-      },
+      subject: { ...n0.b },
+      object: { ...n1.b },
+      ...recordPred[0],
+      ...source0,
+      ...api0,
     };
 
     const record1_n1a_n2a = {
-      $edge_metadata: {
-        trapi_qEdge_obj: e1,
-        predicate: 'biolink:record1_pred',
-        source: 'source0',
-        api_name: 'api0',
-      },
-      // n1
-      $input: {
-        obj: [
-          {
-            primaryID: 'n1a',
-          },
-        ],
-      },
-      // n2
-      $output: {
-        obj: [
-          {
-            primaryID: 'n2a',
-          },
-        ],
-      },
+      subject: { ...n1.a },
+      object: { ...n2.a },
+      ...recordPred[1],
+      ...source0,
+      ...api0,
     };
 
-    const e1_reversed = new QEdge('e1_reversed', { subject: n2, object: n1 });
-    const record1_n2a_n1a = cloneDeep(record1_n1a_n2a);
-    record1_n2a_n1a.$edge_metadata.trapi_qEdge_obj = e1_reversed;
-    record1_n2a_n1a.$input = cloneDeep(record1_n1a_n2a.$output)
-    record1_n2a_n1a.$output = cloneDeep(record1_n1a_n2a.$input)
+    const record1_n2a_n1a = {
+      ...record1_n1a_n2a,
+      subject: { ...n2.a },
+      object: { ...n1.a },
+    };
 
     const record1_n1a_n2b = {
-      $edge_metadata: {
-        trapi_qEdge_obj: e1,
-        predicate: 'biolink:record1_pred',
-        source: 'source0',
-        api_name: 'api0',
-      },
-      // n1
-      $input: {
-        obj: [
-          {
-            primaryID: 'n1a',
-          },
-        ],
-      },
-      // n2
-      $output: {
-        obj: [
-          {
-            primaryID: 'n2b',
-          },
-        ],
-      },
+      subject: { ...n1.a },
+      object: { ...n2.b },
+      ...recordPred[1],
+      ...source0,
+      ...api0,
     };
 
-    const record1_n2b_n1a = cloneDeep(record1_n1a_n2b);
-    record1_n2b_n1a.$edge_metadata.trapi_qEdge_obj = e1_reversed;
-    record1_n2b_n1a.$input = cloneDeep(record1_n1a_n2b.$output)
-    record1_n2b_n1a.$output = cloneDeep(record1_n1a_n2b.$input)
+    const record1_n2b_n1a = {
+      ...record1_n1a_n2b,
+      subject: { ...n2.b },
+      object: { ...n1.a },
+    };
 
     const record1_n1b_n2a = {
-      $edge_metadata: {
-        trapi_qEdge_obj: e1,
-        predicate: 'biolink:record1_pred',
-        source: 'source0',
-        api_name: 'api0',
-      },
-      // n1
-      $input: {
-        obj: [
-          {
-            primaryID: 'n1b',
-          },
-        ],
-      },
-      // n2
-      $output: {
-        obj: [
-          {
-            primaryID: 'n2a',
-          },
-        ],
-      },
+      subject: { ...n1.b },
+      object: { ...n2.a },
+      ...recordPred[1],
+      ...source0,
+      ...api0,
     };
 
     const record1_n1b_n2b = {
-      $edge_metadata: {
-        trapi_qEdge_obj: e1,
-        predicate: 'biolink:record1_pred',
-        source: 'source0',
-        api_name: 'api0',
-      },
-      // n1
-      $input: {
-        obj: [
-          {
-            primaryID: 'n1b',
-          },
-        ],
-      },
-      // n2
-      $output: {
-        obj: [
-          {
-            primaryID: 'n2b',
-          },
-        ],
-      },
+      subject: { ...n1.b },
+      object: { ...n1.b },
+      ...recordPred[1],
+      ...source0,
+      ...api0,
     };
 
     const record2_n1a_n3a = {
-      $edge_metadata: {
-        trapi_qEdge_obj: e2,
-        predicate: 'biolink:record2_pred',
-        source: 'source0',
-        api_name: 'api0',
-      },
-      // n1
-      $input: {
-        obj: [
-          {
-            primaryID: 'n1a',
-          },
-        ],
-      },
-      // n3
-      $output: {
-        obj: [
-          {
-            primaryID: 'n3a',
-          },
-        ],
-      },
+      subject: { ...n1.a },
+      object: { ...n3.a },
+      ...recordPred[2],
+      ...source0,
+      ...api0,
     };
 
-    const e2_reversed = new QEdge('e2_reversed', { subject: n3, object: n1 });
-    const record2_n3a_n1a = cloneDeep(record2_n1a_n3a);
-    record2_n3a_n1a.$edge_metadata.trapi_qEdge_obj = e2_reversed;
-    record2_n3a_n1a.$input = cloneDeep(record2_n1a_n3a.$output)
-    record2_n3a_n1a.$output = cloneDeep(record2_n1a_n3a.$input)
+    const record2_n3a_n1a = {
+      ...record2_n1a_n3a,
+      subject: { ...n3.a },
+      object: { ...n1.a },
+    };
 
-    const record2_n1b_n3a = {
-      $edge_metadata: {
-        trapi_qEdge_obj: e2,
-        predicate: 'biolink:record2_pred',
-        source: 'source0',
-        api_name: 'api0',
-      },
-      // n1
-      $input: {
-        obj: [
-          {
-            primaryID: 'n1b',
-          },
-        ],
-      },
-      // n3
-      $output: {
-        obj: [
-          {
-            primaryID: 'n3a',
-          },
-        ],
-      },
+    record2_n1b_n3a = {
+      subject: { ...n1.b },
+      object: { ...n3.a },
+      ...recordPred[2],
+      ...source0,
+      ...api0,
     };
 
     const record3_n1a_n4a = {
-      $edge_metadata: {
-        trapi_qEdge_obj: e3,
-        predicate: 'biolink:record3_pred',
-        source: 'source0',
-        api_name: 'api0',
-      },
-      // n1
-      $input: {
-        obj: [
-          {
-            primaryID: 'n1a',
-          },
-        ],
-      },
-      // n4
-      $output: {
-        obj: [
-          {
-            primaryID: 'n4a',
-          },
-        ],
-      },
+      subject: { ...n1.a },
+      object: { ...n4.a },
+      ...recordPred[3],
+      ...source0,
+      ...api0,
     };
 
     const record3_n1b_n4a = {
-      $edge_metadata: {
-        trapi_qEdge_obj: e3,
-        predicate: 'biolink:record3_pred',
-        source: 'source0',
-        api_name: 'api0',
-      },
-      // n1
-      $input: {
-        obj: [
-          {
-            primaryID: 'n1b',
-          },
-        ],
-      },
-      // n4
-      $output: {
-        obj: [
-          {
-            primaryID: 'n4a',
-          },
-        ],
-      },
+      subject: { ...n1.b },
+      object: { ...n4.a },
+      ...recordPred[3],
+      ...source0,
+      ...api0,
     };
 
     const record4_n2a_n5a = {
-      $edge_metadata: {
-        trapi_qEdge_obj: e4,
-        predicate: 'biolink:record4_pred',
-        source: 'source0',
-        api_name: 'api0',
-      },
-      // n1
-      $input: {
-        obj: [
-          {
-            primaryID: 'n2a',
-          },
-        ],
-      },
-      // n5
-      $output: {
-        obj: [
-          {
-            primaryID: 'n5a',
-          },
-        ],
-      },
+      subject: { ...n2.a },
+      object: { ...n5.a },
+      ...recordPred[4],
+      ...source0,
+      ...api0,
     };
 
     const record5_n3a_n5a = {
-      $edge_metadata: {
-        trapi_qEdge_obj: e5,
-        predicate: 'biolink:record5_pred',
-        source: 'source0',
-        api_name: 'api0',
-      },
-      // n3
-      $input: {
-        obj: [
-          {
-            primaryID: 'n3a',
-          },
-        ],
-      },
-      // n5
-      $output: {
-        obj: [
-          {
-            primaryID: 'n5a',
-          },
-        ],
-      },
+      subject: { ...n3.a },
+      object: { ...n5.a },
+      ...recordPred[5],
+      ...source0,
+      ...api0,
     };
 
     const record6_n4a_n5a = {
-      $edge_metadata: {
-        trapi_qEdge_obj: e6,
-        predicate: 'biolink:record6_pred',
-        source: 'source0',
-        api_name: 'api0',
-      },
-      // n4
-      $input: {
-        obj: [
-          {
-            primaryID: 'n4a',
-          },
-        ],
-      },
-      // n5
-      $output: {
-        obj: [
-          {
-            primaryID: 'n5a',
-          },
-        ],
+      subject: { ...n4.a },
+      object: { ...n5.a },
+      ...recordPred[6],
+      ...source0,
+      ...api0,
+    };
+
+    const record0_n0a_n1a_right_is_set = {
+      ...record0_n0a_n1a,
+      object: {
+        ...set(n1.a),
       },
     };
 
-    const record0_n0a_n1a_right_is_set = cloneDeep(record0_n0a_n1a);
-    record0_n0a_n1a_right_is_set.$edge_metadata.trapi_qEdge_obj = e0_right_is_set;
-    record0_n0a_n1a_right_is_set.$output.obj.forEach(o => {
-      o.is_set = true;
-    });
-    const record0_n0b_n1a_right_is_set = cloneDeep(record0_n0b_n1a);
-    record0_n0b_n1a_right_is_set.$edge_metadata.trapi_qEdge_obj = e0_right_is_set;
-    record0_n0b_n1a_right_is_set.$output.obj.forEach(o => {
-      o.is_set = true;
-    });
+    const record0_n0b_n1a_right_is_set = {
+      ...record0_n0b_n1a,
+      object: {
+        ...set(n1.a),
+      },
+    };
 
-    const record0_n0a_n1a_left_is_set = cloneDeep(record0_n0a_n1a);
-    record0_n0a_n1a_left_is_set.$edge_metadata.trapi_qEdge_obj = e0_left_is_set;
-    record0_n0a_n1a_left_is_set.$input.obj.forEach(o => {
-      o.is_set = true;
-    });
-    const record0_n0b_n1a_left_is_set = cloneDeep(record0_n0b_n1a);
-    record0_n0b_n1a_left_is_set.$edge_metadata.trapi_qEdge_obj = e0_left_is_set;
-    record0_n0b_n1a_left_is_set.$input.obj.forEach(o => {
-      o.is_set = true;
-    });
+    const record0_n0a_n1a_left_is_set = {
+      ...record0_n0a_n1a,
+      subject: {
+        ...set(n0.a),
+      },
+    };
 
-    const record1_n1a_n2a_left_is_set = cloneDeep(record1_n1a_n2a);
-    record1_n1a_n2a_left_is_set.$edge_metadata.trapi_qEdge_obj = e1_left_is_set;
-    record1_n1a_n2a_left_is_set.$input.obj.forEach(o => {
-      o.is_set = true;
-    });
-    const record1_n1a_n2b_left_is_set = cloneDeep(record1_n1a_n2b);
-    record1_n1a_n2b_left_is_set.$edge_metadata.trapi_qEdge_obj = e1_left_is_set;
-    record1_n1a_n2b_left_is_set.$input.obj.forEach(o => {
-      o.is_set = true;
-    });
+    const record0_n0b_n1a_left_is_set = {
+      ...record0_n0b_n1a,
+      subject: {
+        ...set(n0.b),
+      },
+    };
 
-    const record1_n2a_n1a_left_is_set = cloneDeep(record1_n2a_n1a);
-    record1_n2a_n1a_left_is_set.$edge_metadata.trapi_qEdge_obj = e1_reversed_left_is_set;
-    record1_n2a_n1a_left_is_set.$input.obj.forEach(o => {
-      o.is_set = true;
-    });
-    const record1_n2b_n1a_left_is_set = cloneDeep(record1_n2b_n1a);
-    record1_n2b_n1a_left_is_set.$edge_metadata.trapi_qEdge_obj = e1_reversed_left_is_set;
-    record1_n2b_n1a_left_is_set.$input.obj.forEach(o => {
-      o.is_set = true;
-    });
+    const record1_n1a_n2a_left_is_set = {
+      ...record1_n1a_n2a,
+      subject: {
+        ...set(n1.a),
+      },
+    };
 
-    const record0_n0a_n1a_both_is_set = cloneDeep(record0_n0a_n1a);
-    record0_n0a_n1a_both_is_set.$edge_metadata.trapi_qEdge_obj = e0_both_is_set;
-    record0_n0a_n1a_both_is_set.$input.obj.forEach(o => {
-      o.is_set = true;
-    });
-    record0_n0a_n1a_both_is_set.$output.obj.forEach(o => {
-      o.is_set = true;
-    });
-    const record0_n0b_n1a_both_is_set = cloneDeep(record0_n0b_n1a);
-    record0_n0b_n1a_both_is_set.$edge_metadata.trapi_qEdge_obj = e0_both_is_set;
-    record0_n0b_n1a_both_is_set.$input.obj.forEach(o => {
-      o.is_set = true;
-    });
-    record0_n0b_n1a_both_is_set.$output.obj.forEach(o => {
-      o.is_set = true;
-    });
+    const record1_n1a_n2b_left_is_set = {
+      ...record1_n1a_n2b,
+      subject: {
+        ...set(n1.a),
+      },
+    };
 
-    const record1_n2a_n1a_both_is_set = cloneDeep(record1_n2a_n1a);
-    record1_n2a_n1a_both_is_set.$edge_metadata.trapi_qEdge_obj = e1_both_is_set;
-    record1_n2a_n1a_both_is_set.$input.obj.forEach(o => {
-      o.is_set = true;
-    });
-    record1_n2a_n1a_both_is_set.$output.obj.forEach(o => {
-      o.is_set = true;
-    });
-    const record1_n2b_n1a_both_is_set = cloneDeep(record1_n2b_n1a);
-    record1_n2b_n1a_both_is_set.$edge_metadata.trapi_qEdge_obj = e1_both_is_set;
-    record1_n2b_n1a_both_is_set.$input.obj.forEach(o => {
-      o.is_set = true;
-    });
-    record1_n2b_n1a_both_is_set.$output.obj.forEach(o => {
-      o.is_set = true;
-    });
+    const record1_n2a_n1a_left_is_set = {
+      ...record1_n2a_n1a,
+      subject: {
+        ...set(n2.a),
+      },
+    };
+
+    const record1_n2b_n1a_left_is_set = {
+      ...record1_n2b_n1a,
+      subject: {
+        ...set(n2.b),
+      },
+    };
+
+    const record0_n0a_n1a_both_is_set = {
+      ...record0_n0a_n1a,
+      subject: {
+        ...set(n0.a),
+      },
+      object: {
+        ...set(n1.a),
+      },
+    };
+
+    const record0_n0b_n1a_both_is_set = {
+      ...record0_n0b_n1a,
+      subject: {
+        ...set(n0.b),
+      },
+      object: {
+        ...set(n1.a),
+      },
+    };
+
+    const record1_n2a_n1a_both_is_set = {
+      ...record1_n2a_n1a,
+      subject: {
+        ...set(n2.a),
+      },
+      object: {
+        ...set(n1.a),
+      },
+    };
+
+    const record1_n2b_n1a_both_is_set = {
+      ...record1_n2b_n1a,
+      subject: {
+        ...set(n2.b),
+      },
+      object: {
+        ...set(n1.a),
+      },
+    };
 
     // start of synthetic record tests
 
@@ -1342,16 +1168,16 @@ describe('Testing QueryResults Module', () => {
 
       const queryResultOuter = new QueryResult();
       let resultsOuter;
-      test('just wrapping for async', async() => {
+      test('just wrapping for async', async () => {
         await queryResultOuter.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": [record0_n0a_n1a]
+          e0: {
+            connected_to: ['e1'],
+            records: [new Record(record0_n0a_n1a, config)],
           },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": [record1_n1a_n2a]
-          }
+          e1: {
+            connected_to: ['e0'],
+            records: [new Record(record1_n1a_n2a, config)],
+          },
         });
         resultsOuter = queryResultOuter.getResults();
       });
@@ -1359,24 +1185,24 @@ describe('Testing QueryResults Module', () => {
       test('should get same results: update (1) & getResults (1) vs. update (2) & getResults (1)', async () => {
         const queryResultInner = new QueryResult();
         await queryResultInner.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": [record0_n0a_n1a]
+          e0: {
+            connected_to: ['e1'],
+            records: [new Record(record0_n0a_n1a, config)],
           },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": [record1_n1a_n2a]
-          }
+          e1: {
+            connected_to: ['e0'],
+            records: [new Record(record1_n1a_n2a, config)],
+          },
         });
         await queryResultInner.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": [record0_n0a_n1a]
+          e0: {
+            connected_to: ['e1'],
+            records: [new Record(record0_n0a_n1a, config)],
           },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": [record1_n1a_n2a]
-          }
+          e1: {
+            connected_to: ['e0'],
+            records: [new Record(record1_n1a_n2a, config)],
+          },
         });
         const resultsInner = queryResultInner.getResults();
         expect(JSON.stringify(resultsOuter)).toEqual(JSON.stringify(resultsInner));
@@ -1385,24 +1211,24 @@ describe('Testing QueryResults Module', () => {
       test('should get same results: update (1) & getResults (1) vs. update (2) & getResults (2)', async () => {
         const queryResultInner = new QueryResult();
         await queryResultInner.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": [record0_n0a_n1a]
+          e0: {
+            connected_to: ['e1'],
+            records: [new Record(record0_n0a_n1a, config)],
           },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": [record1_n1a_n2a]
-          }
+          e1: {
+            connected_to: ['e0'],
+            records: [new Record(record1_n1a_n2a, config)],
+          },
         });
         await queryResultInner.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": [record0_n0a_n1a]
+          e0: {
+            connected_to: ['e1'],
+            records: [new Record(record0_n0a_n1a, config)],
           },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": [record1_n1a_n2a]
-          }
+          e1: {
+            connected_to: ['e0'],
+            records: [new Record(record1_n1a_n2a, config)],
+          },
         });
         queryResultInner.getResults();
         const resultsInner = queryResultInner.getResults();
@@ -1412,14 +1238,14 @@ describe('Testing QueryResults Module', () => {
       test('should get same results: update (1) & getResults (1) vs. update (1) & getResults (2)', async () => {
         const queryResultInner = new QueryResult();
         await queryResultInner.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": [record0_n0a_n1a]
+          e0: {
+            connected_to: ['e1'],
+            records: [new Record(record0_n0a_n1a, config)],
           },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": [record1_n1a_n2a]
-          }
+          e1: {
+            connected_to: ['e0'],
+            records: [new Record(record1_n1a_n2a, config)],
+          },
         });
         queryResultInner.getResults();
         const resultsInner = queryResultInner.getResults();
@@ -1431,66 +1257,51 @@ describe('Testing QueryResults Module', () => {
       test('should get 1 result with record: →', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
-          "e0": {
-            "connected_to": [],
-            "records": [record0_n0a_n1a]
-          }
+          e0: {
+            connected_to: [],
+            records: [new Record(record0_n0a_n1a, config)],
+          },
         });
         const results = queryResult.getResults();
 
         expect(results.length).toEqual(1);
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0'
-        ]);
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1']);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0']);
         expect(results[0]).toHaveProperty('score');
       });
 
       test('should get 4 results for 4 different records per edge: 𝍬', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
-          "e0": {
-            "connected_to": [],
-            "records": [record0_n0a_n1a, record0_n0a_n1b, record0_n0b_n1a, record0_n0b_n1b]
-          }
+          e0: {
+            connected_to: [],
+            records: [
+              new Record(record0_n0a_n1a, config),
+              new Record(record0_n0a_n1b, config),
+              new Record(record0_n0b_n1a, config),
+              new Record(record0_n0b_n1b, config),
+            ],
+          },
         });
         const results = queryResult.getResults();
 
         expect(results.length).toEqual(4);
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0'
-        ]);
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1']);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0']);
         expect(results[0]).toHaveProperty('score');
 
-        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
-          'n0', 'n1'
-        ]);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
-          'e0'
-        ]);
+        expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0', 'n1']);
+        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0']);
         expect(results[1]).toHaveProperty('score');
 
-        expect(Object.keys(results[2].node_bindings).sort()).toEqual([
-          'n0', 'n1'
-        ]);
-        expect(Object.keys(results[2].edge_bindings).sort()).toEqual([
-          'e0'
-        ]);
+        expect(Object.keys(results[2].node_bindings).sort()).toEqual(['n0', 'n1']);
+        expect(Object.keys(results[2].edge_bindings).sort()).toEqual(['e0']);
         expect(results[2]).toHaveProperty('score');
 
-        expect(Object.keys(results[3].node_bindings).sort()).toEqual([
-          'n0', 'n1'
-        ]);
-        expect(Object.keys(results[3].edge_bindings).sort()).toEqual([
-          'e0'
-        ]);
+        expect(Object.keys(results[3].node_bindings).sort()).toEqual(['n0', 'n1']);
+        expect(Object.keys(results[3].edge_bindings).sort()).toEqual(['e0']);
         expect(results[3]).toHaveProperty('score');
       });
 
@@ -1498,98 +1309,95 @@ describe('Testing QueryResults Module', () => {
       test('should get 1 result for the same record repeated 4 times: 𝍬', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
-          "e0": {
-            "connected_to": [],
-            "records": [record0_n0a_n1a, record0_n0a_n1a, record0_n0a_n1a, record0_n0a_n1a]
-          }
+          e0: {
+            connected_to: [],
+            records: [
+              new Record(record0_n0a_n1a, config),
+              new Record(record0_n0a_n1a, config),
+              new Record(record0_n0a_n1a, config),
+              new Record(record0_n0a_n1a, config),
+            ],
+          },
         });
         const results = queryResult.getResults();
 
         expect(results.length).toEqual(1);
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0'
-        ]);
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1']);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0']);
         expect(results[0]).toHaveProperty('score');
       });
 
-//      // TODO: this test fails. Do we need to handle this case?
-//      test('should get 1 result for the same record repeated twice and reversed twice: 𝍬', async () => {
-//        const queryResult = new QueryResult();
-//        await queryResult.update({
-//          "e1": {
-//            "connected_to": [],
-//            "records": [record1_n1a_n2a, record1_n1a_n2a, record1_n2a_n1a, record1_n2a_n1a]
-//          },
-//        });
-//        const results = queryResult.getResults();
-//
-//        expect(results.length).toEqual(1);
-//
-//        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-//          'n1', 'n2'
-//        ]);
-//        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-//          'e1'
-//        ]);
-//        expect(results[0]).toHaveProperty('score');
-//      });
-//
-//      // TODO: this one fails. Do we need to worry about this case?
-//      test('should get 2 results for the same record repeated twice and reversed twice: ⇉⇇', async () => {
-//        const queryResult = new QueryResult();
-//        await queryResult.update({
-//          "e1": {
-//            "connected_to": ["e1_reversed"],
-//            "records": [record1_n1a_n2a, record1_n1a_n2a]
-//          },
-//          "e1_reversed": {
-//            "connected_to": ["e1"],
-//            "records": [record1_n2a_n1a, record1_n2a_n1a]
-//          }
-//        });
-//        const results = queryResult.getResults();
-//
-//        expect(results.length).toEqual(2);
-//
-//        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-//          'n1', 'n2'
-//        ]);
-//        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-//          'e1'
-//        ]);
-//        expect(results[0]).toHaveProperty('score');
-//
-//        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
-//          'n2', 'n1'
-//        ]);
-//        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
-//          'e1_reversed'
-//        ]);
-//        expect(results[1]).toHaveProperty('score');
-//      });
+      //      // TODO: this test fails. Do we need to handle this case?
+      //      test('should get 1 result for the same record repeated twice and reversed twice: 𝍬', async () => {
+      //        const queryResult = new QueryResult();
+      //        await queryResult.update({
+      //          "e1": {
+      //            "connected_to": [],
+      //            "records": [new Record(record1_n1a_n2a, config), new Record(record1_n1a_n2a, config), new Record(record1_n2a_n1a, config), new Record(record1_n2a_n1a, config)]
+      //          },
+      //        });
+      //        const results = queryResult.getResults();
+      //
+      //        expect(results.length).toEqual(1);
+      //
+      //        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+      //          'n1', 'n2'
+      //        ]);
+      //        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+      //          'e1'
+      //        ]);
+      //        expect(results[0]).toHaveProperty('score');
+      //      });
+      //
+      //      // TODO: this one fails. Do we need to worry about this case?
+      //      test('should get 2 results for the same record repeated twice and reversed twice: ⇉⇇', async () => {
+      //        const queryResult = new QueryResult();
+      //        await queryResult.update({
+      //          "e1": {
+      //            "connected_to": ["e1_reversed"],
+      //            "records": [new Record(record1_n1a_n2a, config), new Record(record1_n1a_n2a, config)]
+      //          },
+      //          "e1_reversed": {
+      //            "connected_to": ["e1"],
+      //            "records": [new Record(record1_n2a_n1a, config), new Record(record1_n2a_n1a, config)]
+      //          }
+      //        });
+      //        const results = queryResult.getResults();
+      //
+      //        expect(results.length).toEqual(2);
+      //
+      //        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+      //          'n1', 'n2'
+      //        ]);
+      //        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+      //          'e1'
+      //        ]);
+      //        expect(results[0]).toHaveProperty('score');
+      //
+      //        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
+      //          'n2', 'n1'
+      //        ]);
+      //        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
+      //          'e1_reversed'
+      //        ]);
+      //        expect(results[1]).toHaveProperty('score');
+      //      });
 
       test('should get 1 result with 2 edge mappings when predicates differ: ⇉', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
-          "e0": {
-            "connected_to": [],
-            "records": [record0_n0a_n1a_pred0_api1, record0_n0a_n1a_pred1_api1]
-          }
+          e0: {
+            connected_to: [],
+            records: [new Record(record0_n0a_n1a_pred0_api1, config), new Record(record0_n0a_n1a_pred1_api1, config)],
+          },
         });
         const results = queryResult.getResults();
 
         expect(results.length).toEqual(1);
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0'
-        ]);
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1']);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0']);
 
         expect(results[0].edge_bindings['e0'].length).toEqual(2);
 
@@ -1604,7 +1412,7 @@ describe('Testing QueryResults Module', () => {
         await queryResult.update({
           "e0": {
             "connected_to": [],
-            "records": [record0_n0a_n1a_pred1_api0, record0_n0a_n1a_pred1_api1]
+            "records": [new Record(record0_n0a_n1a_pred1_api0, config), new Record(record0_n0a_n1a_pred1_api1, config)]
           }
         });
         const results = queryResult.getResults();
@@ -1652,259 +1460,214 @@ describe('Testing QueryResults Module', () => {
         expect(results[0]).toHaveProperty('score');
       });
       //*/
-
     });
 
     describe('query graph: →→', () => {
       test('should get 1 result with records: →→', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": [record0_n0a_n1a]
+          e0: {
+            connected_to: ['e1'],
+            records: [new Record(record0_n0a_n1a, config)],
           },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": [record1_n1a_n2a]
-          }
+          e1: {
+            connected_to: ['e0'],
+            records: [new Record(record1_n1a_n2a, config)],
+          },
         });
         const results = queryResult.getResults();
 
         expect(results.length).toEqual(1);
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0', 'e1'
-        ]);
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
         expect(results[0]).toHaveProperty('score');
       });
       test('should get 2 results with records: >-', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": [record0_n0a_n1a, record0_n0b_n1a]
+          e0: {
+            connected_to: ['e1'],
+            records: [new Record(record0_n0a_n1a, config), new Record(record0_n0b_n1a, config)],
           },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": [record1_n1a_n2a]
-          }
+          e1: {
+            connected_to: ['e0'],
+            records: [new Record(record1_n1a_n2a, config)],
+          },
         });
         const results = queryResult.getResults();
 
         expect(results.length).toEqual(2);
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0', 'e1'
-        ]);
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
         expect(results[0]).toHaveProperty('score');
 
-        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
-          'e0', 'e1'
-        ]);
+        expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
+        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0', 'e1']);
         expect(results[1]).toHaveProperty('score');
       });
       test('should get 4 results with records: ><', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": [record0_n0a_n1a, record0_n0b_n1a]
+          e0: {
+            connected_to: ['e1'],
+            records: [new Record(record0_n0a_n1a, config), new Record(record0_n0b_n1a, config)],
           },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": [record1_n1a_n2a, record1_n1a_n2b]
-          }
+          e1: {
+            connected_to: ['e0'],
+            records: [new Record(record1_n1a_n2a, config), new Record(record1_n1a_n2b, config)],
+          },
         });
         const results = queryResult.getResults();
 
         expect(results.length).toEqual(4);
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0', 'e1'
-        ]);
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
         expect(results[0]).toHaveProperty('score');
 
-        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
-          'e0', 'e1'
-        ]);
+        expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
+        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0', 'e1']);
         expect(results[1]).toHaveProperty('score');
 
-        expect(Object.keys(results[2].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[2].edge_bindings).sort()).toEqual([
-          'e0', 'e1'
-        ]);
+        expect(Object.keys(results[2].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
+        expect(Object.keys(results[2].edge_bindings).sort()).toEqual(['e0', 'e1']);
         expect(results[2]).toHaveProperty('score');
 
-        expect(Object.keys(results[3].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[3].edge_bindings).sort()).toEqual([
-          'e0', 'e1'
-        ]);
+        expect(Object.keys(results[3].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
+        expect(Object.keys(results[3].edge_bindings).sort()).toEqual(['e0', 'e1']);
         expect(results[3]).toHaveProperty('score');
-      });   
+      });
       test('should get 2 results with records: >< (is_set for n0)', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
-          "e0_left_is_set": {
-            "connected_to": ["e1"],
-            "records": [record0_n0a_n1a_left_is_set, record0_n0b_n1a_left_is_set]
+          e0_left_is_set: {
+            connected_to: ['e1'],
+            records: [
+              new Record(record0_n0a_n1a_left_is_set, config),
+              new Record(record0_n0b_n1a_left_is_set, config)
+            ],
           },
-          "e1": {
-            "connected_to": ["e0_left_is_set"],
-            "records": [record1_n1a_n2a, record1_n1a_n2b]
-          }
+          e1: {
+            connected_to: ['e0_left_is_set'],
+            records: [
+              new Record(record1_n1a_n2a, config),
+              new Record(record1_n1a_n2b, config)
+            ],
+          },
         });
         const results = queryResult.getResults();
 
         expect(results.length).toEqual(2);
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0_with_is_set', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0_left_is_set', 'e1'
-        ]);
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0_with_is_set', 'n1', 'n2']);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0_left_is_set', 'e1']);
         expect(results[0]).toHaveProperty('score');
 
-        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
-          'n0_with_is_set', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
-          'e0_left_is_set', 'e1'
-        ]);
+        expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0_with_is_set', 'n1', 'n2']);
+        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0_left_is_set', 'e1']);
         expect(results[1]).toHaveProperty('score');
-      });    
+      });
       test('should get 4 results with records: >< (is_set for n1)', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
-          "e0_right_is_set": {
-            "connected_to": ["e1_left_is_set"],
-            "records": [record0_n0a_n1a_right_is_set, record0_n0b_n1a_right_is_set]
+          e0_right_is_set: {
+            connected_to: ['e1_left_is_set'],
+            records: [
+              new Record(record0_n0a_n1a_right_is_set, config),
+              new Record(record0_n0b_n1a_right_is_set, config),
+            ],
           },
-          "e1_left_is_set": {
-            "connected_to": ["e0_right_is_set"],
-            "records": [record1_n1a_n2a_left_is_set, record1_n1a_n2b_left_is_set]
-          }
+          e1_left_is_set: {
+            connected_to: ['e0_right_is_set'],
+            records: [
+              new Record(record1_n1a_n2a_left_is_set, config),
+              new Record(record1_n1a_n2b_left_is_set, config)
+            ],
+          },
         });
         const results = queryResult.getResults();
 
         expect(results.length).toEqual(4);
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1_with_is_set', 'n2'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0_right_is_set', 'e1_left_is_set'
-        ]);
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1_with_is_set', 'n2']);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0_right_is_set', 'e1_left_is_set']);
         expect(results[0]).toHaveProperty('score');
 
-        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
-          'n0', 'n1_with_is_set', 'n2'
-        ]);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
-          'e0_right_is_set', 'e1_left_is_set'
-        ]);
+        expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0', 'n1_with_is_set', 'n2']);
+        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0_right_is_set', 'e1_left_is_set']);
         expect(results[1]).toHaveProperty('score');
       });
 
       test('should get 1 result with records: >< (is_set for n0 and n2)', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
-          "e0_left_is_set": {
-            "connected_to": ["e1_reversed_left_is_set"],
-            "records": [record0_n0a_n1a_left_is_set, record0_n0b_n1a_left_is_set]
+          e0_left_is_set: {
+            connected_to: ['e1_reversed_left_is_set'],
+            records: [new Record(record0_n0a_n1a_left_is_set, config), new Record(record0_n0b_n1a_left_is_set, config)],
           },
-          "e1_reversed_left_is_set": {
-            "connected_to": ["e0_left_is_set"],
-            "records": [record1_n2a_n1a_left_is_set, record1_n2b_n1a_left_is_set]
-          }
+          e1_reversed_left_is_set: {
+            connected_to: ['e0_left_is_set'],
+            records: [new Record(record1_n2a_n1a_left_is_set, config), new Record(record1_n2b_n1a_left_is_set, config)],
+          },
         });
         const results = queryResult.getResults();
 
         expect(results.length).toEqual(1);
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0_with_is_set', 'n1', 'n2_with_is_set'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0_left_is_set', 'e1_reversed_left_is_set'
-        ]);
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0_with_is_set', 'n1', 'n2_with_is_set']);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0_left_is_set', 'e1_reversed_left_is_set']);
         expect(results[0]).toHaveProperty('score');
       });
 
       test('should get 1 result with records: >< (is_set for n0, n1 and n2)', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
-          "e0_both_is_set": {
-            "connected_to": ["e1_both_is_set"],
-            "records": [record0_n0a_n1a_both_is_set, record0_n0b_n1a_both_is_set]
+          e0_both_is_set: {
+            connected_to: ['e1_both_is_set'],
+            records: [new Record(record0_n0a_n1a_both_is_set, config), new Record(record0_n0b_n1a_both_is_set, config)],
           },
-          "e1_both_is_set": {
-            "connected_to": ["e0_both_is_set"],
-            "records": [record1_n2a_n1a_both_is_set, record1_n2b_n1a_both_is_set]
-          }
+          e1_both_is_set: {
+            connected_to: ['e0_both_is_set'],
+            records: [new Record(record1_n2a_n1a_both_is_set, config), new Record(record1_n2b_n1a_both_is_set, config)],
+          },
         });
         const results = queryResult.getResults();
 
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0_with_is_set', 'n1_with_is_set', 'n2_with_is_set'
+          'n0_with_is_set',
+          'n1_with_is_set',
+          'n2_with_is_set',
         ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0_both_is_set', 'e1_both_is_set'
-        ]);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0_both_is_set', 'e1_both_is_set']);
         expect(results[0]).toHaveProperty('score');
       });
 
       test('should get 2 results with records: ⇉⇉', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": [record0_n0a_n1a, record0_n0a_n1b]
+          e0: {
+            connected_to: ['e1'],
+            records: [new Record(record0_n0a_n1a, config), new Record(record0_n0a_n1b, config)],
           },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": [record1_n1a_n2a, record1_n1b_n2a]
-          }
+          e1: {
+            connected_to: ['e0'],
+            records: [new Record(record1_n1a_n2a, config), new Record(record1_n1b_n2a, config)],
+          },
         });
         const results = queryResult.getResults();
 
         expect(results.length).toEqual(2);
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0', 'e1'
-        ]);
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
         expect(results[0]).toHaveProperty('score');
 
-        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
-          'e0', 'e1'
-        ]);
+        expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
+        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0', 'e1']);
         expect(results[1]).toHaveProperty('score');
       });
 
@@ -1912,81 +1675,65 @@ describe('Testing QueryResults Module', () => {
       test('should get 1 result with records: ⇉⇉ (duplicates)', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": [record0_n0a_n1a, record0_n0a_n1a]
+          e0: {
+            connected_to: ['e1'],
+            records: [new Record(record0_n0a_n1a, config), new Record(record0_n0a_n1a, config)],
           },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": [record1_n1a_n2a, record1_n1a_n2a]
-          }
+          e1: {
+            connected_to: ['e0'],
+            records: [new Record(record1_n1a_n2a, config), new Record(record1_n1a_n2a, config)],
+          },
         });
         const results = queryResult.getResults();
 
         expect(results.length).toEqual(1);
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0', 'e1'
-        ]);
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
         expect(results[0]).toHaveProperty('score');
       });
       test('should get 2 results with records: -<', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": [record0_n0a_n1a]
+          e0: {
+            connected_to: ['e1'],
+            records: [new Record(record0_n0a_n1a, config)],
           },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": [record1_n1a_n2a, record1_n1a_n2b]
-          }
+          e1: {
+            connected_to: ['e0'],
+            records: [new Record(record1_n1a_n2a, config), new Record(record1_n1a_n2b, config)],
+          },
         });
         const results = queryResult.getResults();
 
         expect(results.length).toEqual(2);
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0', 'e1'
-        ]);
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
         expect(results[0]).toHaveProperty('score');
 
-        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
-          'e0', 'e1'
-        ]);
+        expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
+        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0', 'e1']);
         expect(results[1]).toHaveProperty('score');
       });
       test('should get 1 result with records: →← (directionality does not match query graph)', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
-          "e0": {
-            "connected_to": ["e1_reversed"],
-            "records": [record0_n0a_n1a]
+          e0: {
+            connected_to: ['e1_reversed'],
+            records: [new Record(record0_n0a_n1a, config)],
           },
-          "e1_reversed": {
-            "connected_to": ["e0"],
-            "records": [record1_n2a_n1a]
-          }
+          e1_reversed: {
+            connected_to: ['e0'],
+            records: [new Record(record1_n2a_n1a, config)],
+          },
         });
         const results = queryResult.getResults();
 
         expect(results.length).toEqual(1);
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0', 'e1_reversed'
-        ]);
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1_reversed']);
         expect(results[0]).toHaveProperty('score');
       });
 
@@ -2015,144 +1762,106 @@ describe('Testing QueryResults Module', () => {
         expect(n0Count * n1Count * n2Count).toEqual(5000);
 
         // generate connected records
-        range(0, n1Count).forEach(n1Index => {
-          e0Records.push({
-            $edge_metadata: {
-              trapi_qEdge_obj: e0,
-              predicate: 'biolink:record0_pred0',
-              source: 'source0',
-              api_name: 'api0',
-            },
-            // n0
-            $input: {
-              obj: [
-                {
-                  primaryID: 'n0a',
+        range(0, n1Count).forEach((n1Index) => {
+          e0Records.push(
+            new Record(
+              {
+                subject: {
+                  ...n0.a,
                 },
-              ],
-            },
-            // n1
-            $output: {
-              obj: [
-                {
-                  primaryID: 'n1_' + n1Index,
+                object: {
+                  ...n1.a,
+                  curie: `n1_${n1Index}`,
                 },
-              ],
-            },
-          });
+                predicate: 'biolink:record0_pred0',
+                ...source0,
+                ...api0,
+              }
+            ),
+          );
 
-          range(0, n2Count).forEach(n2Index => {
-            e1Records.push({
-              $edge_metadata: {
-                trapi_qEdge_obj: e1,
-                predicate: 'biolink:record1_pred0',
-                source: 'source1',
-                api_name: 'api1',
-              },
-              // n1
-              $input: {
-                obj: [
-                  {
-                    primaryID: 'n1_' + n1Index,
+          range(0, n2Count).forEach((n2Index) => {
+            e1Records.push(
+              new Record(
+                {
+                  subject: {
+                    ...n1.a,
+                    curie: `n1_${n1Index}`,
                   },
-                ],
-              },
-              // n2
-              $output: {
-                obj: [
-                  {
-                    primaryID: 'n2_' + n2Index,
+                  object: {
+                    ...n2.a,
+                    curie: `n2_${n2Index}`,
                   },
-                ],
-              },
-            });
+                  predicate: 'biolink:record1_pred0',
+                  ...source1,
+                  ...api1,
+                }
+              ),
+            );
           });
         });
 
         // generate unconnected records
-        range(0, n1Count).forEach(n1Index => {
-          e0Records.push({
-            $edge_metadata: {
-              trapi_qEdge_obj: e0,
-              predicate: 'biolink:record0_pred0',
-              source: 'source0',
-              api_name: 'api0',
-            },
-            // n0
-            $input: {
-              obj: [
-                {
-                  primaryID: 'n0a',
+        range(0, n1Count).forEach((n1Index) => {
+          e0Records.push(
+            new Record(
+              {
+                subject: {
+                  ...n0.a,
                 },
-              ],
-            },
-            // n1
-            $output: {
-              obj: [
-                {
-                  primaryID: 'n1_unconnected_e0record_' + n1Index,
+                object: {
+                  ...n1.a,
+                  curie: 'n1_unconnected_e0record_'
                 },
-              ],
-            },
-          });
+                predicate: 'biolink:record0_pred0',
+                ...source0,
+                ...api0,
+              }
+            ),
+          );
 
-          range(0, n2Count).forEach(n2Index => {
-            e1Records.push({
-              $edge_metadata: {
-                trapi_qEdge_obj: e1,
-                predicate: 'biolink:record1_pred0',
-                source: 'source1',
-                api_name: 'api1',
-              },
-              // n1
-              $input: {
-                obj: [
-                  {
-                    primaryID: 'n1_unconnected_e1record_' + n1Index,
+          range(0, n2Count).forEach((n2Index) => {
+            e1Records.push(
+              new Record(
+                {
+                  subject: {
+                    ...n1.a,
+                    curie: `n1_unconnected_e1record_${n1Index}`
                   },
-                ],
-              },
-              // n2
-              $output: {
-                obj: [
-                  {
-                    primaryID: 'n2_' + n2Index,
+                  object: {
+                    ...n2.a,
+                    curie: `n2_${n2Index}`,
                   },
-                ],
-              },
-            });
+                  predicate: 'biolink:record1_pred0',
+                  ...source1,
+                  ...api1,
+                }
+              ),
+            );
           });
         });
 
         const queryResult = new QueryResult();
         await queryResult.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": e0Records
+          e0: {
+            connected_to: ['e1'],
+            records: e0Records,
           },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": e1Records
-          }
+          e1: {
+            connected_to: ['e0'],
+            records: e1Records,
+          },
         });
         const results = queryResult.getResults();
 
         expect(results.length).toEqual(5000);
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0', 'e1'
-        ]);
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
         expect(results[0]).toHaveProperty('score');
 
-        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
-          'e0', 'e1'
-        ]);
+        expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
+        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0', 'e1']);
         expect(results[1]).toHaveProperty('score');
       });
 
@@ -2172,105 +1881,79 @@ describe('Testing QueryResults Module', () => {
         const e1Records = [];
 
         // generate connected records
-        e0Records.push({
-          $edge_metadata: {
-            trapi_qEdge_obj: e0,
-            predicate: 'biolink:record0_pred0',
-            source: 'source0',
-            api_name: 'api0',
-          },
-          // n0
-          $input: {
-            obj: [
-              {
-                primaryID: 'n0a',
+        e0Records.push(
+          new Record(
+            {
+              subject: {
+                ...n0.a,
               },
-            ],
-          },
-          // n1
-          $output: {
-            obj: [
-              {
-                primaryID: 'n1_connected',
+              object: {
+                ...n1.a,
+                curie: 'n1_connected'
               },
-            ],
-          },
-        });
+              predicate: 'biolink:record0_pred0',
+              ...source0,
+              ...api0,
+            }
+          ),
+        );
 
-        e1Records.push({
-          $edge_metadata: {
-            trapi_qEdge_obj: e1,
-            predicate: 'biolink:record1_pred0',
-            source: 'source1',
-            api_name: 'api1',
-          },
-          // n1
-          $input: {
-            obj: [
-              {
-                primaryID: 'n1_connected',
+        e1Records.push(
+          new Record(
+            {
+              subject: {
+                ...n1.a,
+                curie: 'n1_connected'
               },
-            ],
-          },
-          // n2
-          $output: {
-            obj: [
-              {
-                primaryID: 'n2_connected',
+              object: {
+                ...n2.a,
+                curie: 'n2_connected'
               },
-            ],
-          },
-        });
+              predicate: 'biolink:record1_pred0',
+              ...source1,
+              ...api1,
+            }
+          ),
+        );
 
         // generate unconnected records
-        range(0, 50000).forEach(n2Index => {
-          e1Records.push({
-            $edge_metadata: {
-              trapi_qEdge_obj: e1,
-              predicate: 'biolink:record1_pred0',
-              source: 'source1',
-              api_name: 'api1',
-            },
-            // n1
-            $input: {
-              obj: [
-                {
-                  primaryID: 'n1_unconnected',
+        range(0, 50000).forEach((n2Index) => {
+          e1Records.push(
+            new Record(
+              {
+                subject: {
+                  ...n1.a,
+                  curie: 'n1_unconnected',
                 },
-              ],
-            },
-            // n2
-            $output: {
-              obj: [
-                {
-                  primaryID: 'n2_unconnected_' + n2Index,
+                object: {
+                  ...n2.a,
+                  curie: `n2_unconnected_${n2Index}`
                 },
-              ],
-            },
-          });
+                predicate: 'biolink:record1_pred0',
+                ...source1,
+                ...api1,
+              }
+            ),
+          );
         });
 
         const queryResult = new QueryResult();
         await queryResult.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": e0Records
+          e0: {
+            connected_to: ['e1'],
+            records: e0Records,
           },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": e1Records
-          }
+          e1: {
+            connected_to: ['e0'],
+            records: e1Records,
+          },
         });
         const results = queryResult.getResults();
 
         expect(results.length).toEqual(1);
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0', 'e1'
-        ]);
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
         expect(results[0]).toHaveProperty('score');
       });
 
@@ -2310,16 +1993,16 @@ describe('Testing QueryResults Module', () => {
                 api_name: 'api0',
               },
               // n0
-              $input: {
-                obj: [
+              subject: {
+                normalizedInfo: [
                   {
                     primaryID: 'n0a',
                   },
                 ],
               },
               // n1
-              $output: {
-                obj: [
+              object: {
+                normalizedInfo: [
                   {
                     primaryID: 'n1_' + n1Index,
                   },
@@ -2336,16 +2019,16 @@ describe('Testing QueryResults Module', () => {
                   api_name: 'api1',
                 },
                 // n1
-                $input: {
-                  obj: [
+                subject: {
+                  normalizedInfo: [
                     {
                       primaryID: 'n1_' + n1Index,
                     },
                   ],
                 },
                 // n2
-                $output: {
-                  obj: [
+                object: {
+                  normalizedInfo: [
                     {
                       primaryID: 'n2_' + n2Index,
                     },
@@ -2418,16 +2101,16 @@ describe('Testing QueryResults Module', () => {
                 api_name: 'api0',
               },
               // n0
-              $input: {
-                obj: [
+              subject: {
+                normalizedInfo: [
                   {
                     primaryID: 'n0a',
                   },
                 ],
               },
               // n1
-              $output: {
-                obj: [
+              object: {
+                normalizedInfo: [
                   {
                     primaryID: 'n1_' + n1Index,
                   },
@@ -2444,16 +2127,16 @@ describe('Testing QueryResults Module', () => {
                   api_name: 'api1',
                 },
                 // n1
-                $input: {
-                  obj: [
+                subject: {
+                  normalizedInfo: [
                     {
                       primaryID: 'n1_' + n1Index,
                     },
                   ],
                 },
                 // n2
-                $output: {
-                  obj: [
+                object: {
+                  normalizedInfo: [
                     {
                       primaryID: 'n2_' + n2Index,
                     },
@@ -2473,16 +2156,16 @@ describe('Testing QueryResults Module', () => {
                 api_name: 'api0',
               },
               // n0
-              $input: {
-                obj: [
+              subject: {
+                normalizedInfo: [
                   {
                     primaryID: 'n0a',
                   },
                 ],
               },
               // n1
-              $output: {
-                obj: [
+              object: {
+                normalizedInfo: [
                   {
                     primaryID: 'n1_unconnected_e0record_' + n1Index,
                   },
@@ -2499,16 +2182,16 @@ describe('Testing QueryResults Module', () => {
                   api_name: 'api1',
                 },
                 // n1
-                $input: {
-                  obj: [
+                subject: {
+                  normalizedInfo: [
                     {
                       primaryID: 'n1_unconnected_e1record_' + n1Index,
                     },
                   ],
                 },
                 // n2
-                $output: {
-                  obj: [
+                object: {
+                  normalizedInfo: [
                     {
                       primaryID: 'n2_' + n2Index,
                     },
@@ -2580,16 +2263,16 @@ describe('Testing QueryResults Module', () => {
                 api_name: 'api0',
               },
               // n0
-              $input: {
-                obj: [
+              subject: {
+                normalizedInfo: [
                   {
                     primaryID: 'n0a',
                   },
                 ],
               },
               // n1
-              $output: {
-                obj: [
+              object: {
+                normalizedInfo: [
                   {
                     primaryID: 'n1_' + n1Index,
                   },
@@ -2606,16 +2289,16 @@ describe('Testing QueryResults Module', () => {
                   api_name: 'api1',
                 },
                 // n1
-                $input: {
-                  obj: [
+                subject: {
+                  normalizedInfo: [
                     {
                       primaryID: 'n1_' + n1Index,
                     },
                   ],
                 },
                 // n2
-                $output: {
-                  obj: [
+                object: {
+                  normalizedInfo: [
                     {
                       primaryID: 'n2_' + n2Index,
                     },
@@ -2658,86 +2341,71 @@ describe('Testing QueryResults Module', () => {
         });
       });
       //*/
-
     });
 
     describe('query graph: →←', () => {
       test('should get 1 result with records: →←', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
-          "e0": {
-            "connected_to": ["e1_reversed"],
-            "records": [record0_n0a_n1a]
+          e0: {
+            connected_to: ['e1_reversed'],
+            records: [new Record(record0_n0a_n1a, config)],
           },
-          "e1_reversed": {
-            "connected_to": ["e0"],
-            "records": [record1_n2a_n1a]
-          }
+          e1_reversed: {
+            connected_to: ['e0'],
+            records: [new Record(record1_n2a_n1a, config)],
+          },
         });
         const results = queryResult.getResults();
 
         expect(results.length).toEqual(1);
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0', 'e1_reversed'
-        ]);
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1_reversed']);
         expect(results[0]).toHaveProperty('score');
       });
 
       test('should get 1 result with records: →→ (directionality does not match query graph)', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
-          "e0": {
-            "connected_to": ["e1"],
-            "records": [record0_n0a_n1a]
+          e0: {
+            connected_to: ['e1'],
+            records: [new Record(record0_n0a_n1a, config)],
           },
-          "e1": {
-            "connected_to": ["e0"],
-            "records": [record1_n1a_n2a]
-          }
+          e1: {
+            connected_to: ['e0'],
+            records: [new Record(record1_n1a_n2a, config)],
+          },
         });
         const results = queryResult.getResults();
 
         expect(results.length).toEqual(1);
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0', 'e1'
-        ]);
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
         expect(results[0]).toHaveProperty('score');
       });
-
-
     });
 
     describe('query graph: ←→', () => {
       test('should get 1 result for 1 record per edge: ←→', async () => {
         const queryResult = new QueryResult();
         await queryResult.update({
-          "e1_reversed": {
-            "connected_to": ["e4"],
-            "records": [record1_n2a_n1a]
+          e1_reversed: {
+            connected_to: ['e4'],
+            records: [new Record(record1_n2a_n1a, config)],
           },
-          "e4": {
-            "connected_to": ["e1_reversed"],
-            "records": [record4_n2a_n5a]
-          }
+          e4: {
+            connected_to: ['e1_reversed'],
+            records: [new Record(record4_n2a_n5a, config)],
+          },
         });
         const results = queryResult.getResults();
 
         expect(results.length).toEqual(1);
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n1', 'n2', 'n5'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e1_reversed', 'e4'
-        ]);
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n1', 'n2', 'n5']);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e1_reversed', 'e4']);
         expect(results[0]).toHaveProperty('score');
       });
 
@@ -2745,21 +2413,20 @@ describe('Testing QueryResults Module', () => {
         const queryResult = new QueryResult();
 
         await queryResult.update({
-          "e1_reversed": {
-            "connected_to": ["e4"],
-            "records": [record1_n2b_n1a]
+          e1_reversed: {
+            connected_to: ['e4'],
+            records: [new Record(record1_n2b_n1a, config)],
           },
-          "e4": {
-            "connected_to": ["e1_reversed"],
-            "records": [record4_n2a_n5a]
-          }
+          e4: {
+            connected_to: ['e1_reversed'],
+            records: [new Record(record4_n2a_n5a, config)],
+          },
         });
 
         const results = queryResult.getResults();
 
         expect(results.length).toEqual(0);
       });
-
     });
 
     describe('query graph: -<', () => {
@@ -2772,17 +2439,17 @@ describe('Testing QueryResults Module', () => {
         const queryResult = new QueryResult();
 
         await queryResult.update({
-          "e0": {
-            "connected_to": ["e1", "e2"],
-            "records": [record0_n0a_n1a]
+          e0: {
+            connected_to: ['e1', 'e2'],
+            records: [new Record(record0_n0a_n1a, config)],
           },
-          "e1": {
-            "connected_to": ["e0", "e2"],
-            "records": [record1_n1a_n2a]
+          e1: {
+            connected_to: ['e0', 'e2'],
+            records: [new Record(record1_n1a_n2a, config)],
           },
-          "e2": {
-            "connected_to": ["e0", "e1"],
-            "records": [record2_n1a_n3a]
+          e2: {
+            connected_to: ['e0', 'e1'],
+            records: [new Record(record2_n1a_n3a, config)],
           },
         });
 
@@ -2790,53 +2457,49 @@ describe('Testing QueryResults Module', () => {
 
         expect(results.length).toEqual(1);
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2', 'n3'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0', 'e1', 'e2'
-        ]);
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2', 'n3']);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1', 'e2']);
 
         expect(results[0]).toHaveProperty('score');
       });
 
-//      // TODO: this test fails
-//      /*
-//       *               -e1-> n2
-//       *   n0 <-e0- n1
-//       *               -e2-> n3
-//       */
-//      test('should get 1 result for 1 record per edge: ←⇉⮆', async () => {
-//        const queryResult = new QueryResult();
-//
-//        await queryResult.update({
-//          "e0_reversed": {
-//            "connected_to": ["e1", "e2"],
-//            "records": [record0_n1a_n0a]
-//          },
-//          "e1": {
-//            "connected_to": ["e0_reversed", "e2"],
-//            "records": [record1_n1a_n2a]
-//          },
-//          "e2": {
-//            "connected_to": ["e0_reversed", "e1"],
-//            "records": [record2_n1a_n3a]
-//          },
-//        });
-//
-//        const results = queryResult.getResults();
-//
-//        expect(results.length).toEqual(1);
-//
-//        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-//          'n0', 'n1', 'n2', 'n3'
-//        ]);
-//        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-//          'e0_reversed', 'e1', 'e2'
-//        ]);
-//
-//        expect(results[0]).toHaveProperty('score');
-//      });
+      //      // TODO: this test fails
+      //      /*
+      //       *               -e1-> n2
+      //       *   n0 <-e0- n1
+      //       *               -e2-> n3
+      //       */
+      //      test('should get 1 result for 1 record per edge: ←⇉⮆', async () => {
+      //        const queryResult = new QueryResult();
+      //
+      //        await queryResult.update({
+      //          "e0_reversed": {
+      //            "connected_to": ["e1", "e2"],
+      //            "records": [new Record(record0_n1a_n0a, config)]
+      //          },
+      //          "e1": {
+      //            "connected_to": ["e0_reversed", "e2"],
+      //            "records": [new Record(record1_n1a_n2a, config)]
+      //          },
+      //          "e2": {
+      //            "connected_to": ["e0_reversed", "e1"],
+      //            "records": [new Record(record2_n1a_n3a, config)]
+      //          },
+      //        });
+      //
+      //        const results = queryResult.getResults();
+      //
+      //        expect(results.length).toEqual(1);
+      //
+      //        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+      //          'n0', 'n1', 'n2', 'n3'
+      //        ]);
+      //        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+      //          'e0_reversed', 'e1', 'e2'
+      //        ]);
+      //
+      //        expect(results[0]).toHaveProperty('score');
+      //      });
 
       /*
        *               <-e1- n2
@@ -2847,17 +2510,17 @@ describe('Testing QueryResults Module', () => {
         const queryResult = new QueryResult();
 
         await queryResult.update({
-          "e0": {
-            "connected_to": ["e1_reversed", "e2"],
-            "records": [record0_n0a_n1a]
+          e0: {
+            connected_to: ['e1_reversed', 'e2'],
+            records: [new Record(record0_n0a_n1a, config)],
           },
-          "e1_reversed": {
-            "connected_to": ["e0", "e2"],
-            "records": [record1_n2a_n1a]
+          e1_reversed: {
+            connected_to: ['e0', 'e2'],
+            records: [new Record(record1_n2a_n1a, config)],
           },
-          "e2": {
-            "connected_to": ["e0", "e1_reversed"],
-            "records": [record2_n1a_n3a]
+          e2: {
+            connected_to: ['e0', 'e1_reversed'],
+            records: [new Record(record2_n1a_n3a, config)],
           },
         });
 
@@ -2865,12 +2528,8 @@ describe('Testing QueryResults Module', () => {
 
         expect(results.length).toEqual(1);
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2', 'n3'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0', 'e1_reversed', 'e2'
-        ]);
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2', 'n3']);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1_reversed', 'e2']);
 
         expect(results[0]).toHaveProperty('score');
       });
@@ -2884,17 +2543,17 @@ describe('Testing QueryResults Module', () => {
         const queryResult = new QueryResult();
 
         await queryResult.update({
-          "e0": {
-            "connected_to": ["e1_reversed", "e2_reversed"],
-            "records": [record0_n0a_n1a]
+          e0: {
+            connected_to: ['e1_reversed', 'e2_reversed'],
+            records: [new Record(record0_n0a_n1a, config)],
           },
-          "e1_reversed": {
-            "connected_to": ["e0", "e2_reversed"],
-            "records": [record1_n2a_n1a]
+          e1_reversed: {
+            connected_to: ['e0', 'e2_reversed'],
+            records: [new Record(record1_n2a_n1a, config)],
           },
-          "e2_reversed": {
-            "connected_to": ["e0", "e1_reversed"],
-            "records": [record2_n3a_n1a]
+          e2_reversed: {
+            connected_to: ['e0', 'e1_reversed'],
+            records: [new Record(record2_n3a_n1a, config)],
           },
         });
 
@@ -2902,12 +2561,8 @@ describe('Testing QueryResults Module', () => {
 
         expect(results.length).toEqual(1);
 
-        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-          'n0', 'n1', 'n2', 'n3'
-        ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-          'e0', 'e1_reversed', 'e2_reversed'
-        ]);
+        expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2', 'n3']);
+        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1_reversed', 'e2_reversed']);
 
         expect(results[0]).toHaveProperty('score');
       });
@@ -2921,17 +2576,17 @@ describe('Testing QueryResults Module', () => {
         const queryResult = new QueryResult();
 
         await queryResult.update({
-          "e0": {
-            "connected_to": ["e1", "e2"],
-            "records": [record0_n0a_n1a]
+          e0: {
+            connected_to: ['e1', 'e2'],
+            records: [new Record(record0_n0a_n1a, config)],
           },
-          "e1": {
-            "connected_to": ["e0", "e2"],
-            "records": [record1_n1b_n2a]
+          e1: {
+            connected_to: ['e0', 'e2'],
+            records: [new Record(record1_n1b_n2a, config)],
           },
-          "e2": {
-            "connected_to": ["e0", "e1"],
-            "records": [record2_n1a_n3a]
+          e2: {
+            connected_to: ['e0', 'e1'],
+            records: [new Record(record2_n1a_n3a, config)],
           },
         });
 
@@ -2941,475 +2596,474 @@ describe('Testing QueryResults Module', () => {
       });
     });
 
-//    // TODO: the following tests fail. Leaving them disabled below,
-//    // because Andrew said we don't have to handle cycles for now.
-//    describe('query graph: -ᗕᗒ', () => {
-//      /*
-//       *               -e1-> n2 -e4->
-//       *   n0 -e0-> n1 -e2-> n3 -e5-> n5
-//       *               -e3-> n4 -e6->
-//       */
-//
-////      test('should get 1 result for 1 record per edge', async () => {
-////        const queryResult = new QueryResult();
-////
-////        await queryResult.update({
-////          "e0": {
-////            "connected_to": ["e1", "e2", "e3"],
-////            "records": [record0_n0a_n1a]
-////          },
-////          "e1": {
-////            "connected_to": ["e0", "e2", "e3", "e4"],
-////            "records": [record1_n1a_n2a]
-////          },
-////          "e2": {
-////            "connected_to": ["e0", "e1", "e3", "e5"],
-////            "records": [record2_n1a_n3a]
-////          },
-////          "e3": {
-////            "connected_to": ["e0", "e1",  "e2", "e6"],
-////            "records": [record3_n1a_n4a]
-////          },
-////          "e4": {
-////            "connected_to": ["e1", "e5", "e6"],
-////            "records": [record4_n2a_n5a]
-////          },
-////          "e5": {
-////            "connected_to": ["e2", "e4", "e6"],
-////            "records": [record5_n3a_n5a]
-////          },
-////          "e6": {
-////            "connected_to": ["e3", "e4", "e5"],
-////            "records": [record6_n4a_n5a]
-////          }
-////        });
-////
-////        const results = queryResult.getResults();
-////
-////        expect(results.length).toEqual(1);
-////
-////        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
-////        ]);
-////        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
-////        ]);
-////        expect(results[0]).toHaveProperty('score');
-////      });
-//
-////      test('should get 2 results for 2 records per edge at n0', async () => {
-////        const queryResult = new QueryResult();
-////
-////        await queryResult.update({
-////          "e0": {
-////            "connected_to": ["e1", "e2", "e3"],
-////            "records": [record0_n0a_n1a, record0_n0b_n1a]
-////          },
-////          "e1": {
-////            "connected_to": ["e0", "e2", "e3", "e4"],
-////            "records": [record1_n1a_n2a]
-////          },
-////          "e2": {
-////            "connected_to": ["e0", "e1", "e3", "e5"],
-////            "records": [record2_n1a_n3a]
-////          },
-////          "e3": {
-////            "connected_to": ["e0", "e1",  "e2", "e6"],
-////            "records": [record3_n1a_n4a]
-////          },
-////          "e4": {
-////            "connected_to": ["e1", "e5", "e6"],
-////            "records": [record4_n2a_n5a]
-////          },
-////          "e5": {
-////            "connected_to": ["e2", "e4", "e6"],
-////            "records": [record5_n3a_n5a]
-////          },
-////          "e6": {
-////            "connected_to": ["e3", "e4", "e5"],
-////            "records": [record6_n4a_n5a]
-////          }
-////        });
-////
-////        const results = queryResult.getResults();
-////
-////        expect(results.length).toEqual(2);
-////
-////        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
-////        ]);
-////        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
-////        ]);
-////        expect(results[0]).toHaveProperty('score');
-////
-////        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
-////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
-////        ]);
-////        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
-////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
-////        ]);
-////        expect(results[1]).toHaveProperty('score');
-////      });
-////
-////      test('should get 2 results for 2 records per edge at n1', async () => {
-////        const queryResult = new QueryResult();
-////
-////        await queryResult.update({
-////          "e0": {
-////            "connected_to": ["e1", "e2", "e3"],
-////            "records": [record0_n0a_n1a, record0_n0a_n1b]
-////          },
-////          "e1": {
-////            "connected_to": ["e0", "e2", "e3", "e4"],
-////            "records": [record1_n1a_n2a, record1_n1b_n2a]
-////          },
-////          "e2": {
-////            "connected_to": ["e0", "e1", "e3", "e5"],
-////            "records": [record2_n1a_n3a, record2_n1b_n3a]
-////          },
-////          "e3": {
-////            "connected_to": ["e0", "e1",  "e2", "e6"],
-////            "records": [record3_n1a_n4a, record3_n1b_n4a]
-////          },
-////          "e4": {
-////            "connected_to": ["e1", "e5", "e6"],
-////            "records": [record4_n2a_n5a]
-////          },
-////          "e5": {
-////            "connected_to": ["e2", "e4", "e6"],
-////            "records": [record5_n3a_n5a]
-////          },
-////          "e6": {
-////            "connected_to": ["e3", "e4", "e5"],
-////            "records": [record6_n4a_n5a]
-////          }
-////        });
-////
-////        const results = queryResult.getResults();
-////
-////        expect(results.length).toEqual(2);
-////
-////        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
-////        ]);
-////        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
-////        ]);
-////        expect(results[0]).toHaveProperty('score');
-////
-////        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
-////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
-////        ]);
-////        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
-////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
-////        ]);
-////        expect(results[1]).toHaveProperty('score');
-////      });
-////
-////      /*
-////       *                 -e1-> n2a -e4->
-////       *   n0a -e0-> n1a -e2-> n3a -e5-> n5a
-////       *                 -e3-> n4a -e6->
-////       *
-////       *
-////       *                 -e1-> n2a -e4->
-////       *   n0a -e0-> n1b -e2-> n3a -e5-> n5a
-////       *                 -e3-> n4a -e6->
-////       *
-////       *
-////       *                 -e1-> n2a -e4->
-////       *   n0b -e0-> n1a -e2-> n3a -e5-> n5a
-////       *                 -e3-> n4a -e6->
-////       */
-////      test('should get 3 results for n0a→n1a, n0a→n1b, n0b→n1a', async () => {
-////        const queryResult = new QueryResult();
-////
-////        await queryResult.update({
-////          "e0": {
-////            "connected_to": ["e1", "e2", "e3"],
-////            "records": [record0_n0a_n1a, record0_n0a_n1b, record0_n0b_n1a]
-////          },
-////          "e1": {
-////            "connected_to": ["e0", "e2", "e3", "e4"],
-////            "records": [record1_n1a_n2a, record1_n1b_n2a]
-////          },
-////          "e2": {
-////            "connected_to": ["e0", "e1", "e3", "e5"],
-////            "records": [record2_n1a_n3a, record2_n1b_n3a]
-////          },
-////          "e3": {
-////            "connected_to": ["e0", "e1",  "e2", "e6"],
-////            "records": [record3_n1a_n4a, record3_n1b_n4a]
-////          },
-////          "e4": {
-////            "connected_to": ["e1", "e5", "e6"],
-////            "records": [record4_n2a_n5a]
-////          },
-////          "e5": {
-////            "connected_to": ["e2", "e4", "e6"],
-////            "records": [record5_n3a_n5a]
-////          },
-////          "e6": {
-////            "connected_to": ["e3", "e4", "e5"],
-////            "records": [record6_n4a_n5a]
-////          }
-////        });
-////
-////        const results = queryResult.getResults();
-////
-////        expect(results.length).toEqual(3);
-////
-////        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
-////        ]);
-////        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
-////        ]);
-////        expect(results[0]).toHaveProperty('score');
-////
-////        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
-////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
-////        ]);
-////        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
-////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
-////        ]);
-////        expect(results[1]).toHaveProperty('score');
-////
-////        expect(Object.keys(results[2].node_bindings).sort()).toEqual([
-////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
-////        ]);
-////        expect(Object.keys(results[2].edge_bindings).sort()).toEqual([
-////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
-////        ]);
-////        expect(results[2]).toHaveProperty('score');
-////      });
-////
-////      /*
-////       *                 -e1-> n2a -e4->
-////       *   n0a -e0-> n1a -e2-> n3a -e5-> n5a
-////       *                 -e3-> n4a -e6->
-////       *
-////       *
-////       *                 -e1-> n2a -e4->
-////       *   n0a -e0-> n1b -e2-> n3a -e5-> n5a
-////       *                 -e3-> n4a -e6->
-////       *
-////       *
-////       *                 -e1-> n2a -e4->
-////       *   n0b -e0-> n1a -e2-> n3a -e5-> n5a
-////       *                 -e3-> n4a -e6->
-////       *
-////       *
-////       *                 -e1-> n2a -e4->
-////       *   n0b -e0-> n1b -e2-> n3a -e5-> n5a
-////       *                 -e3-> n4a -e6->
-////       */
-////      test('should get 4 results for n0a→n1a, n0a→n1b, n0b→n1a, n0b→n1b', async () => {
-////        const queryResult = new QueryResult();
-////
-////        await queryResult.update({
-////          "e0": {
-////            "connected_to": ["e1", "e2", "e3"],
-////            "records": [record0_n0a_n1a, record0_n0a_n1b, record0_n0b_n1a, record0_n0b_n1b]
-////          },
-////          "e1": {
-////            "connected_to": ["e0", "e2", "e3", "e4"],
-////            "records": [record1_n1a_n2a, record1_n1b_n2a]
-////          },
-////          "e2": {
-////            "connected_to": ["e0", "e1", "e3", "e5"],
-////            "records": [record2_n1a_n3a, record2_n1b_n3a]
-////          },
-////          "e3": {
-////            "connected_to": ["e0", "e1",  "e2", "e6"],
-////            "records": [record3_n1a_n4a, record3_n1b_n4a]
-////          },
-////          "e4": {
-////            "connected_to": ["e1", "e5", "e6"],
-////            "records": [record4_n2a_n5a]
-////          },
-////          "e5": {
-////            "connected_to": ["e2", "e4", "e6"],
-////            "records": [record5_n3a_n5a]
-////          },
-////          "e6": {
-////            "connected_to": ["e3", "e4", "e5"],
-////            "records": [record6_n4a_n5a]
-////          }
-////        });
-////
-////        const results = queryResult.getResults();
-////
-////        expect(results.length).toEqual(4);
-////
-////        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
-////        ]);
-////        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
-////        ]);
-////        expect(results[0]).toHaveProperty('score');
-////
-////        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
-////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
-////        ]);
-////        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
-////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
-////        ]);
-////        expect(results[1]).toHaveProperty('score');
-////
-////        expect(Object.keys(results[2].node_bindings).sort()).toEqual([
-////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
-////        ]);
-////        expect(Object.keys(results[2].edge_bindings).sort()).toEqual([
-////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
-////        ]);
-////        expect(results[2]).toHaveProperty('score');
-////
-////        expect(Object.keys(results[3].node_bindings).sort()).toEqual([
-////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
-////        ]);
-////        expect(Object.keys(results[3].edge_bindings).sort()).toEqual([
-////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
-////        ]);
-////        expect(results[3]).toHaveProperty('score');
-////      });
-//
-//      test('should get 0 results due to unconnected record at n1 (n1a vs. n1b)', async () => {
-//        const queryResult = new QueryResult();
-//
-//        await queryResult.update({
-//          "e0": {
-//            "connected_to": ["e1", "e2", "e3"],
-//            "records": [record0_n0a_n1a]
-//          },
-//          "e1": {
-//            "connected_to": ["e0", "e2", "e3", "e4"],
-//            "records": [record1_n1b_n2a]
-//          },
-//          "e2": {
-//            "connected_to": ["e0", "e1", "e3", "e5"],
-//            "records": [record2_n1a_n3a]
-//          },
-//          "e3": {
-//            "connected_to": ["e0", "e1",  "e2", "e6"],
-//            "records": [record3_n1a_n4a]
-//          },
-//          "e4": {
-//            "connected_to": ["e1", "e5", "e6"],
-//            "records": [record4_n2a_n5a]
-//          },
-//          "e5": {
-//            "connected_to": ["e2", "e4", "e6"],
-//            "records": [record5_n3a_n5a]
-//          },
-//          "e6": {
-//            "connected_to": ["e3", "e4", "e5"],
-//            "records": [record6_n4a_n5a]
-//          }
-//        });
-//
-//        const results = queryResult.getResults();
-//
-//        expect(results.length).toEqual(0);
-//      });
-//
-////      test('should get 1 result & ignore unconnected record', async () => {
-////        const queryResult = new QueryResult();
-////
-////        await queryResult.update({
-////          "e0": {
-////            "connected_to": ["e1", "e2", "e3"],
-////            "records": [record0_n0a_n1a]
-////          },
-////          "e1": {
-////            "connected_to": ["e0", "e2", "e3", "e4"],
-////            "records": [record1_n1a_n2a, record1_n1b_n2a]
-////          },
-////          "e2": {
-////            "connected_to": ["e0", "e1", "e3", "e5"],
-////            "records": [record2_n1a_n3a]
-////          },
-////          "e3": {
-////            "connected_to": ["e0", "e1",  "e2", "e6"],
-////            "records": [record3_n1a_n4a]
-////          },
-////          "e4": {
-////            "connected_to": ["e1", "e5", "e6"],
-////            "records": [record4_n2a_n5a]
-////          },
-////          "e5": {
-////            "connected_to": ["e2", "e4", "e6"],
-////            "records": [record5_n3a_n5a]
-////          },
-////          "e6": {
-////            "connected_to": ["e3", "e4", "e5"],
-////            "records": [record6_n4a_n5a]
-////          }
-////        });
-////
-////        const results = queryResult.getResults();
-////
-////        expect(results.length).toEqual(1);
-////
-////        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
-////        ]);
-////        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
-////        ]);
-////        expect(results[0]).toHaveProperty('score');
-////      });
-////
-////      test('should get 1 result & ignore 4 unconnected records', async () => {
-////        const queryResult = new QueryResult();
-////
-////        await queryResult.update({
-////          "e0": {
-////            "connected_to": ["e1", "e2", "e3"],
-////            "records": [record0_n0a_n1a, record0_n0a_n1b]
-////          },
-////          "e1": {
-////            "connected_to": ["e0", "e2", "e3", "e4"],
-////            "records": [record1_n1a_n2a, record1_n1a_n2b, record1_n1b_n2a, record1_n1b_n2b]
-////          },
-////          "e2": {
-////            "connected_to": ["e0", "e1", "e3", "e5"],
-////            "records": [record2_n1a_n3a]
-////          },
-////          "e3": {
-////            "connected_to": ["e0", "e1",  "e2", "e6"],
-////            "records": [record3_n1a_n4a]
-////          },
-////          "e4": {
-////            "connected_to": ["e1", "e5", "e6"],
-////            "records": [record4_n2a_n5a]
-////          },
-////          "e5": {
-////            "connected_to": ["e2", "e4", "e6"],
-////            "records": [record5_n3a_n5a]
-////          },
-////          "e6": {
-////            "connected_to": ["e3", "e4", "e5"],
-////            "records": [record6_n4a_n5a]
-////          }
-////        });
-////
-////        const results = queryResult.getResults();
-////
-////        expect(results.length).toEqual(1);
-////
-////        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
-////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
-////        ]);
-////        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
-////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
-////        ]);
-////        expect(results[0]).toHaveProperty('score');
-////      });
-//    });
-
+    //    // TODO: the following tests fail. Leaving them disabled below,
+    //    // because Andrew said we don't have to handle cycles for now.
+    //    describe('query graph: -ᗕᗒ', () => {
+    //      /*
+    //       *               -e1-> n2 -e4->
+    //       *   n0 -e0-> n1 -e2-> n3 -e5-> n5
+    //       *               -e3-> n4 -e6->
+    //       */
+    //
+    ////      test('should get 1 result for 1 record per edge', async () => {
+    ////        const queryResult = new QueryResult();
+    ////
+    ////        await queryResult.update({
+    ////          "e0": {
+    ////            "connected_to": ["e1", "e2", "e3"],
+    ////            "records": [new Record(record0_n0a_n1a, config)]
+    ////          },
+    ////          "e1": {
+    ////            "connected_to": ["e0", "e2", "e3", "e4"],
+    ////            "records": [new Record(record1_n1a_n2a, config)]
+    ////          },
+    ////          "e2": {
+    ////            "connected_to": ["e0", "e1", "e3", "e5"],
+    ////            "records": [new Record(record2_n1a_n3a, config)]
+    ////          },
+    ////          "e3": {
+    ////            "connected_to": ["e0", "e1",  "e2", "e6"],
+    ////            "records": [new Record(record3_n1a_n4a, config)]
+    ////          },
+    ////          "e4": {
+    ////            "connected_to": ["e1", "e5", "e6"],
+    ////            "records": [new Record(record4_n2a_n5a, config)]
+    ////          },
+    ////          "e5": {
+    ////            "connected_to": ["e2", "e4", "e6"],
+    ////            "records": [new Record(record5_n3a_n5a, config)]
+    ////          },
+    ////          "e6": {
+    ////            "connected_to": ["e3", "e4", "e5"],
+    ////            "records": [new Record(record6_n4a_n5a, config)]
+    ////          }
+    ////        });
+    ////
+    ////        const results = queryResult.getResults();
+    ////
+    ////        expect(results.length).toEqual(1);
+    ////
+    ////        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+    ////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
+    ////        ]);
+    ////        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+    ////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
+    ////        ]);
+    ////        expect(results[0]).toHaveProperty('score');
+    ////      });
+    //
+    ////      test('should get 2 results for 2 records per edge at n0', async () => {
+    ////        const queryResult = new QueryResult();
+    ////
+    ////        await queryResult.update({
+    ////          "e0": {
+    ////            "connected_to": ["e1", "e2", "e3"],
+    ////            "records": [new Record(record0_n0a_n1a, config), new Record(record0_n0b_n1a, config)]
+    ////          },
+    ////          "e1": {
+    ////            "connected_to": ["e0", "e2", "e3", "e4"],
+    ////            "records": [new Record(record1_n1a_n2a, config)]
+    ////          },
+    ////          "e2": {
+    ////            "connected_to": ["e0", "e1", "e3", "e5"],
+    ////            "records": [new Record(record2_n1a_n3a, config)]
+    ////          },
+    ////          "e3": {
+    ////            "connected_to": ["e0", "e1",  "e2", "e6"],
+    ////            "records": [new Record(record3_n1a_n4a, config)]
+    ////          },
+    ////          "e4": {
+    ////            "connected_to": ["e1", "e5", "e6"],
+    ////            "records": [new Record(record4_n2a_n5a, config)]
+    ////          },
+    ////          "e5": {
+    ////            "connected_to": ["e2", "e4", "e6"],
+    ////            "records": [new Record(record5_n3a_n5a, config)]
+    ////          },
+    ////          "e6": {
+    ////            "connected_to": ["e3", "e4", "e5"],
+    ////            "records": [new Record(record6_n4a_n5a, config)]
+    ////          }
+    ////        });
+    ////
+    ////        const results = queryResult.getResults();
+    ////
+    ////        expect(results.length).toEqual(2);
+    ////
+    ////        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+    ////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
+    ////        ]);
+    ////        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+    ////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
+    ////        ]);
+    ////        expect(results[0]).toHaveProperty('score');
+    ////
+    ////        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
+    ////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
+    ////        ]);
+    ////        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
+    ////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
+    ////        ]);
+    ////        expect(results[1]).toHaveProperty('score');
+    ////      });
+    ////
+    ////      test('should get 2 results for 2 records per edge at n1', async () => {
+    ////        const queryResult = new QueryResult();
+    ////
+    ////        await queryResult.update({
+    ////          "e0": {
+    ////            "connected_to": ["e1", "e2", "e3"],
+    ////            "records": [new Record(record0_n0a_n1a, config), new Record(record0_n0a_n1b, config)]
+    ////          },
+    ////          "e1": {
+    ////            "connected_to": ["e0", "e2", "e3", "e4"],
+    ////            "records": [new Record(record1_n1a_n2a, config), new Record(record1_n1b_n2a, config)]
+    ////          },
+    ////          "e2": {
+    ////            "connected_to": ["e0", "e1", "e3", "e5"],
+    ////            "records": [new Record(record2_n1a_n3a, config), new Record(record2_n1b_n3a, config)]
+    ////          },
+    ////          "e3": {
+    ////            "connected_to": ["e0", "e1",  "e2", "e6"],
+    ////            "records": [new Record(record3_n1a_n4a, config), new Record(record3_n1b_n4a, config)]
+    ////          },
+    ////          "e4": {
+    ////            "connected_to": ["e1", "e5", "e6"],
+    ////            "records": [new Record(record4_n2a_n5a, config)]
+    ////          },
+    ////          "e5": {
+    ////            "connected_to": ["e2", "e4", "e6"],
+    ////            "records": [new Record(record5_n3a_n5a, config)]
+    ////          },
+    ////          "e6": {
+    ////            "connected_to": ["e3", "e4", "e5"],
+    ////            "records": [new Record(record6_n4a_n5a, config)]
+    ////          }
+    ////        });
+    ////
+    ////        const results = queryResult.getResults();
+    ////
+    ////        expect(results.length).toEqual(2);
+    ////
+    ////        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+    ////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
+    ////        ]);
+    ////        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+    ////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
+    ////        ]);
+    ////        expect(results[0]).toHaveProperty('score');
+    ////
+    ////        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
+    ////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
+    ////        ]);
+    ////        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
+    ////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
+    ////        ]);
+    ////        expect(results[1]).toHaveProperty('score');
+    ////      });
+    ////
+    ////      /*
+    ////       *                 -e1-> n2a -e4->
+    ////       *   n0a -e0-> n1a -e2-> n3a -e5-> n5a
+    ////       *                 -e3-> n4a -e6->
+    ////       *
+    ////       *
+    ////       *                 -e1-> n2a -e4->
+    ////       *   n0a -e0-> n1b -e2-> n3a -e5-> n5a
+    ////       *                 -e3-> n4a -e6->
+    ////       *
+    ////       *
+    ////       *                 -e1-> n2a -e4->
+    ////       *   n0b -e0-> n1a -e2-> n3a -e5-> n5a
+    ////       *                 -e3-> n4a -e6->
+    ////       */
+    ////      test('should get 3 results for n0a→n1a, n0a→n1b, n0b→n1a', async () => {
+    ////        const queryResult = new QueryResult();
+    ////
+    ////        await queryResult.update({
+    ////          "e0": {
+    ////            "connected_to": ["e1", "e2", "e3"],
+    ////            "records": [new Record(record0_n0a_n1a, config), new Record(record0_n0a_n1b, config), new Record(record0_n0b_n1a, config)]
+    ////          },
+    ////          "e1": {
+    ////            "connected_to": ["e0", "e2", "e3", "e4"],
+    ////            "records": [new Record(record1_n1a_n2a, config), new Record(record1_n1b_n2a, config)]
+    ////          },
+    ////          "e2": {
+    ////            "connected_to": ["e0", "e1", "e3", "e5"],
+    ////            "records": [new Record(record2_n1a_n3a, config), new Record(record2_n1b_n3a, config)]
+    ////          },
+    ////          "e3": {
+    ////            "connected_to": ["e0", "e1",  "e2", "e6"],
+    ////            "records": [new Record(record3_n1a_n4a, config), new Record(record3_n1b_n4a, config)]
+    ////          },
+    ////          "e4": {
+    ////            "connected_to": ["e1", "e5", "e6"],
+    ////            "records": [new Record(record4_n2a_n5a, config)]
+    ////          },
+    ////          "e5": {
+    ////            "connected_to": ["e2", "e4", "e6"],
+    ////            "records": [new Record(record5_n3a_n5a, config)]
+    ////          },
+    ////          "e6": {
+    ////            "connected_to": ["e3", "e4", "e5"],
+    ////            "records": [new Record(record6_n4a_n5a, config)]
+    ////          }
+    ////        });
+    ////
+    ////        const results = queryResult.getResults();
+    ////
+    ////        expect(results.length).toEqual(3);
+    ////
+    ////        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+    ////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
+    ////        ]);
+    ////        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+    ////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
+    ////        ]);
+    ////        expect(results[0]).toHaveProperty('score');
+    ////
+    ////        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
+    ////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
+    ////        ]);
+    ////        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
+    ////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
+    ////        ]);
+    ////        expect(results[1]).toHaveProperty('score');
+    ////
+    ////        expect(Object.keys(results[2].node_bindings).sort()).toEqual([
+    ////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
+    ////        ]);
+    ////        expect(Object.keys(results[2].edge_bindings).sort()).toEqual([
+    ////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
+    ////        ]);
+    ////        expect(results[2]).toHaveProperty('score');
+    ////      });
+    ////
+    ////      /*
+    ////       *                 -e1-> n2a -e4->
+    ////       *   n0a -e0-> n1a -e2-> n3a -e5-> n5a
+    ////       *                 -e3-> n4a -e6->
+    ////       *
+    ////       *
+    ////       *                 -e1-> n2a -e4->
+    ////       *   n0a -e0-> n1b -e2-> n3a -e5-> n5a
+    ////       *                 -e3-> n4a -e6->
+    ////       *
+    ////       *
+    ////       *                 -e1-> n2a -e4->
+    ////       *   n0b -e0-> n1a -e2-> n3a -e5-> n5a
+    ////       *                 -e3-> n4a -e6->
+    ////       *
+    ////       *
+    ////       *                 -e1-> n2a -e4->
+    ////       *   n0b -e0-> n1b -e2-> n3a -e5-> n5a
+    ////       *                 -e3-> n4a -e6->
+    ////       */
+    ////      test('should get 4 results for n0a→n1a, n0a→n1b, n0b→n1a, n0b→n1b', async () => {
+    ////        const queryResult = new QueryResult();
+    ////
+    ////        await queryResult.update({
+    ////          "e0": {
+    ////            "connected_to": ["e1", "e2", "e3"],
+    ////            "records": [new Record(record0_n0a_n1a, config), new Record(record0_n0a_n1b, config), new Record(record0_n0b_n1a, config), new Record(record0_n0b_n1b, config)]
+    ////          },
+    ////          "e1": {
+    ////            "connected_to": ["e0", "e2", "e3", "e4"],
+    ////            "records": [new Record(record1_n1a_n2a, config), new Record(record1_n1b_n2a, config)]
+    ////          },
+    ////          "e2": {
+    ////            "connected_to": ["e0", "e1", "e3", "e5"],
+    ////            "records": [new Record(record2_n1a_n3a, config), new Record(record2_n1b_n3a, config)]
+    ////          },
+    ////          "e3": {
+    ////            "connected_to": ["e0", "e1",  "e2", "e6"],
+    ////            "records": [new Record(record3_n1a_n4a, config), new Record(record3_n1b_n4a, config)]
+    ////          },
+    ////          "e4": {
+    ////            "connected_to": ["e1", "e5", "e6"],
+    ////            "records": [new Record(record4_n2a_n5a, config)]
+    ////          },
+    ////          "e5": {
+    ////            "connected_to": ["e2", "e4", "e6"],
+    ////            "records": [new Record(record5_n3a_n5a, config)]
+    ////          },
+    ////          "e6": {
+    ////            "connected_to": ["e3", "e4", "e5"],
+    ////            "records": [new Record(record6_n4a_n5a, config)]
+    ////          }
+    ////        });
+    ////
+    ////        const results = queryResult.getResults();
+    ////
+    ////        expect(results.length).toEqual(4);
+    ////
+    ////        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+    ////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
+    ////        ]);
+    ////        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+    ////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
+    ////        ]);
+    ////        expect(results[0]).toHaveProperty('score');
+    ////
+    ////        expect(Object.keys(results[1].node_bindings).sort()).toEqual([
+    ////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
+    ////        ]);
+    ////        expect(Object.keys(results[1].edge_bindings).sort()).toEqual([
+    ////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
+    ////        ]);
+    ////        expect(results[1]).toHaveProperty('score');
+    ////
+    ////        expect(Object.keys(results[2].node_bindings).sort()).toEqual([
+    ////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
+    ////        ]);
+    ////        expect(Object.keys(results[2].edge_bindings).sort()).toEqual([
+    ////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
+    ////        ]);
+    ////        expect(results[2]).toHaveProperty('score');
+    ////
+    ////        expect(Object.keys(results[3].node_bindings).sort()).toEqual([
+    ////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
+    ////        ]);
+    ////        expect(Object.keys(results[3].edge_bindings).sort()).toEqual([
+    ////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
+    ////        ]);
+    ////        expect(results[3]).toHaveProperty('score');
+    ////      });
+    //
+    //      test('should get 0 results due to unconnected record at n1 (n1a vs. n1b)', async () => {
+    //        const queryResult = new QueryResult();
+    //
+    //        await queryResult.update({
+    //          "e0": {
+    //            "connected_to": ["e1", "e2", "e3"],
+    //            "records": [new Record(record0_n0a_n1a, config)]
+    //          },
+    //          "e1": {
+    //            "connected_to": ["e0", "e2", "e3", "e4"],
+    //            "records": [new Record(record1_n1b_n2a, config)]
+    //          },
+    //          "e2": {
+    //            "connected_to": ["e0", "e1", "e3", "e5"],
+    //            "records": [new Record(record2_n1a_n3a, config)]
+    //          },
+    //          "e3": {
+    //            "connected_to": ["e0", "e1",  "e2", "e6"],
+    //            "records": [new Record(record3_n1a_n4a, config)]
+    //          },
+    //          "e4": {
+    //            "connected_to": ["e1", "e5", "e6"],
+    //            "records": [new Record(record4_n2a_n5a, config)]
+    //          },
+    //          "e5": {
+    //            "connected_to": ["e2", "e4", "e6"],
+    //            "records": [new Record(record5_n3a_n5a, config)]
+    //          },
+    //          "e6": {
+    //            "connected_to": ["e3", "e4", "e5"],
+    //            "records": [new Record(record6_n4a_n5a, config)]
+    //          }
+    //        });
+    //
+    //        const results = queryResult.getResults();
+    //
+    //        expect(results.length).toEqual(0);
+    //      });
+    //
+    ////      test('should get 1 result & ignore unconnected record', async () => {
+    ////        const queryResult = new QueryResult();
+    ////
+    ////        await queryResult.update({
+    ////          "e0": {
+    ////            "connected_to": ["e1", "e2", "e3"],
+    ////            "records": [new Record(record0_n0a_n1a, config)]
+    ////          },
+    ////          "e1": {
+    ////            "connected_to": ["e0", "e2", "e3", "e4"],
+    ////            "records": [new Record(record1_n1a_n2a, config), new Record(record1_n1b_n2a, config)]
+    ////          },
+    ////          "e2": {
+    ////            "connected_to": ["e0", "e1", "e3", "e5"],
+    ////            "records": [new Record(record2_n1a_n3a, config)]
+    ////          },
+    ////          "e3": {
+    ////            "connected_to": ["e0", "e1",  "e2", "e6"],
+    ////            "records": [new Record(record3_n1a_n4a, config)]
+    ////          },
+    ////          "e4": {
+    ////            "connected_to": ["e1", "e5", "e6"],
+    ////            "records": [new Record(record4_n2a_n5a, config)]
+    ////          },
+    ////          "e5": {
+    ////            "connected_to": ["e2", "e4", "e6"],
+    ////            "records": [new Record(record5_n3a_n5a, config)]
+    ////          },
+    ////          "e6": {
+    ////            "connected_to": ["e3", "e4", "e5"],
+    ////            "records": [new Record(record6_n4a_n5a, config)]
+    ////          }
+    ////        });
+    ////
+    ////        const results = queryResult.getResults();
+    ////
+    ////        expect(results.length).toEqual(1);
+    ////
+    ////        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+    ////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
+    ////        ]);
+    ////        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+    ////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
+    ////        ]);
+    ////        expect(results[0]).toHaveProperty('score');
+    ////      });
+    ////
+    ////      test('should get 1 result & ignore 4 unconnected records', async () => {
+    ////        const queryResult = new QueryResult();
+    ////
+    ////        await queryResult.update({
+    ////          "e0": {
+    ////            "connected_to": ["e1", "e2", "e3"],
+    ////            "records": [new Record(record0_n0a_n1a, config), new Record(record0_n0a_n1b, config)]
+    ////          },
+    ////          "e1": {
+    ////            "connected_to": ["e0", "e2", "e3", "e4"],
+    ////            "records": [new Record(record1_n1a_n2a, config), new Record(record1_n1a_n2b, config), new Record(record1_n1b_n2a, config), new Record(record1_n1b_n2b, config)]
+    ////          },
+    ////          "e2": {
+    ////            "connected_to": ["e0", "e1", "e3", "e5"],
+    ////            "records": [new Record(record2_n1a_n3a, config)]
+    ////          },
+    ////          "e3": {
+    ////            "connected_to": ["e0", "e1",  "e2", "e6"],
+    ////            "records": [new Record(record3_n1a_n4a, config)]
+    ////          },
+    ////          "e4": {
+    ////            "connected_to": ["e1", "e5", "e6"],
+    ////            "records": [new Record(record4_n2a_n5a, config)]
+    ////          },
+    ////          "e5": {
+    ////            "connected_to": ["e2", "e4", "e6"],
+    ////            "records": [new Record(record5_n3a_n5a, config)]
+    ////          },
+    ////          "e6": {
+    ////            "connected_to": ["e3", "e4", "e5"],
+    ////            "records": [new Record(record6_n4a_n5a, config)]
+    ////          }
+    ////        });
+    ////
+    ////        const results = queryResult.getResults();
+    ////
+    ////        expect(results.length).toEqual(1);
+    ////
+    ////        expect(Object.keys(results[0].node_bindings).sort()).toEqual([
+    ////          'n0', 'n1', 'n2', 'n3', 'n4', 'n5'
+    ////        ]);
+    ////        expect(Object.keys(results[0].edge_bindings).sort()).toEqual([
+    ////          'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'
+    ////        ]);
+    ////        expect(results[0]).toHaveProperty('score');
+    ////      });
+    //    });
   });
 
   describe('Graph structure', () => {
@@ -3417,78 +3071,62 @@ describe('Testing QueryResults Module', () => {
       const exampleRecordsByQEdgeID = {
         e0: {
           connected_to: ['e1', 'e2'],
-          records: [{
-            $edge_metadata: {
-              trapi_qEdge_obj: {
-                isReversed() { return false; },
-                getSubject() {
-                  return {
-                    getID() { return 'n2' }
-                  }
+          records: [
+            new Record(
+              {
+                subject: {
+                  qNodeID: 'n2',
                 },
-                getObject() {
-                  return {
-                    getID() { return 'n1' }
-                  };
+                object: {
+                  qNodeID: 'n1'
                 },
               }
-            }
-          }]
+            )
+          ],
         },
         e1: {
           connected_to: ['e0'],
-          records: [{
-            $edge_metadata: {
-              trapi_qEdge_obj: {
-                isReversed() { return false; },
-                getSubject() {
-                  return {
-                    getID() { return 'n2' }
-                  }
+          records: [
+            new Record(
+              {
+                subject: {
+                  qNodeID: 'n2'
                 },
-                getObject() {
-                  return {
-                    getID() { return 'n3' }
-                  };
-                },
+                object: {
+                  qNodeID: 'n3'
+                }
               }
-            }
-          }]
+            )
+          ],
         },
         e2: {
           connected_to: ['e0'],
-          records: [{
-            $edge_metadata: {
-              trapi_qEdge_obj: {
-                isReversed() { return false; },
-                getSubject() {
-                  return {
-                    getID() { return 'n0' }
-                  }
+          records: [
+            new Record(
+              {
+                subject: {
+                  qNodeID: 'n0'
                 },
-                getObject() {
-                  return {
-                    getID() { return 'n1' }
-                  };
-                },
+                object: {
+                  qNodeID: 'n1'
+                }
               }
-            }
-          }]
+            )
+          ],
         },
-
-      }
+      };
 
       test('Should select leaf node', () => {
         const queryResult = new QueryResult();
-        const [initialNode, initialEdge] = queryResult._getInitialQNodeIDToMatch(exampleRecordsByQEdgeID);
+        const [[initialNode, initialEdge]] = queryResult._getValidInitialPairs(exampleRecordsByQEdgeID);
         expect(initialNode).toEqual('n3');
         expect(initialEdge).toEqual('e1');
       });
       test('Should select leaf node with fewest records on associated edge', () => {
         const queryResult = new QueryResult();
         const example = cloneDeep(exampleRecordsByQEdgeID);
-        example.e1.records.push({fake: true});
-        const [initialNode, initialEdge] = queryResult._getInitialQNodeIDToMatch(example);
+        example.e1.records.push({ fake: true });
+        const [[initialNode, initialEdge]] = queryResult._getValidInitialPairs(example);
         expect(initialNode).toEqual('n0');
         expect(initialEdge).toEqual('e2');
       });
