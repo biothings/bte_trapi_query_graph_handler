@@ -60,7 +60,7 @@ async function getScores (recordsByQEdgeID) {
   let results = await query(queries);
 
   debug("Combos no UMLS ID: ", combosWithoutIDs);
-  return results;
+  return results || []; // in case results is undefined, avoid TypeErrors
 }
 
 //multiply the inverses of the ngds together to get the total score for a combo
