@@ -202,11 +202,14 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
 
   async _logSkippedQueries(unavailableAPIs) {
     Object.entries(unavailableAPIs).forEach(([api, skippedQueries]) => {
-      const skipMessage = `${skippedQueries} additional quer${skippedQueries > 1 ? 'ies' : 'y'} to ${api} ${
-        skippedQueries > 1 ? 'were' : 'was'
-      } skipped as the API was unavailable.`;
-      debug(skipMessage);
-      this.logs.push(new LogEntry('WARNING', null, skipMessage).getLog());
+      skippedQueries -= 1; // first failed is not 'skipped'
+      if (skippedQueries > 0) {
+        const skipMessage = `${skippedQueries} additional quer${skippedQueries > 1 ? 'ies' : 'y'} to ${api} ${
+          skippedQueries > 1 ? 'were' : 'was'
+        } skipped as the API was unavailable.`;
+        debug(skipMessage);
+        this.logs.push(new LogEntry('WARNING', null, skipMessage).getLog());
+      }
     });
   }
 
