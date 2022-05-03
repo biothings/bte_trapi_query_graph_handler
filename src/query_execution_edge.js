@@ -1,7 +1,7 @@
 const helper = require('./helper');
 const debug = require('debug')('bte:biothings-explorer-trapi:QueryExecutionEdge');
 const utils = require('./utils');
-const reverse = require('./biolink');
+const biolink = require('./biolink');
 
 module.exports = class QueryExecutionEdge {
   /**
@@ -432,7 +432,7 @@ module.exports = class QueryExecutionEdge {
   }
 
   expandPredicates(predicates) {
-    const reducer = (acc, cur) => [...acc, ...reverse.getDescendantPredicates(cur)];
+    const reducer = (acc, cur) => [...acc, ...biolink.getDescendantPredicates(cur)];
     return Array.from(new Set(predicates.reduce(reducer, [])));
   }
 
@@ -445,7 +445,7 @@ module.exports = class QueryExecutionEdge {
     debug(`Expanded edges: ${expandedPredicates}`);
     return expandedPredicates
       .map((predicate) => {
-        return this.isReversed() === true ? reverse.reverse(predicate) : predicate;
+        return this.isReversed() === true ? biolink.reverse(predicate) : predicate;
       })
       .filter((item) => !(typeof item === 'undefined'));
   }
@@ -493,5 +493,9 @@ module.exports = class QueryExecutionEdge {
       return this.qEdge.object.hasInput();
     }
     return this.qEdge.subject.hasInput();
+  }
+
+  getReversedPredicate(predicate) {
+    return predicate ? biolink.reverse(predicate) : undefined;
   }
 };

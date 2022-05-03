@@ -310,7 +310,7 @@ module.exports = class QueryExecutionEdgeManager {
         //First: go through edges and filter that each edge is holding
         this._qXEdges.forEach((qXEdge) => {
             let qEdgeID = qXEdge.getID();
-            let filteredRecords = qXEdge.records;
+            let filteredRecords = qXEdge.records.map(record => record.queryDirection());
             if (filteredRecords.length == 0) {
                 this.logs.push(
                     new LogEntry(
