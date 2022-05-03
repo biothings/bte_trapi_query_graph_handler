@@ -328,7 +328,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     const results = this.trapiResultsAssembler.getResults().length;
     const resultQueries = this.logs.filter(({ data }) => data?.type === 'query' && data?.hits).length;
     const queries = this.logs.filter(({ data }) => data?.type === 'query').length;
-    const sources = [...new Set(manager._records.map((res) => res.apiEdge.api_name))];
+    const sources = [...new Set(manager._records.map((rec) => rec.api))];
     let cached = this.logs.filter(({ data }) => data?.type === 'cacheHit').length;
     this.logs.push(
       new LogEntry(
