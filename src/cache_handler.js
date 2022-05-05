@@ -8,6 +8,7 @@ const helper = require('./helper');
 const lz4 = require('lz4');
 const chunker = require('stream-chunker');
 const { Readable, Transform } = require('stream');
+const { Record } = require('@biothings-explorer/api-response-transform');
 
 class DelimitedChunksDecoder extends Transform {
   constructor() {
@@ -82,7 +83,7 @@ class DelimitedChunksEncoder extends Transform {
 }
 
 module.exports = class {
-  constructor(qXEdges, caching, metaKG = undefined, logs = []) {
+  constructor(qXEdges, caching, metaKG = undefined, recordConfig = {}, logs = []) {
     this.qXEdges = qXEdges;
     this.metaKG = metaKG;
     this.logs = logs;
@@ -92,6 +93,7 @@ module.exports = class {
         : process.env.RESULT_CACHING !== 'false'
         ? !(process.env.REDIS_HOST === undefined) && !(process.env.REDIS_PORT === undefined)
         : false;
+    this.recordConfig = recordConfig;
     this.logs.push(
       new LogEntry('DEBUG', null, `REDIS cache is ${this.cacheEnabled === true ? '' : 'not'} enabled.`).getLog(),
     );
@@ -107,27 +109,29 @@ module.exports = class {
     let nonCachedQXEdges = [];
     let cachedRecords = [];
     debug('Begin edge cache lookup...');
-    for (let i = 0; i < qXEdges.length; i++) {
-      const qXEdgeMetaKGHash = this._hashEdgeByMetaKG(qXEdges[i].getHashedEdgeRepresentation());
-      const cachedRecordJSON = await new Promise(async (resolve) => {
+    await async.eachSeries(qXEdges, async (qXEdge) => {
+      const qXEdgeMetaKGHash = this._hashEdgeByMetaKG(qXEdge.getHashedEdgeRepresentation());
+      const unpackedRecords = await new Promise(async (resolve) => {
         let unlock = () => null;
         try {
           const redisID = 'bte:edgeCache:' + qXEdgeMetaKGHash;
           unlock = await redisClient.lock('redisLock:' + redisID);
-          const cachedRecord = await redisClient.hgetallAsync(redisID);
-          if (cachedRecord) {
-            const decodedRecords = [];
-            const sortedRecords = Object.entries(cachedRecord)
+          const compressedRecordPack = await redisClient.hgetallAsync(redisID);
+
+          if (compressedRecordPack) {
+            const recordPack = [];
+
+            const sortedPackParts = Object.entries(compressedRecordPack)
               .sort(([key1], [key2]) => parseInt(key1) - parseInt(key2))
               .map(([_key, val]) => {
                 return val;
               });
 
-            const recordStream = Readable.from(sortedRecords);
+            const recordStream = Readable.from(sortedPackParts);
             recordStream
               .pipe(this.createDecodeStream())
-              .on('data', (obj) => decodedRecords.push(obj))
-              .on('end', () => resolve(decodedRecords));
+              .on('data', (obj) => recordPack.push(obj))
+              .on('end', () => resolve(Record.unpackRecords(recordPack, qXEdge, this.recordConfig)));
           } else {
             resolve(null);
           }
@@ -139,64 +143,26 @@ module.exports = class {
         }
       });
 
-      if (cachedRecordJSON) {
+      if (unpackedRecords) {
         this.logs.push(
           new LogEntry(
             'DEBUG',
             null,
-            `BTE finds cached records for ${qXEdges[i].getID()}`,
+            `BTE finds cached records for ${qXEdge.getID()}`,
             {
               type: 'cacheHit',
-              qEdgeID: qXEdges[i].getID(),
+              qEdgeID: qXEdge.getID(),
             }
           ).getLog()
         );
-        cachedRecordJSON.map((rec) => {
-          rec.$edge_metadata.trapi_qEdge_obj = qXEdges[i];
-        });
-        cachedRecords = [...cachedRecords, ...cachedRecordJSON];
+        cachedRecords = [...cachedRecords, ...unpackedRecords];
       } else {
-        nonCachedQXEdges.push(qXEdges[i]);
+        nonCachedQXEdges.push(qXEdge);
       }
       debug(`Found (${cachedRecords.length}) cached records.`);
-    }
+    });
+
     return { cachedRecords, nonCachedQXEdges };
-  }
-
-  _copyRecord(record) {
-    const objs = {
-      $input: record.$input.obj,
-      $output: record.$output.obj,
-    };
-
-    const copyObjs = Object.fromEntries(
-      Object.entries(objs).map(([which, nodes]) => {
-        return [
-          which,
-          {
-            original: record[which].original,
-            obj: nodes.map((obj) => {
-              const copyObj = Object.fromEntries(Object.entries(obj).filter(([key]) => !key.startsWith('__')));
-              Object.entries(Object.getOwnPropertyDescriptors(Object.getPrototypeOf(obj)))
-                .filter(([key, descriptor]) => typeof descriptor.get === 'function' && key !== '__proto__')
-                .map(([key]) => key)
-                .forEach((key) => {
-                  copyObj[key] = obj[key];
-                });
-              return copyObj;
-            }),
-          },
-        ];
-      }),
-    );
-
-    const returnVal = { ...record };
-    returnVal.$edge_metadata = { ...record.$edge_metadata };
-    // replaced after taking out of cache, so save some memory
-    returnVal.$edge_metadata.trapi_qEdge_obj = undefined;
-    returnVal.$input = copyObjs.$input;
-    returnVal.$output = copyObjs.$output;
-    return returnVal;
   }
 
   _hashEdgeByMetaKG(qXEdgeHash) {
@@ -205,21 +171,24 @@ module.exports = class {
     }
     const len = String(this.metaKG.ops.length);
     const allIDs = Array.from(new Set(this.metaKG.ops.map((op) => op.association.smartapi.id))).join('');
-    return new helper()._generateHash(qXEdgeHash + len + allIDs);
+    return helper._generateHash(qXEdgeHash + len + allIDs);
   }
 
   _groupQueryRecordsByQXEdgeHash(queryRecords) {
     let groupedRecords = {};
     queryRecords.map((record) => {
       try {
-        const qXEdgeMetaKGHash = this._hashEdgeByMetaKG(record.$edge_metadata.trapi_qEdge_obj.getHashedEdgeRepresentation());
+        const qXEdgeMetaKGHash = this._hashEdgeByMetaKG(record.qXEdge.getHashedEdgeRepresentation());
         if (!(qXEdgeMetaKGHash in groupedRecords)) {
           groupedRecords[qXEdgeMetaKGHash] = [];
         }
-        groupedRecords[qXEdgeMetaKGHash].push(this._copyRecord(record));
+        groupedRecords[qXEdgeMetaKGHash].push(record);
       } catch (e) {
         debug('skipping malformed record');
       }
+    });
+    Object.entries(groupedRecords).forEach(([qXEdgeMetaKGHash, records]) => {
+      groupedRecords[qXEdgeMetaKGHash] = Record.packRecords(records);
     });
     return groupedRecords;
   }

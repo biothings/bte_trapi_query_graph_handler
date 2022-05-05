@@ -60,9 +60,9 @@ module.exports = class NodesUpdateHandler {
   }
 
   _createEquivalentIDsObject(record) {
-    if (record.$output.obj !== undefined) {
+    if (record.object.normalizedInfo !== undefined) {
       return {
-        [record.$output.obj.primaryID]: record.$output.obj,
+        [record.object.curie]: record.object.normalizedInfo,
       };
     } else {
       return;
@@ -82,10 +82,10 @@ module.exports = class NodesUpdateHandler {
     queryRecords.map((record) => {
       if (
         record &&
-        !(record.$output.obj[0].primaryID in record.$edge_metadata.trapi_qEdge_obj.output_equivalent_identifiers)
+        !(record.object.curie in record.qXEdge.output_equivalent_identifiers)
       ) {
-        record.$edge_metadata.trapi_qEdge_obj.output_equivalent_identifiers[record.$output.obj[0].primaryID] =
-          record.$output.obj;
+        record.qXEdge.output_equivalent_identifiers[record.object.curie] =
+          record.object.normalizedInfo;
       }
     });
   }

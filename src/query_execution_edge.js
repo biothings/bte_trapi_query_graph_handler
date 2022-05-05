@@ -1,7 +1,7 @@
 const helper = require('./helper');
 const debug = require('debug')('bte:biothings-explorer-trapi:QueryExecutionEdge');
 const utils = require('./utils');
-const reverse = require('./biolink');
+const biolink = require('./biolink');
 
 module.exports = class QueryExecutionEdge {
   /**
@@ -72,7 +72,7 @@ module.exports = class QueryExecutionEdge {
     let all = {};
     records.forEach((record) => {
 
-      record.$input.obj.forEach((o) => {
+      record.subject.normalizedInfo.forEach((o) => {
         //create semantic type if not included
         let type = o._leafSemanticType;
         if (typesToInclude.includes(type) ||
@@ -82,7 +82,7 @@ module.exports = class QueryExecutionEdge {
             all[type] = {};
           }
           //get original and aliases
-          let original = record.$input.original;
+          let original = record.subject.original;
           //#1 prefer equivalent ids
           if (Object.hasOwnProperty.call(o, '_dbIDs')) {
             let original_aliases = new Set();
@@ -137,7 +137,7 @@ module.exports = class QueryExecutionEdge {
         }
       });
 
-      record.$output.obj.forEach((o) => {
+      record.object.normalizedInfo.forEach((o) => {
         //create semantic type if not included
         let type = o._leafSemanticType;
         if (typesToInclude.includes(type) ||
@@ -147,7 +147,7 @@ module.exports = class QueryExecutionEdge {
             all[type] = {};
           }
           //get original and aliases
-          let original = record.$output.original;
+          let original = record.object.original;
 
           //#1 prefer equivalent ids
           if (Object.hasOwnProperty.call(o, '_dbIDs')) {
@@ -243,7 +243,7 @@ module.exports = class QueryExecutionEdge {
     let save_kept = false;
     let sub_constraints = this.subject.constraints;
     if (sub_constraints && sub_constraints.length) {
-      let from = this.reverse ? '$output' : '$input';
+      let from = this.reverse ? 'object' : 'subject';
       debug(`Node (subject) constraints: ${JSON.stringify(sub_constraints)}`);
       save_kept = true;
       for (let i = 0; i < this.records.length; i++) {
@@ -263,7 +263,7 @@ module.exports = class QueryExecutionEdge {
 
     let obj_constraints = this.object.constraints;
     if (obj_constraints && obj_constraints.length) {
-      let from = this.reverse ? '$input' : '$output';
+      let from = this.reverse ? 'subject' : 'object';
       debug(`Node (object) constraints: ${JSON.stringify(obj_constraints)}`);
       save_kept = true;
       for (let i = 0; i < this.records.length; i++) {
@@ -428,11 +428,11 @@ module.exports = class QueryExecutionEdge {
   getHashedEdgeRepresentation() {
     const toBeHashed =
       this.getSubject().getCategories() + this.getPredicate() + this.getObject().getCategories() + this.getInputCurie();
-    return new helper()._generateHash(toBeHashed);
+    return helper._generateHash(toBeHashed);
   }
 
   expandPredicates(predicates) {
-    const reducer = (acc, cur) => [...acc, ...reverse.getDescendantPredicates(cur)];
+    const reducer = (acc, cur) => [...acc, ...biolink.getDescendantPredicates(cur)];
     return Array.from(new Set(predicates.reduce(reducer, [])));
   }
 
@@ -445,7 +445,7 @@ module.exports = class QueryExecutionEdge {
     debug(`Expanded edges: ${expandedPredicates}`);
     return expandedPredicates
       .map((predicate) => {
-        return this.isReversed() === true ? reverse.reverse(predicate) : predicate;
+        return this.isReversed() === true ? biolink.reverse(predicate) : predicate;
       })
       .filter((item) => !(typeof item === 'undefined'));
   }
@@ -493,5 +493,9 @@ module.exports = class QueryExecutionEdge {
       return this.qEdge.object.hasInput();
     }
     return this.qEdge.subject.hasInput();
+  }
+
+  getReversedPredicate(predicate) {
+    return predicate ? biolink.reverse(predicate) : undefined;
   }
 };

@@ -1,7 +1,5 @@
 const debug = require('debug')('bte:biothings-explorer-trapi:Score');
 const axios = require('axios');
-const GraphHelper = require('./helper');
-const helper = new GraphHelper();
 
 const _ = require('lodash');
 
@@ -35,8 +33,8 @@ async function getScores (recordsByQEdgeID) {
 
   Object.keys(recordsByQEdgeID).forEach((edge_key) => {
     recordsByQEdgeID[edge_key].records.forEach((record) => {
-      let inputUMLS = helper._getInputUMLS(record) || [];
-      let outputUMLS = helper._getOutputUMLS(record) || [];
+      let inputUMLS = record.subject.UMLS || [];
+      let outputUMLS = record.object.UMLS || [];
 
       inputUMLS?.forEach((input_umls) => {
         if (!pairs.hasOwnProperty(input_umls)) {
@@ -46,9 +44,9 @@ async function getScores (recordsByQEdgeID) {
           pairs[input_umls].add(output_umls);
         })
       });
-      
+
       if (inputUMLS.length == 0 || outputUMLS.length == 0) {
-        // debug("NO RESULT", helper._getInputCurie(record), helper._getInputUMLS(record), helper._getOutputCurie(record), helper._getOutputUMLS(record))
+        // debug("NO RESULT", record.subject.curie, record.subject.UMLS, record.object.curie, record.object.UMLS)
         combosWithoutIDs++;
       }
     });
@@ -62,7 +60,7 @@ async function getScores (recordsByQEdgeID) {
   let results = await query(queries);
 
   debug("Combos no UMLS ID: ", combosWithoutIDs);
-  return results;
+  return results || []; // in case results is undefined, avoid TypeErrors
 }
 
 //multiply the inverses of the ngds together to get the total score for a combo

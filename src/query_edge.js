@@ -29,7 +29,7 @@ module.exports = class QEdge {
   getHashedEdgeRepresentation() {
     const toBeHashed =
       this.subject.getCategories() + this.predicate + this.object.getCategories() + this.getInputCurie();
-    return new helper()._generateHash(toBeHashed);
+    return helper._generateHash(toBeHashed);
   }
 
   expandPredicates(predicates) {
