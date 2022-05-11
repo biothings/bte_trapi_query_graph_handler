@@ -12,7 +12,8 @@ const _ = require('lodash');
 const QEdge2APIEdgeHandler = require('./qedge2apiedge');
 const LogEntry = require('./log_entry');
 const redisClient = require('./redis-client');
-const config = require('./config')
+const config = require('./config');
+const fs = require('fs').promises;
 
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 exports.redisClient = redisClient;
@@ -96,18 +97,6 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       }
     }
   }
-
-  // DEPRECATED
-  // _createBatchEdgeQueryHandlers(queryPaths, kg) {
-  //   let handlers = {};
-  //   for (const index in queryPaths) {
-  //     handlers[index] = new BatchEdgeQueryHandler(kg, this.resolveOutputIDs, { caching: this.options.caching });
-  //     handlers[index].setEdges(queryPaths[index]);
-  //     handlers[index].subscribe(this.trapiResultsAssembler);
-  //     handlers[index].subscribe(this.bteGraph);
-  //   }
-  //   return handlers;
-  // }
 
   _createBatchEdgeQueryHandlersForCurrent(currentQXEdge, metaKG) {
     let handler = new BatchEdgeQueryHandler(metaKG, this.resolveOutputIDs, {
