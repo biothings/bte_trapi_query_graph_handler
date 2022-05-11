@@ -202,6 +202,26 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     });
   }
 
+  async dumpRecords(records) {
+    let filePath = path.resolve('../../..', process.env.DUMP_RECORDS);
+    // create new (unique) file if arg is directory
+    try {
+      if ((await fs.lstat(filePath)).isDirectory()) {
+        filePath = path.resolve(filePath, `recordDump-${(new Date()).toISOString()}.json`);
+      }
+    } catch (e) {
+      null; // specified a file, which doesn't exist (which is fine)
+    }
+    let direction = false;
+    if (process.env.DUMP_RECORDS_DIRECTION?.includes('exec')) {
+      direction = true;
+      records = [...records].map(record => record.queryDirection());
+    }
+    await fs.writeFile(filePath, JSON.stringify(records.map(record => record.freeze())))
+    let logMessage = `Dumping Records ${direction ? `(in execution direction)` : ''} to ${filePath}`;
+    debug(logMessage);
+  }
+
   async query() {
     this._initializeResponse();
     debug('Start to load metakg.');
@@ -302,6 +322,10 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     this._logSkippedQueries(unavailableAPIs);
     // collect and organize records
     manager.collectRecords();
+    // dump records if set to do so
+    if (process.env.DUMP_RECORDS) {
+      await this.dumpRecords(manager.getRecords());
+    }
     this.logs = [...this.logs, ...manager.logs];
     // update query graph
     this.bteGraph.update(manager.getRecords());
