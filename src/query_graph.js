@@ -54,7 +54,7 @@ module.exports = class QueryGraphHandler {
           unknown: curies
       });
       debug(`Query node missing categories...Looking for match...`);
-      if (Object.hasOwnProperty.call(category, curies[0])) {
+      if (Object.hasOwnProperty.call(category, curies[0]) && category[curies[0]][0]['semanticType']) {
           category = category[curies[0]][0]['semanticType'];
           return ["biolink:" + category];
       } else {
