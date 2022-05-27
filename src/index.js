@@ -222,11 +222,43 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     debug(logMessage);
   }
 
+  async checkSpecificEndpointOptions(metaKG) {
+    if (this.options.smartAPIID) {
+      const metaKGSmartAPIids = metaKG.ops.map((op) => {
+        return op.association.smartapi?.id;
+      });
+      if (!metaKGSmartAPIids.includes(this.options.smartAPIID)) {
+        const errorMessage = `smartAPI (${this.options.smartAPIID}) not present in metaKG.`;
+        this.logs.push(new LogEntry('ERROR', null, errorMessage).getLog());
+        debug(errorMessage);
+        return false;
+      }
+    }
+    if (this.options.teamName) {
+      const metaKGTeams = metaKG.ops.reduce((set, op) => {
+        if (op.association['x-translator']) {
+          op.association['x-translator'].team.forEach((team) => set.add(team));
+        }
+        return set;
+      }, new Set());
+      if (!metaKGTeams.has(this.options.teamName)) {
+        const errorMessage = `team (${this.options.teamName}) not present in metaKG.`;
+        this.logs.push(new LogEntry('ERROR', null, errorMessage).getLog());
+        debug(errorMessage);
+        return false;
+      }
+    }
+    return true;
+  }
+
   async query() {
     this._initializeResponse();
     debug('Start to load metakg.');
-    const metaKG = this._loadMetaKG(this.smartapiID, this.team);
+    const metaKG = this._loadMetaKG(this.smartAPIID, this.team);
     debug('MetaKG successfully loaded!');
+    if (!this.checkSpecificEndpointOptions(metaKG)) {
+      return;
+    }
     if (global.missingAPIs) {
       this.logs.push(
         new LogEntry(
