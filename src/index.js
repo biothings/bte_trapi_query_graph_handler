@@ -14,6 +14,9 @@ const LogEntry = require('./log_entry');
 const redisClient = require('./redis-client');
 const config = require('./config');
 const fs = require('fs').promises;
+const getTemplates = require('./inference_templates/template_lookup').getTemplates;
+const utils = require('./utils');
+const async = require('async');
 
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 exports.redisClient = redisClient;
@@ -207,7 +210,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     // create new (unique) file if arg is directory
     try {
       if ((await fs.lstat(filePath)).isDirectory()) {
-        filePath = path.resolve(filePath, `recordDump-${(new Date()).toISOString()}.json`);
+        filePath = path.resolve(filePath, `recordDump-${new Date().toISOString()}.json`);
       }
     } catch (e) {
       null; // specified a file, which doesn't exist (which is fine)
@@ -215,11 +218,227 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     let direction = false;
     if (process.env.DUMP_RECORDS_DIRECTION?.includes('exec')) {
       direction = true;
-      records = [...records].map(record => record.queryDirection());
+      records = [...records].map((record) => record.queryDirection());
     }
-    await fs.writeFile(filePath, JSON.stringify(records.map(record => record.freeze())))
+    await fs.writeFile(filePath, JSON.stringify(records.map((record) => record.freeze())));
     let logMessage = `Dumping Records ${direction ? `(in execution direction)` : ''} to ${filePath}`;
     debug(logMessage);
+  }
+
+  _queryUsesInferredMode() {
+    // TODO add warning for inferred but not one-hop
+    const oneHop = Object.keys(this.queryGraph.edges).length === 1;
+    const inferredEdge = Object.values(this.queryGraph.edges).some((edge) => edge.knowledge_type === 'inferred');
+    return oneHop && inferredEdge;
+  }
+
+  async _handleInferredEdges(usePredicate = true) {
+    // TODO top priority: infer categories from ids where applicable before template lookup
+    // TODO figure out reverse templates
+    // test case ChemicalEntity -treats-> DiseaseOrPhenotypicFeature
+    /**
+     * TODO handle errors:
+     * - missing categories
+     */
+    const qEdgeID = Object.keys(this.queryGraph.edges)[0];
+    const qEdge = this.queryGraph.edges[qEdgeID];
+    const qSubject = this.queryGraph.nodes[qEdge.subject];
+    const qObject = this.queryGraph.nodes[qEdge.object];
+    const searchStrings = qSubject.categories.reduce((arr, subCat) => {
+      let templates;
+      if (usePredicate) {
+        templates = qObject.categories.reduce((arr2, objCat) => {
+          return [
+            ...arr2,
+            ...qEdge.predicates.map((predicate) => {
+              return `${utils.removeBioLinkPrefix(subCat)}-${utils.removeBioLinkPrefix(
+                predicate,
+              )}-${utils.removeBioLinkPrefix(objCat)}`;
+            }),
+          ];
+        }, []);
+      } else {
+        return qObject.categories.map((objCat) => {
+          return `${utils.removeBioLinkPrefixs(subCat)}-${utils.removeBioLinkPrefix(objCat)}`;
+        });
+      }
+      return [...arr, ...templates];
+    }, []);
+    const templates = await getTemplates(searchStrings);
+
+    const subQueries = templates.map((template) => {
+      template.nodes.subject.categories = [...new Set([
+        ...template.nodes.subject.categories,
+        ...qSubject.categories
+      ])];
+      const qEdgeSubjectIDs = qSubject.ids ? qSubject.ids : [];
+      template.nodes.subject.ids = template.nodes.subject.ids
+        ? [...new Set([...template.nodes.subject.ids, ...qEdgeSubjectIDs])]
+        : qEdgeSubjectIDs;
+
+      template.nodes.object.categories = [...new Set([
+        ...template.nodes.object.categories,
+        ...qObject.categories
+      ])];
+      const qEdgeObjectIDs = qObject.ids ? qObject.ids : [];
+      template.nodes.object.ids = template.nodes.object.ids
+        ? [...new Set([...template.nodes.object.ids, ...qEdgeObjectIDs])]
+        : qEdgeObjectIDs;
+
+      if (!template.nodes.subject.categories.length) {
+        delete template.nodes.subject.categories;
+      }
+      if (!template.nodes.object.categories.length) {
+        delete template.nodes.object.categories;
+      }
+      if (!template.nodes.subject.ids.length) {
+        delete template.nodes.subject.ids;
+      }
+      if (!template.nodes.object.ids.length) {
+        delete template.nodes.object.ids;
+      }
+
+      return template;
+    });
+    const combinedResponse = {
+      workflow: [{ id: 'lookup' }],
+      message: {
+        query_graph: {},
+        knowledge_graph: {
+          nodes: {},
+          edges: {},
+        },
+        results: [],
+      },
+      logs: this.logs
+    };
+    const reservedIDs = {
+      nodes: [qEdge.subject, qEdge.object],
+      edges: [qEdgeID],
+    };
+    // add/combine nodes
+    let successfulQueries = 0;
+    await async.eachOfSeries(subQueries, async (queryGraph, i) => {
+      const handler = new TRAPIQueryHandler(this.options, this.path, this.predicatePath, this.includeReasoner);
+      handler.setQueryGraph(queryGraph);
+      try {
+        await handler.query();
+        const response = handler.getResponse();
+        // add non-duplicate nodes
+        Object.entries(response.message.knowledge_graph.nodes).forEach(([curie, node]) => {
+          if (!(curie in combinedResponse.message.knowledge_graph.nodes)) {
+            combinedResponse.message.knowledge_graph.nodes[curie] = node;
+          }
+        });
+        // add non-duplicate edges
+        Object.entries(response.message.knowledge_graph.edges).forEach(([recordHash, edge]) => {
+          if (!(recordHash in combinedResponse.message.knowledge_graph.edges)) {
+            combinedResponse.message.knowledge_graph.edges[recordHash] = edge;
+          }
+        });
+        // make unique node/edge ids for this sub-query's graph
+        const nodeMapping = Object.fromEntries(
+          Object.keys(response.message.query_graph.nodes).map((nodeID) => {
+            let newID = nodeID;
+            if (['subject', 'object'].includes(nodeID)) {
+              newID === 'subject' ? qEdge.subject : qEdge.object;
+            } else {
+              while (reservedIDs.nodes.includes(newID)) {
+                let number = newID.match(/[0-9]+$/);
+                let newNumber = number ? `0${parseInt(number[0]) + 1}` : '01';
+                newID.replace(number, newNumber);
+              }
+              reservedIDs.nodes.push(newID);
+            }
+            return [nodeID, newID];
+          }),
+        );
+        const edgeMapping = Object.fromEntries(
+          Object.keys(response.message.query_graph.edges).map((edgeID) => {
+            let newID = edgeID;
+            if (['subject', 'object'].includes(edgeID)) {
+              newID === 'subject' ? qEdge.subject : qEdge.object;
+            } else {
+              while (reservedIDs.edges.includes(newID)) {
+                let number = newID.match(/[0-9]+$/);
+                let newNumber = number ? `0${parseInt(number[0]) + 1}` : '01';
+                newID = newID.replace(number, newNumber);
+              }
+              reservedIDs.edges.push(newID);
+            }
+            return [edgeID, newID];
+          }),
+        );
+        // add results
+        response.message.results.forEach((result) => {
+          const translatedResult = {
+            node_bindings: {},
+            edge_bindings: {},
+            score: 0,
+          };
+          Object.entries(result.node_bindings).forEach(([nodeID, bindings]) => {
+            translatedResult[nodeMapping[nodeID]] = bindings;
+          });
+          Object.entries(result.edge_bindings).forEach(([edgeID, bindings]) => {
+            translatedResult[edgeMapping[edgeID]] = bindings;
+          });
+        });
+        // fix/combine logs
+        handler.logs.forEach((log) => {
+          Object.entries(nodeMapping).forEach(([oldID, newID]) => {
+            log.message = log.message.replace(oldID, newID);
+          });
+          Object.entries(edgeMapping).forEach(([oldID, newID]) => {
+            log.message = log.message.replace(oldID, newID);
+          });
+          log.message = `[SubQuery-${i}]: ${log.message}`;
+
+          combinedResponse.logs.push(log);
+        });
+        if (response.message.results.length) {
+          successfulQueries += 1;
+        }
+      } catch (error) {
+        // TODO merge logs
+        const message = `ERROR: subQuery ${i} failed due to error ${error}`;
+        debug(message);
+        this.logs.push(new LogEntry(`ERROR`, null, message).getLog());
+        return
+      }
+    });
+    combinedResponse.message.query_graph = this.queryGraph;
+
+    this.getResponse = () => {
+      return combinedResponse;
+    };
+    if (successfulQueries > 0) {
+      this.createSummaryLog(combinedResponse.logs).forEach((log) => combinedResponse.logs.push(log));
+    }
+    combinedResponse.logs = combinedResponse.logs.map((log) => log.toJSON());
+  }
+
+  createSummaryLog(logs) {
+    const response = this.getResponse();
+    const KGNodes = Object.keys(response.message.knowledge_graph.nodes).length;
+    const kgEdges = Object.keys(response.message.knowledge_graph.edges).length;
+    const results = response.message.results.length;
+    const resultQueries = logs.filter(({ data }) => data?.type === 'query' && data?.hits).length;
+    const queries = logs.filter(({ data }) => data?.type === 'query').length;
+    const sources = [...new Set(logs
+      .filter(({ data }) => data?.type === 'query')
+      .map(({ data }) => data?.api_name)
+    )];
+    let cached = logs.filter(({ data }) => data?.type === 'cacheHit').length;
+    return [
+      new LogEntry(
+        'INFO',
+        null,
+        `Execution Summary: (${KGNodes}) nodes / (${kgEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${
+          cached ? ` (${cached} cached qEdges)` : ''
+        } returned results from (${sources.length}) unique APIs ${sources === 1 ? 's' : ''}`,
+      ).getLog(),
+      new LogEntry('INFO', null, `APIs: ${sources.join(', ')}`).getLog(),
+    ]
   }
 
   async query() {
@@ -240,6 +459,10 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     }
     let queryExecutionEdges = await this._processQueryGraph(this.queryGraph);
     debug(`(3) All edges created ${JSON.stringify(queryExecutionEdges)}`);
+    if (this._queryUsesInferredMode()) {
+      await this._handleInferredEdges();
+      return;
+    }
     if (!(await this._edgesSupported(queryExecutionEdges, metaKG))) {
       return;
     }
@@ -336,23 +559,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     this.bteGraph.prune(this.trapiResultsAssembler.getResults());
     this.bteGraph.notify();
     // finishing logs
-    const KGNodes = Object.keys(this.knowledgeGraph.nodes).length;
-    const kgEdges = Object.keys(this.knowledgeGraph.edges).length;
-    const results = this.trapiResultsAssembler.getResults().length;
-    const resultQueries = this.logs.filter(({ data }) => data?.type === 'query' && data?.hits).length;
-    const queries = this.logs.filter(({ data }) => data?.type === 'query').length;
-    const sources = [...new Set(manager._records.map((rec) => rec.api))];
-    let cached = this.logs.filter(({ data }) => data?.type === 'cacheHit').length;
-    this.logs.push(
-      new LogEntry(
-        'INFO',
-        null,
-        `Execution Summary: (${KGNodes}) nodes / (${kgEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${
-          cached ? ` (${cached} cached qEdges)` : ''
-        } returned results from (${sources.length}) unique APIs ${sources === 1 ? 's' : ''}`,
-      ).getLog(),
-    );
-    this.logs.push(new LogEntry('INFO', null, `APIs: ${sources.join(', ')}`).getLog());
+    this.createSummaryLog(this.logs).forEach((log) => this.logs.push(log));
     debug(`(14) TRAPI query finished.`);
   }
 };
