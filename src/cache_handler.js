@@ -112,35 +112,33 @@ module.exports = class {
     await async.eachSeries(qXEdges, async (qXEdge) => {
       const qXEdgeMetaKGHash = this._hashEdgeByMetaKG(qXEdge.getHashedEdgeRepresentation());
       const unpackedRecords = await new Promise(async (resolve) => {
-        let lock = { release: () => null };
-        try {
-          const redisID = 'bte:edgeCache:' + qXEdgeMetaKGHash;
-          lock = await redisClient.client.lock('redisLock:' + redisID);
-          const compressedRecordPack = await redisClient.client.hgetallTimeout(redisID);
+        const redisID = 'bte:edgeCache:' + qXEdgeMetaKGHash;
+        await redisClient.client.usingLock([`redisLock:${redisID}`], 600000, async (signal) => {
+          try {
+            const compressedRecordPack = await redisClient.client.hgetallTimeout(redisID);
 
-          if (compressedRecordPack && Object.keys(compressedRecordPack).length) {
-            const recordPack = [];
+            if (compressedRecordPack && Object.keys(compressedRecordPack).length) {
+              const recordPack = [];
 
-            const sortedPackParts = Object.entries(compressedRecordPack)
-              .sort(([key1], [key2]) => parseInt(key1) - parseInt(key2))
-              .map(([_key, val]) => {
-                return val;
-              });
+              const sortedPackParts = Object.entries(compressedRecordPack)
+                .sort(([key1], [key2]) => parseInt(key1) - parseInt(key2))
+                .map(([_key, val]) => {
+                  return val;
+                });
 
-            const recordStream = Readable.from(sortedPackParts);
-            recordStream
-              .pipe(this.createDecodeStream())
-              .on('data', (obj) => recordPack.push(obj))
-              .on('end', () => resolve(Record.unpackRecords(recordPack, qXEdge, this.recordConfig)));
-          } else {
+              const recordStream = Readable.from(sortedPackParts);
+              recordStream
+                .pipe(this.createDecodeStream())
+                .on('data', (obj) => recordPack.push(obj))
+                .on('end', () => resolve(Record.unpackRecords(recordPack, qXEdge, this.recordConfig)));
+            } else {
+              resolve(null);
+            }
+          } catch (error) {
             resolve(null);
+            debug(`Cache lookup/retrieval failed due to ${error}. Proceeding without cache.`);
           }
-        } catch (error) {
-          resolve(null);
-          debug(`Cache lookup/retrieval failed due to ${error}. Proceeding without cache.`);
-        } finally {
-          await lock.release();
-        }
+        });
       });
 
       if (unpackedRecords) {
@@ -219,45 +217,44 @@ module.exports = class {
       const failedHashes = [];
       await async.eachSeries(qXEdgeHashes, async (hash) => {
         // lock to prevent caching to/reading from actively caching edge
-        let lock = { release: () => null };
         const redisID = 'bte:edgeCache:' + hash;
         if (parentPort) {
           parentPort.postMessage({ addCacheKey: redisID });
         }
-        try {
-          lock = await redisClient.client.lock('redisLock:' + redisID);
-          await redisClient.client.delTimeout(redisID); // prevents weird overwrite edge cases
-          await new Promise((resolve, reject) => {
-            let i = 0;
-            Readable.from(groupedRecords[hash])
-              .pipe(this.createEncodeStream())
-              .pipe(chunker(100000, { flush: true }))
-              .on('data', async (chunk) => {
-                try {
-                  await redisClient.client.hsetTimeout(redisID, String(i++), chunk);
-                } catch (error) {
-                  reject(error);
+        await redisClient.client.usingLock([`redisLock:${redisID}`], 600000, async (signal) => {
+          try {
+            await redisClient.client.delTimeout(redisID); // prevents weird overwrite edge cases
+            await new Promise((resolve, reject) => {
+              let i = 0;
+              Readable.from(groupedRecords[hash])
+                .pipe(this.createEncodeStream())
+                .pipe(chunker(100000, { flush: true }))
+                .on('data', async (chunk) => {
                   try {
-                    await redisClient.client.delTimeout(redisID);
-                  } catch (e) {
-                    debug(`Unable to remove partial cache ${redisID} from redis during cache failure due to error ${error}. This may result in failed or improper cache retrieval of this qXEdge.`)
+                    await redisClient.client.hsetTimeout(redisID, String(i++), chunk);
+                  } catch (error) {
+                    reject(error);
+                    try {
+                      await redisClient.client.delTimeout(redisID);
+                    } catch (e) {
+                      debug(`Unable to remove partial cache ${redisID} from redis during cache failure due to error ${error}. This may result in failed or improper cache retrieval of this qXEdge.`)
+                    }
                   }
-                }
-              })
-              .on('end', () => {
-                resolve();
-              });
-          });
-          await redisClient.client.expireTimeout(redisID, process.env.REDIS_KEY_EXPIRE_TIME || 600);
-        } catch (error) {
-          failedHashes.push(hash);
-          debug(`Failed to cache qXEdge ${hash} records due to error ${error}. This does not stop other edges from caching nor terminate the query.`)
-        } finally {
-          await lock.release(); // release lock whether cache succeeded or not
-          if (parentPort) {
-            parentPort.postMessage({ completeCacheKey: redisID });
+                })
+                .on('end', () => {
+                  resolve();
+                });
+            });
+            await redisClient.client.expireTimeout(redisID, process.env.REDIS_KEY_EXPIRE_TIME || 600);
+          } catch (error) {
+            failedHashes.push(hash);
+            debug(`Failed to cache qXEdge ${hash} records due to error ${error}. This does not stop other edges from caching nor terminate the query.`)
+          } finally {
+            if (parentPort) {
+              parentPort.postMessage({ completeCacheKey: redisID });
+            }
           }
-        }
+        });
       });
       const successCount = Object.entries(groupedRecords).reduce((acc, [hash, records]) => {
         return failedHashes.includes(hash) ? acc : acc + records.length;

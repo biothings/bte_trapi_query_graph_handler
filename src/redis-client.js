@@ -1,8 +1,9 @@
 const Redis = require('ioredis');
 // const { checkServerIdentity } = require("tls");
 // const redisLock = require('redis-lock');
-const LockManager = require('redis-dlm').default;
+// const LockManager = require('redis-dlm').default;
 // const { promisify } = require('util');
+const Redlock = require('redlock').default;
 
 const prefix = `{BTEHashSlotPrefix}`;
 
@@ -38,6 +39,12 @@ const addPrefixToAll = (func) => {
   };
 };
 
+const lockPrefix = (func) => {
+  return async (...args) => {
+    return await func(args[0].map((lockName) => `${prefix}:${lockName}`), ...args.slice(1));
+  }
+}
+
 class RedisClient {
   constructor() {
     this.client;
@@ -68,10 +75,8 @@ class RedisClient {
 
       cluster = new Redis.Cluster(details);
 
-      const lockManager = new LockManager([cluster], {
-        duration: 30 * 60000,
-        maxHoldTime: 30 * 60000,
-      });
+      // allow up to 10 minutes to acquire lock (in case of large items being saved/retrieved)
+      const redlock = new Redlock([cluster], {retryDelay: 500, retryCount: 1200});
 
       this.client = {
         ...cluster,
@@ -81,7 +86,7 @@ class RedisClient {
         hgetallTimeout: addPrefix(timeoutFunc((...args) => cluster.hgetall(...args))),
         expireTimeout: addPrefix(timeoutFunc((...args) => cluster.expire(...args))),
         delTimeout: addPrefixToAll(timeoutFunc((...args) => cluster.del(...args))),
-        lock: addPrefix(timeoutFunc((...args) => lockManager.acquire(...args), 5 * 60000)),
+        usingLock: lockPrefix((...args) => redlock.using(...args)),
         // hmsetTimeout: timeoutFunc((...args) => cluster.hmset(...args)),
         // keysTimeout: timeoutFunc((...args) => cluster.keys(...args)),
         existsTimeout: addPrefix(timeoutFunc((...args) => cluster.exists(...args))),
@@ -101,10 +106,9 @@ class RedisClient {
         details.tls = { checkServerIdentity: () => undefined };
       }
       client = new Redis(details);
-      const lockManager = new LockManager([client], {
-        duration: 30 * 60000,
-        maxHoldTime: 30 * 60000,
-      });
+
+      // allow up to 10 minutes to acquire lock (in case of large items being saved/retrieved)
+      const redlock = new Redlock([client], {retryDelay: 500, retryCount: 1200});
 
       this.client = {
         ...client,
@@ -114,7 +118,7 @@ class RedisClient {
         hgetallTimeout: timeoutFunc((...args) => client.hgetall(...args)),
         expireTimeout: timeoutFunc((...args) => client.expire(...args)),
         delTimeout: timeoutFunc((...args) => client.del(...args)),
-        lock: timeoutFunc((...args) => lockManager.acquire(...args), 5 * 60000),
+        usingLock: lockPrefix((...args) => redlock.using(...args)),
         // hmsetTimeout: timeoutFunc((...args) => client.hmset(...args)),
         // keysTimeout: timeoutFunc((...args) => client.keys(...args)),
         existsTimeout: timeoutFunc((...args) => client.exists(...args)),
