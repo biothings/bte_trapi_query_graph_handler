@@ -1,8 +1,5 @@
 const Redis = require('ioredis');
-// const { checkServerIdentity } = require("tls");
-// const redisLock = require('redis-lock');
-// const LockManager = require('redis-dlm').default;
-// const { promisify } = require('util');
+const debug = require('debug')('bte:biothings-explorer-trapi:redis-client');
 const Redlock = require('redlock').default;
 
 const prefix = `{BTEHashSlotPrefix}`;
@@ -59,21 +56,21 @@ class RedisClient {
     if (process.env.REDIS_CLUSTER === 'true') {
       let cluster;
 
-      const details = [
+      const details = { redisOptions: {} };
+
+      if (process.env.REDIS_PASSWORD) {
+        details.redisOptions.password = process.env.REDIS_PASSWORD;
+      }
+      if (process.env.REDIS_TLS_ENABLED) {
+        details.redisOptions.tls = { checkServerIdentity: () => undefined };
+      }
+
+      cluster = new Redis.Cluster([
         {
           host: process.env.REDIS_HOST,
           port: process.env.REDIS_PORT,
         },
-      ];
-
-      if (process.env.REDIS_PASSWORD) {
-        details[0].auth_pass = process.env.REDIS_PASSWORD;
-      }
-      if (process.env.REDIS_TLS_ENABLED) {
-        details[0].tls = { checkServerIdentity: () => undefined };
-      }
-
-      cluster = new Redis.Cluster(details);
+      ], details);
 
       // allow up to 10 minutes to acquire lock (in case of large items being saved/retrieved)
       const redlock = new Redlock([cluster], {retryDelay: 500, retryCount: 1200});
@@ -92,6 +89,7 @@ class RedisClient {
         existsTimeout: addPrefix(timeoutFunc((...args) => cluster.exists(...args))),
         pingTimeout: timeoutFunc((...args) => cluster.ping(...args), 10000), // for testing
       };
+      debug('Initialized redis client (cluster-mode)');
     } else {
       let client;
 
@@ -124,6 +122,7 @@ class RedisClient {
         existsTimeout: timeoutFunc((...args) => client.exists(...args)),
         pingTimeout: timeoutFunc((...args) => client.ping(...args), 10000), // for testing
       };
+      debug('Initialized redis client (non-cluster-mode)');
     }
     this.clientEnabled = true;
   }
