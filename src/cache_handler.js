@@ -1,4 +1,4 @@
-const redisClient = require('./redis-client');
+const { redisClient } = require('./redis-client');
 const debug = require('debug')('bte:biothings-explorer-trapi:cache_handler');
 const LogEntry = require('./log_entry');
 const { parentPort } = require('worker_threads');
@@ -112,13 +112,13 @@ module.exports = class {
     await async.eachSeries(qXEdges, async (qXEdge) => {
       const qXEdgeMetaKGHash = this._hashEdgeByMetaKG(qXEdge.getHashedEdgeRepresentation());
       const unpackedRecords = await new Promise(async (resolve) => {
-        let unlock = () => null;
+        let lock = { release: () => null };
         try {
           const redisID = 'bte:edgeCache:' + qXEdgeMetaKGHash;
-          unlock = await redisClient.lock('redisLock:' + redisID);
-          const compressedRecordPack = await redisClient.hgetallAsync(redisID);
+          lock = await redisClient.client.lock('redisLock:' + redisID);
+          const compressedRecordPack = await redisClient.client.hgetallTimeout(redisID);
 
-          if (compressedRecordPack) {
+          if (compressedRecordPack && Object.keys(compressedRecordPack).length) {
             const recordPack = [];
 
             const sortedPackParts = Object.entries(compressedRecordPack)
@@ -139,7 +139,7 @@ module.exports = class {
           resolve(null);
           debug(`Cache lookup/retrieval failed due to ${error}. Proceeding without cache.`);
         } finally {
-          unlock();
+          await lock.release();
         }
       });
 
@@ -219,14 +219,14 @@ module.exports = class {
       const failedHashes = [];
       await async.eachSeries(qXEdgeHashes, async (hash) => {
         // lock to prevent caching to/reading from actively caching edge
-        let unlock = () => null;
+        let lock = { release: () => null };
         const redisID = 'bte:edgeCache:' + hash;
         if (parentPort) {
           parentPort.postMessage({ addCacheKey: redisID });
         }
         try {
-          unlock = await redisClient.lock('redisLock:' + redisID);
-          await redisClient.delAsync(redisID); // prevents weird overwrite edge cases
+          lock = await redisClient.client.lock('redisLock:' + redisID);
+          await redisClient.client.delTimeout(redisID); // prevents weird overwrite edge cases
           await new Promise((resolve, reject) => {
             let i = 0;
             Readable.from(groupedRecords[hash])
@@ -234,11 +234,11 @@ module.exports = class {
               .pipe(chunker(100000, { flush: true }))
               .on('data', async (chunk) => {
                 try {
-                  await redisClient.hsetAsync(redisID, String(i++), chunk);
+                  await redisClient.client.hsetTimeout(redisID, String(i++), chunk);
                 } catch (error) {
                   reject(error);
                   try {
-                    await redisClient.delAsync(redisID);
+                    await redisClient.client.delTimeout(redisID);
                   } catch (e) {
                     debug(`Unable to remove partial cache ${redisID} from redis during cache failure due to error ${error}. This may result in failed or improper cache retrieval of this qXEdge.`)
                   }
@@ -248,12 +248,12 @@ module.exports = class {
                 resolve();
               });
           });
-          await redisClient.expireAsync(redisID, process.env.REDIS_KEY_EXPIRE_TIME || 600);
+          await redisClient.client.expireTimeout(redisID, process.env.REDIS_KEY_EXPIRE_TIME || 600);
         } catch (error) {
           failedHashes.push(hash);
           debug(`Failed to cache qXEdge ${hash} records due to error ${error}. This does not stop other edges from caching nor terminate the query.`)
         } finally {
-          unlock(); // release lock whether cache succeeded or not
+          await lock.release(); // release lock whether cache succeeded or not
           if (parentPort) {
             parentPort.postMessage({ completeCacheKey: redisID });
           }

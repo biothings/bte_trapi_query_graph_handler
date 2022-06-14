@@ -1,0 +1,29 @@
+{
+  "message": {
+    "query_graph": {
+      "nodes": {
+        "subject": {
+          "categories": ["biolink:ChemicalEntity"]
+        },
+        "n1": {
+          "categories": ["biolink:Gene"]
+        },
+        "object": {
+          "categories": ["biolink:DiseaseOrPhenotypicFeature"]
+        }
+      },
+      "edges": {
+        "e01": {
+          "subject": "subject",
+          "object": "n1",
+          "predicates": ["biolink:affects"]
+        },
+        "e03": {
+          "subject": "object",
+          "object": "n1",
+          "predicates": ["biolink:caused_by"]
+        }
+      }
+    }
+  }
+}

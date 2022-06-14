@@ -11,7 +11,7 @@ const EdgeManager = require('./edge_manager');
 const _ = require('lodash');
 const QEdge2APIEdgeHandler = require('./qedge2apiedge');
 const LogEntry = require('./log_entry');
-const redisClient = require('./redis-client');
+const { redisClient } = require('./redis-client');
 const config = require('./config');
 const fs = require('fs').promises;
 
