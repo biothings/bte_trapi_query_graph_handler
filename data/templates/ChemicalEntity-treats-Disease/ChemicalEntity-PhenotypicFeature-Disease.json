@@ -1,0 +1,29 @@
+{
+  "message": {
+    "query_graph": {
+      "nodes": {
+        "creativeQuerySubject": {
+          "categories": ["biolink:ChemicalEntity"]
+        },
+        "n1": {
+          "categories": ["biolink:PhenotypicFeature"]
+        },
+        "creativeQueryObject": {
+          "categories": ["biolink:Disease"]
+        }
+      },
+      "edges": {
+        "e01": {
+          "subject": "creativeQuerySubject",
+          "object": "n1",
+          "predicates": ["biolink:treats"]
+        },
+        "e02": {
+          "subject": "creativeQueryObject",
+          "object": "n1",
+          "predicates": ["biolink:has_phenotype"]
+        }
+      }
+    }
+  }
+}
