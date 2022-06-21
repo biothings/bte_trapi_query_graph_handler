@@ -14,7 +14,7 @@ const LogEntry = require('./log_entry');
 const { redisClient } = require('./redis-client');
 const config = require('./config');
 const fs = require('fs').promises;
-const getTemplates = require('./inference_templates/template_lookup').getTemplates;
+const { getTemplates } = require('./template_lookup');
 const utils = require('./utils');
 const async = require('async');
 
@@ -226,24 +226,51 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   }
 
   _queryUsesInferredMode() {
-    // TODO add warning for inferred but not one-hop
-    const oneHop = Object.keys(this.queryGraph.edges).length === 1;
     const inferredEdge = Object.values(this.queryGraph.edges).some((edge) => edge.knowledge_type === 'inferred');
-    return oneHop && inferredEdge;
+
+    return inferredEdge;
+  }
+
+  _queryIsOneHop() {
+    const oneHop = Object.keys(this.queryGraph.edges).length === 1;
+    return oneHop;
   }
 
   async _handleInferredEdges(usePredicate = true) {
-    // TODO top priority: infer categories from ids where applicable before template lookup
-    // TODO figure out reverse templates
-    // test case ChemicalEntity -treats-> DiseaseOrPhenotypicFeature
-    /**
-     * TODO handle errors:
-     * - missing categories
-     */
+    // TODO [POST-MVP] check for flipped predicate cases
+    // i.e. Drug -treats-> Disease OR Disease -treated_by-> Drug
+    // TODO [POST MVP] possibly do biolink subclass expansion
+    // i.e. Drug -treats-> DiseaseOrPhenoTypicFeature
+    // also adds Drug -treats-> Disease & Drug -treats->PhenotypicFeature
+    let logMessage = 'Query proceeding in Inferred Mode';
+    debug(logMessage);
+    this.logs.push(new LogEntry('INFO', null, logMessage).getLog());
+
+    const nodeMissingCategory = Object.values(this.queryGraph.nodes).some((node) => {
+      return typeof node.categories === 'undefined' || node.categories.length === 0;
+    });
+    if (nodeMissingCategory) {
+      const message = 'All nodes in Inferred Mode edge must have categories. Your query terminates.';
+      this.logs.push(new LogEntry("ERROR", null, message).getLog());
+      debug(message);
+      return;
+    }
+
+    const nodeMissingID = !Object.values(this.queryGraph.nodes).some((node) => {
+      return typeof node.ids !== 'undefined' && node.ids.length > 0;
+    })
+    if (nodeMissingID) {
+      const message = 'At least one node in Inferred Mode edge must have at least 1 ID. Your query terminates.';
+      this.logs.push(new LogEntry("ERROR", null, message).getLog());
+      debug(message);
+      return;
+    }
+
     const qEdgeID = Object.keys(this.queryGraph.edges)[0];
     const qEdge = this.queryGraph.edges[qEdgeID];
     const qSubject = this.queryGraph.nodes[qEdge.subject];
     const qObject = this.queryGraph.nodes[qEdge.object];
+    debug('Looking up query Templates');
     const searchStrings = qSubject.categories.reduce((arr, subCat) => {
       let templates;
       if (usePredicate) {
@@ -266,40 +293,44 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     }, []);
     const templates = await getTemplates(searchStrings);
 
-    const subQueries = templates.map((template) => {
-      template.nodes.subject.categories = [...new Set([
-        ...template.nodes.subject.categories,
-        ...qSubject.categories
-      ])];
-      const qEdgeSubjectIDs = qSubject.ids ? qSubject.ids : [];
-      template.nodes.subject.ids = template.nodes.subject.ids
-        ? [...new Set([...template.nodes.subject.ids, ...qEdgeSubjectIDs])]
-        : qEdgeSubjectIDs;
+    logMessage = `Got ${templates.length} inferred query templates`;
+    debug(logMessage);
+    this.logs.push(new LogEntry('INFO', null, logMessage).getLog());
 
-      template.nodes.object.categories = [...new Set([
-        ...template.nodes.object.categories,
-        ...qObject.categories
-      ])];
+    // combine creative query with templates
+    const subQueries = templates.map((template) => {
+      template.nodes.creativeQuerySubject.categories = [
+        ...new Set([...template.nodes.creativeQuerySubject.categories, ...qSubject.categories]),
+      ];
+      const creativeQuerySubjectIDs = qSubject.ids ? qSubject.ids : [];
+      template.nodes.creativeQuerySubject.ids = template.nodes.creativeQuerySubject.ids
+        ? [...new Set([...template.nodes.creativeQuerySubject.ids, ...creativeQuerySubjectIDs])]
+        : creativeQuerySubjectIDs;
+
+      template.nodes.creativeQueryObject.categories = [
+        ...new Set([...template.nodes.creativeQueryObject.categories, ...qObject.categories]),
+      ];
       const qEdgeObjectIDs = qObject.ids ? qObject.ids : [];
-      template.nodes.object.ids = template.nodes.object.ids
-        ? [...new Set([...template.nodes.object.ids, ...qEdgeObjectIDs])]
+      template.nodes.creativeQueryObject.ids = template.nodes.creativeQueryObject.ids
+        ? [...new Set([...template.nodes.creativeQueryObject.ids, ...qEdgeObjectIDs])]
         : qEdgeObjectIDs;
 
-      if (!template.nodes.subject.categories.length) {
-        delete template.nodes.subject.categories;
+      if (!template.nodes.creativeQuerySubject.categories.length) {
+        delete template.nodes.creativeQuerySubject.categories;
       }
-      if (!template.nodes.object.categories.length) {
-        delete template.nodes.object.categories;
+      if (!template.nodes.creativeQueryObject.categories.length) {
+        delete template.nodes.creativeQueryObject.categories;
       }
-      if (!template.nodes.subject.ids.length) {
-        delete template.nodes.subject.ids;
+      if (!template.nodes.creativeQuerySubject.ids.length) {
+        delete template.nodes.creativeQuerySubject.ids;
       }
-      if (!template.nodes.object.ids.length) {
-        delete template.nodes.object.ids;
+      if (!template.nodes.creativeQueryObject.ids.length) {
+        delete template.nodes.creativeQueryObject.ids;
       }
 
       return template;
     });
+
     const combinedResponse = {
       workflow: [{ id: 'lookup' }],
       message: {
@@ -310,7 +341,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         },
         results: [],
       },
-      logs: this.logs
+      logs: this.logs,
     };
     const reservedIDs = {
       nodes: [qEdge.subject, qEdge.object],
@@ -346,7 +377,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
               while (reservedIDs.nodes.includes(newID)) {
                 let number = newID.match(/[0-9]+$/);
                 let newNumber = number ? `0${parseInt(number[0]) + 1}` : '01';
-                newID.replace(number, newNumber);
+                newID = number
+                  ? newID.replace(number, newNumber)
+                  : `${newID}${newNumber}`;
               }
               reservedIDs.nodes.push(newID);
             }
@@ -362,7 +395,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
               while (reservedIDs.edges.includes(newID)) {
                 let number = newID.match(/[0-9]+$/);
                 let newNumber = number ? `0${parseInt(number[0]) + 1}` : '01';
-                newID = newID.replace(number, newNumber);
+                newID = number
+                  ? newID.replace(number, newNumber)
+                  : `${newID}${newNumber}`;
               }
               reservedIDs.edges.push(newID);
             }
@@ -377,11 +412,12 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
             score: 0,
           };
           Object.entries(result.node_bindings).forEach(([nodeID, bindings]) => {
-            translatedResult[nodeMapping[nodeID]] = bindings;
+            translatedResult.node_bindings[nodeMapping[nodeID]] = bindings;
           });
           Object.entries(result.edge_bindings).forEach(([edgeID, bindings]) => {
-            translatedResult[edgeMapping[edgeID]] = bindings;
+            translatedResult.edge_bindings[edgeMapping[edgeID]] = bindings;
           });
+          combinedResponse.message.results.push(translatedResult);
         });
         // fix/combine logs
         handler.logs.forEach((log) => {
@@ -399,11 +435,13 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
           successfulQueries += 1;
         }
       } catch (error) {
-        // TODO merge logs
+        handler.logs.forEach((log) => {
+          combinedResponse.logs.push(log);
+        })
         const message = `ERROR: subQuery ${i} failed due to error ${error}`;
         debug(message);
         this.logs.push(new LogEntry(`ERROR`, null, message).getLog());
-        return
+        return;
       }
     });
     combinedResponse.message.query_graph = this.queryGraph;
@@ -424,10 +462,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     const results = response.message.results.length;
     const resultQueries = logs.filter(({ data }) => data?.type === 'query' && data?.hits).length;
     const queries = logs.filter(({ data }) => data?.type === 'query').length;
-    const sources = [...new Set(logs
-      .filter(({ data }) => data?.type === 'query')
-      .map(({ data }) => data?.api_name)
-    )];
+    const sources = [...new Set(logs.filter(({ data }) => data?.type === 'query').map(({ data }) => data?.api_name))];
     let cached = logs.filter(({ data }) => data?.type === 'cacheHit').length;
     return [
       new LogEntry(
@@ -438,7 +473,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         } returned results from (${sources.length}) unique APIs ${sources === 1 ? 's' : ''}`,
       ).getLog(),
       new LogEntry('INFO', null, `APIs: ${sources.join(', ')}`).getLog(),
-    ]
+    ];
   }
 
   async query() {
@@ -470,8 +505,13 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     }
     let queryExecutionEdges = await this._processQueryGraph(this.queryGraph);
     debug(`(3) All edges created ${JSON.stringify(queryExecutionEdges)}`);
-    if (this._queryUsesInferredMode()) {
+    if (this._queryUsesInferredMode() && this._queryIsOneHop()) {
       await this._handleInferredEdges();
+      return;
+    } else if (this._queryUsesInferredMode && !this._queryIsOneHop) {
+      const message = "Inferred Mode edges are only supported in single-edge queries. Your query terminates."
+      debug(message);
+      this.logs.push(new LogEntry("ERROR", null, message));
       return;
     }
     if (!(await this._edgesSupported(queryExecutionEdges, metaKG))) {
