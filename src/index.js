@@ -228,7 +228,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     const metaKG = this._loadMetaKG(this.smartapiID, this.team);
     if (!metaKG.ops.length) {
       let error;
-      if (this.options.smartapiID) {
+      if (this.options.smartAPIID) {
         error = `Specified SmartAPI ID (${this.options.smartAPIID}) is either invalid or missing.`;
       } else if (this.options.teamName) {
         error = `Specified Team (${this.options.teamName}) is either invalid or missing.`;
@@ -236,6 +236,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         error = `Something has gone wrong and the MetaKG is empty. Please try again later. If this persists, please contact the server admin.`;
       }
       this.logs.push(new LogEntry('ERROR', null, error).getLog());
+      return;
     }
     debug('MetaKG successfully loaded!');
     if (global.missingAPIs) {
