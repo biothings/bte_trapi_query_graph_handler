@@ -339,7 +339,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
           nodes: {},
           edges: {},
         },
-        results: [],
+        results: {},
       },
       logs: this.logs,
     };
@@ -349,7 +349,11 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     };
     // add/combine nodes
     let successfulQueries = 0;
+    let stop = false;
     await async.eachOfSeries(subQueries, async (queryGraph, i) => {
+      if (stop) {
+        return;
+      }
       const handler = new TRAPIQueryHandler(this.options, this.path, this.predicatePath, this.includeReasoner);
       handler.setQueryGraph(queryGraph);
       try {
@@ -371,8 +375,8 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         const nodeMapping = Object.fromEntries(
           Object.keys(response.message.query_graph.nodes).map((nodeID) => {
             let newID = nodeID;
-            if (['subject', 'object'].includes(nodeID)) {
-              newID === 'subject' ? qEdge.subject : qEdge.object;
+            if (['creativeQuerySubject', 'creativeQueryObject'].includes(nodeID)) {
+              newID === 'creativeQuerySubject' ? qEdge.subject : qEdge.object;
             } else {
               while (reservedIDs.nodes.includes(newID)) {
                 let number = newID.match(/[0-9]+$/);
@@ -389,18 +393,14 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         const edgeMapping = Object.fromEntries(
           Object.keys(response.message.query_graph.edges).map((edgeID) => {
             let newID = edgeID;
-            if (['subject', 'object'].includes(edgeID)) {
-              newID === 'subject' ? qEdge.subject : qEdge.object;
-            } else {
-              while (reservedIDs.edges.includes(newID)) {
-                let number = newID.match(/[0-9]+$/);
-                let newNumber = number ? `0${parseInt(number[0]) + 1}` : '01';
-                newID = number
-                  ? newID.replace(number, newNumber)
-                  : `${newID}${newNumber}`;
-              }
-              reservedIDs.edges.push(newID);
+            while (reservedIDs.edges.includes(newID)) {
+              let number = newID.match(/[0-9]+$/);
+              let newNumber = number ? `0${parseInt(number[0]) + 1}` : '01';
+              newID = number
+                ? newID.replace(number, newNumber)
+                : `${newID}${newNumber}`;
             }
+            reservedIDs.edges.push(newID);
             return [edgeID, newID];
           }),
         );
@@ -417,7 +417,24 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
           Object.entries(result.edge_bindings).forEach(([edgeID, bindings]) => {
             translatedResult.edge_bindings[edgeMapping[edgeID]] = bindings;
           });
-          combinedResponse.message.results.push(translatedResult);
+          const resultCreativeSubjectID = translatedResult.node_bindings[nodeMapping['creativeQuerySubject']]
+            .map((binding) => binding.id)
+            .join(',');
+          const resultCreativeObjectID = translatedResult.node_bindings[nodeMapping['creativeQueryObject']]
+            .map((binding) => binding.id)
+            .join(',');
+          const resultID = `${resultCreativeSubjectID}-${resultCreativeObjectID}`;
+          if (resultID in combinedResponse.message.results) {
+            Object.entries(translatedResult.node_bindings).forEach(([nodeID, bindings]) => {
+              combinedResponse.message.results[resultID].node_bindings[nodeID] = bindings;
+            });
+            Object.entries(translatedResult.node_bindings).forEach(([edgeID, bindings]) => {
+              combinedResponse.message.results[resultID].node_bindings[edgeID] = bindings;
+            });
+            combinedResponse.message.results[resultID].score += translatedResult.score;
+          } else {
+            combinedResponse.message.results[resultID] = translatedResult;
+          }
         });
         // fix/combine logs
         handler.logs.forEach((log) => {
@@ -440,11 +457,24 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         })
         const message = `ERROR: subQuery ${i} failed due to error ${error}`;
         debug(message);
-        this.logs.push(new LogEntry(`ERROR`, null, message).getLog());
+        combinedResponse.logs.push(new LogEntry(`ERROR`, null, message).getLog());
         return;
+      }
+
+      if (
+        process.env.CREATIVE_LIMIT &&
+        Object.keys(combinedResponse.message.results).length >= parseInt(process.env.CREATIVE_LIMIT)
+      ) {
+        stop = true;
+        const message = `Reached Inferred Mode max result count (${
+          Object.keys(combinedResponse.message.results).length
+        }/${process.env.CREATIVE_LIMIT}), skipping remaining ${subQueries.length - (i + 1)} templates`;
+        debug(message);
+        combinedResponse.logs.push(new LogEntry(`INFO`, null, message).getLog());
       }
     });
     combinedResponse.message.query_graph = this.queryGraph;
+    combinedResponse.message.results = Object.values(combinedResponse.message.results);
 
     this.getResponse = () => {
       return combinedResponse;
