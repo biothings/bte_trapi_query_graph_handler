@@ -12,7 +12,14 @@ exports.getTemplates = async (filterStrings) => {
   });
   matchingTemplates = await async.reduce(matchingTemplates, [], async (arr, groupDir) => {
     // get templates
-    const fnames = await fs.readdir(path.resolve(__dirname, `../data/templates/${groupDir}`));
+    let fnames = await fs.readdir(path.resolve(__dirname, `../data/templates/${groupDir}`));
+    fnames = fnames.sort((a, b) => {
+      let aNum = a.match(/^[0-9]+/g);
+      let bNum = a.match(/^[0-9]+/g);
+      aNum = aNum ? parseInt(aNum[0]) : Infinity;
+      bNum = bNum ? parseInt(bNum[0]) : Infinity;
+      return a - b ? a - b : 0;
+    });
     const templates = await async.mapSeries(fnames, async (fname) => {
       // read templates
       return JSON.parse(await fs.readFile(path.resolve(__dirname, `../data/templates/${groupDir}`, fname))).message
