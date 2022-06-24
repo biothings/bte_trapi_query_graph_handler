@@ -17,6 +17,7 @@ const fs = require('fs').promises;
 const { getTemplates } = require('./template_lookup');
 const utils = require('./utils');
 const async = require('async');
+const biolink = require('./biolink');
 
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 exports.redisClient = redisClient;
@@ -271,22 +272,40 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     const qSubject = this.queryGraph.nodes[qEdge.subject];
     const qObject = this.queryGraph.nodes[qEdge.object];
     debug('Looking up query Templates');
-    const searchStrings = qSubject.categories.reduce((arr, subCat) => {
+    const expandedSubject = qSubject.categories.reduce((arr, subjectCategory) => {
+      return utils.getUnique([
+        ...arr,
+        ...biolink.getDescendantClasses(utils.removeBioLinkPrefix(subjectCategory))
+      ])
+    }, []);
+    const expandedPredicates = qEdge.predicates.reduce((arr, predicate) => {
+      return utils.getUnique([
+        ...arr,
+        ...biolink.getDescendantPredicates(utils.removeBioLinkPrefix(predicate))
+      ])
+    }, []);
+    const expandedObject = qObject.categories.reduce((arr, objectCategory) => {
+      return utils.getUnique([
+        ...arr,
+        ...biolink.getDescendantClasses(utils.removeBioLinkPrefix(objectCategory))
+      ])
+    }, []);
+    const searchStrings = expandedSubject.reduce((arr, subjectCategory) => {
       let templates;
       if (usePredicate) {
-        templates = qObject.categories.reduce((arr2, objCat) => {
+        templates = expandedObject.reduce((arr2, objectCategory) => {
           return [
             ...arr2,
-            ...qEdge.predicates.map((predicate) => {
-              return `${utils.removeBioLinkPrefix(subCat)}-${utils.removeBioLinkPrefix(
+            ...expandedPredicates.map((predicate) => {
+              return `${utils.removeBioLinkPrefix(subjectCategory)}-${utils.removeBioLinkPrefix(
                 predicate,
-              )}-${utils.removeBioLinkPrefix(objCat)}`;
+              )}-${utils.removeBioLinkPrefix(objectCategory)}`;
             }),
           ];
         }, []);
       } else {
-        return qObject.categories.map((objCat) => {
-          return `${utils.removeBioLinkPrefixs(subCat)}-${utils.removeBioLinkPrefix(objCat)}`;
+        return expandedObject.map((objCat) => {
+          return `${utils.removeBioLinkPrefix(subjectCategory)}-${utils.removeBioLinkPrefix(objCat)}`;
         });
       }
       return [...arr, ...templates];
