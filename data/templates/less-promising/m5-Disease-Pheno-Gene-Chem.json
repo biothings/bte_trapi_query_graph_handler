@@ -21,12 +21,12 @@
                 "eA": {
                     "subject": "creativeQueryObject",
                     "object": "nA",
-                    "predicates": ["biolink:superclass_of"]
+                    "predicates": ["biolink:has_phenotype"]
                 },
                 "eB": {
                     "subject": "nA",
                     "object": "nB",
-                    "predicates": ["biolink:caused_by"]
+                    "predicates": ["biolink:entity_regulated_by_entity"]
                 },
                 "eC": {
                     "subject": "nB",
