@@ -17,10 +17,7 @@
                 "eA": {
                     "subject": "creativeQueryObject",
                     "object": "nA",
-                    "predicates": [
-                        "biolink:condition_associated_with_gene",
-                        "biolink:caused_by"
-                        ]
+                    "predicates": ["biolink:caused_by"]
                 },
                 "eB": {
                     "subject": "nA",
