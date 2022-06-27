@@ -378,6 +378,21 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       try {
         await handler.query();
         const response = handler.getResponse();
+
+        if ( // if query would add too many results, don't combine it
+          process.env.CREATIVE_LIMIT &&
+          Object.keys(response.message.results).length + Object.keys(combinedResponse.message.results) >
+            parseInt(process.env.CREATIVE_LIMIT) + 200 &&
+          i > 0
+        ) {
+          stop = true;
+          const message = `Reached Inferred Mode max result count (${
+            Object.keys(combinedResponse.message.results).length
+          }/${process.env.CREATIVE_LIMIT}), skipping remaining ${subQueries.length - (i + 1)} templates`;
+          debug(message);
+          combinedResponse.logs.push(new LogEntry(`INFO`, null, message).getLog());
+          return;
+        }
         // add non-duplicate nodes
         Object.entries(response.message.knowledge_graph.nodes).forEach(([curie, node]) => {
           if (!(curie in combinedResponse.message.knowledge_graph.nodes)) {
