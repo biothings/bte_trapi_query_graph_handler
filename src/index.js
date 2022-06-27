@@ -463,7 +463,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
           Object.entries(edgeMapping).forEach(([oldID, newID]) => {
             log.message = log.message.replace(oldID, newID);
           });
-          log.message = `[SubQuery-${i}]: ${log.message}`;
+          log.message = `[Template-${i}]: ${log.message}`;
 
           combinedResponse.logs.push(log);
         });
