@@ -526,7 +526,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     const results = response.message.results.length;
     const resultQueries = logs.filter(({ data }) => data?.type === 'query' && data?.hits).length;
     const queries = logs.filter(({ data }) => data?.type === 'query').length;
-    const sources = [...new Set(logs.filter(({ data }) => data?.type === 'query').map(({ data }) => data?.api_name))];
+    const sources = [...new Set(logs.filter(({ data }) => data?.type === 'query' && data?.hits > 0).map(({ data }) => data?.api_name))];
     let cached = logs.filter(({ data }) => data?.type === 'cacheHit').length;
     return [
       new LogEntry(
