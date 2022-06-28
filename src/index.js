@@ -240,10 +240,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   async _handleInferredEdges(usePredicate = true) {
     // TODO [POST-MVP] check for flipped predicate cases
     // i.e. Drug -treats-> Disease OR Disease -treated_by-> Drug
-    // TODO [POST MVP] possibly do biolink subclass expansion
-    // i.e. Drug -treats-> DiseaseOrPhenoTypicFeature
-    // also adds Drug -treats-> Disease & Drug -treats->PhenotypicFeature
-    let logMessage = 'Query proceeding in Inferred Mode';
+    let logMessage = 'Query proceeding in Inferred Mode.';
     debug(logMessage);
     this.logs.push(new LogEntry('INFO', null, logMessage).getLog());
 
@@ -252,7 +249,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     });
     if (nodeMissingCategory) {
       const message = 'All nodes in Inferred Mode edge must have categories. Your query terminates.';
-      this.logs.push(new LogEntry("ERROR", null, message).getLog());
+      this.logs.push(new LogEntry("WARNING", null, message).getLog());
       debug(message);
       return;
     }
@@ -262,10 +259,22 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     })
     if (nodeMissingID) {
       const message = 'At least one node in Inferred Mode edge must have at least 1 ID. Your query terminates.';
-      this.logs.push(new LogEntry("ERROR", null, message).getLog());
+      this.logs.push(new LogEntry("WARNING", null, message).getLog());
       debug(message);
       return;
     }
+
+    const tooManyIDs = 1 < Object.values(this.queryGraph.nodes).reduce((sum, node) => {
+      return typeof node.ids !== 'undefined' ? sum + node.ids.length : sum;
+    }, 0);
+    if (tooManyIDs) {
+      const message = 'Inferred Mode queries with multiple IDs are not supported. Your query terminates.';
+      this.logs.push(new LogEntry("WARNING", null, message).getLog());
+      debug(message);
+      return;
+    }
+
+    const CREATIVE_LIMIT = 1000;
 
     const qEdgeID = Object.keys(this.queryGraph.edges)[0];
     const qEdge = this.queryGraph.edges[qEdgeID];
@@ -312,9 +321,15 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     }, []);
     const templates = await getTemplates(searchStrings);
 
-    logMessage = `Got ${templates.length} inferred query templates`;
+    logMessage = `Got ${templates.length} inferred query templates.`;
     debug(logMessage);
     this.logs.push(new LogEntry('INFO', null, logMessage).getLog());
+
+    if (!templates.length) {
+      logMessage = `No Templates matched your inferred-mode query. Your query terminates.`;
+      debug(logMessage);
+      this.logs.push(new LogEntry('WARNING', null, logMessage).getLog());
+    }
 
     // combine creative query with templates
     const subQueries = templates.map((template) => {
@@ -380,15 +395,15 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         const response = handler.getResponse();
 
         if ( // if query would add too many results, don't combine it
-          process.env.CREATIVE_LIMIT &&
+          CREATIVE_LIMIT &&
           Object.keys(response.message.results).length + Object.keys(combinedResponse.message.results) >
-            parseInt(process.env.CREATIVE_LIMIT) + 200 &&
-          i > 0
+            parseInt(CREATIVE_LIMIT) + 500 &&
+          Object.keys(combinedResponse.message.results).length > 0
         ) {
           stop = true;
           const message = `Reached Inferred Mode max result count (${
             Object.keys(combinedResponse.message.results).length
-          }/${process.env.CREATIVE_LIMIT}), skipping remaining ${subQueries.length - (i + 1)} templates`;
+          }/${CREATIVE_LIMIT}), skipping remaining ${subQueries.length - (i + 1)} templates`;
           debug(message);
           combinedResponse.logs.push(new LogEntry(`INFO`, null, message).getLog());
           return;
@@ -496,13 +511,13 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       }
 
       if (
-        process.env.CREATIVE_LIMIT &&
-        Object.keys(combinedResponse.message.results).length >= parseInt(process.env.CREATIVE_LIMIT)
+        CREATIVE_LIMIT &&
+        Object.keys(combinedResponse.message.results).length >= parseInt(CREATIVE_LIMIT)
       ) {
         stop = true;
         const message = `Reached Inferred Mode max result count (${
           Object.keys(combinedResponse.message.results).length
-        }/${process.env.CREATIVE_LIMIT}), skipping remaining ${subQueries.length - (i + 1)} templates`;
+        }/${CREATIVE_LIMIT}), skipping remaining ${subQueries.length - (i + 1)} templates`;
         debug(message);
         combinedResponse.logs.push(new LogEntry(`INFO`, null, message).getLog());
       }
@@ -575,7 +590,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     } else if (this._queryUsesInferredMode && !this._queryIsOneHop) {
       const message = "Inferred Mode edges are only supported in single-edge queries. Your query terminates."
       debug(message);
-      this.logs.push(new LogEntry("ERROR", null, message));
+      this.logs.push(new LogEntry("WARNING", null, message));
       return;
     }
     if (!(await this._edgesSupported(queryExecutionEdges, metaKG))) {
