@@ -375,6 +375,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       edges: [qEdgeID],
     };
     // add/combine nodes
+    let resultQueries = [];
     let successfulQueries = 0;
     let stop = false;
     await async.eachOfSeries(subQueries, async (queryGraph, i) => {
@@ -493,8 +494,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
           combinedResponse.logs.push(log);
         });
         if (response.message.results.length) {
-          successfulQueries += 1;
+          resultQueries.push(i);
         }
+        successfulQueries += 1;
       } catch (error) {
         handler.logs.forEach((log) => {
           combinedResponse.logs.push(log);
@@ -520,21 +522,33 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     this.getResponse = () => {
       return combinedResponse;
     };
-    if (successfulQueries > 0) {
-      this.createSummaryLog(combinedResponse.logs).forEach((log) => combinedResponse.logs.push(log));
+    if (successfulQueries) {
+      this.createSummaryLog(combinedResponse.logs, resultQueries).forEach((log) => combinedResponse.logs.push(log));
     }
     combinedResponse.logs = combinedResponse.logs.map((log) => log.toJSON());
   }
 
-  createSummaryLog(logs) {
+  createSummaryLog(logs, resultTemplates = undefined) {
     const response = this.getResponse();
     const KGNodes = Object.keys(response.message.knowledge_graph.nodes).length;
     const kgEdges = Object.keys(response.message.knowledge_graph.edges).length;
     const results = response.message.results.length;
-    const resultQueries = logs.filter(({ data }) => data?.type === 'query' && data?.hits).length;
+    const resultQueries = logs.filter(({ message, data }) => {
+      const correctType = data?.type === 'query' && data?.hits;
+      if (resultTemplates) {
+        return correctType && resultTemplates.some((queryIndex) => message.includes(`[Template-${queryIndex}]`));
+      }
+      return correctType;
+    }).length;
     const queries = logs.filter(({ data }) => data?.type === 'query').length;
     const sources = [
-      ...new Set(logs.filter(({ data }) => data?.type === 'query' && data?.hits > 0).map(({ data }) => data?.api_name)),
+      ...new Set(logs.filter(({ message, data }) => {
+        const correctType = data?.type === 'query' && data?.hits;
+        if (resultTemplates) {
+          return correctType && resultTemplates.some((queryIndex) => message.includes(`[Template-${queryIndex}]`));
+        }
+        return correctType;
+      }).map(({ data }) => data?.api_name)),
     ];
     let cached = logs.filter(({ data }) => data?.type === 'cacheHit').length;
     return [
