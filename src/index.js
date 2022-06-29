@@ -249,27 +249,29 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     });
     if (nodeMissingCategory) {
       const message = 'All nodes in Inferred Mode edge must have categories. Your query terminates.';
-      this.logs.push(new LogEntry("WARNING", null, message).getLog());
+      this.logs.push(new LogEntry('WARNING', null, message).getLog());
       debug(message);
       return;
     }
 
     const nodeMissingID = !Object.values(this.queryGraph.nodes).some((node) => {
       return typeof node.ids !== 'undefined' && node.ids.length > 0;
-    })
+    });
     if (nodeMissingID) {
       const message = 'At least one node in Inferred Mode edge must have at least 1 ID. Your query terminates.';
-      this.logs.push(new LogEntry("WARNING", null, message).getLog());
+      this.logs.push(new LogEntry('WARNING', null, message).getLog());
       debug(message);
       return;
     }
 
-    const tooManyIDs = 1 < Object.values(this.queryGraph.nodes).reduce((sum, node) => {
-      return typeof node.ids !== 'undefined' ? sum + node.ids.length : sum;
-    }, 0);
+    const tooManyIDs =
+      1 <
+      Object.values(this.queryGraph.nodes).reduce((sum, node) => {
+        return typeof node.ids !== 'undefined' ? sum + node.ids.length : sum;
+      }, 0);
     if (tooManyIDs) {
       const message = 'Inferred Mode queries with multiple IDs are not supported. Your query terminates.';
-      this.logs.push(new LogEntry("WARNING", null, message).getLog());
+      this.logs.push(new LogEntry('WARNING', null, message).getLog());
       debug(message);
       return;
     }
@@ -282,22 +284,13 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     const qObject = this.queryGraph.nodes[qEdge.object];
     debug('Looking up query Templates');
     const expandedSubject = qSubject.categories.reduce((arr, subjectCategory) => {
-      return utils.getUnique([
-        ...arr,
-        ...biolink.getDescendantClasses(utils.removeBioLinkPrefix(subjectCategory))
-      ])
+      return utils.getUnique([...arr, ...biolink.getDescendantClasses(utils.removeBioLinkPrefix(subjectCategory))]);
     }, []);
     const expandedPredicates = qEdge.predicates.reduce((arr, predicate) => {
-      return utils.getUnique([
-        ...arr,
-        ...biolink.getDescendantPredicates(utils.removeBioLinkPrefix(predicate))
-      ])
+      return utils.getUnique([...arr, ...biolink.getDescendantPredicates(utils.removeBioLinkPrefix(predicate))]);
     }, []);
     const expandedObject = qObject.categories.reduce((arr, objectCategory) => {
-      return utils.getUnique([
-        ...arr,
-        ...biolink.getDescendantClasses(utils.removeBioLinkPrefix(objectCategory))
-      ])
+      return utils.getUnique([...arr, ...biolink.getDescendantClasses(utils.removeBioLinkPrefix(objectCategory))]);
     }, []);
     const searchStrings = expandedSubject.reduce((arr, subjectCategory) => {
       let templates;
@@ -394,16 +387,14 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         await handler.query();
         const response = handler.getResponse();
 
-        if ( // if query would add too many results, don't combine it
-          CREATIVE_LIMIT &&
-          Object.keys(response.message.results).length + Object.keys(combinedResponse.message.results) >
+        if (
+          // if query would add too many results, don't combine it
+          Object.keys(response.message.results).length + Object.keys(combinedResponse.message.results).length >
             parseInt(CREATIVE_LIMIT) + 500 &&
           Object.keys(combinedResponse.message.results).length > 0
         ) {
           stop = true;
-          const message = `Reached Inferred Mode max result count (${
-            Object.keys(combinedResponse.message.results).length
-          }/${CREATIVE_LIMIT}), skipping remaining ${subQueries.length - (i + 1)} templates`;
+          const message = `Template ${i} exceeds absolute maximum of ${CREATIVE_LIMIT + 500} (${Object.keys(response.message.results).length}). These results will not be included. Skipping remaining ${subQueries.length - (i + 1)} templates.`;
           debug(message);
           combinedResponse.logs.push(new LogEntry(`INFO`, null, message).getLog());
           return;
@@ -425,14 +416,12 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
           Object.keys(response.message.query_graph.nodes).map((nodeID) => {
             let newID = nodeID;
             if (['creativeQuerySubject', 'creativeQueryObject'].includes(nodeID)) {
-              newID === 'creativeQuerySubject' ? qEdge.subject : qEdge.object;
+              newID = nodeID === 'creativeQuerySubject' ? qEdge.subject : qEdge.object;
             } else {
               while (reservedIDs.nodes.includes(newID)) {
                 let number = newID.match(/[0-9]+$/);
                 let newNumber = number ? `0${parseInt(number[0]) + 1}` : '01';
-                newID = number
-                  ? newID.replace(number, newNumber)
-                  : `${newID}${newNumber}`;
+                newID = number ? newID.replace(number, newNumber) : `${newID}${newNumber}`;
               }
               reservedIDs.nodes.push(newID);
             }
@@ -445,9 +434,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
             while (reservedIDs.edges.includes(newID)) {
               let number = newID.match(/[0-9]+$/);
               let newNumber = number ? `0${parseInt(number[0]) + 1}` : '01';
-              newID = number
-                ? newID.replace(number, newNumber)
-                : `${newID}${newNumber}`;
+              newID = number ? newID.replace(number, newNumber) : `${newID}${newNumber}`;
             }
             reservedIDs.edges.push(newID);
             return [edgeID, newID];
@@ -458,7 +445,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
           const translatedResult = {
             node_bindings: {},
             edge_bindings: {},
-            score: 0,
+            score: result.score,
           };
           Object.entries(result.node_bindings).forEach(([nodeID, bindings]) => {
             translatedResult.node_bindings[nodeMapping[nodeID]] = bindings;
@@ -475,12 +462,20 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
           const resultID = `${resultCreativeSubjectID}-${resultCreativeObjectID}`;
           if (resultID in combinedResponse.message.results) {
             Object.entries(translatedResult.node_bindings).forEach(([nodeID, bindings]) => {
-              combinedResponse.message.results[resultID].node_bindings[nodeID] = bindings;
+              combinedResponse.message.results[resultID].node_bindings[nodeMapping[nodeID]] = bindings;
             });
-            Object.entries(translatedResult.node_bindings).forEach(([edgeID, bindings]) => {
-              combinedResponse.message.results[resultID].node_bindings[edgeID] = bindings;
+            Object.entries(translatedResult.edge_bindings).forEach(([edgeID, bindings]) => {
+              combinedResponse.message.results[resultID].edge_bindings[edgeMapping[edgeID]] = bindings;
             });
-            combinedResponse.message.results[resultID].score += translatedResult.score;
+
+            const resScore = translatedResult.score;
+            if (typeof combinedResponse.message.results[resultID].score !== 'undefined') {
+              combinedResponse.message.results[resultID].score = resScore
+                ? combinedResponse.message.results[resultID].score + resScore
+                : combinedResponse.message.results[resultID].score;
+            } else {
+              combinedResponse.message.results[resultID].score = resScore;
+            }
           } else {
             combinedResponse.message.results[resultID] = translatedResult;
           }
@@ -503,17 +498,14 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       } catch (error) {
         handler.logs.forEach((log) => {
           combinedResponse.logs.push(log);
-        })
+        });
         const message = `ERROR: subQuery ${i} failed due to error ${error}`;
         debug(message);
         combinedResponse.logs.push(new LogEntry(`ERROR`, null, message).getLog());
         return;
       }
 
-      if (
-        CREATIVE_LIMIT &&
-        Object.keys(combinedResponse.message.results).length >= parseInt(CREATIVE_LIMIT)
-      ) {
+      if (Object.keys(combinedResponse.message.results).length >= parseInt(CREATIVE_LIMIT)) {
         stop = true;
         const message = `Reached Inferred Mode max result count (${
           Object.keys(combinedResponse.message.results).length
@@ -541,7 +533,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     const results = response.message.results.length;
     const resultQueries = logs.filter(({ data }) => data?.type === 'query' && data?.hits).length;
     const queries = logs.filter(({ data }) => data?.type === 'query').length;
-    const sources = [...new Set(logs.filter(({ data }) => data?.type === 'query' && data?.hits > 0).map(({ data }) => data?.api_name))];
+    const sources = [
+      ...new Set(logs.filter(({ data }) => data?.type === 'query' && data?.hits > 0).map(({ data }) => data?.api_name)),
+    ];
     let cached = logs.filter(({ data }) => data?.type === 'cacheHit').length;
     return [
       new LogEntry(
@@ -588,9 +582,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       await this._handleInferredEdges();
       return;
     } else if (this._queryUsesInferredMode && !this._queryIsOneHop) {
-      const message = "Inferred Mode edges are only supported in single-edge queries. Your query terminates."
+      const message = 'Inferred Mode edges are only supported in single-edge queries. Your query terminates.';
       debug(message);
-      this.logs.push(new LogEntry("WARNING", null, message));
+      this.logs.push(new LogEntry('WARNING', null, message));
       return;
     }
     if (!(await this._edgesSupported(queryExecutionEdges, metaKG))) {
