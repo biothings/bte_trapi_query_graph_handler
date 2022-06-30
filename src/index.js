@@ -264,6 +264,14 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       return;
     }
 
+    const edgeMissingPredicate = typeof Object.values(this.queryGraph.edges)[0].predicates === 'undefined' || Object.values(this.queryGraph.edges)[0].predicates.length < 1;
+    if (edgeMissingPredicate) {
+      const message = 'Inferred Mode edge must specify a predicate. Your query terminates.';
+      this.logs.push(new LogEntry('WARNING', null, message).getLog());
+      debug(message);
+      return;
+    }
+
     const tooManyIDs =
       1 <
       Object.values(this.queryGraph.nodes).reduce((sum, node) => {
@@ -271,6 +279,16 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       }, 0);
     if (tooManyIDs) {
       const message = 'Inferred Mode queries with multiple IDs are not supported. Your query terminates.';
+      this.logs.push(new LogEntry('WARNING', null, message).getLog());
+      debug(message);
+      return;
+    }
+
+    const multiplePredicates = Object.values(this.queryGraph.edges).reduce((sum, edge) => {
+      return edge.predicates ? sum + edge.predicates.length : sum;
+    }, 0);
+    if (multiplePredicates) {
+      const message = 'Inferred Mode queries with multiple predicates are not supported. Your query terminates.';
       this.logs.push(new LogEntry('WARNING', null, message).getLog());
       debug(message);
       return;
@@ -463,10 +481,10 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
           const resultID = `${resultCreativeSubjectID}-${resultCreativeObjectID}`;
           if (resultID in combinedResponse.message.results) {
             Object.entries(translatedResult.node_bindings).forEach(([nodeID, bindings]) => {
-              combinedResponse.message.results[resultID].node_bindings[nodeMapping[nodeID]] = bindings;
+              combinedResponse.message.results[resultID].node_bindings[nodeID] = bindings;
             });
             Object.entries(translatedResult.edge_bindings).forEach(([edgeID, bindings]) => {
-              combinedResponse.message.results[resultID].edge_bindings[edgeMapping[edgeID]] = bindings;
+              combinedResponse.message.results[resultID].edge_bindings[edgeID] = bindings;
             });
 
             const resScore = translatedResult.score;
@@ -517,7 +535,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       }
     });
     combinedResponse.message.query_graph = this.queryGraph;
-    combinedResponse.message.results = Object.values(combinedResponse.message.results);
+    combinedResponse.message.results = Object.values(combinedResponse.message.results).sort((a, b) => {
+      return b.score - a.score ? b.score - a.score : 0;
+    });
 
     this.getResponse = () => {
       return combinedResponse;
@@ -595,7 +615,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     if (this._queryUsesInferredMode() && this._queryIsOneHop()) {
       await this._handleInferredEdges();
       return;
-    } else if (this._queryUsesInferredMode && !this._queryIsOneHop) {
+    } else if (this._queryUsesInferredMode() && !this._queryIsOneHop()) {
       const message = 'Inferred Mode edges are only supported in single-edge queries. Your query terminates.';
       debug(message);
       this.logs.push(new LogEntry('WARNING', null, message));
