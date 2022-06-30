@@ -286,7 +286,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
 
     const multiplePredicates = Object.values(this.queryGraph.edges).reduce((sum, edge) => {
       return edge.predicates ? sum + edge.predicates.length : sum;
-    }, 0);
+    }, 0) > 1;
     if (multiplePredicates) {
       const message = 'Inferred Mode queries with multiple predicates are not supported. Your query terminates.';
       this.logs.push(new LogEntry('WARNING', null, message).getLog());
