@@ -619,7 +619,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     } else if (this._queryUsesInferredMode() && !this._queryIsOneHop()) {
       const message = 'Inferred Mode edges are only supported in single-edge queries. Your query terminates.';
       debug(message);
-      this.logs.push(new LogEntry('WARNING', null, message));
+      this.logs.push(new LogEntry('WARNING', null, message).getLog());
       return;
     }
     if (!(await this._edgesSupported(queryExecutionEdges, metaKG))) {
