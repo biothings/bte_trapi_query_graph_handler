@@ -1,0 +1,16 @@
+[
+  {
+    "name": "Drug treats Disease",
+    "subject": ["Drug", "ChemicalSubstance"],
+    "predicate": ["treats", "ameliorates", "prevents", "affects"],
+    "object": ["Disease"],
+    "templates": ["Disease-subclassDoP-Chem.json", "m1-Disease-Pheno-Chem.json", "m4-Disease-Gene-Chem.json", "m7-Disease-subclassDoP-Pheno-Chem.json"]
+  },
+  {
+    "name": "Drug treats PhenotypicFeature",
+    "subject": ["Drug", "ChemicalSubstance"],
+    "predicate": ["treats", "ameliorates", "prevents", "affects"],
+    "object": ["PhenotypicFeature"],
+    "templates": ["Pheno-subclassDoP-Chem.json", "probably-wont-find-anything-m1-Pheno-Pheno-Chem.json", "m4-Pheno-Gene-Chem.json", "m7-Pheno-subclassDoP-Pheno-Chem.json"]
+  }
+]

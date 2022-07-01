@@ -310,27 +310,25 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     const expandedObject = qObject.categories.reduce((arr, objectCategory) => {
       return utils.getUnique([...arr, ...biolink.getDescendantClasses(utils.removeBioLinkPrefix(objectCategory))]);
     }, []);
-    const searchStrings = expandedSubject.reduce((arr, subjectCategory) => {
-      let templates;
-      if (usePredicate) {
-        templates = expandedObject.reduce((arr2, objectCategory) => {
-          return [
-            ...arr2,
-            ...expandedPredicates.map((predicate) => {
-              return `${utils.removeBioLinkPrefix(subjectCategory)}-${utils.removeBioLinkPrefix(
-                predicate,
-              )}-${utils.removeBioLinkPrefix(objectCategory)}`;
-            }),
-          ];
-        }, []);
-      } else {
-        return expandedObject.map((objCat) => {
-          return `${utils.removeBioLinkPrefix(subjectCategory)}-${utils.removeBioLinkPrefix(objCat)}`;
-        });
-      }
+    const lookupObjects = expandedSubject.reduce((arr, subjectCategory) => {
+      let templates = expandedObject.reduce((arr2, objectCategory) => {
+        return [
+          ...arr2,
+          ...expandedPredicates.map((predicate) => {
+            return {
+              subject: utils.removeBioLinkPrefix(subjectCategory),
+              object: utils.removeBioLinkPrefix(objectCategory),
+              predicate: utils.removeBioLinkPrefix(predicate),
+            }
+            // return `${utils.removeBioLinkPrefix(subjectCategory)}-${utils.removeBioLinkPrefix(
+            //   predicate,
+            // )}-${utils.removeBioLinkPrefix(objectCategory)}`;
+          }),
+        ];
+      }, []);
       return [...arr, ...templates];
     }, []);
-    const templates = await getTemplates(searchStrings);
+    const templates = await getTemplates(lookupObjects);
 
     logMessage = `Got ${templates.length} inferred query templates.`;
     debug(logMessage);
