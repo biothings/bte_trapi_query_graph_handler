@@ -32,7 +32,7 @@ exports.getTemplates = async (lookups) => {
 
       if (lookupMatch) {
         group.templates.forEach((template) => {
-          if (matches.includes(templatePaths[template])) {
+          if (!matches.includes(templatePaths[template])) {
             matches.push(templatePaths[template])
           }
         });
