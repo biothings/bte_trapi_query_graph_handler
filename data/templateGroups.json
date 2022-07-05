@@ -1,9 +1,9 @@
 [
   {
     "name": "Drug treats Disease",
-    "subject": ["Drug", "SmallMolecule", "biolink:ChemicalEntity"],
-    "predicate": ["biolink:treats", "ameliorates"],
-    "object": ["biolink:Disease", "PhenotypicFeature"],
+    "subject": ["Drug", "SmallMolecule", "ChemicalEntity"],
+    "predicate": ["treats", "ameliorates"],
+    "object": ["Disease", "PhenotypicFeature"],
     "templates": [
       "DoP-subclassDoP-Chem.json",
       "m1-DoP-hasPheno-Chem.json",
