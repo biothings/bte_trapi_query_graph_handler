@@ -1,14 +1,14 @@
 [
   {
     "name": "Drug treats Disease",
-    "subject": ["Drug", "SmallMolecule"],
-    "predicate": ["treats", "ameliorates", "prevents", "affects"],
-    "object": ["Disease", "PhenotypicFeature"],
+    "subject": ["Drug", "SmallMolecule", "biolink:ChemicalEntity"],
+    "predicate": ["biolink:treats", "ameliorates"],
+    "object": ["biolink:Disease", "PhenotypicFeature"],
     "templates": [
-      "Disease-subclassDoP-Chem.json",
-      "m1-Disease-Pheno-Chem.json",
-      "m4-Disease-Gene-Chem.json",
-      "m7-Disease-subclassDoP-Pheno-Chem.json"
+      "DoP-subclassDoP-Chem.json",
+      "m1-DoP-hasPheno-Chem.json",
+      "m4-DoP-causedByGene-Chem.json",
+      "m7-DoP-subclassDoP-hasPheno-Chem.json"
     ]
   }
 ]

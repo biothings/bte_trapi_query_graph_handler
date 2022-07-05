@@ -3,14 +3,10 @@
         "query_graph": {
             "nodes": {
                 "creativeQueryObject": {
-                    "categories":["biolink:Disease"]
+                    "categories":["biolink:DiseaseOrPhenotypicFeature"]
                },
                 "nA": {
                     "categories":["biolink:DiseaseOrPhenotypicFeature"],
-                    "is_set": true
-                },
-                "nB": {
-                    "categories":["biolink:PhenotypicFeature"],
                     "is_set": true
                 },
                 "creativeQuerySubject": {
@@ -25,11 +21,6 @@
                 },
                 "eB": {
                     "subject": "nA",
-                    "object": "nB",
-                    "predicates": ["biolink:has_phenotype"]
-                },
-                "eC": {
-                    "subject": "nB",
                     "object": "creativeQuerySubject",
                     "predicates": ["biolink:treated_by"]
                 }

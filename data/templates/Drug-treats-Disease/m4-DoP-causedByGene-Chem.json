@@ -3,7 +3,7 @@
         "query_graph": {
             "nodes": {
                 "creativeQueryObject": {
-                    "categories":["biolink:Disease"]
+                    "categories":["biolink:DiseaseOrPhenotypicFeature"]
                },
                 "nA": {
                     "categories":["biolink:Gene"],
