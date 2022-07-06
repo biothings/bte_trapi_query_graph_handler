@@ -1,7 +1,7 @@
 [
   {
     "name": "Drug treats Disease",
-    "subject": ["Drug", "SmallMolecule", "ChemicalEntity"],
+    "subject": ["Drug", "SmallMolecule"],
     "predicate": ["treats", "ameliorates"],
     "object": ["Disease", "PhenotypicFeature"],
     "templates": [
