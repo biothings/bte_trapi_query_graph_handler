@@ -31,26 +31,27 @@ module.exports = class KnowledgeGraph {
           attribute_type_id: 'biolink:synonym',
           value: kgNode._names,
         },
-        {
-          attribute_type_id: 'num_source_nodes',
-          value: kgNode._sourceNodes.size,
-          //value_type_id: 'bts:num_source_nodes',
-        },
-        {
-          attribute_type_id: 'num_target_nodes',
-          value: kgNode._targetNodes.size,
-          //value_type_id: 'bts:num_target_nodes',
-        },
-        {
-          attribute_type_id: 'source_qg_nodes',
-          value: Array.from(kgNode._sourceQNodeIDs),
-          //value_type_id: 'bts:source_qg_nodes',
-        },
-        {
-          attribute_type_id: 'target_qg_nodes',
-          value: Array.from(kgNode._targetQNodeIDs),
-          //value_type_id: 'bts:target_qg_nodes',
-        },
+        // Currently unused
+        // {
+        //   attribute_type_id: 'num_source_nodes',
+        //   value: kgNode._sourceNodes.size,
+        //   //value_type_id: 'bts:num_source_nodes',
+        // },
+        // {
+        //   attribute_type_id: 'num_target_nodes',
+        //   value: kgNode._targetNodes.size,
+        //   //value_type_id: 'bts:num_target_nodes',
+        // },
+        // {
+        //   attribute_type_id: 'source_qg_nodes',
+        //   value: Array.from(kgNode._sourceQNodeIDs),
+        //   //value_type_id: 'bts:source_qg_nodes',
+        // },
+        // {
+        //   attribute_type_id: 'target_qg_nodes',
+        //   value: Array.from(kgNode._targetQNodeIDs),
+        //   //value_type_id: 'bts:target_qg_nodes',
+        // },
       ],
     };
     for (const key in kgNode._nodeAttributes) {
