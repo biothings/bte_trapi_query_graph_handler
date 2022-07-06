@@ -33,9 +33,20 @@ jobs:
     needs: test-coverage
     runs-on: ubuntu-latest
     steps:
+    - name: Determine Git SHA values
+      id: set_git_sha
+      uses: ZenHubHQ/best-git-sha-action@v1.3
+      with:
+        github_event_pull_request_head_sha: ${{ github.event.pull_request.head.sha }}
+        github_sha: ${{ github.sha }}
+        github_event_number: ${{ github.event.number }}
+        github_head_ref: ${{ github.head_ref }}
+        github_ref: ${{ github.ref }}
     - name: Coveralls Finished
       uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.github_token }}
+        git-commit: ${{ steps.set_git_sha.outputs.sha }}
+        git-branch: ${{ steps.set_git_sha.outputs.currentBranch }}
         base-path: packages/@biothings-explorer/query_graph_handler
         parallel-finished: true
