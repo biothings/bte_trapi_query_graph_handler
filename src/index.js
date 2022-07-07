@@ -14,7 +14,7 @@ const LogEntry = require('./log_entry');
 const { redisClient } = require('./redis-client');
 const config = require('./config');
 const fs = require('fs').promises;
-const { getTemplates } = require('./template_lookup');
+const { getTemplates, supportedLookups } = require('./template_lookup');
 const utils = require('./utils');
 const async = require('async');
 const biolink = require('./biolink');
@@ -22,6 +22,8 @@ const biolink = require('./biolink');
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 exports.redisClient = redisClient;
 exports.LogEntry = LogEntry;
+exports.getTemplates = getTemplates;
+exports.supportedLookups = supportedLookups;
 
 exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   constructor(options = {}, smartAPIPath = undefined, predicatesPath = undefined, includeReasoner = true) {
