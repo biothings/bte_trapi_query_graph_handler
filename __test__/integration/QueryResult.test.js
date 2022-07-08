@@ -1,7 +1,7 @@
 const { cloneDeep, range } = require('lodash');
 const QNode = require('../../src/query_node');
 const QEdge = require('../../src/query_edge');
-const QueryResult = require('../../src/query_results');
+const QueryResult = require('../../src/results_assembly/query_results');
 const { Record } = require('@biothings-explorer/api-response-transform');
 const config = require('../../src/config.js');
 

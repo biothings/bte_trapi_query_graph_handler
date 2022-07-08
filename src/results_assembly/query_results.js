@@ -1,8 +1,10 @@
 const { cloneDeep, keys, spread, toPairs, values, zip } = require('lodash');
 const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
-const LogEntry = require('./log_entry');
+const LogEntry = require('../log_entry');
 const { getScores, calculateScore } = require('./score');
 const { Record } = require('@biothings-explorer/api-response-transform');
+const { getPfocr } = require('./pfocr');
+
 
 /**
  * @type { Record }
