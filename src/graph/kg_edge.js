@@ -62,7 +62,12 @@ module.exports = class KGEdge {
   addAdditionalAttributes(name, value) {
     if (!(name in this.attributes)) {
       this.attributes[name] = new Set();
-    } 
-    this.attributes[name].add(value)
+    }
+    if (!Array.isArray(value)) {
+      value = [value];
+    }
+    value.map((item) => {
+      this.attributes[name].add(item)
+    })
   }
 };
