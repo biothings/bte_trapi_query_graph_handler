@@ -207,7 +207,13 @@ module.exports = class QueryGraphHandler {
           debug(`Creating node...`);
           nodes[qNodeID] = new QNode(qNodeID, this.queryGraph.nodes[qNodeID]);
         }
-
+        
+        if (nodes[qNodeID].category !== undefined) {
+          if (nodes[qNodeID].category.includes('biolink:Disease') || nodes[qNodeID].category.includes('biolink:PhenotypicFeature')) {
+            nodes[qNodeID].category = nodes[qNodeID].category.filter(e => e !== 'biolink:Disease' && e !== 'biolink:PhenotypicFeature')
+            nodes[qNodeID].category.push('biolink:DiseaseOrPhenotypicFeature')
+          }
+        }
       }
       this.logs.push(
         new LogEntry('DEBUG', null, `BTE identified ${Object.keys(nodes).length} qNodes from your query graph`).getLog(),
