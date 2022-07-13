@@ -213,6 +213,9 @@ module.exports = class QueryGraphHandler {
             nodes[qNodeID].category = nodes[qNodeID].category.filter(e => e !== 'biolink:Disease' && e !== 'biolink:PhenotypicFeature')
             nodes[qNodeID].category.push('biolink:DiseaseOrPhenotypicFeature')
           }
+          if (nodes[qNodeID].category.includes('biolink:Protein') && !nodes[qNodeID].category.includes('biolink:Gene')) {
+            nodes[qNodeID].category.push('biolink:Gene');
+          }
         }
       }
       this.logs.push(
