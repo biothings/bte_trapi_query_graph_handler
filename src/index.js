@@ -59,20 +59,6 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
    * @param {object} queryGraph - TRAPI Query Graph Object
    */
   setQueryGraph(queryGraph) {
-    for (const nodeId in queryGraph.nodes) {
-      if (Object.hasOwnProperty.call(queryGraph.nodes, nodeId)) {
-        const currentNode = queryGraph.nodes[nodeId];
-        if (Object.hasOwnProperty.call(currentNode, 'categories')) {
-          if (
-            currentNode['categories'].includes('biolink:Protein') &&
-            !currentNode['categories'].includes('biolink:Gene')
-          ) {
-            debug(`(0) Adding "Gene" category to "Protein" node.`);
-            currentNode['categories'].push('biolink:Gene');
-          }
-        }
-      }
-    }
     this.queryGraph = queryGraph;
   }
 
