@@ -32,7 +32,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       typeof this.options.enableIDResolution === 'undefined' ? true : this.options.enableIDResolution;
     this.path = smartAPIPath || path.resolve(__dirname, './smartapi_specs.json');
     this.predicatePath = predicatesPath || path.resolve(__dirname, './predicates.json');
-    this.findUnregisteredApi();
+    this.options.apiList && this.findUnregisteredApi();
   }
 
   findUnregisteredApi() {
@@ -45,7 +45,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       if(smartapiIds.includes(configListApi['id']) == false) {
         debug(`${configListApi['name']} not found in smartapi registry`);
       }
-    })
+    });
   }
 
   _loadMetaKG() {
