@@ -3064,6 +3064,70 @@ describe('Testing QueryResults Module', () => {
     ////        expect(results[0]).toHaveProperty('score');
     ////      });
     //    });
+    test('Records with different predicates should not be merged', async () => {
+      const record1 = new Record({
+        "subject": {
+          "original":"NCBIGene:3265",
+          "qNodeID":"n1",
+          "isSet":false,
+          "curie":"NCBIGene:3265",
+          "UMLS":["C0079471","C1569842"],
+          "semanticType":"Gene",
+          "label":"HRAS",
+          "attributes":{}
+        },
+        "object": {
+          "original":"BIOPLANET:bioplanet_1498",
+          "qNodeID":"n0",
+          "isSet":false,
+          "curie":"BIOPLANET:bioplanet_1498",
+          "semanticType":"Pathway",
+          "label":"BIOPLANET:bioplanet_1498",
+          "attributes":{}
+        },
+        "predicate":"biolink:actively_involved_in",
+        "mappedResponse":{
+          "pathway_name":"Cell surface interactions at the vascular wall",
+          "pathway_categories": ["Cardiovascular disease","Circulatory system","Hemostasis","Immune disease","Immune system","Infectious disease"],
+          "gene_symbol":"HRAS"
+        }
+      });
+      const record2 = new Record({
+        "subject": {
+          "original":"NCBIGene:3265",
+          "qNodeID":"n1",
+          "isSet":false,
+          "curie":"NCBIGene:3265",
+          "UMLS":["C0079471","C1569842"],
+          "semanticType":"Gene",
+          "label":"HRAS",
+          "attributes":{}
+        },
+        "object": {
+          "original":"BIOPLANET:bioplanet_1498",
+          "qNodeID":"n0",
+          "isSet":false,
+          "curie":"BIOPLANET:bioplanet_1498",
+          "semanticType":"Pathway",
+          "label":"BIOPLANET:bioplanet_1498",
+          "attributes":{}
+        },
+        "predicate":"biolink:related_to",
+        "mappedResponse":{
+          "pathway_name":"Cell surface interactions at the vascular wall",
+          "pathway_categories": ["Cardiovascular disease","Circulatory system","Hemostasis","Immune disease","Immune system","Infectious disease"],
+          "gene_symbol":"HRAS"
+        }
+      });
+      const queryResult = new QueryResult();
+      await queryResult.update({
+        e01: {
+          connected_to: [],
+          records: [record1, record2],
+        },
+      });
+      expect(queryResult.getResults()[0].edge_bindings.e01.length).toEqual(2);
+    })
   });
 
   describe('Graph structure', () => {
