@@ -617,6 +617,12 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       );
     }
     let queryExecutionEdges = await this._processQueryGraph(this.queryGraph);
+    if ((this.options.smartAPIID || this.options.teamName) && Object.values(this.queryGraph.edges).length > 1) {
+      const message = 'smartAPI/team-specific endpoints only support single-edge queries. Your query terminates.';
+      this.logs.push(new LogEntry('WARNING', null, message).getLog());
+      debug(message);
+      return;
+    }
     debug(`(3) All edges created ${JSON.stringify(queryExecutionEdges)}`);
     if (this._queryUsesInferredMode() && this._queryIsOneHop()) {
       await this._handleInferredEdges();
