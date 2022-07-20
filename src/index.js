@@ -35,14 +35,14 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     this.options.apiList && this.findUnregisteredApi();
   }
 
-  findUnregisteredApi() {
+  async findUnregisteredApi() {
     const configListApis = this.options.apiList['include']
-    const smartapiRegistry = require('./smartapi_specs.json')['hits']
+    const smartapiRegistry = await fs.readFile(this.path)
     const smartapiIds = []
 
-    smartapiRegistry.forEach(smartapiRegistration => smartapiIds.push(smartapiRegistration['_id']));
+    JSON.parse(smartapiRegistry)['hits'].forEach(smartapiRegistration => smartapiIds.push(smartapiRegistration['_id']));
     configListApis.forEach(configListApi => {
-      if(smartapiIds.includes(configListApi['id']) == false) {
+      if(smartapiIds.includes(configListApi['id']) === false) {
         debug(`${configListApi['name']} not found in smartapi registry`);
       }
     });
