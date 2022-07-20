@@ -294,6 +294,13 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       return;
     }
 
+    if (this.options.smartAPIID || this.options.teamName) {
+      const message = 'Inferred Mode on smartapi/team-specific endpoints not supported. Your query terminates.';
+      this.logs.push(new LogEntry('WARNING', null, message).getLog());
+      debug(message);
+      return;
+    }
+
     const CREATIVE_LIMIT = 1000;
 
     const qEdgeID = Object.keys(this.queryGraph.edges)[0];
@@ -584,7 +591,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   async query() {
     this._initializeResponse();
     debug('Start to load metakg.');
-    const metaKG = this._loadMetaKG(this.smartapiID, this.team);
+    const metaKG = this._loadMetaKG();
     if (!metaKG.ops.length) {
       let error;
       if (this.options.smartAPIID) {
