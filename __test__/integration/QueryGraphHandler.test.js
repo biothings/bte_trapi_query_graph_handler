@@ -1,6 +1,7 @@
 const QueryGraphHandler = require("../../src/query_graph");
 const QNode2 = require("../../src/query_node");
 const QEdge = require("../../src/query_edge");
+const InvalidQueryGraphError = require("../../src/exceptions/invalid_query_graph_error");
 
 describe("Testing QueryGraphHandler Module", () => {
     const disease_entity_node = {
@@ -87,6 +88,70 @@ describe("Testing QueryGraphHandler Module", () => {
         }
     };
 
+    const QueryWithCycle1 = {
+        nodes: {
+            n0: disease_entity_node,
+            n1: gene_class_node,
+            n2: chemical_class_node,
+            n3: phenotype_class_node,
+            n4: pathway_class_node,
+        },
+        edges: {
+            e01: {
+                subject: "n0",
+                object: "n1"
+            },
+            e02: {
+                subject: "n1",
+                object: "n2"
+            },
+            e03: {
+                subject: "n2",
+                object: "n3"
+            },
+            e04: {
+                subject: "n3",
+                object: "n4"
+            },
+            e05: {
+              subject: "n4",
+              object: "n1"
+            },
+        }
+    };
+
+    const QueryWithCycle2 = {
+        nodes: {
+            n0: disease_entity_node,
+            n1: gene_class_node,
+            n2: chemical_class_node,
+            n3: phenotype_class_node,
+            n4: pathway_class_node,
+        },
+        edges: {
+            e01: {
+                subject: "n0",
+                object: "n1"
+            },
+            e02: {
+                subject: "n1",
+                object: "n2"
+            },
+            e03: {
+                subject: "n2",
+                object: "n3"
+            },
+            e04: {
+                subject: "n3",
+                object: "n4"
+            },
+            e05: {
+              subject: "n4",
+              object: "n1"
+            },
+        }
+    };
+
     describe("test _storeNodes function", () => {
 
         test("test if storeNodes with one hop query", async () => {
@@ -138,4 +203,14 @@ describe("Testing QueryGraphHandler Module", () => {
             expect(edges[2]).toHaveLength(1);
         });
     });
+    describe("test cycle detection for query graphs", () => {
+      test("Query Graph Cycle #1", async () => {
+        const handler = new QueryGraphHandler(QueryWithCycle1)
+        expect(handler.calculateEdges()).rejects.toThrow(InvalidQueryGraphError)
+      })
+      test("Query Graph Cycle #2", async () => {
+        const handler = new QueryGraphHandler(QueryWithCycle2)
+        expect(handler.calculateEdges()).rejects.toThrow(InvalidQueryGraphError)
+      })
+    })
 });
