@@ -1,5 +1,4 @@
 const axios = require('axios');
-const { toPairs } = require('lodash');
 const debug = require('debug')('bte:biothings-explorer-trapi:pfocr');
 const { intersection } = require('../utils');
 
@@ -7,10 +6,11 @@ const { intersection } = require('../utils');
 // the minimum acceptable intersection size between the CURIEs
 // in a TRAPI result and in a PFOCR figure.
 const MATCH_COUNT_MIN = 2;
+const FIGURE_COUNT_MAX = 20;
 
 /* Get all results by using a scrolling query
  * https://docs.mygene.info/en/latest/doc/query_service.html#scrolling-queries
- * The initial queryString must include "fetch_all=TRUE". Any subsequent
+ * The initial queryString must include 'fetch_all=TRUE'. Any subsequent
  * scrolling requests will include the scroll_id in the queryString.
  */
 async function getAllByScrolling(baseUrl, queryString, batchIndex, hits=[]) {
@@ -90,24 +90,29 @@ async function getPfocrFigures(qTerms) {
 }
 
 function getMatchableQNodeIDs(allTrapiResults) {
-  let matchableQNodeIDs = [];
-  if (allTrapiResults.length > 0) {
-    // TODO: this will need to be updated to handle non-NCBIGene CURIEs as well
-    // as non-gene CURIEs once we support querying for chemicals and diseases.
+  const matchableQNodeIDs = new Set();
 
-    // We're just looking at the first node binding for each query node to see
-    // whether it has a CURIE that start with 'NCBIGene:'
-    matchableQNodeIDs = toPairs(allTrapiResults[0].node_bindings)
-      .filter(([qNodeID, nodeBindingValues]) => {
-        const matchableDatasourceCount = nodeBindingValues
-          .filter(nodeBindingValue => nodeBindingValue.id.startsWith('NCBIGene:'))
-          .length;
-
-        return matchableDatasourceCount > 0;
-      })
-      .map(([qNodeID, curies]) => qNodeID);
+  if (allTrapiResults.length === 0) {
+    return matchableQNodeIDs;
   }
-  debug(`QNode(s) with CURIEs PFOCR could potentially match: ${matchableQNodeIDs}`)
+
+  // TODO: this will need to be updated to handle non-NCBIGene CURIEs as well
+  // as non-gene CURIEs once we support querying for chemicals and diseases.
+
+  const supportedPrefixes = new Set(['NCBIGene']);
+  for (const trapiResult of allTrapiResults) {
+    for (const [qNodeID, nodeBindingValues] of Object.entries(trapiResult.node_bindings)) {
+      for (const nodeBindingValue of nodeBindingValues) {
+        const prefix = nodeBindingValue.id.split(':')[0];
+        if (supportedPrefixes.has(prefix)) {
+          matchableQNodeIDs.add(qNodeID);
+          break;
+        }
+      }
+    }
+  }
+
+  debug(`QNode(s) having CURIEs that PFOCR could potentially match: ${Array.from(matchableQNodeIDs)}`)
   return matchableQNodeIDs;
 }
 
@@ -119,7 +124,7 @@ function getMatchableQNodeIDs(allTrapiResults) {
 async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
   const matchableQNodeIDs = getMatchableQNodeIDs(allTrapiResults);
 
-  if (matchableQNodeIDs.length < MATCH_COUNT_MIN) {
+  if (matchableQNodeIDs.size < MATCH_COUNT_MIN) {
     // No TRAPI result can satisfy MATCH_COUNT_MIN
     return;
   }
@@ -190,7 +195,8 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
 
     for (const figure of figures) {
       const figureCurieSet = figureToCuries.get(figure);
-      if (intersection(trapiResultCurieSet, figureCurieSet).size < MATCH_COUNT_MIN) {
+      const commonCuries = intersection(trapiResultCurieSet, figureCurieSet);
+      if (commonCuries.size < MATCH_COUNT_MIN) {
         continue;
       }
 
@@ -198,7 +204,14 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
         trapiResult.pfocr = [];
       }
 
-      const matchedQNodes = matchableQNodeIDs.filter(matchableQNodeID => {
+      // TODO: use a smarter way of picking the top 20.
+      // Right now it's just the first 20.
+      if (trapiResult.pfocr.length > FIGURE_COUNT_MAX) {
+        debug(`Truncating PFOCR figures at ${FIGURE_COUNT_MAX} for TRAPI result w/ ${Array.from(commonCuries)}`)
+        break;
+      }
+
+      const matchedQNodes = Array.from(matchableQNodeIDs).filter(matchableQNodeID => {
         const currentQNodeCurieSet = new Set(
           trapiResult.node_bindings[matchableQNodeID]
           .map(node_binding => node_binding.id)
@@ -228,7 +241,7 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
   );
   // Each of the matched TRAPI results has at least one figure with an overlap of 2+ genes
   debug(
-    `${matchedTrapiResults.size} TRAPI results match ${MATCH_COUNT_MIN}+ genes in individual PFOCR figures(s)`
+    `${matchedTrapiResults.size} TRAPI results match ${MATCH_COUNT_MIN}+ genes in individual PFOCR figure(s)`
   );
 }
 
