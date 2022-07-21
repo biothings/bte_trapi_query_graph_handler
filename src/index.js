@@ -18,6 +18,7 @@ const { getTemplates } = require('./template_lookup');
 const utils = require('./utils');
 const async = require('async');
 const biolink = require('./biolink');
+const { getDescendants } = require('@biothings-explorer/node-expansion');
 
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 exports.redisClient = redisClient;
@@ -71,6 +72,13 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
             currentNode['categories'].push('biolink:Gene');
           }
         }
+      }
+      // perform node expansion
+      if (queryGraph.nodes[nodeId].ids) {
+        let expanded = Object.values(getDescendants(queryGraph.nodes[nodeId].ids)).flat();
+        expanded = _.uniq([...queryGraph.nodes[nodeId].ids, ...expanded]);
+        debug(`Expanded ids for node ${nodeId}: (${queryGraph.nodes[nodeId].ids.length} ids -> ${expanded.length} ids)`);
+        queryGraph.nodes[nodeId].ids = expanded;
       }
     }
     this.queryGraph = queryGraph;
