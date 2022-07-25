@@ -196,8 +196,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   }
 
   async _logSkippedQueries(unavailableAPIs) {
-    Object.entries(unavailableAPIs).forEach(([api, skippedQueries]) => {
-      skippedQueries -= 1; // first failed is not 'skipped'
+    Object.entries(unavailableAPIs).forEach(([api, { skippedQueries }]) => {
       if (skippedQueries > 0) {
         const skipMessage = `${skippedQueries} additional quer${skippedQueries > 1 ? 'ies' : 'y'} to ${api} ${
           skippedQueries > 1 ? 'were' : 'was'
