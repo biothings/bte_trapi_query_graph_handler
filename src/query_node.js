@@ -26,7 +26,7 @@ module.exports = class QNode {
         this.held_curie = [];
         this.held_expanded = {};
         //node constraints
-        this.attribute_constraints = info.attribute_constraints;
+        this.constraints = info.constraints;
         //list of edge ids that are connected to this node
         this.connected_to = new Set();
         //object-ify array of initial curies
@@ -41,8 +41,8 @@ module.exports = class QNode {
 
     validateConstraints() {
         const required = ['id', 'operator', 'value'];
-        if (this.attribute_constraints && this.attribute_constraints.length) {
-            this.attribute_constraints.forEach((constraint) => {
+        if (this.constraints && this.constraints.length) {
+            this.constraints.forEach((constraint) => {
                 let constraint_keys = Object.keys(constraint);
                 if (_.intersection(constraint_keys, required).length < 3) {
                     throw new InvalidQueryGraphError(

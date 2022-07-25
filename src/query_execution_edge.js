@@ -241,7 +241,7 @@ module.exports = class QueryExecutionEdge {
     debug(`(6) Applying Node Constraints to ${this.records.length} records.`);
     let kept = [];
     let save_kept = false;
-    let sub_constraints = this.subject.attribute_constraints;
+    let sub_constraints = this.subject.constraints;
     if (sub_constraints && sub_constraints.length) {
       let from = this.reverse ? 'object' : 'subject';
       debug(`Node (subject) constraints: ${JSON.stringify(sub_constraints)}`);
@@ -261,7 +261,7 @@ module.exports = class QueryExecutionEdge {
       }
     }
 
-    let obj_constraints = this.object.attribute_constraints;
+    let obj_constraints = this.object.constraints;
     if (obj_constraints && obj_constraints.length) {
       let from = this.reverse ? 'subject' : 'object';
       debug(`Node (object) constraints: ${JSON.stringify(obj_constraints)}`);
