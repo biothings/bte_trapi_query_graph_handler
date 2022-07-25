@@ -576,11 +576,23 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       }).map(({ data }) => data?.api_name)),
     ];
     let cached = logs.filter(({ data }) => data?.type === 'cacheHit').length;
+    let scored = 0;
+    let unscored = 0;
+    if(resultTemplates !== undefined) {
+      const scoreLogs = logs.filter(({ data }) => {
+          const correctType = data?.type === 'scoring';
+          return correctType;
+      })
+      scoreLogs.forEach(scoreLog => {
+        scored += scoreLog['data']['scored'];
+        unscored += scoreLog['data']['unscored'];
+      });
+    }
     return [
       new LogEntry(
         'INFO',
         null,
-        `Execution Summary: (${KGNodes}) nodes / (${kgEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${
+        `Execution Summary:  (${scored}) scored / (${unscored}) unscored / (${KGNodes}) nodes / (${kgEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${
           cached ? ` (${cached} cached qEdges)` : ''
         } returned results from (${sources.length}) unique APIs ${sources === 1 ? 's' : ''}`,
       ).getLog(),
