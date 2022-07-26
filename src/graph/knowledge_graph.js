@@ -123,7 +123,7 @@ module.exports = class KnowledgeGraph {
       for (const key in kgEdge.attributes) {
         attributes.push({
           attribute_type_id: key,
-          value: Arrays.from(kgEdge.attributes[key]),
+          value: Array.from(kgEdge.attributes[key]),
           //value_type_id: 'bts:' + key,
         });
       }
@@ -166,7 +166,7 @@ module.exports = class KnowledgeGraph {
       for (const key in kgEdge.attributes) {
         attributes.push({
           attribute_type_id: key,
-          value: Arrays.from(kgEdge.attributes[key]),
+          value: Array.from(kgEdge.attributes[key]),
           //value_type_id: 'bts:' + key,
         });
       }
