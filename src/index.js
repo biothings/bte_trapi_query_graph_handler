@@ -582,6 +582,30 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     ];
   }
 
+  async _checkContraints() {
+    const constraints = new Set();
+    Object.values(this.queryGraph).forEach((item) => {
+      Object.values(item).forEach((element) => {
+        element.constraints?.forEach(constraint => constraints.add(constraint.name));
+        element.attribute_constraints?.forEach(constraint => constraints.add(constraint.name));
+        element.qualifier_constraints?.forEach(constraint => constraints.add(constraint.name));
+      });
+    });
+    if (constraints.size) {
+      this.logs.push(new LogEntry(
+        "ERROR",
+        "UnsupportedAttributeConstraint",
+        `Unsupported Attribute Constraints: [${[...constraints].join(", ")}]`
+      ).getLog())
+      this.logs.push(new LogEntry(
+        "ERROR",
+        null,
+        `BTE does not currently support any type of constraint. Your query Terminates.`
+      ).getLog())
+      return true;
+    }
+  }
+
   async query() {
     this._initializeResponse();
     debug('Start to load metakg.');
@@ -611,6 +635,10 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       );
     }
     let queryExecutionEdges = await this._processQueryGraph(this.queryGraph);
+    // TODO remove this when constraints implemented
+    if (await this._checkContraints()) {
+      return;
+    }
     debug(`(3) All edges created ${JSON.stringify(queryExecutionEdges)}`);
     if (this._queryUsesInferredMode() && this._queryIsOneHop()) {
       await this._handleInferredEdges();
