@@ -38,6 +38,18 @@ module.exports = class QueryGraphHandler {
     }
   }
 
+  _validateDuplicateEdges(queryGraph) {
+    const edgeSet = new Set()
+    for (const edgeID in queryGraph.edges) {
+      const subject = queryGraph.edges[edgeID].subject
+      const object = queryGraph.edges[edgeID].object
+      if (edgeSet.has(`${subject}-${object}`) || edgeSet.has(`${object}-${subject}`)) {
+        throw new InvalidQueryGraphError("Multiple edges between two nodes.");
+      }
+      edgeSet.add(`${subject}-${object}`)
+    }
+  }
+
   _validateCycles(queryGraph) {
     const nodes = {}
     for (const nodeID in queryGraph.nodes) {
@@ -75,6 +87,7 @@ module.exports = class QueryGraphHandler {
     this._validateEmptyEdges(queryGraph);
     this._validateEmptyNodes(queryGraph);
     this._validateNodeEdgeCorrespondence(queryGraph);
+    this._validateDuplicateEdges(queryGraph)
     this._validateCycles(queryGraph);
   }
 

@@ -152,6 +152,23 @@ describe("Testing QueryGraphHandler Module", () => {
         }
     };
 
+    const QueryWithDuplicateEdge1 = {
+        nodes: {
+            n0: disease_entity_node,
+            n1: gene_class_node,
+        },
+        edges: {
+            e01: {
+                subject: "n0",
+                object: "n1"
+            },
+            e02: {
+                subject: "n1",
+                object: "n0"
+            }
+        }
+    };
+
     describe("test _storeNodes function", () => {
 
         test("test if storeNodes with one hop query", async () => {
@@ -203,7 +220,11 @@ describe("Testing QueryGraphHandler Module", () => {
             expect(edges[2]).toHaveLength(1);
         });
     });
-    describe("test cycle detection for query graphs", () => {
+    describe("test cycle/duplicate edge detection for query graphs", () => {
+      test("Duplicate Edge Graph #1", async () => {
+        const handler = new QueryGraphHandler(QueryWithDuplicateEdge1)
+        expect(handler.calculateEdges()).rejects.toThrow(InvalidQueryGraphError)
+      })
       test("Query Graph Cycle #1", async () => {
         const handler = new QueryGraphHandler(QueryWithCycle1)
         expect(handler.calculateEdges()).rejects.toThrow(InvalidQueryGraphError)
