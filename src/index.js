@@ -34,6 +34,22 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       typeof this.options.enableIDResolution === 'undefined' ? true : this.options.enableIDResolution;
     this.path = smartAPIPath || path.resolve(__dirname, './smartapi_specs.json');
     this.predicatePath = predicatesPath || path.resolve(__dirname, './predicates.json');
+    this.options.apiList && this.findUnregisteredApi();
+  }
+
+  async findUnregisteredApi() {
+    const configListApis = this.options.apiList['include'];
+    const smartapiRegistry = await fs.readFile(this.path);
+    const smartapiIds = [];
+
+    JSON.parse(smartapiRegistry)['hits'].forEach((smartapiRegistration) =>
+      smartapiIds.push(smartapiRegistration['_id']),
+    );
+    configListApis.forEach((configListApi) => {
+      if (smartapiIds.includes(configListApi['id']) === false) {
+        debug(`${configListApi['name']} not found in smartapi registry`);
+      }
+    });
   }
 
   _loadMetaKG() {
@@ -61,20 +77,6 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
    * @param {object} queryGraph - TRAPI Query Graph Object
    */
   setQueryGraph(queryGraph) {
-    for (const nodeId in queryGraph.nodes) {
-      if (Object.hasOwnProperty.call(queryGraph.nodes, nodeId)) {
-        const currentNode = queryGraph.nodes[nodeId];
-        if (Object.hasOwnProperty.call(currentNode, 'categories')) {
-          if (
-            currentNode['categories'].includes('biolink:Protein') &&
-            !currentNode['categories'].includes('biolink:Gene')
-          ) {
-            debug(`(0) Adding "Gene" category to "Protein" node.`);
-            currentNode['categories'].push('biolink:Gene');
-          }
-        }
-      }
-    }
     this.queryGraph = queryGraph;
   }
 
@@ -265,7 +267,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       return;
     }
 
-    const edgeMissingPredicate = typeof Object.values(this.queryGraph.edges)[0].predicates === 'undefined' || Object.values(this.queryGraph.edges)[0].predicates.length < 1;
+    const edgeMissingPredicate =
+      typeof Object.values(this.queryGraph.edges)[0].predicates === 'undefined' ||
+      Object.values(this.queryGraph.edges)[0].predicates.length < 1;
     if (edgeMissingPredicate) {
       const message = 'Inferred Mode edge must specify a predicate. Your query terminates.';
       this.logs.push(new LogEntry('WARNING', null, message).getLog());
@@ -285,11 +289,19 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       return;
     }
 
-    const multiplePredicates = Object.values(this.queryGraph.edges).reduce((sum, edge) => {
-      return edge.predicates ? sum + edge.predicates.length : sum;
-    }, 0) > 1;
+    const multiplePredicates =
+      Object.values(this.queryGraph.edges).reduce((sum, edge) => {
+        return edge.predicates ? sum + edge.predicates.length : sum;
+      }, 0) > 1;
     if (multiplePredicates) {
       const message = 'Inferred Mode queries with multiple predicates are not supported. Your query terminates.';
+      this.logs.push(new LogEntry('WARNING', null, message).getLog());
+      debug(message);
+      return;
+    }
+
+    if (this.options.smartAPIID || this.options.teamName) {
+      const message = 'Inferred Mode on smartapi/team-specific endpoints not supported. Your query terminates.';
       this.logs.push(new LogEntry('WARNING', null, message).getLog());
       debug(message);
       return;
@@ -320,7 +332,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
               subject: utils.removeBioLinkPrefix(subjectCategory),
               object: utils.removeBioLinkPrefix(objectCategory),
               predicate: utils.removeBioLinkPrefix(predicate),
-            }
+            };
             // return `${utils.removeBioLinkPrefix(subjectCategory)}-${utils.removeBioLinkPrefix(
             //   predicate,
             // )}-${utils.removeBioLinkPrefix(objectCategory)}`;
@@ -395,6 +407,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     let resultQueries = [];
     let successfulQueries = 0;
     let stop = false;
+    let mergedResultsCount = {};
     await async.eachOfSeries(subQueries, async (queryGraph, i) => {
       if (stop) {
         return;
@@ -412,7 +425,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
           Object.keys(combinedResponse.message.results).length > 0
         ) {
           stop = true;
-          const message = `Template ${i} exceeds absolute maximum of ${CREATIVE_LIMIT + 500} (${Object.keys(response.message.results).length}). These results will not be included. Skipping remaining ${subQueries.length - (i + 1)} templates.`;
+          const message = `Template ${i} exceeds absolute maximum of ${CREATIVE_LIMIT + 500} (${
+            Object.keys(response.message.results).length
+          }). These results will not be included. Skipping remaining ${subQueries.length - (i + 1)} templates.`;
           debug(message);
           combinedResponse.logs.push(new LogEntry(`INFO`, null, message).getLog());
           return;
@@ -479,6 +494,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
             .join(',');
           const resultID = `${resultCreativeSubjectID}-${resultCreativeObjectID}`;
           if (resultID in combinedResponse.message.results) {
+            mergedResultsCount[resultID] = mergedResultsCount[resultID]
+              ? mergedResultsCount[resultID] + 1
+              : 2; // accounting for initial + first merged
             Object.entries(translatedResult.node_bindings).forEach(([nodeID, bindings]) => {
               combinedResponse.message.results[resultID].node_bindings[nodeID] = bindings;
             });
@@ -541,6 +559,14 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     this.getResponse = () => {
       return combinedResponse;
     };
+    if (Object.keys(mergedResultsCount).length) {
+      const total = Object.values(mergedResultsCount).reduce((sum, count) => sum + count, 0);
+      combinedResponse.logs.push(
+        new LogEntry(
+          `(${total}) inferred-template results were merged into (${Object.keys(mergedResultsCount).length}) final results.`,
+        ).getLog(),
+      );
+    }
     if (successfulQueries) {
       this.createSummaryLog(combinedResponse.logs, resultQueries).forEach((log) => combinedResponse.logs.push(log));
     }
@@ -561,15 +587,29 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     }).length;
     const queries = logs.filter(({ data }) => data?.type === 'query').length;
     const sources = [
-      ...new Set(logs.filter(({ message, data }) => {
-        const correctType = data?.type === 'query' && data?.hits;
-        if (resultTemplates) {
-          return correctType && resultTemplates.some((queryIndex) => message.includes(`[Template-${queryIndex}]`));
-        }
-        return correctType;
-      }).map(({ data }) => data?.api_name)),
+      ...new Set(
+        logs
+          .filter(({ message, data }) => {
+            const correctType = data?.type === 'query' && data?.hits;
+            if (resultTemplates) {
+              return correctType && resultTemplates.some((queryIndex) => message.includes(`[Template-${queryIndex}]`));
+            }
+            return correctType;
+          })
+          .map(({ data }) => data?.api_name),
+      ),
     ];
     let cached = logs.filter(({ data }) => data?.type === 'cacheHit').length;
+    let scored = 0;
+    let unscored = 0;
+    const scoreLogs = logs.filter(({ data }) => {
+      const correctType = data?.type === 'scoring';
+      return correctType;
+    });
+    scoreLogs.forEach((scoreLog) => {
+      scored += scoreLog['data']['scored'];
+      unscored += scoreLog['data']['unscored'];
+    });
     return [
       new LogEntry(
         'INFO',
@@ -579,7 +619,11 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         } returned results from (${sources.length}) unique APIs ${sources === 1 ? 's' : ''}`,
       ).getLog(),
       new LogEntry('INFO', null, `APIs: ${sources.join(', ')}`).getLog(),
-    ];
+    ].concat(
+      resultTemplates !== undefined
+        ? new LogEntry('INFO', null, `Scoring Summary: (${scored}) scored / (${unscored}) unscored`).getLog()
+        : [],
+    );
   }
 
   async _checkContraints() {
@@ -609,7 +653,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   async query() {
     this._initializeResponse();
     debug('Start to load metakg.');
-    const metaKG = this._loadMetaKG(this.smartapiID, this.team);
+    const metaKG = this._loadMetaKG();
     if (!metaKG.ops.length) {
       let error;
       if (this.options.smartAPIID) {
@@ -637,6 +681,12 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     let queryExecutionEdges = await this._processQueryGraph(this.queryGraph);
     // TODO remove this when constraints implemented
     if (await this._checkContraints()) {
+      return;
+    }
+    if ((this.options.smartAPIID || this.options.teamName) && Object.values(this.queryGraph.edges).length > 1) {
+      const message = 'smartAPI/team-specific endpoints only support single-edge queries. Your query terminates.';
+      this.logs.push(new LogEntry('WARNING', null, message).getLog());
+      debug(message);
       return;
     }
     debug(`(3) All edges created ${JSON.stringify(queryExecutionEdges)}`);
