@@ -38,10 +38,57 @@ module.exports = class QueryGraphHandler {
     }
   }
 
+  _validateDuplicateEdges(queryGraph) {
+    const edgeSet = new Set()
+    for (const edgeID in queryGraph.edges) {
+      const subject = queryGraph.edges[edgeID].subject
+      const object = queryGraph.edges[edgeID].object
+      if (edgeSet.has(`${subject}-${object}`) || edgeSet.has(`${object}-${subject}`)) {
+        throw new InvalidQueryGraphError("Multiple edges between two nodes.");
+      }
+      edgeSet.add(`${subject}-${object}`)
+    }
+  }
+
+  _validateCycles(queryGraph) {
+    const nodes = {}
+    for (const nodeID in queryGraph.nodes) {
+      nodes[nodeID] = {
+        connections: new Set(),
+        visited: false
+      };
+    }
+    
+    for (const edgeID in queryGraph.edges) {
+      const edge = queryGraph.edges[edgeID]
+      nodes[edge.subject].connections.add(edge.object)
+      nodes[edge.object].connections.add(edge.subject)
+    }
+      
+    for (const firstNode in nodes) {
+      if (nodes[firstNode].visited === true) continue;
+      const stack = [{curNode: firstNode, parent: -1}]
+      nodes[firstNode].visited = true
+      while (stack.length !== 0) {
+        const {curNode, parent} = stack.pop()
+        for (const conNode of nodes[curNode].connections) {
+          if (conNode == parent) continue;
+          if (nodes[conNode].visited === true) {
+            throw new InvalidQueryGraphError("The query graph contains a cycle.");
+          }
+          stack.push({curNode: conNode, parent: curNode})
+          nodes[conNode].visited = true
+        }
+      }
+    }
+  }
+
   _validate(queryGraph) {
     this._validateEmptyEdges(queryGraph);
     this._validateEmptyNodes(queryGraph);
     this._validateNodeEdgeCorrespondence(queryGraph);
+    this._validateDuplicateEdges(queryGraph)
+    this._validateCycles(queryGraph);
   }
 
   /**
