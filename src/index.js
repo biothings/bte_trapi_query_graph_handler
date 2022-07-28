@@ -36,13 +36,15 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   }
 
   async findUnregisteredApi() {
-    const configListApis = this.options.apiList['include']
-    const smartapiRegistry = await fs.readFile(this.path)
-    const smartapiIds = []
+    const configListApis = this.options.apiList['include'];
+    const smartapiRegistry = await fs.readFile(this.path);
+    const smartapiIds = [];
 
-    JSON.parse(smartapiRegistry)['hits'].forEach(smartapiRegistration => smartapiIds.push(smartapiRegistration['_id']));
-    configListApis.forEach(configListApi => {
-      if(smartapiIds.includes(configListApi['id']) === false) {
+    JSON.parse(smartapiRegistry)['hits'].forEach((smartapiRegistration) =>
+      smartapiIds.push(smartapiRegistration['_id']),
+    );
+    configListApis.forEach((configListApi) => {
+      if (smartapiIds.includes(configListApi['id']) === false) {
         debug(`${configListApi['name']} not found in smartapi registry`);
       }
     });
@@ -264,7 +266,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       return;
     }
 
-    const edgeMissingPredicate = typeof Object.values(this.queryGraph.edges)[0].predicates === 'undefined' || Object.values(this.queryGraph.edges)[0].predicates.length < 1;
+    const edgeMissingPredicate =
+      typeof Object.values(this.queryGraph.edges)[0].predicates === 'undefined' ||
+      Object.values(this.queryGraph.edges)[0].predicates.length < 1;
     if (edgeMissingPredicate) {
       const message = 'Inferred Mode edge must specify a predicate. Your query terminates.';
       this.logs.push(new LogEntry('WARNING', null, message).getLog());
@@ -284,9 +288,10 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       return;
     }
 
-    const multiplePredicates = Object.values(this.queryGraph.edges).reduce((sum, edge) => {
-      return edge.predicates ? sum + edge.predicates.length : sum;
-    }, 0) > 1;
+    const multiplePredicates =
+      Object.values(this.queryGraph.edges).reduce((sum, edge) => {
+        return edge.predicates ? sum + edge.predicates.length : sum;
+      }, 0) > 1;
     if (multiplePredicates) {
       const message = 'Inferred Mode queries with multiple predicates are not supported. Your query terminates.';
       this.logs.push(new LogEntry('WARNING', null, message).getLog());
@@ -326,7 +331,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
               subject: utils.removeBioLinkPrefix(subjectCategory),
               object: utils.removeBioLinkPrefix(objectCategory),
               predicate: utils.removeBioLinkPrefix(predicate),
-            }
+            };
             // return `${utils.removeBioLinkPrefix(subjectCategory)}-${utils.removeBioLinkPrefix(
             //   predicate,
             // )}-${utils.removeBioLinkPrefix(objectCategory)}`;
@@ -418,7 +423,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
           Object.keys(combinedResponse.message.results).length > 0
         ) {
           stop = true;
-          const message = `Template ${i} exceeds absolute maximum of ${CREATIVE_LIMIT + 500} (${Object.keys(response.message.results).length}). These results will not be included. Skipping remaining ${subQueries.length - (i + 1)} templates.`;
+          const message = `Template ${i} exceeds absolute maximum of ${CREATIVE_LIMIT + 500} (${
+            Object.keys(response.message.results).length
+          }). These results will not be included. Skipping remaining ${subQueries.length - (i + 1)} templates.`;
           debug(message);
           combinedResponse.logs.push(new LogEntry(`INFO`, null, message).getLog());
           return;
@@ -567,22 +574,26 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     }).length;
     const queries = logs.filter(({ data }) => data?.type === 'query').length;
     const sources = [
-      ...new Set(logs.filter(({ message, data }) => {
-        const correctType = data?.type === 'query' && data?.hits;
-        if (resultTemplates) {
-          return correctType && resultTemplates.some((queryIndex) => message.includes(`[Template-${queryIndex}]`));
-        }
-        return correctType;
-      }).map(({ data }) => data?.api_name)),
+      ...new Set(
+        logs
+          .filter(({ message, data }) => {
+            const correctType = data?.type === 'query' && data?.hits;
+            if (resultTemplates) {
+              return correctType && resultTemplates.some((queryIndex) => message.includes(`[Template-${queryIndex}]`));
+            }
+            return correctType;
+          })
+          .map(({ data }) => data?.api_name),
+      ),
     ];
     let cached = logs.filter(({ data }) => data?.type === 'cacheHit').length;
     let scored = 0;
     let unscored = 0;
     const scoreLogs = logs.filter(({ data }) => {
-        const correctType = data?.type === 'scoring';
-        return correctType;
-    })
-    scoreLogs.forEach(scoreLog => {
+      const correctType = data?.type === 'scoring';
+      return correctType;
+    });
+    scoreLogs.forEach((scoreLog) => {
       scored += scoreLog['data']['scored'];
       unscored += scoreLog['data']['unscored'];
     });
@@ -595,7 +606,11 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         } returned results from (${sources.length}) unique APIs ${sources === 1 ? 's' : ''}`,
       ).getLog(),
       new LogEntry('INFO', null, `APIs: ${sources.join(', ')}`).getLog(),
-    ].concat(resultTemplates !== undefined ? new LogEntry('INFO', null, `Scoring Summary: (${scored}) scored / (${unscored}) unscored )`).getLog() : []);
+    ].concat(
+      resultTemplates !== undefined
+        ? new LogEntry('INFO', null, `Scoring Summary: (${scored}) scored / (${unscored}) unscored`).getLog()
+        : [],
+    );
   }
 
   async query() {
