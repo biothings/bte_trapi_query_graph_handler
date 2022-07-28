@@ -406,6 +406,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     let resultQueries = [];
     let successfulQueries = 0;
     let stop = false;
+    let mergedResultsCount = {};
     await async.eachOfSeries(subQueries, async (queryGraph, i) => {
       if (stop) {
         return;
@@ -492,6 +493,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
             .join(',');
           const resultID = `${resultCreativeSubjectID}-${resultCreativeObjectID}`;
           if (resultID in combinedResponse.message.results) {
+            mergedResultsCount[resultID] = mergedResultsCount[resultID]
+              ? mergedResultsCount[resultID] + 1
+              : 2; // accounting for initial + first merged
             Object.entries(translatedResult.node_bindings).forEach(([nodeID, bindings]) => {
               combinedResponse.message.results[resultID].node_bindings[nodeID] = bindings;
             });
@@ -554,6 +558,14 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     this.getResponse = () => {
       return combinedResponse;
     };
+    if (Object.keys(mergedResultsCount).length) {
+      const total = Object.values(mergedResultsCount).reduce((sum, count) => sum + count, 0);
+      combinedResponse.logs.push(
+        new LogEntry(
+          `(${total}) inferred-template results were merged into (${Object.keys(mergedResultsCount).length}) final results.`,
+        ).getLog(),
+      );
+    }
     if (successfulQueries) {
       this.createSummaryLog(combinedResponse.logs, resultQueries).forEach((log) => combinedResponse.logs.push(log));
     }
