@@ -434,11 +434,20 @@ module.exports = class TrapiResultsAssembler {
     .sort((result1, result2) => (result2.score - result1.score)); //sort by decreasing score
 
     debug(`Got ${this._results.length} TRAPI result(s)`)
+    this.logs.push(
+      new LogEntry('DEBUG', null, `Got ${this._results.length} TRAPI result(s)`).getLog(),
+    );
 
     try {
       await enrichTrapiResultsWithPfocrFigures(this._results);
+      this.logs.push(
+        new LogEntry('DEBUG', null, "Enriched TRAPI results with PFOCR figures").getLog(),
+      );
     } catch (err) {
       debug("Error enriching with PFOCR figures: ", err);
+      this.logs.push(
+        new LogEntry('DEBUG', null, "Error enriching with PFOCR figures: ", err).getLog(),
+      );
     }
 
     debug(`Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`);

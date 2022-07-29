@@ -206,7 +206,7 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
 
       // TODO: use a smarter way of picking the top 20.
       // Right now it's just the first 20.
-      if (trapiResult.pfocr.length > FIGURE_COUNT_MAX) {
+      if (trapiResult.pfocr.length >= FIGURE_COUNT_MAX) {
         debug(`Truncating PFOCR figures at ${FIGURE_COUNT_MAX} for TRAPI result w/ ${Array.from(commonCuries)}`)
         break;
       }
@@ -235,13 +235,10 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
     }
   }
 
-  // Each of the matched figures has at least one TRAPI result with an overlap of 2+ genes
+  // Each of the matched figures has at least one TRAPI result with an overlap of 2+ genes.
+  // Each of the matched TRAPI results has at least one figure with an overlap of 2+ genes.
   debug(
-    `${matchedFigures.size} PFOCR figures match ${MATCH_COUNT_MIN}+ genes in individual TRAPI result(s)`
-  );
-  // Each of the matched TRAPI results has at least one figure with an overlap of 2+ genes
-  debug(
-    `${matchedTrapiResults.size} TRAPI results match ${MATCH_COUNT_MIN}+ genes in individual PFOCR figure(s)`
+    `${MATCH_COUNT_MIN}+ CURIE matches: ${matchedFigures.size} PFOCR figures and ${matchedTrapiResults.size} TRAPI results`
   );
 }
 
