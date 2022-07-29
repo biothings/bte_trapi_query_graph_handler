@@ -150,7 +150,7 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
 
     trapiResultToCurieSet.set(trapiResult, trapiResultCurieSet);
 
-    if (trapiResultCurieSet.size >= MATCH_COUNT_MIN) {
+    if (trapiResultCurieSet.size > MATCH_COUNT_MIN) {
       for (const trapiResultCurie of trapiResultCurieSet) {
         uniqueTrapiCuries.add(trapiResultCurie);
       }
