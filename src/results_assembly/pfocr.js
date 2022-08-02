@@ -1,5 +1,10 @@
 const axios = require('axios');
 const debug = require('debug')('bte:biothings-explorer-trapi:pfocr');
+const fs = require("fs")
+const { BloomFilter, ScalableBloomFilter, XorFilter } = require('bloom-filters')
+const bloomit = require('bloomit');
+const BloomFilterBF = bloomit.BloomFilter;
+
 const { intersection } = require('../utils');
 
 
@@ -7,6 +12,143 @@ const { intersection } = require('../utils');
 // in a TRAPI result and in a PFOCR figure.
 const MATCH_COUNT_MIN = 2;
 const FIGURE_COUNT_MAX = 20;
+
+/* Get all results by using a scrolling query
+ * https://docs.mygene.info/en/latest/doc/query_service.html#scrolling-queries
+ * The initial queryString must include 'fetch_all=TRUE'. Any subsequent
+ * scrolling requests will include the scroll_id in the queryString.
+ */
+async function loadFilter(url='https://www.dropbox.com/s/1f14t5zaseocyg6/bte_chemicals_diseases_genes.ndjson?dl=1') {
+  const {data} = await axios.get(url)
+    .catch(err => {
+      debug('Error getting PFOCR data', err);
+      throw err;
+    });
+
+  const uniqueFigureCuries = new Set();
+  for (const figureStr of data.split('\n')) {
+    if (figureStr === '') {
+      continue;
+    }
+    const figure = JSON.parse(figureStr);
+    const figureCuries = figure.associatedWith.mentions.genes.ncbigene
+      .map(ncbigeneNumber => 'NCBIGene:' + ncbigeneNumber);
+
+    for (const figureCurie of figureCuries) {
+      uniqueFigureCuries.add(figureCurie)
+    }
+  }
+
+  console.log(uniqueFigureCuries.size)
+
+  const pfocrUniqueGeneCount = 14253;
+
+  // number of pairs of CURIEs
+  // no repetition
+  // sorted always first
+  const pfocrUniqueGenePairCount = 101566878;
+
+  const comboCount = pfocrUniqueGeneCount + pfocrUniqueGenePairCount;
+
+  const getCurieCombos = function*() {
+    const uniqueFigureCuriesList = Array.from(uniqueFigureCuries).sort();
+    const uniqueFigureCuriesListLength = uniqueFigureCuriesList.length;
+    let k = 0;
+    for (let i = 0; i < uniqueFigureCuriesListLength - 1; i++) {
+      const firstCurie = uniqueFigureCuriesList[i];
+      //yield firstCurie;
+      for (let j = i + 1; j < uniqueFigureCuriesListLength; j++) {
+        k += 1;
+        if (k % 10000000 === 0) {
+          console.log(`k: ${k}`);
+        }
+        const secondCurie = uniqueFigureCuriesList[j];
+        yield [firstCurie, secondCurie].join(' & ');
+      }
+    }
+    console.log(`k: ${k}`);
+  };
+
+  const errorRate = 0.1 // 10% error rate
+  /*
+  const combos = Array.from(getCurieCombos());
+
+  const pfocrFilterCombosXor = new XorFilter(combos.length);
+  pfocrFilterCombosXor.add(combos);
+  fs.writeFile("pfocrFilterCombosXor.json", JSON.stringify(pfocrFilterCombosXor.saveAsJSON()), err => {
+      if (err) {
+          console.log(err)
+      }
+  });
+
+  const pfocrFilterCombosBloom = BloomFilter.create(combos.length, errorRate);
+  for (const curieCombo of combos) {
+    pfocrFilterCombosBloom.add(curieCombo);
+  }
+
+  console.log(pfocrFilterCombosBloom.has('a')) // false
+  console.log(pfocrFilterCombosBloom.has('NCBIGene:1')) // true
+  console.log(pfocrFilterCombosBloom.has('NCBIGene:1023')) // ?
+  console.log(pfocrFilterCombosBloom.has('NCBIGene:5971')) // ?
+  console.log(pfocrFilterCombosBloom.has('NCBIGene:1 & NCBIGene:10')) // true
+  console.log(pfocrFilterCombosBloom.has('NCBIGene:5118 & NCBIGene:5971')) // ?
+
+  fs.writeFile("pfocrFilterCombosBloom.json", JSON.stringify(pfocrFilterCombosBloom.saveAsJSON()), err => {
+      if (err) {
+          console.log(err)
+      }
+  });
+  //*/
+
+  //const pfocrFilterCombosBloomBF = BloomFilterBF.from(getCurieCombos(), errorRate);
+  const pfocrFilterCombosBloomBF = BloomFilterBF.create(pfocrUniqueGenePairCount, errorRate);
+  for (const curieCombo of getCurieCombos()) {
+    pfocrFilterCombosBloomBF.add(curieCombo);
+  }
+  fs.writeFile("pfocrFilterCombosBloomBF.json", pfocrFilterCombosBloomBF.export(), err => {
+      if (err) {
+          console.log(err)
+      }
+  });
+
+  //*
+  const pfocrFilterSingleBloomBF = BloomFilterBF.create(uniqueFigureCuries.size, 0.01);
+  for (curie in uniqueFigureCuries) {
+    pfocrFilterSingleBloomBF.add(curie)
+  }
+  fs.writeFile("pfocrFilterSingleBloomBF.json", pfocrFilterSingleBloomBF.export(), err => {
+      if (err) {
+          console.log(err)
+      }
+  });
+  //*/
+
+  //*
+  const pfocrFilterSingleBloom = BloomFilter.create(uniqueFigureCuries.size, 0.01);
+  for (curie in uniqueFigureCuries) {
+    pfocrFilterSingleBloom.add(curie)
+  }
+  fs.writeFile("pfocrFilterSingleBloom.json", JSON.stringify(pfocrFilterSingleBloom.saveAsJSON()), err => {
+      if (err) {
+          console.log(err)
+      }
+  });
+  //*/
+
+  //*
+  const pfocrFilterSingleXor = new XorFilter(uniqueFigureCuries.size)
+  pfocrFilterSingleXor.add(Array.from(uniqueFigureCuries))
+  fs.writeFile("pfocrFilterSingleXor.json", JSON.stringify(pfocrFilterSingleXor.saveAsJSON()), err => {
+      if (err) {
+          console.log(err)
+      }
+  });
+  //*/
+
+  //debug(`Batch ${batchIndex}: ${hits.length} / ${data.total} hits retrieved for PFOCR figure data`);
+}
+
+loadFilter()
 
 /* Get all results by using a scrolling query
  * https://docs.mygene.info/en/latest/doc/query_service.html#scrolling-queries
