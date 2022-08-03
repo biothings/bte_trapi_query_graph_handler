@@ -562,6 +562,8 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       const total = Object.values(mergedResultsCount).reduce((sum, count) => sum + count, 0);
       combinedResponse.logs.push(
         new LogEntry(
+          "INFO",
+          null,
           `(${total}) inferred-template results were merged into (${Object.keys(mergedResultsCount).length}) final results.`,
         ).getLog(),
       );
