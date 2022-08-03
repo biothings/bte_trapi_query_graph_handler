@@ -44,14 +44,19 @@ async function getPfocrFigures(qTerms) {
   const queryStrings = [];
   const concatenator = ' OR ';
   let currentQueryString = 'fetch_all=true&q=' + qTerms.pop();
+  let qTermCount = 0;
   for (const qTerm of qTerms) {
     if ((currentQueryString + concatenator + qTerm).length < queryStringLengthLimit) {
+      qTermCount += 1;
       currentQueryString += concatenator + qTerm;
     } else {
+      console.log(`qTermCount: ${qTermCount}`)
+      qTermCount = 0;
       queryStrings.push(currentQueryString)
       currentQueryString = 'fetch_all=true&q=' + qTerm
     }
   }
+  console.log(`qTermCount: ${qTermCount}`)
   queryStrings.push(currentQueryString);
   const docMessage = `Making ${queryStrings.length} scrolling request(s) for PFOCR figure data`;
   if (queryStrings.length === 1) {
