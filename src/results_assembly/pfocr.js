@@ -117,6 +117,7 @@ async function loadFilter(url='https://www.dropbox.com/s/1f14t5zaseocyg6/bte_che
   const comboFalsePositiveRate = 0.1 // 10% error rate
 
   //*
+  // The following code works, but it takes a very long time.
   const pfocrFilterCombosBloom = BloomFilter.create(pfocrUniqueGenePairCount, comboFalsePositiveRate);
   const pfocrFilterCombosBloomBloomIt = BloomFilterBloomIt.create(pfocrUniqueGenePairCount, comboFalsePositiveRate);
   for (const curieCombo of getCurieCombos()) {
@@ -125,13 +126,10 @@ async function loadFilter(url='https://www.dropbox.com/s/1f14t5zaseocyg6/bte_che
   }
   console.log(pfocrFilterCombosBloom.has('NCBIGene:1')) // false
   console.log(pfocrFilterCombosBloomBloomIt.has('NCBIGene:1')) // false
-
   console.log(pfocrFilterCombosBloom.has('NCBIGene:1 & NCBIGene:7098')) // false
   console.log(pfocrFilterCombosBloomBloomIt.has('NCBIGene:1 & NCBIGene:7098')) // false
-
   console.log(pfocrFilterCombosBloom.has('NCBIGene:10879 & NCBIGene:7098')) // true
   console.log(pfocrFilterCombosBloomBloomIt.has('NCBIGene:10879 & NCBIGene:7098')) // true
-
   fs.writeFile("pfocrFilterCombosBloom.json", JSON.stringify(pfocrFilterCombosBloom.saveAsJSON()), err => {
       if (err) {
           console.log(err)
@@ -144,10 +142,11 @@ async function loadFilter(url='https://www.dropbox.com/s/1f14t5zaseocyg6/bte_che
   });
   //*/
 
-  //*
-  // this XOR filter requires all the combos to be present in memory at the same time,
-  // can't use a generator function and iteratively add items. My laptop runs out of
-  // memory when trying to do this.
+  /*
+  // The following code fails on my laptop.
+  // This implementation of an XOR filter requires all the combos to be present in memory
+  // at the same time, meaning I can't use a generator function and iteratively add items.
+  // My laptop runs out of memory when trying to do this.
   const combos = Array.from(getCurieCombos());
   const pfocrFilterCombosXor = new XorFilter(combos.length);
   pfocrFilterCombosXor.add(combos);
@@ -158,8 +157,6 @@ async function loadFilter(url='https://www.dropbox.com/s/1f14t5zaseocyg6/bte_che
   });
   //*/
 }
-
-loadFilter()
 
 /* Get all results by using a scrolling query
  * https://docs.mygene.info/en/latest/doc/query_service.html#scrolling-queries
