@@ -99,7 +99,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       if (err instanceof InvalidQueryGraphError) {
         throw err;
       } else {
-        throw new InvalidQueryGraphError(err.message);
+        throw new InvalidQueryGraphError();
       }
     }
   }
