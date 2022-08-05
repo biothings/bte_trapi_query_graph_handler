@@ -2,7 +2,7 @@ const axios = require('axios');
 const debug = require('debug')('bte:biothings-explorer-trapi:pfocr');
 const fs = require("fs")
 const { BloomFilter, XorFilter } = require('bloom-filters')
-const BloomFilterBloomIt = require('bloomit').BloomFilter;
+const BloomFilter2 = require('bloomit').BloomFilter;
 
 const { intersection } = require('../utils');
 
@@ -21,7 +21,7 @@ const FIGURE_COUNT_MAX = 20;
  * 
  * This is just proof-of-concept code.
  */
-async function loadFilter(url='https://www.dropbox.com/s/1f14t5zaseocyg6/bte_chemicals_diseases_genes.ndjson?dl=1') {
+async function generateFilter(url='https://www.dropbox.com/s/1f14t5zaseocyg6/bte_chemicals_diseases_genes.ndjson?dl=1') {
   const {data} = await axios.get(url)
     .catch(err => {
       debug('Error getting PFOCR data', err);
@@ -29,6 +29,8 @@ async function loadFilter(url='https://www.dropbox.com/s/1f14t5zaseocyg6/bte_che
     });
 
   const uniqueFigureCuries = new Set();
+  const uniqueFigureCuriePairs = new Set();
+  console.log(`Getting CURIE pairs. This can take awhile.`);
   for (const figureStr of data.split('\n')) {
     if (figureStr === '') {
       continue;
@@ -40,19 +42,33 @@ async function loadFilter(url='https://www.dropbox.com/s/1f14t5zaseocyg6/bte_che
     for (const figureCurie of figureCuries) {
       uniqueFigureCuries.add(figureCurie)
     }
+
+    const uniqueFigureCuriesList = Array.from(new Set(figureCuries)).sort();
+    if (uniqueFigureCuriesList.length >= 2) {
+      const uniqueFigureCuriesListLength = uniqueFigureCuriesList.length;
+      let k = 0;
+      for (let i = 0; i < uniqueFigureCuriesListLength - 1; i++) {
+        const firstCurie = uniqueFigureCuriesList[i];
+        for (let j = i + 1; j < uniqueFigureCuriesListLength; j++) {
+          k += 1;
+          const secondCurie = uniqueFigureCuriesList[j];
+          uniqueFigureCuriePairs.add([firstCurie, secondCurie].join(' & '));
+        }
+      }
+    }
   }
 
   console.log(`Unique PFOCR figure gene CURIE count: ${uniqueFigureCuries.size}`)
+  console.log(`Unique PFOCR figure gene CURIE pair count: ${uniqueFigureCuriePairs.size}`)
 
   /********
-   * Single gene CURIEs in PFOCR
-   * There are currently 14,253 of them.
+   * Unique gene CURIEs in PFOCR
+   * Current count: 14,253
    */
 
   const singleFalsePositiveRate = 0.01 // 1% error rate
 
-  //*
-  const pfocrFilterSingleBloomBloomIt = BloomFilterBloomIt.create(uniqueFigureCuries.size, singleFalsePositiveRate);
+  const pfocrFilterSingleBloomBloomIt = BloomFilter2.create(uniqueFigureCuries.size, singleFalsePositiveRate);
   for (curie in uniqueFigureCuries) {
     pfocrFilterSingleBloomBloomIt.add(curie)
   }
@@ -61,9 +77,7 @@ async function loadFilter(url='https://www.dropbox.com/s/1f14t5zaseocyg6/bte_che
           console.log(err)
       }
   });
-  //*/
 
-  //*
   const pfocrFilterSingleBloom = BloomFilter.create(uniqueFigureCuries.size, singleFalsePositiveRate);
   for (curie in uniqueFigureCuries) {
     pfocrFilterSingleBloom.add(curie)
@@ -73,9 +87,7 @@ async function loadFilter(url='https://www.dropbox.com/s/1f14t5zaseocyg6/bte_che
           console.log(err)
       }
   });
-  //*/
 
-  //*
   const pfocrFilterSingleXor = new XorFilter(uniqueFigureCuries.size)
   pfocrFilterSingleXor.add(Array.from(uniqueFigureCuries))
   fs.writeFile("pfocrFilterSingleXor.json", JSON.stringify(pfocrFilterSingleXor.saveAsJSON()), err => {
@@ -83,79 +95,53 @@ async function loadFilter(url='https://www.dropbox.com/s/1f14t5zaseocyg6/bte_che
           console.log(err)
       }
   });
-  //*/
 
   /********
-   * Combos: pairs of gene CURIEs
+   * Unique pairs of gene CURIEs in PFOCR
+   * - CURIEs in each pair sorted
+   * - Both CURIEs in a pair co-occur within a figure
+   * Current count: 4,630,449
    */
 
-  // number of pairs of unique gene CURIEs in PFOCR
-  // CURIEs in each pair sorted
-  // no repetition of pairs
-  const pfocrUniqueGenePairCount = 101566878;
+  // file size for serialized data gets too large if this is too small
+  const pairFalsePositiveRate = 0.1 // 10% error rate
 
-  const getCurieCombos = function*() {
-    const uniqueFigureCuriesList = Array.from(uniqueFigureCuries).sort();
-    const uniqueFigureCuriesListLength = uniqueFigureCuriesList.length;
-    let k = 0;
-    console.log(`Getting curieCombos. This can take awhile.`);
-    for (let i = 0; i < uniqueFigureCuriesListLength - 1; i++) {
-      const firstCurie = uniqueFigureCuriesList[i];
-      for (let j = i + 1; j < uniqueFigureCuriesListLength; j++) {
-        k += 1;
-        if (k % 10000000 === 0) {
-          console.log(`${Math.round((k / pfocrUniqueGenePairCount) * 100)}% complete`);
-        }
-        const secondCurie = uniqueFigureCuriesList[j];
-        yield [firstCurie, secondCurie].join(' & ');
-      }
-    }
-    console.log(`curieCombo count: ${k}`);
-  };
-
-  // serialized file size gets too large if this is too small
-  const comboFalsePositiveRate = 0.1 // 10% error rate
-
-  //*
-  // The following code works, but it takes a very long time.
-  const pfocrFilterCombosBloom = BloomFilter.create(pfocrUniqueGenePairCount, comboFalsePositiveRate);
-  const pfocrFilterCombosBloomBloomIt = BloomFilterBloomIt.create(pfocrUniqueGenePairCount, comboFalsePositiveRate);
-  for (const curieCombo of getCurieCombos()) {
-    pfocrFilterCombosBloom.add(curieCombo);
-    pfocrFilterCombosBloomBloomIt.add(curieCombo);
+  const pfocrFilterPairsBloom = BloomFilter.create(uniqueFigureCuriePairs.size, pairFalsePositiveRate);
+  const pfocrFilterPairsBloom2 = BloomFilter2.create(uniqueFigureCuriePairs.size, pairFalsePositiveRate);
+  for (const curiePair of uniqueFigureCuriePairs) {
+    pfocrFilterPairsBloom.add(curiePair);
+    pfocrFilterPairsBloom2.add(curiePair);
   }
-  console.log(pfocrFilterCombosBloom.has('NCBIGene:1')) // false
-  console.log(pfocrFilterCombosBloomBloomIt.has('NCBIGene:1')) // false
-  console.log(pfocrFilterCombosBloom.has('NCBIGene:1 & NCBIGene:7098')) // false
-  console.log(pfocrFilterCombosBloomBloomIt.has('NCBIGene:1 & NCBIGene:7098')) // false
-  console.log(pfocrFilterCombosBloom.has('NCBIGene:10879 & NCBIGene:7098')) // true
-  console.log(pfocrFilterCombosBloomBloomIt.has('NCBIGene:10879 & NCBIGene:7098')) // true
-  fs.writeFile("pfocrFilterCombosBloom.json", JSON.stringify(pfocrFilterCombosBloom.saveAsJSON()), err => {
+  fs.writeFile("pfocrFilterPairsBloom.json", JSON.stringify(pfocrFilterPairsBloom.saveAsJSON()), err => {
       if (err) {
           console.log(err)
       }
   });
-  fs.writeFile("pfocrFilterCombosBloomBloomIt.json", JSON.stringify(pfocrFilterCombosBloomBloomIt.export()), err => {
+  fs.writeFile("pfocrFilterPairsBloom2.json", JSON.stringify(pfocrFilterPairsBloom2.export()), err => {
       if (err) {
           console.log(err)
       }
   });
-  //*/
 
-  /*
-  // The following code fails on my laptop.
-  // This implementation of an XOR filter requires all the combos to be present in memory
-  // at the same time, meaning I can't use a generator function and iteratively add items.
-  // My laptop runs out of memory when trying to do this.
-  const combos = Array.from(getCurieCombos());
-  const pfocrFilterCombosXor = new XorFilter(combos.length);
-  pfocrFilterCombosXor.add(combos);
-  fs.writeFile("pfocrFilterCombosXor.json", JSON.stringify(pfocrFilterCombosXor.saveAsJSON()), err => {
+  const pfocrFilterPairsXor = new XorFilter(uniqueFigureCuriePairs.size);
+  pfocrFilterPairsXor.add(Array.from(uniqueFigureCuriePairs));
+  fs.writeFile("pfocrFilterPairsXor.json", JSON.stringify(pfocrFilterPairsXor.saveAsJSON()), err => {
       if (err) {
           console.log(err)
       }
   });
-  //*/
+
+  console.log(pfocrFilterPairsBloom.has('NCBIGene:1')) // false
+  console.log(pfocrFilterPairsBloom2.has('NCBIGene:1')) // false
+  console.log(pfocrFilterPairsXor.has('NCBIGene:1')) // false
+
+  console.log(pfocrFilterPairsBloom.has('NCBIGene:1 & NCBIGene:7098')) // false
+  console.log(pfocrFilterPairsBloom2.has('NCBIGene:1 & NCBIGene:7098')) // false
+  console.log(pfocrFilterPairsXor.has('NCBIGene:1 & NCBIGene:7098')) // false
+
+  console.log(pfocrFilterPairsBloom.has('NCBIGene:10879 & NCBIGene:7098')) // true
+  console.log(pfocrFilterPairsBloom2.has('NCBIGene:10879 & NCBIGene:7098')) // true
+  console.log(pfocrFilterPairsXor.has('NCBIGene:10879 & NCBIGene:7098')) // true
 }
 
 /* Get all results by using a scrolling query
