@@ -104,7 +104,7 @@ async function loadFilter(url='https://www.dropbox.com/s/1f14t5zaseocyg6/bte_che
       for (let j = i + 1; j < uniqueFigureCuriesListLength; j++) {
         k += 1;
         if (k % 10000000 === 0) {
-          console.log(`${(k/pfocrUniqueGenePairCount).toFixed(1)}% complete`);
+          console.log(`${Math.round((k / pfocrUniqueGenePairCount) * 100)}% complete`);
         }
         const secondCurie = uniqueFigureCuriesList[j];
         yield [firstCurie, secondCurie].join(' & ');
