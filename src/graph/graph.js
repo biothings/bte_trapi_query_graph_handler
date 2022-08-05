@@ -1,6 +1,7 @@
 const kg_edge = require('./kg_edge');
 const kg_node = require('./kg_node');
 const debug = require('debug')('bte:biothings-explorer-trapi:Graph');
+const biolink = require('../biolink')
 
 module.exports = class BTEGraph {
   constructor() {
@@ -89,6 +90,18 @@ module.exports = class BTEGraph {
       .filter((recordHash) => !resultsBoundEdges.has(recordHash));
     edgesToDelete.forEach((unusedRecordHash) => delete this.edges[unusedRecordHash]);
     debug(`pruned ${nodesToDelete.length} nodes and ${edgesToDelete.length} edges from BTEGraph.`);
+  }
+
+  useCanonicalDirection() {
+    Object.keys(this.edges).map(edgeID => {
+      const predicate = this.edges[edgeID].predicate.substring(8)
+      if (!biolink.isCanonical(predicate)) {
+        let temp = this.edges[edgeID].subject
+        this.edges[edgeID].subject = this.edges[edgeID].object
+        this.edges[edgeID].object = temp
+        this.edges[edgeID].predicate = 'biolink:' + biolink.reverse(predicate)
+      }
+    })
   }
 
   /**

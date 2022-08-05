@@ -769,6 +769,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     this.logs = [...this.logs, ...this.trapiResultsAssembler.logs];
     // prune bteGraph
     this.bteGraph.prune(this.trapiResultsAssembler.getResults());
+    this.bteGraph.useCanonicalDirection()
     this.bteGraph.notify();
     // finishing logs
     this.createSummaryLog(this.logs).forEach((log) => this.logs.push(log));

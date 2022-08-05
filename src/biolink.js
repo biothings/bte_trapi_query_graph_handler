@@ -13,6 +13,19 @@ class BioLinkModel {
     return BioLinkModel.instance;
   }
 
+  isCanonical(predicate) {
+    if (typeof predicate === 'string') {
+      if (predicate in this.biolink.slotTree.objects) {
+        console.log("slttree")
+        console.log(this.biolink.slotTree.objects[predicate])
+        if (this.biolink.slotTree.objects[predicate].canonical_predicate !== true) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
   reverse(predicate) {
     if (typeof predicate === 'string') {
       if (predicate in this.biolink.slotTree.objects) {
