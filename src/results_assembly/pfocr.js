@@ -17,7 +17,6 @@ const FIGURE_COUNT_MAX = 20;
  * is in the PFOCR dataset.
  * 
  * Trying multiple different implementations of Bloom filters.
- * The bloomit package seems best for this use case.
  * 
  * This is just proof-of-concept code.
  */
