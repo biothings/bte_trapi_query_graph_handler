@@ -11,9 +11,11 @@ module.exports = class BatchEdgeQueryHandler {
     this.subscribers = [];
     this.logs = [];
     this.caching = options && options.caching;
-    this.recordConfig = options && options.recordHashEdgeAttributes
-      ? {EDGE_ATTRIBUTES_USED_IN_RECORD_HASH: options.recordHashEdgeAttributes}
-      : {};
+    this.recordConfig = {};
+    if (options && options.recordHashEdgeAttributes) {
+      this.recordConfig.EDGE_ATTRIBUTES_USED_IN_RECORD_HASH = options.recordHashEdgeAttributes;
+    }
+    if (options && options.submitter) this.recordConfig.submitter = options.submitter;
     this.resolveOutputIDs = resolveOutputIDs;
   }
 
