@@ -417,20 +417,6 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         await handler.query();
         const response = handler.getResponse();
 
-        if (
-          // if query would add too many results, don't combine it
-          Object.keys(response.message.results).length + Object.keys(combinedResponse.message.results).length >
-            parseInt(CREATIVE_LIMIT) + 500 &&
-          Object.keys(combinedResponse.message.results).length > 0
-        ) {
-          stop = true;
-          const message = `Template ${i} exceeds absolute maximum of ${CREATIVE_LIMIT + 500} (${
-            Object.keys(response.message.results).length
-          }). These results will not be included. Skipping remaining ${subQueries.length - (i + 1)} templates.`;
-          debug(message);
-          combinedResponse.logs.push(new LogEntry(`INFO`, null, message).getLog());
-          return;
-        }
         // add non-duplicate nodes
         Object.entries(response.message.knowledge_graph.nodes).forEach(([curie, node]) => {
           if (!(curie in combinedResponse.message.knowledge_graph.nodes)) {
@@ -493,9 +479,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
             .join(',');
           const resultID = `${resultCreativeSubjectID}-${resultCreativeObjectID}`;
           if (resultID in combinedResponse.message.results) {
-            mergedResultsCount[resultID] = mergedResultsCount[resultID]
-              ? mergedResultsCount[resultID] + 1
-              : 2; // accounting for initial + first merged
+            mergedResultsCount[resultID] = mergedResultsCount[resultID] ? mergedResultsCount[resultID] + 1 : 2; // accounting for initial + first merged
             Object.entries(translatedResult.node_bindings).forEach(([nodeID, bindings]) => {
               combinedResponse.message.results[resultID].node_bindings[nodeID] = bindings;
             });
@@ -527,6 +511,22 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
 
           combinedResponse.logs.push(log);
         });
+
+        if (
+          // if query would add too many results, don't combine it
+          Object.keys(response.message.results).length + Object.keys(combinedResponse.message.results).length >
+            parseInt(CREATIVE_LIMIT) + 500 &&
+          Object.keys(combinedResponse.message.results).length > 0
+        ) {
+          stop = true;
+          const message = `Addition of ${
+            Object.keys(response.message.results).length
+          } results from Template ${i} would exceed absolute maximum of ${CREATIVE_LIMIT + 500}. After combination, response will be truncated to ${CREATIVE_LIMIT + 500} top results. Skipping remaining ${subQueries.length - (i + 1)} templates.`;
+          debug(message);
+          combinedResponse.logs.push(new LogEntry(`INFO`, null, message).getLog());
+          // return;
+        }
+        
         if (response.message.results.length) {
           resultQueries.push(i);
         }
@@ -541,7 +541,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         return;
       }
 
-      if (Object.keys(combinedResponse.message.results).length >= parseInt(CREATIVE_LIMIT)) {
+      if (Object.keys(combinedResponse.message.results).length >= parseInt(CREATIVE_LIMIT) && !stop) {
         stop = true;
         const message = `Reached Inferred Mode max result count (${
           Object.keys(combinedResponse.message.results).length
@@ -551,9 +551,37 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       }
     });
     combinedResponse.message.query_graph = this.queryGraph;
+    // sort records by score
     combinedResponse.message.results = Object.values(combinedResponse.message.results).sort((a, b) => {
       return b.score - a.score ? b.score - a.score : 0;
     });
+    // trim extra results and kg
+    combinedResponse.message.results = combinedResponse.message.results.slice(0, CREATIVE_LIMIT + 500);
+
+    debug('pruning creative combinedResponse nodes/edges...');
+    const resultsBoundNodes = new Set();
+    const resultsBoundEdges = new Set();
+
+    combinedResponse.message.results.forEach((result) => {
+      Object.entries(result.node_bindings).forEach(([node, bindings]) => {
+        bindings.forEach((binding) => resultsBoundNodes.add(binding.id));
+      });
+      Object.entries(result.edge_bindings).forEach(([edge, bindings]) => {
+        bindings.forEach((binding) => resultsBoundEdges.add(binding.id));
+      });
+    });
+
+    const nodesToDelete = Object.keys(combinedResponse.message.knowledge_graph.nodes).filter(
+      (bteNodeID) => !resultsBoundNodes.has(bteNodeID),
+    );
+    nodesToDelete.forEach((unusedBTENodeID) => delete combinedResponse.message.knowledge_graph.nodes[unusedBTENodeID]);
+    const edgesToDelete = Object.keys(combinedResponse.message.knowledge_graph.edges).filter(
+      (recordHash) => !resultsBoundEdges.has(recordHash),
+    );
+    edgesToDelete.forEach(
+      (unusedRecordHash) => delete combinedResponse.message.knowledge_graph.edges[unusedRecordHash],
+    );
+    debug(`pruned ${nodesToDelete.length} nodes and ${edgesToDelete.length} edges from combinedResponse.`);
 
     this.getResponse = () => {
       return combinedResponse;
@@ -562,9 +590,11 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       const total = Object.values(mergedResultsCount).reduce((sum, count) => sum + count, 0);
       combinedResponse.logs.push(
         new LogEntry(
-          "INFO",
+          'INFO',
           null,
-          `(${total}) inferred-template results were merged into (${Object.keys(mergedResultsCount).length}) final results.`,
+          `(${total}) inferred-template results were merged into (${
+            Object.keys(mergedResultsCount).length
+          }) final results.`,
         ).getLog(),
       );
     }
@@ -627,7 +657,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         } returned results from (${sources.length}) unique APIs ${sources === 1 ? 's' : ''}`,
       ).getLog(),
       new LogEntry('INFO', null, `APIs: ${sources.join(', ')}`).getLog(),
-    ]
+    ];
   }
 
   async query() {
