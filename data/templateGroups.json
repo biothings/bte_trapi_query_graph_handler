@@ -9,10 +9,10 @@
                "DiseaseOrPhenotypicFeature"
               ],
     "templates": [
-      "DoP-subclassDoP-Chem.json",
-      "m1-DoP-hasPheno-Chem.json",
-      "m4-DoP-causedByGene-Chem.json",
-      "m7-DoP-subclassDoP-hasPheno-Chem.json"
+      "Chem-subclassDoP-DoP.json",
+      "m1-Chem-Pheno-DoP.json",
+      "m4-Chem-Gene-DoP.json",
+      "m7-Chem-Pheno-subclassDoP-DoP.json"
     ]
   }
 ]

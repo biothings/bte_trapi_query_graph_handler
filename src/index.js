@@ -62,7 +62,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
 
   getResponse() {
     return {
-      workflow: [{ id: 'lookup' }],
+      workflow: [{ id: 'lookup_and_score' }],
       message: {
         query_graph: this.queryGraph,
         knowledge_graph: this.knowledgeGraph.kg,
@@ -389,7 +389,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     });
 
     const combinedResponse = {
-      workflow: [{ id: 'lookup' }],
+      workflow: [{ id: 'lookup_and_score' }],
       message: {
         query_graph: {},
         knowledge_graph: {
@@ -564,12 +564,30 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       const total = Object.values(mergedResultsCount).reduce((sum, count) => sum + count, 0);
       combinedResponse.logs.push(
         new LogEntry(
+          "INFO",
+          null,
           `(${total}) inferred-template results were merged into (${Object.keys(mergedResultsCount).length}) final results.`,
         ).getLog(),
       );
     }
     if (successfulQueries) {
       this.createSummaryLog(combinedResponse.logs, resultQueries).forEach((log) => combinedResponse.logs.push(log));
+      let scoredResults = 0;
+      let unscoredResults = 0;
+      combinedResponse.message.results.forEach((result) => {
+        if (result.score > 0) {
+          scoredResults += 1;
+        } else {
+          unscoredResults += 1;
+        }
+      });
+      combinedResponse.logs.push(
+        new LogEntry(
+          'INFO',
+          null,
+          `Scoring Summary: (${scoredResults}) scored / (${unscoredResults}) unscored`,
+        ).getLog(),
+      );
     }
     combinedResponse.logs = combinedResponse.logs.map((log) => log.toJSON());
   }
@@ -601,16 +619,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       ),
     ];
     let cached = logs.filter(({ data }) => data?.type === 'cacheHit').length;
-    let scored = 0;
-    let unscored = 0;
-    const scoreLogs = logs.filter(({ data }) => {
-      const correctType = data?.type === 'scoring';
-      return correctType;
-    });
-    scoreLogs.forEach((scoreLog) => {
-      scored += scoreLog['data']['scored'];
-      unscored += scoreLog['data']['unscored'];
-    });
+
     return [
       new LogEntry(
         'INFO',
@@ -620,11 +629,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         } returned results from (${sources.length}) unique APIs ${sources === 1 ? 's' : ''}`,
       ).getLog(),
       new LogEntry('INFO', null, `APIs: ${sources.join(', ')}`).getLog(),
-    ].concat(
-      resultTemplates !== undefined
-        ? new LogEntry('INFO', null, `Scoring Summary: (${scored}) scored / (${unscored}) unscored`).getLog()
-        : [],
-    );
+    ]
   }
 
   async _checkContraints() {
