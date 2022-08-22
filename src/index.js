@@ -512,25 +512,28 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
           combinedResponse.logs.push(log);
         });
 
-        if (
-          // if query would add too many results, don't combine it
-          Object.keys(response.message.results).length + Object.keys(combinedResponse.message.results).length >
-            parseInt(CREATIVE_LIMIT) + 500 &&
-          Object.keys(combinedResponse.message.results).length > 0
-        ) {
-          stop = true;
-          const message = `Addition of ${
-            Object.keys(response.message.results).length
-          } results from Template ${i} would exceed absolute maximum of ${CREATIVE_LIMIT + 500}. After combination, response will be truncated to ${CREATIVE_LIMIT + 500} top results. Skipping remaining ${subQueries.length - (i + 1)} templates.`;
-          debug(message);
-          combinedResponse.logs.push(new LogEntry(`INFO`, null, message).getLog());
-          // return;
-        }
-        
         if (response.message.results.length) {
           resultQueries.push(i);
         }
         successfulQueries += 1;
+
+        if (Object.keys(combinedResponse.message.results).length >= CREATIVE_LIMIT && !stop) {
+          stop = true;
+          const message = [
+            `Addition of ${Object.keys(response.message.results).length} results from Template ${i}`,
+            Object.keys(combinedResponse.message.results).length === CREATIVE_LIMIT ? ' meets ' : ' exceeds ',
+            `creative result maximum of ${CREATIVE_LIMIT} (reaching ${
+              Object.keys(combinedResponse.message.results).length
+            } merged). `,
+            `Response will be truncated to top-scoring ${CREATIVE_LIMIT} results. Skipping remaining ${
+              subQueries.length - (i + 1)
+            } `,
+            subQueries.length - (i + 1) === 1 ? `template.` : `templates.`
+          ].join('');
+          debug(message);
+          combinedResponse.logs.push(new LogEntry(`INFO`, null, message).getLog());
+        }
+
       } catch (error) {
         handler.logs.forEach((log) => {
           combinedResponse.logs.push(log);
@@ -541,14 +544,6 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         return;
       }
 
-      if (Object.keys(combinedResponse.message.results).length >= parseInt(CREATIVE_LIMIT) && !stop) {
-        stop = true;
-        const message = `Reached Inferred Mode max result count (${
-          Object.keys(combinedResponse.message.results).length
-        }/${CREATIVE_LIMIT}), skipping remaining ${subQueries.length - (i + 1)} templates`;
-        debug(message);
-        combinedResponse.logs.push(new LogEntry(`INFO`, null, message).getLog());
-      }
     });
     combinedResponse.message.query_graph = this.queryGraph;
     // sort records by score
@@ -556,7 +551,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       return b.score - a.score ? b.score - a.score : 0;
     });
     // trim extra results and kg
-    combinedResponse.message.results = combinedResponse.message.results.slice(0, CREATIVE_LIMIT + 500);
+    combinedResponse.message.results = combinedResponse.message.results.slice(0, CREATIVE_LIMIT);
 
     debug('pruning creative combinedResponse nodes/edges...');
     const resultsBoundNodes = new Set();
