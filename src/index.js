@@ -60,7 +60,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
 
   getResponse() {
     return {
-      workflow: [{ id: 'lookup_and_score' }],
+      workflow: [{ id: 'lookup' }],
       message: {
         query_graph: this.queryGraph,
         knowledge_graph: this.knowledgeGraph.kg,
@@ -387,7 +387,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     });
 
     const combinedResponse = {
-      workflow: [{ id: 'lookup_and_score' }],
+      workflow: [{ id: 'lookup' }],
       message: {
         query_graph: {},
         knowledge_graph: {
