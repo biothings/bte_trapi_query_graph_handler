@@ -99,6 +99,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       if (err instanceof InvalidQueryGraphError) {
         throw err;
       } else {
+        console.log(err)
         throw new InvalidQueryGraphError();
       }
     }
@@ -569,7 +570,8 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       );
     }
     if (successfulQueries) {
-      this.createSummaryLog(combinedResponse.logs, resultQueries).forEach((log) => combinedResponse.logs.push(log));
+      const summaryData = this.createSummaryLog(combinedResponse.logs, resultQueries)
+      summaryData.logs.forEach((log) => combinedResponse.logs.push(log));
       let scoredResults = 0;
       let unscoredResults = 0;
       combinedResponse.message.results.forEach((result) => {
@@ -591,6 +593,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   }
 
   createSummaryLog(logs, resultTemplates = undefined) {
+    debug(`Summary logs with ${logs}`)
     const response = this.getResponse();
     const KGNodes = Object.keys(response.message.knowledge_graph.nodes).length;
     const kgEdges = Object.keys(response.message.knowledge_graph.edges).length;
@@ -603,6 +606,21 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       return correctType;
     }).length;
     const queries = logs.filter(({ data }) => data?.type === 'query').length;
+
+    const queriedSources = [
+      ...new Set(
+        logs
+          .filter(({ message, data }) => {
+            const correctType = data?.type === 'query';
+            if (resultTemplates) {
+              return correctType && resultTemplates.some((queryIndex) => message.includes(`[Template-${queryIndex}]`));
+            }
+            return correctType;
+          })
+          .map(({ data }) => data?.api_name),
+      ),
+    ];
+
     const sources = [
       ...new Set(
         logs
@@ -618,16 +636,21 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     ];
     let cached = logs.filter(({ data }) => data?.type === 'cacheHit').length;
 
-    return [
-      new LogEntry(
-        'INFO',
-        null,
-        `Execution Summary: (${KGNodes}) nodes / (${kgEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${
-          cached ? ` (${cached} cached qEdges)` : ''
-        } returned results from (${sources.length}) unique APIs ${sources === 1 ? 's' : ''}`,
-      ).getLog(),
-      new LogEntry('INFO', null, `APIs: ${sources.join(', ')}`).getLog(),
-    ]
+    return {
+      logs: [
+        new LogEntry(
+          'INFO',
+          null,
+          `Execution Summary: (${KGNodes}) nodes / (${kgEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${
+            cached ? ` (${cached} cached qEdges)` : ''
+          } returned results from (${sources.length}) unique APIs ${sources === 1 ? 's' : ''}, querying a total of ${queriedSources.length} sources`,
+        ).getLog(),
+        new LogEntry('INFO', null, `APIs: ${sources.join(', ')}`).getLog(),
+      ],
+      data: {
+        queriedSourcesCount: queriedSources.length
+      }
+    }
   }
 
   async query() {
@@ -771,7 +794,10 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     this.bteGraph.prune(this.trapiResultsAssembler.getResults());
     this.bteGraph.notify();
     // finishing logs
-    this.createSummaryLog(this.logs).forEach((log) => this.logs.push(log));
+    const summaryData = this.createSummaryLog(this.logs)
+    summaryData.logs.forEach((log) => this.logs.push(log));
     debug(`(14) TRAPI query finished.`);
+    
+    return summaryData.data;
   }
 };
