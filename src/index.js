@@ -14,7 +14,7 @@ const LogEntry = require('./log_entry');
 const { redisClient } = require('./redis-client');
 const config = require('./config');
 const fs = require('fs').promises;
-const { getTemplates } = require('./template_lookup');
+const { getTemplates, supportedLookups } = require('./template_lookup');
 const utils = require('./utils');
 const async = require('async');
 const biolink = require('./biolink');
@@ -22,6 +22,8 @@ const biolink = require('./biolink');
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 exports.redisClient = redisClient;
 exports.LogEntry = LogEntry;
+exports.getTemplates = getTemplates;
+exports.supportedLookups = supportedLookups;
 
 exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   constructor(options = {}, smartAPIPath = undefined, predicatesPath = undefined, includeReasoner = true) {
@@ -107,6 +109,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   _createBatchEdgeQueryHandlersForCurrent(currentQXEdge, metaKG) {
     let handler = new BatchEdgeQueryHandler(metaKG, this.resolveOutputIDs, {
       caching: this.options.caching,
+      submitter: this.options.submitter,
       recordHashEdgeAttributes: config.EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,
     });
     handler.setEdges(currentQXEdge);
@@ -196,8 +199,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   }
 
   async _logSkippedQueries(unavailableAPIs) {
-    Object.entries(unavailableAPIs).forEach(([api, skippedQueries]) => {
-      skippedQueries -= 1; // first failed is not 'skipped'
+    Object.entries(unavailableAPIs).forEach(([api, { skippedQueries }]) => {
       if (skippedQueries > 0) {
         const skipMessage = `${skippedQueries} additional quer${skippedQueries > 1 ? 'ies' : 'y'} to ${api} ${
           skippedQueries > 1 ? 'were' : 'was'
@@ -655,6 +657,30 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     ];
   }
 
+  async _checkContraints() {
+    const constraints = new Set();
+    Object.values(this.queryGraph).forEach((item) => {
+      Object.values(item).forEach((element) => {
+        element.constraints?.forEach(constraint => constraints.add(constraint.name));
+        element.attribute_constraints?.forEach(constraint => constraints.add(constraint.name));
+        element.qualifier_constraints?.forEach(constraint => constraints.add(constraint.name));
+      });
+    });
+    if (constraints.size) {
+      this.logs.push(new LogEntry(
+        "ERROR",
+        "UnsupportedAttributeConstraint",
+        `Unsupported Attribute Constraints: [${[...constraints].join(", ")}]`
+      ).getLog())
+      this.logs.push(new LogEntry(
+        "ERROR",
+        null,
+        `BTE does not currently support any type of constraint. Your query Terminates.`
+      ).getLog())
+      return true;
+    }
+  }
+
   async query() {
     this._initializeResponse();
     debug('Start to load metakg.');
@@ -684,6 +710,10 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       );
     }
     let queryExecutionEdges = await this._processQueryGraph(this.queryGraph);
+    // TODO remove this when constraints implemented
+    if (await this._checkContraints()) {
+      return;
+    }
     if ((this.options.smartAPIID || this.options.teamName) && Object.values(this.queryGraph.edges).length > 1) {
       const message = 'smartAPI/team-specific endpoints only support single-edge queries. Your query terminates.';
       this.logs.push(new LogEntry('WARNING', null, message).getLog());

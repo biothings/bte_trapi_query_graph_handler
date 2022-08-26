@@ -1,9 +1,13 @@
 [
   {
     "name": "Drug treats Disease",
-    "subject": ["Drug", "SmallMolecule"],
+    "subject": ["Drug", "SmallMolecule", 
+                "ChemicalEntity", "ComplexMolecularMixture", "MolecularMixture"
+               ],
     "predicate": ["treats", "ameliorates"],
-    "object": ["Disease", "PhenotypicFeature"],
+    "object": ["Disease", "PhenotypicFeature",
+               "DiseaseOrPhenotypicFeature"
+              ],
     "templates": [
       "Chem-subclassDoP-DoP.json",
       "m1-Chem-Pheno-DoP.json",
