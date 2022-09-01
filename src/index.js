@@ -18,6 +18,7 @@ const { getTemplates, supportedLookups } = require('./template_lookup');
 const utils = require('./utils');
 const async = require('async');
 const biolink = require('./biolink');
+const id_resolver = require('biomedical_id_resolver');
 
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 exports.redisClient = redisClient;
@@ -98,7 +99,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       this.logs = [...this.logs, ...queryGraphHandler.logs];
       return queryExecutionEdges;
     } catch (err) {
-      if (err instanceof InvalidQueryGraphError) {
+      if (err instanceof InvalidQueryGraphError || err instanceof id_resolver.SRIResolverFailiure) {
         throw err;
       } else {
         throw new InvalidQueryGraphError();
