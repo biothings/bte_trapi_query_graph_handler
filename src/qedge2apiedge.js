@@ -164,6 +164,11 @@ module.exports = class QEdge2APIEdgeHandler {
       batchSize = 1000;
     }
     let configuredLimit = metaXEdge.query_operation.batchSize;
+    if (metaXEdge.association["x-trapi"]?.batch_size_limit) {
+      configuredLimit = metaXEdge.association["x-trapi"].batch_size_limit < configuredLimit || !configuredLimit
+        ? metaXEdge.association["x-trapi"].batch_size_limit
+        : configuredLimit;
+    }
     let hardLimit = config.API_BATCH_SIZE.find((api) => {
       return api.id === metaXEdge.association.smartapi.id || api.name === metaXEdge.association.api_name;
     });
