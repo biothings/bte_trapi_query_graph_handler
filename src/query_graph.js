@@ -210,15 +210,15 @@ module.exports = class QueryGraphHandler {
       for (let qNodeID in this.queryGraph.nodes) {
         //if node has ID but no categories
         if (
-          (!Object.hasOwnProperty.call(this.queryGraph.nodes[qNodeID], 'categories') &&
-          Object.hasOwnProperty.call(this.queryGraph.nodes[qNodeID], 'ids')) ||
-          (Object.hasOwnProperty.call(this.queryGraph.nodes[qNodeID], 'categories') &&
+          (!this.queryGraph.nodes[qNodeID].categories &&
+          this.queryGraph.nodes[qNodeID].ids) ||
+          (this.queryGraph.nodes[qNodeID].categories &&
           // this.queryGraph.nodes[qNodeID].categories.length == 0 &&
-          Object.hasOwnProperty.call(this.queryGraph.nodes[qNodeID], 'ids'))
+          this.queryGraph.nodes[qNodeID].ids)
           ) {
           let userAssignedCategories = this.queryGraph.nodes[qNodeID].categories;
           let categories = await this._findNodeCategories(this.queryGraph.nodes[qNodeID].ids)
-          if (typeof userAssignedCategories !== 'undefined') {
+          if (userAssignedCategories) {
             userAssignedCategories = [...userAssignedCategories]; // new Array for accurate logging after node updated
             categories = categories.filter((category) => !userAssignedCategories.includes(category));
           }
@@ -238,7 +238,7 @@ module.exports = class QueryGraphHandler {
                   `with id${this.queryGraph.nodes[qNodeID].ids.length > 1 ? 's' : ''} `,
                   `[${this.queryGraph.nodes[qNodeID].ids.join(', ')}] `,
                   `${
-                    typeof userAssignedCategories !== 'undefined' && userAssignedCategories.length
+                    userAssignedCategories && userAssignedCategories.length
                     ? `and categor${userAssignedCategories.length === 1 ? 'y' : 'ies'} [${userAssignedCategories.join(', ')}] augmented with`
                     : `assigned`
                   } `,
