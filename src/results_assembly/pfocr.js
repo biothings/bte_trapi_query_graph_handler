@@ -3,6 +3,7 @@ const axios = require('axios');
 const debug = require('debug')('bte:biothings-explorer-trapi:pfocr');
 const { intersection } = require('../utils');
 const { _, merge } = require('lodash');
+const { default: Analyze } = require('chi-square-p-value');
 
 // the minimum acceptable intersection size between the CURIEs
 // in a TRAPI result and in a PFOCR figure.
@@ -170,6 +171,12 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
 
   const matchedFigures = new Set();
   const matchedTrapiResults = new Set();
+
+  const allGenesInAllFigures = figures.reduce((set, fig) => {
+    fig.associatedWith.mentions.genes.ncbigene.forEach((gene) => set.add(gene));
+    return set;
+  }, new Set()).size;
+
   for (const trapiResult of allTrapiResults) {
     // No figures match this result
     if (!figuresByCuries[trapiResultToCurieSet.get(trapiResult)]) {
@@ -180,10 +187,20 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
       debug(`Truncating PFOCR figures at ${FIGURE_COUNT_MAX} for TRAPI result w/ ${trapiResultToCurieSet.get(trapiResult)}`)
     }
 
-    // TODO sort figures by chi-square score here
+    const resultCuries = new Set();
+      [...matchableQNodeIDs].forEach((QNodeID) => {
+        trapiResult.node_bindings[QNodeID].map((node_binding) => node_binding.id)
+          .filter((curie) => curie.startsWith('NCBIGene:'))
+          .forEach((curie) => {
+            resultCuries.add(curie.replace('NCBIGene:', ''));
+          });
+      });
 
-    // Take top 20
-    figuresByCuries[trapiResultToCurieSet.get(trapiResult)].slice(0, FIGURE_COUNT_MAX).forEach((figure) => {
+    const resultGenesInAllFigures = figures.filter((fig) => {
+      return fig.associatedWith.mentions.genes.ncbigene.some((gene) => resultCuries.has(gene));
+    }).length;
+
+    figuresByCuries[trapiResultToCurieSet.get(trapiResult)].forEach((figure) => {
       if (!trapiResult.hasOwnProperty('pfocr')) {
         trapiResult.pfocr = [];
       }
@@ -204,6 +221,20 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
           ).size > 0
         );
       });
+
+      const figureCurieSet = new Set(figure.associatedWith.mentions.genes.ncbigene)
+
+      const resultGenesInFigure = intersection(
+        resultCuries,
+        figureCurieSet,
+      ).size;
+
+      const otherGenesInFigure = figureCurieSet.size - resultGenesInFigure;
+
+      let resultGenesInOtherFigures = resultGenesInAllFigures - resultGenesInFigure;
+      let otherGenesInOtherFigures = allGenesInAllFigures - resultGenesInOtherFigures;
+
+
       trapiResult.pfocr.push({
         figureUrl: figure.associatedWith.figureUrl,
         pmc: figure.associatedWith.pmc,
@@ -212,10 +243,21 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
         nodes: matchedQNodes,
         // TODO: do we want to include the list of matched CURIEs?
         // TODO: add score
+        score: 1 - parseFloat(Analyze([
+          [resultGenesInFigure, resultGenesInOtherFigures],
+          [otherGenesInFigure, otherGenesInOtherFigures],
+        ]).pValue)
       });
       matchedFigures.add(figure);
       matchedTrapiResults.add(trapiResult);
     });
+
+    // Sort by score and cut down to top 20
+    trapiResult.pfocr = trapiResult.pfocr.sort((figA, figB) => {
+      return figB.score - figA.score;
+    })
+    // .slice(0, 20);
+
   }
 
   // Each of the matched figures has at least one TRAPI result with an overlap of 2+ genes.
