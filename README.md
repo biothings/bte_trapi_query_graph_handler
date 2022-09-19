@@ -2,7 +2,7 @@
 
 A on-the-fly query engine for BioThings Explorer based on TRAPI Query Graph.
 
-[![Test Codecov with Workspace](https://github.com/biothings/bte_trapi_query_graph_handler/actions/workflows/test_ws_codecov.yml/badge.svg)](https://github.com/biothings/bte_trapi_query_graph_handler/actions/workflows/test_ws_codecov.yml)
+[![Test in workspace](https://github.com/biothings/bte_trapi_query_graph_handler/actions/workflows/test_ws_codecov.yml/badge.svg)](https://github.com/biothings/bte_trapi_query_graph_handler/actions/workflows/test_ws_codecov.yml)
 [![codecov](https://codecov.io/gh/biothings/bte_trapi_query_graph_handler/branch/main/graph/badge.svg?token=46CCUK5EYC)](https://codecov.io/gh/biothings/bte_trapi_query_graph_handler)
 
 ## Install
