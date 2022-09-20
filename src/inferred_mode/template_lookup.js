@@ -13,13 +13,13 @@ exports.getTemplates = async (lookups) => {
       return [...arr, fPath];
     });
   };
-  const templatePathsOnly = await getFiles(path.resolve(__dirname, '../data/templates'));
+  const templatePathsOnly = await getFiles(path.resolve(__dirname, '../../data/templates'));
   const templatePaths = Object.fromEntries(
     templatePathsOnly.map((templatePath) => {
       return [path.basename(templatePath), templatePath];
     }),
   );
-  const templateGroups = JSON.parse(await fs.readFile(path.resolve(__dirname, '../data/templateGroups.json')));
+  const templateGroups = JSON.parse(await fs.readFile(path.resolve(__dirname, '../../data/templateGroups.json')));
   const matchingTemplatePaths = [
     ...templateGroups.reduce((matches, group) => {
       const lookupMatch = lookups.some((lookup) => {
@@ -47,7 +47,7 @@ exports.getTemplates = async (lookups) => {
 
 exports.supportedLookups = async () => {
   const edges = new Set();
-  const templateGroups = JSON.parse(await fs.readFile(path.resolve(__dirname, '../data/templateGroups.json')));
+  const templateGroups = JSON.parse(await fs.readFile(path.resolve(__dirname, '../../data/templateGroups.json')));
   templateGroups.forEach((group) => {
     group.subject.forEach((subject) => {
       group.predicate.forEach((predicate) => {
