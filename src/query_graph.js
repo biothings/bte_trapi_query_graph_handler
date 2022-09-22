@@ -21,6 +21,15 @@ module.exports = class QueryGraphHandler {
     }
   }
 
+  _validateOneNodeID(queryGraph) {
+    for (let nodeID in queryGraph.nodes) {
+      if (queryGraph.nodes[nodeID] && queryGraph.nodes[nodeID]?.ids?.length > 0) {
+        return;
+      }
+    }
+    throw new InvalidQueryGraphError('No Query Node has an ID');
+  }
+
   _validateEmptyEdges(queryGraph) {
     if (Object.keys(queryGraph.edges).length === 0) {
       throw new InvalidQueryGraphError('Your Query Graph has no edges defined.');
@@ -86,6 +95,7 @@ module.exports = class QueryGraphHandler {
   _validate(queryGraph) {
     this._validateEmptyEdges(queryGraph);
     this._validateEmptyNodes(queryGraph);
+    this._validateOneNodeID(queryGraph);
     this._validateNodeEdgeCorrespondence(queryGraph);
     this._validateDuplicateEdges(queryGraph)
     this._validateCycles(queryGraph);
