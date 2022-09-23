@@ -60,6 +60,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
    * @param {object} queryGraph - TRAPI Query Graph Object
    */
   setQueryGraph(queryGraph) {
+    this.queryGraph = queryGraph;
     for (const nodeId in queryGraph.nodes) {
       if (Object.hasOwnProperty.call(queryGraph.nodes, nodeId)) {
         const currentNode = queryGraph.nodes[nodeId];
@@ -74,10 +75,13 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         }
       }
       // perform node expansion
-      if (queryGraph.nodes[nodeId].ids) {
+      if (queryGraph.nodes[nodeId].ids && !this._queryUsesInferredMode()) {
         let expanded = Object.values(getDescendants(queryGraph.nodes[nodeId].ids)).flat();
+        console.log(expanded.length);
         expanded = _.uniq([...queryGraph.nodes[nodeId].ids, ...expanded]);
-        debug(`Expanded ids for node ${nodeId}: (${queryGraph.nodes[nodeId].ids.length} ids -> ${expanded.length} ids)`);
+        let log_msg = `Expanded ids for node ${nodeId}: (${queryGraph.nodes[nodeId].ids.length} ids -> ${expanded.length} ids)`;
+        debug(log_msg);
+        this.logs.push(new LogEntry('INFO', null, log_msg).getLog());
         queryGraph.nodes[nodeId].ids = expanded;
       }
     }
