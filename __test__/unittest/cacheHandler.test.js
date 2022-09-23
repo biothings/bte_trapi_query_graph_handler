@@ -267,9 +267,30 @@ describe('test cache handler', () => {
     const CacheHandler = require('../../src/cache_handler');
     const cacheHandler = new CacheHandler(true);
     const redisClient = new Redis();
-    jest.setTimeout(30000);
 
     await cacheHandler.cacheEdges(records);
-    const {cachedRecords, nonCachedQXEdges } = await cacheHandler.categorizeEdges([records[0].qXEdge]);
+    const qXEdges = Object.values(
+      records.reduce((obj, record) => {
+        if (!(record.qXEdge.getHashedEdgeRepresentation() in obj)) {
+          obj[record.qXEdge.getHashedEdgeRepresentation()] = record.qXEdge;
+        }
+        return obj;
+      }, {}),
+    );
+    const { cachedRecords, nonCachedQXEdges } = await cacheHandler.categorizeEdges(qXEdges);
+    expect(nonCachedQXEdges).toHaveLength(0);
+    expect(cachedRecords).toHaveLength(records.length);
+    // TODO get each record sorted by hash to compare individually
+    const originalRecordHashes = records.reduce((set, record) => {
+      set.add(record.recordHash);
+      return set;
+    }, new Set());
+    const cachedRecordHashes = cachedRecords.reduce((set, record) => {
+      set.add(record.recordHash);
+      return set;
+    }, new Set());
+    const setsMatch = [...originalRecordHashes].every((hash) => cachedRecordHashes.has(hash));
+    expect(originalRecordHashes.size).toEqual(cachedRecordHashes.size);
+    expect(setsMatch).toBeTruthy();
   });
 });
