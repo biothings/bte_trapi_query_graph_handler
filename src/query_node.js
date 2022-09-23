@@ -208,7 +208,7 @@ module.exports = class QNode {
     }
 
     hasInput() {
-        return !(typeof this.curie === 'undefined');
+        return !(this.curie === undefined || this.curie === null);
     }
 
     hasEquivalentIDs() {
