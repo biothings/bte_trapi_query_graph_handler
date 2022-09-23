@@ -83,11 +83,57 @@ module.exports = class QueryGraphHandler {
     }
   }
 
+  _validateNodeProperties(queryGraph) {
+    const nodeProperties = new Set(["ids", "categories", "is_set", "constraints"]);
+    const badProperties = new Set();
+    for (const nodeID in queryGraph.nodes) {
+      for (const property in queryGraph.nodes[nodeID]) {
+        if (!nodeProperties.has(property)) {
+          badProperties.add(property);
+        }
+      }
+    }
+
+    if (badProperties.size !== 0) {
+      this.logs.push(
+        new LogEntry(
+          'WARNING',
+          null,
+          `We've encountered one or more properties on a QNode that we don't recognize: ${Array.from(badProperties).join(',')}. We will ignore them and continue execution.`,
+        ).getLog()
+      );
+    }
+  }
+
+  _validateEdgeProperties(queryGraph) {
+    const edgeProperties = new Set(["predicates", "subject", "object", "constraints"]);
+    const badProperties = new Set();
+    for (const edgeID in queryGraph.edges) {
+      for (const property in queryGraph.edges[edgeID]) {
+        if (!edgeProperties.has(property)) {
+          badProperties.add(property);
+        }
+      }
+    }
+
+    if (badProperties.size !== 0) {
+      this.logs.push(
+        new LogEntry(
+          'WARNING',
+          null,
+          `We've encountered one or more properties on a QEdge that we don't recognize: ${Array.from(badProperties).join(',')}. We will ignore them and continue execution.`,
+        ).getLog()
+      );
+    }
+  }
+
   _validate(queryGraph) {
     this._validateEmptyEdges(queryGraph);
     this._validateEmptyNodes(queryGraph);
     this._validateNodeEdgeCorrespondence(queryGraph);
-    this._validateDuplicateEdges(queryGraph)
+    this._validateDuplicateEdges(queryGraph);
+    this._validateNodeProperties(queryGraph);
+    this._validateEdgeProperties(queryGraph);
     this._validateCycles(queryGraph);
   }
 
