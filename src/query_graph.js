@@ -27,7 +27,7 @@ module.exports = class QueryGraphHandler {
         return;
       }
     }
-    throw new InvalidQueryGraphError('No Query Node has an ID');
+    throw new InvalidQueryGraphError('body/message.query_graph.nodes should contain at least one node with at least one non-null id');
   }
 
   _validateEmptyEdges(queryGraph) {
