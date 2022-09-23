@@ -437,7 +437,7 @@ module.exports = class QueryExecutionEdge {
   }
 
   getPredicate() {
-    if (this.qEdge.predicate === undefined) {
+    if (this.qEdge.predicate === undefined || this.qEdge.predicate === null) {
       return undefined;
     }
     const predicates = utils.toArray(this.qEdge.predicate).map((item) => utils.removeBioLinkPrefix(item));
