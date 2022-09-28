@@ -256,7 +256,7 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
     trapiResult.pfocr = trapiResult.pfocr.sort((figA, figB) => {
       return figB.score - figA.score;
     })
-    // .slice(0, 20);
+    .slice(0, 20);
 
   }
 
