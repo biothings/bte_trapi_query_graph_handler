@@ -245,7 +245,7 @@ module.exports = class {
                   resolve();
                 });
             });
-            await redisClient.client.expireTimeout(redisID, process.env.REDIS_KEY_EXPIRE_TIME || 600);
+            await redisClient.client.expireTimeout(redisID, process.env.REDIS_KEY_EXPIRE_TIME || 1800);
           } catch (error) {
             failedHashes.push(hash);
             debug(`Failed to cache qXEdge ${hash} records due to error ${error}. This does not stop other edges from caching nor terminate the query.`)
