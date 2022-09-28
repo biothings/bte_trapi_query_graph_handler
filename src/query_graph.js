@@ -21,6 +21,15 @@ module.exports = class QueryGraphHandler {
     }
   }
 
+  _validateOneNodeID(queryGraph) {
+    for (let nodeID in queryGraph.nodes) {
+      if (queryGraph.nodes[nodeID] && queryGraph.nodes[nodeID]?.ids?.length > 0) {
+        return;
+      }
+    }
+    throw new InvalidQueryGraphError('body/message.query_graph.nodes should contain at least one node with at least one non-null id');
+  }
+
   _validateEmptyEdges(queryGraph) {
     if (Object.keys(queryGraph.edges).length === 0) {
       throw new InvalidQueryGraphError('Your Query Graph has no edges defined.');
@@ -38,10 +47,58 @@ module.exports = class QueryGraphHandler {
     }
   }
 
+  _validateDuplicateEdges(queryGraph) {
+    const edgeSet = new Set()
+    for (const edgeID in queryGraph.edges) {
+      const subject = queryGraph.edges[edgeID].subject
+      const object = queryGraph.edges[edgeID].object
+      if (edgeSet.has(`${subject}-${object}`) || edgeSet.has(`${object}-${subject}`)) {
+        throw new InvalidQueryGraphError("Multiple edges between two nodes.");
+      }
+      edgeSet.add(`${subject}-${object}`)
+    }
+  }
+
+  _validateCycles(queryGraph) {
+    const nodes = {}
+    for (const nodeID in queryGraph.nodes) {
+      nodes[nodeID] = {
+        connections: new Set(),
+        visited: false
+      };
+    }
+    
+    for (const edgeID in queryGraph.edges) {
+      const edge = queryGraph.edges[edgeID]
+      nodes[edge.subject].connections.add(edge.object)
+      nodes[edge.object].connections.add(edge.subject)
+    }
+      
+    for (const firstNode in nodes) {
+      if (nodes[firstNode].visited === true) continue;
+      const stack = [{curNode: firstNode, parent: -1}]
+      nodes[firstNode].visited = true
+      while (stack.length !== 0) {
+        const {curNode, parent} = stack.pop()
+        for (const conNode of nodes[curNode].connections) {
+          if (conNode == parent) continue;
+          if (nodes[conNode].visited === true) {
+            throw new InvalidQueryGraphError("The query graph contains a cycle.");
+          }
+          stack.push({curNode: conNode, parent: curNode})
+          nodes[conNode].visited = true
+        }
+      }
+    }
+  }
+
   _validate(queryGraph) {
     this._validateEmptyEdges(queryGraph);
     this._validateEmptyNodes(queryGraph);
+    this._validateOneNodeID(queryGraph);
     this._validateNodeEdgeCorrespondence(queryGraph);
+    this._validateDuplicateEdges(queryGraph)
+    this._validateCycles(queryGraph);
   }
 
   /**
@@ -163,15 +220,15 @@ module.exports = class QueryGraphHandler {
       for (let qNodeID in this.queryGraph.nodes) {
         //if node has ID but no categories
         if (
-          (!Object.hasOwnProperty.call(this.queryGraph.nodes[qNodeID], 'categories') &&
-          Object.hasOwnProperty.call(this.queryGraph.nodes[qNodeID], 'ids')) ||
-          (Object.hasOwnProperty.call(this.queryGraph.nodes[qNodeID], 'categories') &&
+          (!this.queryGraph.nodes[qNodeID].categories &&
+          this.queryGraph.nodes[qNodeID].ids) ||
+          (this.queryGraph.nodes[qNodeID].categories &&
           // this.queryGraph.nodes[qNodeID].categories.length == 0 &&
-          Object.hasOwnProperty.call(this.queryGraph.nodes[qNodeID], 'ids'))
+          this.queryGraph.nodes[qNodeID].ids)
           ) {
           let userAssignedCategories = this.queryGraph.nodes[qNodeID].categories;
           let categories = await this._findNodeCategories(this.queryGraph.nodes[qNodeID].ids)
-          if (typeof userAssignedCategories !== 'undefined') {
+          if (userAssignedCategories) {
             userAssignedCategories = [...userAssignedCategories]; // new Array for accurate logging after node updated
             categories = categories.filter((category) => !userAssignedCategories.includes(category));
           }
@@ -191,7 +248,7 @@ module.exports = class QueryGraphHandler {
                   `with id${this.queryGraph.nodes[qNodeID].ids.length > 1 ? 's' : ''} `,
                   `[${this.queryGraph.nodes[qNodeID].ids.join(', ')}] `,
                   `${
-                    typeof userAssignedCategories !== 'undefined' && userAssignedCategories.length
+                    userAssignedCategories && userAssignedCategories.length
                     ? `and categor${userAssignedCategories.length === 1 ? 'y' : 'ies'} [${userAssignedCategories.join(', ')}] augmented with`
                     : `assigned`
                   } `,

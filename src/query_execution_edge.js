@@ -292,11 +292,11 @@ module.exports = class QueryExecutionEdge {
   meetsConstraint(constraint, record, from) {
     //list of attribute ids in node
     let available_attributes = new Set();
-    for (const key in record[from].obj[0].attributes) {
+    for (const key in record[from].attributes) {
       available_attributes.add(key)
     }
     available_attributes = [...available_attributes];
-    // debug(`ATTRS ${JSON.stringify(record[from].obj[0]._leafSemanticType)}` +
+    // debug(`ATTRS ${JSON.stringify(record[from].normalizedInfo[0]._leafSemanticType)}` +
     // ` ${from} : ${JSON.stringify(available_attributes)}`);
     //determine if node even contains right attributes
     let filters_found = available_attributes.filter((attr) => attr == constraint.id);
@@ -307,7 +307,7 @@ module.exports = class QueryExecutionEdge {
       //match attr by name, parse only attrs of interest
       let node_attributes = {};
       filters_found.forEach((filter) => {
-        node_attributes[filter] = record[from].obj[0].attributes[filter];
+        node_attributes[filter] = record[from].attributes[filter];
       });
       switch (constraint.operator) {
         case "==":
@@ -437,7 +437,7 @@ module.exports = class QueryExecutionEdge {
   }
 
   getPredicate() {
-    if (this.qEdge.predicate === undefined) {
+    if (this.qEdge.predicate === undefined || this.qEdge.predicate === null) {
       return undefined;
     }
     const predicates = utils.toArray(this.qEdge.predicate).map((item) => utils.removeBioLinkPrefix(item));

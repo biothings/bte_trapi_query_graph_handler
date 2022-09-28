@@ -117,6 +117,8 @@ class RedisClient {
         expireTimeout: timeoutFunc((...args) => client.expire(...args)),
         delTimeout: timeoutFunc((...args) => client.del(...args)),
         usingLock: lockPrefix((...args) => redlock.using(...args)),
+        incrTimeout: timeoutFunc((...args) => client.incr(...args)),
+        decrTimeout: timeoutFunc((...args) => client.decr(...args)),
         // hmsetTimeout: timeoutFunc((...args) => client.hmset(...args)),
         // keysTimeout: timeoutFunc((...args) => client.keys(...args)),
         existsTimeout: timeoutFunc((...args) => client.exists(...args)),
