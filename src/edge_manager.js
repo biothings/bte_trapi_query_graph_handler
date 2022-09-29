@@ -325,7 +325,7 @@ module.exports = class QueryExecutionEdgeManager {
             this.logs = [...this.logs, ...qXEdge.logs];
             //collect records
             combinedRecords = combinedRecords.concat(filteredRecords);
-            let connections = qXEdge.qEdge.subject.getConnections().concat(qXEdge.qEdge.object.getConnections());
+            let connections = qXEdge.subject.getConnections().concat(qXEdge.object.getConnections());
             connections = connections.filter(id => id !== qEdgeID);
             connections = new Set(connections);
             recordsByQEdgeID[qEdgeID] = {
@@ -391,10 +391,10 @@ module.exports = class QueryExecutionEdgeManager {
         debug(`Updating neighbors...`);
         let currentQEdgeID = currentQXEdge.getID();
         //get neighbors of this edges subject that are not this edge
-        let left_connections = currentQXEdge.qEdge.subject.getConnections();
+        let left_connections = currentQXEdge.subject.getConnections();
         left_connections = left_connections.filter((qEdgeID) => qEdgeID !== currentQEdgeID);
         //get neighbors of this edges object that are not this edge
-        let right_connections = currentQXEdge.qEdge.object.getConnections();
+        let right_connections = currentQXEdge.object.getConnections();
         right_connections = right_connections.filter((qEdgeID) => qEdgeID !== currentQEdgeID);
         debug(`(${left_connections})<--edge neighbors-->(${right_connections})`);
         if (left_connections.length) {

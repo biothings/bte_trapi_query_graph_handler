@@ -2,6 +2,7 @@ const QEdge = require('./query_edge');
 const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error');
 const LogEntry = require('./log_entry');
 const QueryExecutionEdge = require('./query_execution_edge');
+const MegaQEdge = require('./mega_query_edge');
 const debug = require('debug')('bte:biothings-explorer-trapi:query_graph');
 const QNode = require('./query_node');
 const biolink = require('./biolink');
@@ -282,13 +283,18 @@ module.exports = class QueryGraphHandler {
     }
 
   /**
-   * @private
+   *
    */
-   async _storeEdges() {
+  async calculateEdges() {
+    this._validate(this.queryGraph);
+    //populate edge and node info
+    debug(`(1) Creating edges for manager...`);
     if (this.nodes === undefined) {
       this.nodes = await this._storeNodes();
     }
+
     let edges = {};
+    let edge_index = 0;
     for (let qEdgeID in this.queryGraph.edges) {
       let edge_info = {
         ...this.queryGraph.edges[qEdgeID],
@@ -301,37 +307,14 @@ module.exports = class QueryGraphHandler {
       this.nodes[this.queryGraph.edges[qEdgeID].subject].updateConnection(qEdgeID);
       this.nodes[this.queryGraph.edges[qEdgeID].object].updateConnection(qEdgeID);
 
-      edges[qEdgeID] = new QEdge(qEdgeID, edge_info);
+      edges[edge_index] = [edge_info.object.curie ? 
+        new MegaQEdge(qEdgeID, edge_info, true) :
+        new MegaQEdge(qEdgeID, edge_info, false)];
+      edge_index++;
     }
     this.logs.push(
       new LogEntry('DEBUG', null, `BTE identified ${Object.keys(edges).length} qEdges from your query graph`).getLog(),
     );
-    return edges;
-  }
-
-  /**
-   *
-   */
-  async calculateEdges() {
-    this._validate(this.queryGraph);
-    //populate edge and node info
-    debug(`(1) Creating edges for manager...`);
-    if (this.edges === undefined) {
-      this.edges = await this._storeEdges();
-    }
-    let edges = {};
-    let edge_index = 0;
-    //create a smart query edge per edge in query
-    for (const qEdgeID in this.edges) {
-      edges[edge_index] = [
-        // () ----> ()
-        this.edges[qEdgeID].object.curie ?
-          new QueryExecutionEdge(this.edges[qEdgeID], true, undefined) :
-          new QueryExecutionEdge(this.edges[qEdgeID], false, undefined)
-        // reversed () <---- ()
-      ];
-      edge_index++;
-    }
     return edges;
   }
 

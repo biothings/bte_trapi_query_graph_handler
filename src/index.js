@@ -100,6 +100,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       if (err instanceof InvalidQueryGraphError || err instanceof id_resolver.SRIResolverFailiure) {
         throw err;
       } else {
+        console.log(err.stack);
         throw new InvalidQueryGraphError();
       }
     }
@@ -136,13 +137,13 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
 
         let log_msg;
         if (currentQXEdge.reverse) {
-          log_msg = `qEdge ${currentQXEdge.qEdge.id} (reversed): ${currentQXEdge.qEdge.object.category} > ${
-            currentQXEdge.qEdge.predicate ? `${currentQXEdge.qEdge.predicate} > ` : ''
-          }${currentQXEdge.qEdge.subject.category}`;
+          log_msg = `qEdge ${currentQXEdge.id} (reversed): ${currentQXEdge.object.category} > ${
+            currentQXEdge.predicate ? `${currentQXEdge.predicate} > ` : ''
+          }${currentQXEdge.subject.category}`;
         } else {
-          log_msg = `qEdge ${currentQXEdge.qEdge.id}: ${currentQXEdge.qEdge.subject.category} > ${
-            currentQXEdge.qEdge.predicate ? `${currentQXEdge.qEdge.predicate} > ` : ''
-          }${currentQXEdge.qEdge.object.category}`;
+          log_msg = `qEdge ${currentQXEdge.id}: ${currentQXEdge.subject.category} > ${
+            currentQXEdge.predicate ? `${currentQXEdge.predicate} > ` : ''
+          }${currentQXEdge.object.category}`;
         }
         this.logs.push(new LogEntry('INFO', null, log_msg).getLog());
 
@@ -158,7 +159,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       }
 
       if (!metaXEdges.length) {
-        qEdgesMissingOps[currentQXEdge.qEdge.id] = currentQXEdge.reverse;
+        qEdgesMissingOps[currentQXEdge.id] = currentQXEdge.reverse;
       }
       // assume results so next edge may be reversed or not
       currentQXEdge.executed = true;
@@ -400,10 +401,10 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         fail = 0,
         total = 0;
       let cached = this.logs.filter(
-        ({ data }) => data?.qEdgeID === currentQXEdge.qEdge.id && data?.type === 'cacheHit',
+        ({ data }) => data?.qEdgeID === currentQXEdge.id && data?.type === 'cacheHit',
       ).length;
       this.logs
-        .filter(({ data }) => data?.qEdgeID === currentQXEdge.qEdge.id && data?.type === 'query')
+        .filter(({ data }) => data?.qEdgeID === currentQXEdge.id && data?.type === 'query')
         .forEach(({ data }) => {
           !data.error ? success++ : fail++;
           total++;
@@ -412,7 +413,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         new LogEntry(
           'INFO',
           null,
-          `${currentQXEdge.qEdge.id} execution: ${total} queries (${success} success/${fail} fail) and (${cached}) cached qEdges return (${queryRecords.length}) records`,
+          `${currentQXEdge.id} execution: ${total} queries (${success} success/${fail} fail) and (${cached}) cached qEdges return (${queryRecords.length}) records`,
           {},
         ).getLog(),
       );
