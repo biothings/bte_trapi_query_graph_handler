@@ -106,7 +106,7 @@ module.exports = class QueryGraphHandler {
   }
 
   _validateEdgeProperties(queryGraph) {
-    const edgeProperties = new Set(["predicates", "subject", "object", "constraints"]);
+    const edgeProperties = new Set(["predicates", "subject", "object", "knowledge_type", "attribute_constraints", "qualifier_constraints"]);
     const badProperties = new Set();
     for (const edgeID in queryGraph.edges) {
       for (const property in queryGraph.edges[edgeID]) {
