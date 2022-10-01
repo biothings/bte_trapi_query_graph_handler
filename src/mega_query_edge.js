@@ -2,6 +2,7 @@ const helper = require('./helper');
 const debug = require('debug')('bte:biothings-explorer-trapi:MegaQEdge');
 const utils = require('./utils');
 const biolink = require('./biolink');
+const { Record } = require('@biothings-explorer/api-response-transform');
 
 module.exports = class MegaQEdge {
   /**
@@ -20,16 +21,39 @@ module.exports = class MegaQEdge {
 
     this.reverse = reverse;
     //object and subject aliases
-    this.input_equivalent_identifiers = {};
-    this.output_equivalent_identifiers = {};
+    this.input_equivalent_identifiers = info.input_equivalent_identifiers === undefined ? {} : info.input_equivalent_identifiers;
+    this.output_equivalent_identifiers = info.output_equivalent_identifiers === undefined ? {} : info.output_equivalent_identifiers;
     //edge has been fully executed
-    this.executed = false;
+    this.executed = info.executed === undefined ? false : info.executed;
     //run initial checks
-    this.logs = [];
+    this.logs = info.logs === undefined ? [] : info.logs;
     //this edges query response records
     this.records = [];
     debug(`(2) Created Edge` +
     ` ${JSON.stringify(this.getID())} Reverse = ${this.reverse}`)
+  }
+
+  freeze() {
+    return {
+      id: this.id,
+      predicate: this.predicate,
+      expanded_predicates: this.expanded_predicates,
+      executed: this.executed,
+      reverse: this.reverse,
+      input_equivalent_identifiers: this.input_equivalent_identifiers,
+      logs: this.logs,
+      subject: this.subject,
+      object: this.object,
+      output_equivalent_identifiers: this.output_equivalent_identifiers,
+      predicate: this.predicate,
+      records: this.records.map(record => record.freeze())
+    };
+  }
+
+  static unfreeze(json) {
+    var output = new MegaQEdge(json.id, json, json.reverse === undefined ? false : json.reverse);
+    output.records = json.records.map(recordJSON => new Record(recordJSON));
+    return output;
   }
 
   init() {
@@ -63,54 +87,6 @@ module.exports = class MegaQEdge {
         return this.isReversed() === true ? biolink.reverse(predicate) : predicate;
       })
       .filter((item) => !(typeof item === 'undefined'));
-  }
-
-  getSubject() {
-    if (this.isReversed()) {
-      return this.object;
-    }
-    return this.subject;
-  }
-
-  getObject() {
-    if (this.isReversed()) {
-      return this.subject;
-    }
-    return this.object;
-  }
-
-  isReversed() {
-    return this.subject.getCurie() === undefined && this.object.getCurie() !== undefined;
-  }
-
-  getInputCurie() {
-    let curie = this.subject.getCurie() || this.object.getCurie();
-    if (Array.isArray(curie)) {
-      return curie;
-    }
-    return [curie];
-  }
-
-  getInputNode() {
-    return this.isReversed() ? this.object : this.subject;
-  }
-
-  getOutputNode() {
-    return this.isReversed() ? this.subject : this.object;
-  }
-
-  hasInputResolved() {
-    if (this.isReversed()) {
-      return this.object.hasEquivalentIDs();
-    }
-    return this.subject.hasEquivalentIDs();
-  }
-
-  hasInput() {
-    if (this.isReversed()) {
-      return this.object.hasInput();
-    }
-    return this.subject.hasInput();
   }
 
   chooseLowerEntityValue() {
