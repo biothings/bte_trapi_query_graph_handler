@@ -17,6 +17,7 @@ const fs = require('fs').promises;
 const { getTemplates, supportedLookups } = require('./inferred_mode/template_lookup');
 const handleInferredMode = require('./inferred_mode/inferred_mode');
 const id_resolver = require('biomedical_id_resolver');
+const InferredQueryHandler = require('./inferred_mode/inferred_mode');
 
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 exports.redisClient = redisClient;
@@ -241,7 +242,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   }
 
   async _handleInferredEdges(usePredicate = true) {
-    const inferredQueryResponse = await handleInferredMode(
+    const inferredQueryHandler = new InferredQueryHandler(
       this,
       TRAPIQueryHandler,
       this.queryGraph,
@@ -251,6 +252,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       this.predicatePath,
       this.includeReasoner,
     );
+    const inferredQueryResponse = await inferredQueryHandler.query()
     if (inferredQueryResponse) {
       this.getResponse = () => inferredQueryResponse;
     }
