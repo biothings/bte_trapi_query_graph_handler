@@ -57,6 +57,24 @@ describe('Test InferredQueryHandler', () => {
 
     expect(handler.queryIsValid).toBeFalsy();
 
+    const missingPredicateType2 = _.cloneDeep(queryGraph1);
+    Object.values(missingPredicateType2.edges).forEach((edge) => {
+      edge.predicates = [];
+    });
+
+    handler = new InferredQueryHandler(
+      {},
+      TRAPIQueryHandler,
+      missingPredicateType2,
+      [],
+      {},
+      smartAPIPAth,
+      predicatesPath,
+      true,
+    );
+
+    expect(handler.queryIsValid).toBeFalsy();
+
     const tooManyIDs = _.cloneDeep(queryGraph1);
     Object.values(tooManyIDs.nodes).forEach((node) => {
       node.ids = ['id0', 'id1'];
@@ -115,7 +133,12 @@ describe('Test InferredQueryHandler', () => {
       true,
     );
 
-    const { qEdgeID, qEdge, qSubject, qObject } = handler.getQueryParts();
+    const queryParts = handler.getQueryParts();
+    expect(queryParts).toHaveProperty('qEdgeID');
+    expect(queryParts).toHaveProperty('qEdge');
+    expect(queryParts).toHaveProperty('qSubject');
+    expect(queryParts).toHaveProperty('qObject');
+    const { qEdgeID, qEdge, qSubject, qObject } = queryParts;
     expect(qEdgeID).toEqual('e01');
     expect(qEdge).toStrictEqual(queryGraph1.edges.e01);
     expect(qSubject).toStrictEqual(queryGraph1.nodes.n01);
@@ -174,6 +197,36 @@ describe('Test InferredQueryHandler', () => {
 
   test('createQueries', async () => {
     const InferredQueryHandler = require('../../src/inferred_mode/inferred_mode');
+    const spy = jest.spyOn(InferredQueryHandler.prototype, 'findTemplates');
+
+    const templates = [
+      {
+        nodes: {
+          creativeQuerySubject: {
+            categories: [],
+          },
+          nA: {
+            categories: [],
+          },
+          creativeQueryObject: {
+            categories: [],
+          },
+        },
+        edges: {
+          eA: {
+            subject: 'creativeQuerySubject',
+            object: 'nA',
+            predicates: [],
+          },
+          eB: {
+            subject: 'nA',
+            object: 'creativeQueryObject',
+            predicates: [],
+          },
+        },
+      },
+    ];
+
     const handler = new InferredQueryHandler(
       {},
       TRAPIQueryHandler,
@@ -185,8 +238,8 @@ describe('Test InferredQueryHandler', () => {
       true,
     );
     const { qEdgeID, qEdge, qSubject, qObject } = handler.getQueryParts();
-
     const subQueries = await handler.createQueries(qEdge, qSubject, qObject);
+    expect(spy).toHaveBeenCalled();
 
     subQueries.forEach((queryGraph) => {
       expect(queryGraph.nodes.creativeQuerySubject.categories).toContain('biolink:ChemicalEntity');
@@ -194,6 +247,44 @@ describe('Test InferredQueryHandler', () => {
       expect(queryGraph.nodes.creativeQueryObject.ids).toContain('MONDO:0007035');
       expect(queryGraph.nodes.creativeQuerySubject.ids).toBeUndefined();
     });
+
+    // check that undefined deletion works
+    const handler2 = new InferredQueryHandler(
+      {},
+      TRAPIQueryHandler,
+      {
+        nodes: {
+          n02: {
+            categories: [],
+            ids: [],
+          },
+          n01: {
+            categories: [],
+          },
+        },
+        edges: {
+          e01: {
+            subject: 'n01',
+            object: 'n02',
+            predicates: [],
+            knowledge_type: 'inferred',
+          },
+        },
+      },
+      [],
+      {},
+      smartAPIPAth,
+      predicatesPath,
+      true,
+    );
+    const { qEdgeID: qEdgeID1, qEdge: qEdge1, qSubject: qSubject1, qObject: qObject1 } = handler2.getQueryParts();
+    spy.mockResolvedValueOnce(templates);
+    const subQueries1 = await handler2.createQueries(qEdge1, qSubject1, qObject1);
+    expect(spy).toHaveBeenCalled();
+    expect(subQueries1[0].nodes.creativeQuerySubject.categories).toBeUndefined();
+    expect(subQueries1[0].nodes.creativeQueryObject.categories).toBeUndefined();
+    expect(subQueries1[0].nodes.creativeQuerySubject.ids).toBeUndefined();
+    expect(subQueries1[0].nodes.creativeQueryObject.ids).toBeUndefined();
   });
 
   test('combineResponse', () => {
@@ -227,10 +318,10 @@ describe('Test InferredQueryHandler', () => {
             },
           },
           edges: {
-            e0: {
+            e01: {
               subject: 'creativeQuerySubject',
               object: 'creativeQueryObject',
-              predicate: 'biolink:treats',
+              predicates: ['biolink:treats'],
             },
           },
         },
@@ -346,106 +437,6 @@ describe('Test InferredQueryHandler', () => {
         },
       ],
     });
-    const trapiQueryHandler1 = new TRAPIQueryHandler();
-    trapiQueryHandler1.getResponse = () => ({
-      workflow: [{ id: 'lookup' }],
-      message: {
-        query_graph: {
-          nodes: {
-            creativeQuerySubject: {
-              categories: ['biolink:SmallMolecule'],
-            },
-            creativeQueryObject: {
-              categories: ['biolink:Disease'],
-              ids: ['fakeDiseaseID'],
-            },
-            n01: {
-              categories: ['biolink:Gene'],
-              ids: ['aGeneThatCausesFakeDisease1'],
-            },
-          },
-          edges: {
-            e0: {
-              subject: 'creativeQuerySubject',
-              object: 'creativeQueryObject',
-              predicate: 'biolink:treats',
-            },
-            e01: {
-              subject: 'creativeQuerySubject',
-              object: 'someIntermediateNode',
-              predicate: 'biolink:negatively_regulates',
-            },
-          },
-        },
-        knowledge_graph: {
-          nodes: {
-            fakeGene1: {
-              categories: ['biolink:Gene'],
-              name: 'fakeGene1',
-            },
-            fakeCompound4: {
-              categories: ['biolink:SmallMolecule'],
-              name: 'fakeCompound4',
-            },
-            fakeDisease1: {
-              categories: ['biolink:Disease'],
-              name: 'fakeDisease1',
-            },
-          },
-          edges: {
-            edgeHash1: {
-              predicate: 'biolink:negatively_regulates',
-              subject: 'fakeCompound4',
-              object: 'fakeGene1',
-            },
-            edgeHash2: {
-              predicate: 'biolink:causes',
-              subject: 'fakeGene1',
-              object: 'fakeDisease1',
-            },
-          },
-        },
-        results: [
-          {
-            node_bindings: {
-              creativeQuerySubject: [
-                {
-                  id: 'fakeCompound4',
-                },
-              ],
-              creativeQueryObject: [
-                {
-                  id: 'fakeDisease1',
-                },
-              ],
-              n01: [
-                {
-                  id: 'fakeGene1',
-                },
-              ],
-            },
-            edge_bindings: {
-              e0: [
-                {
-                  id: 'edgeHash1',
-                },
-              ],
-              e01: [
-                {
-                  id: 'edgeHash2',
-                },
-              ],
-            },
-            score: 0.99,
-          },
-        ],
-      },
-      logs: [
-        {
-          message: 'new fake log',
-        },
-      ],
-    });
 
     const combinedResponse = {
       workflow: [{ id: 'lookup' }],
@@ -535,15 +526,18 @@ describe('Test InferredQueryHandler', () => {
 
     const { qEdgeID, qEdge, qSubject, qObject } = inferredQueryHandler.getQueryParts();
 
-    const reservedIDs = { nodes: ['n01', 'n02'], edges: ['e01'] };
+    let reservedIDs = { nodes: ['n01', 'n02'], edges: ['e01'] };
 
-    const { querySuccess, queryHadResults, mergedResults, creativeLimitHit } = inferredQueryHandler.combineResponse(
-      1,
-      trapiQueryHandler0,
-      qEdge,
-      combinedResponse,
-      reservedIDs,
-    );
+    const report = inferredQueryHandler.combineResponse(1, trapiQueryHandler0, qEdge, combinedResponse, reservedIDs);
+
+    expect(report).toHaveProperty('querySuccess');
+    expect(report).toHaveProperty('queryHadResults');
+    expect(report).toHaveProperty('mergedResults');
+    expect(report).toHaveProperty('creativeLimitHit');
+
+    expect(reservedIDs.edges).toContain('e02');
+
+    const { querySuccess, queryHadResults, mergedResults, creativeLimitHit } = report;
     expect(querySuccess).toBeTruthy();
     expect(queryHadResults).toBeTruthy();
     expect(Object.keys(mergedResults)).toHaveLength(2);
@@ -555,6 +549,140 @@ describe('Test InferredQueryHandler', () => {
     expect(combinedResponse.logs).toHaveLength(2);
     expect(combinedResponse.logs[1].message).toMatch('Template-1');
 
+    const trapiQueryHandler1 = new TRAPIQueryHandler();
+    trapiQueryHandler1.getResponse = () => ({
+      workflow: [{ id: 'lookup' }],
+      message: {
+        query_graph: {
+          nodes: {
+            creativeQuerySubject: {
+              categories: ['biolink:SmallMolecule'],
+            },
+            creativeQueryObject: {
+              categories: ['biolink:Disease'],
+              ids: ['fakeDiseaseID'],
+            },
+            n01: {
+              categories: ['biolink:Gene'],
+              ids: ['aGeneThatCausesFakeDisease1'],
+            },
+          },
+          edges: {
+            e0: {
+              subject: 'creativeQuerySubject',
+              object: 'creativeQueryObject',
+              predicate: ['biolink:treats'],
+            },
+            e01: {
+              subject: 'creativeQuerySubject',
+              object: 'someIntermediateNode',
+              predicate: ['biolink:negatively_regulates'],
+            },
+          },
+        },
+        knowledge_graph: {
+          nodes: {
+            fakeGene1: {
+              categories: ['biolink:Gene'],
+              name: 'fakeGene1',
+            },
+            fakeCompound4: {
+              categories: ['biolink:SmallMolecule'],
+              name: 'fakeCompound4',
+            },
+            fakeCompound1: {
+              categories: ['biolink:SmallMolecule'],
+              name: 'fakeCompound1',
+            },
+            fakeDisease1: {
+              categories: ['biolink:Disease'],
+              name: 'fakeDisease1',
+            },
+          },
+          edges: {
+            edgeHash1: {
+              predicate: 'biolink:negatively_regulates',
+              subject: 'fakeCompound4',
+              object: 'fakeGene1',
+            },
+            edgeHash2: {
+              predicate: 'biolink:causes',
+              subject: 'fakeGene1',
+              object: 'fakeDisease1',
+            },
+            edgeHash3: {
+              predicate: 'biolink:treats',
+              subject: 'fakeCompound1',
+              object: 'fakeDisease1',
+            },
+          },
+        },
+        results: [
+          {
+            node_bindings: {
+              creativeQuerySubject: [
+                {
+                  id: 'fakeCompound4',
+                },
+              ],
+              creativeQueryObject: [
+                {
+                  id: 'fakeDisease1',
+                },
+              ],
+              n01: [
+                {
+                  id: 'fakeGene1',
+                },
+              ],
+            },
+            edge_bindings: {
+              e0: [
+                {
+                  id: 'edgeHash1',
+                },
+              ],
+              e01: [
+                {
+                  id: 'edgeHash2',
+                },
+              ],
+            },
+            score: 0.99,
+          },
+          {
+            node_bindings: {
+              creativeQuerySubject: [
+                {
+                  id: 'fakeCompound1',
+                },
+              ],
+              creativeQueryObject: [
+                {
+                  id: 'fakeDisease1',
+                },
+              ],
+            },
+            edge_bindings: {
+              e0: [
+                {
+                  id: 'edgeHash3',
+                },
+              ],
+            },
+            score: undefined,
+          },
+        ],
+      },
+      logs: [
+        {
+          message: 'new fake log',
+        },
+      ],
+    });
+
+    reservedIDs = { nodes: ['n01', 'n02'], edges: ['e01'] };
+
     const {
       querySuccess: querySuccess1,
       queryHadResults: queryHadResults1,
@@ -562,11 +690,13 @@ describe('Test InferredQueryHandler', () => {
       creativeLimitHit: creativeLimitHit1,
     } = inferredQueryHandler.combineResponse(2, trapiQueryHandler1, qEdge, combinedResponse, reservedIDs);
 
+    expect(reservedIDs.nodes).toContain('n03');
+
     expect(querySuccess1).toBeTruthy();
     expect(queryHadResults1).toBeTruthy();
-    expect(Object.keys(mergedResults1)).toHaveLength(0);
+    expect(Object.keys(mergedResults1)).toHaveLength(1);
     expect(creativeLimitHit1).toBeTruthy();
-    // expect()
+    expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].score).toEqual(1);
     expect(reservedIDs.nodes).toContain('n02');
     expect(reservedIDs.nodes).toContain('n03');
   });
@@ -667,14 +797,14 @@ describe('Test InferredQueryHandler', () => {
               },
               creativeQueryObject: {
                 categories: ['biolink:Disease'],
-                ids: ['fakeDiseaseID'],
+                ids: ['fakeDisease1'],
               },
             },
             edges: {
-              e0: {
+              e01: {
                 subject: 'creativeQuerySubject',
                 object: 'creativeQueryObject',
-                predicate: 'biolink:treats',
+                predicates: ['biolink:treats'],
               },
             },
           },
@@ -694,6 +824,7 @@ describe('Test InferredQueryHandler', () => {
                 predicate: 'biolink:treats',
                 subject: 'creativeQuerySubject',
                 object: 'creativeQueryObject',
+                knowledge_type: 'inferred',
               },
             },
           },
@@ -730,13 +861,37 @@ describe('Test InferredQueryHandler', () => {
       };
     });
     const InferredQueryHandler = require('../../src/inferred_mode/inferred_mode');
+    const queryIsValid = jest.spyOn(InferredQueryHandler.prototype, 'queryIsValid', 'get');
+    const getQueryParts = jest.spyOn(InferredQueryHandler.prototype, 'getQueryParts');
+    const findTemplates = jest.spyOn(InferredQueryHandler.prototype, 'findTemplates');
+    const createQueries = jest.spyOn(InferredQueryHandler.prototype, 'createQueries');
+    const combineResponse = jest.spyOn(InferredQueryHandler.prototype, 'combineResponse');
+    const pruneKnowledgeGraph = jest.spyOn(InferredQueryHandler.prototype, 'pruneKnowledgeGraph');
 
-    const parentHandler = new TRAPIQueryHandler()
+    const parentHandler = new TRAPIQueryHandler();
 
     const handler = new InferredQueryHandler(
       parentHandler,
       TRAPIQueryHandler,
-      queryGraph1,
+      {
+        nodes: {
+          creativeQuerySubject: {
+            categories: ['biolink:SmallMolecule'],
+          },
+          creativeQueryObject: {
+            categories: ['biolink:Disease'],
+            ids: ['fakeDisease1'],
+          },
+        },
+        edges: {
+          e0: {
+            subject: 'creativeQuerySubject',
+            object: 'creativeQueryObject',
+            predicates: ['biolink:treats'],
+            knowledge_type: 'inferred',
+          },
+        },
+      },
       [],
       {},
       smartAPIPAth,
@@ -745,8 +900,22 @@ describe('Test InferredQueryHandler', () => {
     );
 
     const response = await handler.query();
+
+    expect(queryIsValid).toHaveBeenCalled();
+    expect(getQueryParts).toHaveBeenCalled();
+    expect(findTemplates).toHaveBeenCalled();
+    expect(createQueries).toHaveBeenCalled();
+    expect(combineResponse).toHaveBeenCalled();
+    expect(pruneKnowledgeGraph).toHaveBeenCalled();
+
     expect(response).toBeTruthy();
     expect(Object.keys(response.logs).length).toBeGreaterThan(0);
     expect(response.message.results).toHaveLength(1);
+    expect(response.message.knowledge_graph.edges).toHaveProperty('edgeHash1');
+    expect(response.message.knowledge_graph.nodes).toHaveProperty('creativeQuerySubject');
+    expect(response.message.knowledge_graph.nodes).toHaveProperty('creativeQueryObject');
+    expect(response.message.results[0].node_bindings).toHaveProperty('creativeQuerySubject');
+    expect(response.message.results[0].node_bindings).toHaveProperty('creativeQueryObject');
   });
 });
+5;
