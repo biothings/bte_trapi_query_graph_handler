@@ -241,26 +241,6 @@ describe("Testing QueryGraphHandler Module", () => {
         });
     });
 
-    describe("test _storeEdges function", () => {
-
-        test("test storeEdges with one hop query", async () => {
-            let handler = new QueryGraphHandler(OneHopQuery);
-            let edges = await handler._storeEdges();
-            expect(edges).toHaveProperty("e01");
-            expect(edges).not.toHaveProperty("e02");
-            expect(edges.e01).toBeInstanceOf(QEdge);
-            expect(edges.e01.getSubject()).toBeInstanceOf(QNode2);
-        });
-
-        test("test storeEdges with multi hop query", async () => {
-            let handler = new QueryGraphHandler(FourHopQuery);
-            let edges = await handler._storeEdges();
-            expect(edges).toHaveProperty("e01");
-            expect(edges).toHaveProperty("e02");
-            expect(edges.e01).toBeInstanceOf(QEdge);
-        });
-    });
-
     describe("test _createQueryPaths function", () => {
 
         test("test createQueryPaths with three hop explain query", async () => {
