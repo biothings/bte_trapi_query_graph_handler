@@ -305,9 +305,7 @@ module.exports = class QueryGraphHandler {
       this.nodes[this.queryGraph.edges[qEdgeID].subject].updateConnection(qEdgeID);
       this.nodes[this.queryGraph.edges[qEdgeID].object].updateConnection(qEdgeID);
 
-      edges[edge_index] = [edge_info.object.curie ? 
-        new QEdge(qEdgeID, edge_info, true) :
-        new QEdge(qEdgeID, edge_info, false)];
+      edges[edge_index] = [new QEdge(qEdgeID, edge_info)];
       edge_index++;
     }
     this.logs.push(

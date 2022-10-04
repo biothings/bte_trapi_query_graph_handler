@@ -12,12 +12,15 @@ module.exports = class QEdge {
    * @param {object} info - QEdge info, e.g. subject, object, predicate
    * @param {boolean} reverse - is QEdge reversed?
    */
-  constructor(id, info, reverse = false) {
+  constructor(id, info, reverse = null) {
     this.id = id;
     this.predicate = info.predicates;
     this.subject = info.frozen === true ? QNode.unfreeze(info.subject) : info.subject;
     this.object = info.frozen === true ? QNode.unfreeze(info.object) : info.object;
     this.expanded_predicates = [];
+
+    if (reverse === null) reverse = !(info.subject.curie) && !!(info.object.curie);
+
     this.init();
 
     this.reverse = reverse;
