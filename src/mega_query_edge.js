@@ -3,6 +3,7 @@ const debug = require('debug')('bte:biothings-explorer-trapi:MegaQEdge');
 const utils = require('./utils');
 const biolink = require('./biolink');
 const { Record } = require('@biothings-explorer/api-response-transform');
+const QNode = require('./query_node');
 
 module.exports = class MegaQEdge {
   /**
@@ -14,8 +15,8 @@ module.exports = class MegaQEdge {
   constructor(id, info, reverse = false) {
     this.id = id;
     this.predicate = info.predicates;
-    this.subject = info.subject;
-    this.object = info.object;
+    this.subject = info.frozen === true ? QNode.unfreeze(info.subject) : info.subject;
+    this.object = info.frozen === true ? QNode.unfreeze(info.object) : info.object;
     this.expanded_predicates = [];
     this.init();
 
@@ -42,8 +43,8 @@ module.exports = class MegaQEdge {
       reverse: this.reverse,
       input_equivalent_identifiers: this.input_equivalent_identifiers,
       logs: this.logs,
-      subject: this.subject,
-      object: this.object,
+      subject: this.subject.freeze(),
+      object: this.object.freeze(),
       output_equivalent_identifiers: this.output_equivalent_identifiers,
       predicate: this.predicate,
       records: this.records.map(record => record.freeze())
@@ -51,7 +52,7 @@ module.exports = class MegaQEdge {
   }
 
   static unfreeze(json) {
-    var output = new MegaQEdge(json.id, json, json.reverse === undefined ? false : json.reverse);
+    var output = new MegaQEdge(json.id, { ...json, frozen: true }, json.reverse === undefined ? false : json.reverse);
     output.records = json.records.map(recordJSON => new Record(recordJSON));
     return output;
   }

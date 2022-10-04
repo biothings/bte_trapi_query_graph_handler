@@ -18,20 +18,41 @@ module.exports = class QNode {
         //is_set
         this.is_set = info.is_set;
         //mainID : its equivalent ids
-        this.expanded_curie = {};
+        this.expanded_curie = info.expanded_curie !== undefined ? info.expanded_curie : {};
         this.entity_count = info.ids ? info.ids.length : 0;
         debug(`(1) Node "${this.id}" has (${this.entity_count}) entities at start.`);
         //when choosing a lower entity count a node with higher count
         // might be told to store its curies temporarily
-        this.held_curie = [];
-        this.held_expanded = {};
+        this.held_curie = info.held_curie !== undefined ? info.held_curie : [];
+        this.held_expanded = info.held_expanded !== undefined ? info.held_expanded : {};
         //node constraints
         this.constraints = info.constraints;
         //list of edge ids that are connected to this node
-        this.connected_to = new Set();
+        this.connected_to = info.connected_to !== undefined ? new Set(info.connected_to) : new Set();
         //object-ify array of initial curies
-        this.expandCurie();
+        if (info.expanded_curie === undefined) this.expandCurie();
         this.validateConstraints();
+    }
+
+    freeze() {
+      return {
+        category: this.category,
+        connected_to: Array.from(this.connected_to),
+        constraints: this.constraints,
+        curie: this.curie,
+        entity_count: this.entity_count,
+        equivalentIDs: this.equivalentIDs,
+        expanded_curie: this.expanded_curie,
+        held_curie: this.held_curie,
+        held_expanded: this.held_expanded,
+        id: this.id,
+        is_set: this.is_set
+      }
+    }
+
+    static unfreeze(json) {
+      var node = new QNode(json.id, json);
+      return node;
     }
 
     isSet() {
