@@ -1,8 +1,6 @@
 const QEdge = require('./query_edge');
 const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error');
 const LogEntry = require('./log_entry');
-const QueryExecutionEdge = require('./query_execution_edge');
-const MegaQEdge = require('./mega_query_edge');
 const debug = require('debug')('bte:biothings-explorer-trapi:query_graph');
 const QNode = require('./query_node');
 const biolink = require('./biolink');
@@ -308,8 +306,8 @@ module.exports = class QueryGraphHandler {
       this.nodes[this.queryGraph.edges[qEdgeID].object].updateConnection(qEdgeID);
 
       edges[edge_index] = [edge_info.object.curie ? 
-        new MegaQEdge(qEdgeID, edge_info, true) :
-        new MegaQEdge(qEdgeID, edge_info, false)];
+        new QEdge(qEdgeID, edge_info, true) :
+        new QEdge(qEdgeID, edge_info, false)];
       edge_index++;
     }
     this.logs.push(
