@@ -898,6 +898,7 @@ describe('Test InferredQueryHandler', () => {
       predicatesPath,
       true,
     );
+    handler.CREATIVE_LIMIT = 1;
 
     const response = await handler.query();
 
@@ -916,6 +917,6 @@ describe('Test InferredQueryHandler', () => {
     expect(response.message.knowledge_graph.nodes).toHaveProperty('creativeQueryObject');
     expect(response.message.results[0].node_bindings).toHaveProperty('creativeQuerySubject');
     expect(response.message.results[0].node_bindings).toHaveProperty('creativeQueryObject');
+    expect(response.logs.map(log => log.message)).toContain('Addition of 1 results from Template 0 meets creative result maximum of 1 (reaching 1 merged). Response will be truncated to top-scoring 1 results. Skipping remaining 3 templates.')
   });
 });
-5;
