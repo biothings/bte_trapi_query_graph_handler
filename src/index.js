@@ -25,7 +25,8 @@ exports.getTemplates = getTemplates;
 exports.supportedLookups = supportedLookups;
 
 exports.TRAPIQueryHandler = class TRAPIQueryHandler {
-  constructor(options = {}, smartAPIPath = undefined, predicatesPath = undefined, includeReasoner = true) {
+  constructor(schema, options = {}, smartAPIPath = undefined, predicatesPath = undefined, includeReasoner = true) {
+    this.schema = schema;
     this.logs = [];
     this.options = options;
     this.includeReasoner = includeReasoner;
@@ -92,7 +93,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
    */
   async _processQueryGraph(queryGraph) {
     try {
-      let queryGraphHandler = new QueryGraph(queryGraph);
+      let queryGraphHandler = new QueryGraph(queryGraph, this.schema);
       let queryExecutionEdges = await queryGraphHandler.calculateEdges();
       this.logs = [...this.logs, ...queryGraphHandler.logs];
       return queryExecutionEdges;
@@ -100,6 +101,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       if (err instanceof InvalidQueryGraphError || err instanceof id_resolver.SRIResolverFailiure) {
         throw err;
       } else {
+        console.log(err.stack);
         throw new InvalidQueryGraphError();
       }
     }

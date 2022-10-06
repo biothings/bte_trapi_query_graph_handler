@@ -10,8 +10,9 @@ const _ = require('lodash');
 const utils = require('./utils');
 
 module.exports = class QueryGraphHandler {
-  constructor(queryGraph) {
+  constructor(queryGraph, schema) {
     this.queryGraph = queryGraph;
+    this.schema = schema;
     this.logs = [];
   }
 
@@ -84,7 +85,7 @@ module.exports = class QueryGraphHandler {
   }
 
   _validateNodeProperties(queryGraph) {
-    const nodeProperties = new Set(["ids", "categories", "is_set", "constraints"]);
+    const nodeProperties = new Set(Object.keys(this.schema.components.schemas.QNode.properties));
     const badProperties = new Set();
     for (const nodeID in queryGraph.nodes) {
       for (const property in queryGraph.nodes[nodeID]) {
@@ -106,7 +107,7 @@ module.exports = class QueryGraphHandler {
   }
 
   _validateEdgeProperties(queryGraph) {
-    const edgeProperties = new Set(["predicates", "subject", "object", "knowledge_type", "attribute_constraints", "qualifier_constraints"]);
+    const edgeProperties = new Set(Object.keys(this.schema.components.schemas.QEdge.properties));
     const badProperties = new Set();
     for (const edgeID in queryGraph.edges) {
       for (const property in queryGraph.edges[edgeID]) {
