@@ -34,22 +34,25 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       typeof this.options.enableIDResolution === 'undefined' ? true : this.options.enableIDResolution;
     this.path = smartAPIPath || path.resolve(__dirname, './smartapi_specs.json');
     this.predicatePath = predicatesPath || path.resolve(__dirname, './predicates.json');
-    this.options.apiList && this.findUnregisteredApi();
+    this.options.apiList && this.findUnregisteredAPIs();
   }
 
-  async findUnregisteredApi() {
-    const configListApis = this.options.apiList['include'];
+  async findUnregisteredAPIs() {
+    const configListAPIs = this.options.apiList['include'];
     const smartapiRegistry = await fs.readFile(this.path);
-    const smartapiIds = [];
+    const smartapiIDs = [];
+    const unregisteredAPIs = [];
 
-    JSON.parse(smartapiRegistry)['hits'].forEach((smartapiRegistration) =>
-      smartapiIds.push(smartapiRegistration['_id']),
+    JSON.parse(smartapiRegistry).hits.forEach((smartapiRegistration) =>
+      smartapiIDs.push(smartapiRegistration._id),
     );
-    configListApis.forEach((configListApi) => {
-      if (smartapiIds.includes(configListApi['id']) === false) {
-        debug(`${configListApi['name']} not found in smartapi registry`);
+    configListAPIs.forEach((configListApi) => {
+      if (smartapiIDs.includes(configListApi.id) === false) {
+        unregisteredAPIs.push(configListApi.id);
+        debug(`${configListApi.name} not found in smartapi registry`);
       }
     });
+    return unregisteredAPIs;
   }
 
   _loadMetaKG() {
