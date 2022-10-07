@@ -919,4 +919,12 @@ describe('Test InferredQueryHandler', () => {
     expect(response.message.results[0].node_bindings).toHaveProperty('creativeQueryObject');
     expect(response.logs.map(log => log.message)).toContain('Addition of 1 results from Template 0 meets creative result maximum of 1 (reaching 1 merged). Response will be truncated to top-scoring 1 results. Skipping remaining 3 templates.')
   });
+
+  test('supportedLookups', async () => {
+    const { supportedLookups } = require('../../src/inferred_mode/template_lookup');
+    const supported = await supportedLookups();
+    expect(supported).toContain('biolink:Drug-biolink:treats-biolink:Disease');
+    expect(supported).toContain('biolink:SmallMolecule-biolink:treats-biolink:PhenotypicFeature');
+    expect(supported.length).toBeGreaterThanOrEqual(5 * 2 * 3);
+  });
 });
