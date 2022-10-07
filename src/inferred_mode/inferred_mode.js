@@ -178,7 +178,7 @@ module.exports = async (parent, TRAPIQueryHandler, queryGraph, logs, options, pa
       if (stop) {
         return;
       }
-      const handler = new TRAPIQueryHandler(options, path, predicatePath, includeReasoner);
+      const handler = new TRAPIQueryHandler({}, options, path, predicatePath, includeReasoner);
       handler.setQueryGraph(queryGraph);
       try {
         await handler.query();

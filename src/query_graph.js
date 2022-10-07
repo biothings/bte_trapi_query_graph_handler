@@ -85,7 +85,8 @@ module.exports = class QueryGraphHandler {
   }
 
   _validateNodeProperties(queryGraph) {
-    const nodeProperties = new Set(Object.keys(this.schema.components.schemas.QNode.properties));
+    const schemProps = this.schema?.components?.schemas?.QNode?.properties ? this.schema.components.schemas.QNode.properties : {};
+    const nodeProperties = new Set(Object.keys(schemProps));
     const badProperties = new Set();
     for (const nodeID in queryGraph.nodes) {
       for (const property in queryGraph.nodes[nodeID]) {
@@ -107,7 +108,8 @@ module.exports = class QueryGraphHandler {
   }
 
   _validateEdgeProperties(queryGraph) {
-    const edgeProperties = new Set(Object.keys(this.schema.components.schemas.QEdge.properties));
+    const schemProps = this.schema?.components?.schemas?.QEdge?.properties ? this.schema.components.schemas.QEdge.properties : {};
+    const edgeProperties = new Set(Object.keys(schemProps));
     const badProperties = new Set();
     for (const edgeID in queryGraph.edges) {
       for (const property in queryGraph.edges[edgeID]) {

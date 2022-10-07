@@ -22,7 +22,7 @@ describe("Testing TRAPIQueryHandler Module", () => {
     };
     describe("Testing query function", () => {
         test("test with one query edge", async () => {
-            const queryHandler = new TRAPIQueryHandler.TRAPIQueryHandler();
+            const queryHandler = new TRAPIQueryHandler.TRAPIQueryHandler({});
             queryHandler.setQueryGraph(OneHopQuery);
             await queryHandler.query();
             expect(queryHandler.knowledgeGraph.kg).toHaveProperty('nodes');
