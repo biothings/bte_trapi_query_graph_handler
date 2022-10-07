@@ -28,4 +28,15 @@ describe('Test utility functions', () => {
       expect(res).toEqual(['a']);
     });
   });
+
+  test('intersection', () => {
+    const setA = new Set([1, 2, 3]);
+    const setB = new Set([2, 3, 4]);
+    const intersection = utils.intersection(setA, setB);
+    expect(intersection).toStrictEqual(new Set([2, 3]));
+  });
+
+  test('cartesian product', () => {
+    expect(utils.cartesian([[1, 2], [3, 4]])).toStrictEqual([[1, 3], [1, 4], [2, 3], [2, 4]]);
+  });
 });
