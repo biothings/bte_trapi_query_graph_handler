@@ -82,31 +82,53 @@ describe('test TRAPIQueryHandler methods', () => {
   });
 
   test('query', async () => {
-    const query = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/chemicals_targeting_IL1_Signaling_Pathway.json')));
+    const query = JSON.parse(
+      fs.readFileSync(path.resolve(__dirname, '../data/chemicals_targeting_IL1_Signaling_Pathway.json')),
+    );
     const { TRAPIQueryHandler } = require('../../src/index');
     const handler1 = new TRAPIQueryHandler({
-      smartAPIID: 'fakeID'
+      smartAPIID: 'fakeID',
     });
     handler1.setQueryGraph(query.message.query_graph);
     await handler1.query();
-    expect(handler1.logs.map(log => log.level)).toContain('ERROR');
+    expect(handler1.logs.map((log) => log.level)).toContain('ERROR');
     const handler2 = new TRAPIQueryHandler({
-      teamName: 'fakeID'
+      teamName: 'fakeID',
     });
     handler2.setQueryGraph(query.message.query_graph);
     await handler2.query();
-    expect(handler2.logs.map(log => log.level)).toContain('ERROR');
+    expect(handler2.logs.map((log) => log.level)).toContain('ERROR');
     const handler3 = new TRAPIQueryHandler({
-      smartAPIID: '59dce17363dce279d389100834e43648'
+      smartAPIID: '59dce17363dce279d389100834e43648',
     });
     handler3.setQueryGraph(query.message.query_graph);
     await handler3.query();
-    expect(handler3.logs[handler3.logs.length - 1].message).toMatch('smartAPI/team-specific endpoints only support single-edge queries');
+    expect(handler3.logs[handler3.logs.length - 1].message).toMatch(
+      'smartAPI/team-specific endpoints only support single-edge queries',
+    );
     const twoHopInferred = _.cloneDeep(query);
     twoHopInferred.message.query_graph.edges.e01.knowledge_type = 'inferred';
     const handler4 = new TRAPIQueryHandler();
     handler4.setQueryGraph(twoHopInferred.message.query_graph);
     await handler4.query();
-    expect(handler4.logs[handler4.logs.length - 1].message).toMatch('Inferred Mode edges are only supported in single-edge queries');
+    expect(handler4.logs[handler4.logs.length - 1].message).toMatch(
+      'Inferred Mode edges are only supported in single-edge queries',
+    );
+  });
+
+  test('findUnregisteredAPI', async() => {
+    const { TRAPIQueryHandler } = require('../../src/index');
+    const handler = new TRAPIQueryHandler({
+      apiList: {
+        include: [
+          {
+            id: 'fakeID',
+            name: 'fake API',
+          },
+        ],
+      },
+    });
+    const unregisteredAPIs = await handler.findUnregisteredAPIs();
+    expect(unregisteredAPIs).toContain('fakeID');
   });
 });
