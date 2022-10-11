@@ -19,7 +19,7 @@ module.exports = class QEdge {
     this.object = info.frozen === true ? QNode.unfreeze(info.object) : info.object;
     this.expanded_predicates = [];
 
-    if (reverse === null) reverse = !(info.subject.curie) && !!(info.object.curie);
+    if (reverse === null) reverse = !(info.subject?.getCurie()) && !!(info.object?.getCurie());
 
     this.init();
 
