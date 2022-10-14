@@ -64,6 +64,17 @@ module.exports = class KnowledgeGraph {
     return res;
   }
 
+  _createQualifiers(kgEdge) {
+    const qualifiers = Object.entries(kgEdge.qualifiers).map(([qualifierType, qualifier]) => {
+      return {
+        qualifier_type_id: qualifierType,
+        qualifier_value: qualifier,
+      };
+    });
+
+    return qualifiers.length ? qualifiers : undefined;
+  }
+
   _createAttributes(kgEdge) {
     let attributes = [
       {
@@ -73,9 +84,11 @@ module.exports = class KnowledgeGraph {
       },
     ];
 
-    if (kgEdge.attributes['edge-attributes']) { //handle TRAPI APIs (Situation A of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208) and APIs that define 'edge-atributes' in x-bte
+    if (kgEdge.attributes['edge-attributes']) {
+      //handle TRAPI APIs (Situation A of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208) and APIs that define 'edge-atributes' in x-bte
       attributes = [...attributes, ...kgEdge.attributes['edge-attributes']];
-    } else if ( //handle direct info providers (Situation C of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208)
+    } else if (
+      //handle direct info providers (Situation C of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208)
       [
         'Clinical Risk KP API',
         'Text Mining Targeted Association API',
@@ -94,7 +107,7 @@ module.exports = class KnowledgeGraph {
             attribute_type_id: 'biolink:primary_knowledge_source',
             value: Array.from(kgEdge.sources),
             value_type_id: 'biolink:InformationResource',
-          }
+          },
         ];
       }
       //aggregator knowledge source
@@ -105,7 +118,7 @@ module.exports = class KnowledgeGraph {
             attribute_type_id: 'biolink:aggregator_knowledge_source',
             value: Array.from(kgEdge.inforesCuries),
             value_type_id: 'biolink:InformationResource',
-          }
+          },
         ];
       }
       //publications
@@ -116,7 +129,7 @@ module.exports = class KnowledgeGraph {
             attribute_type_id: 'biolink:publications',
             value: Array.from(kgEdge.publications),
             // value_type_id: 'biolink:publications',
-          }
+          },
         ];
       }
 
@@ -127,7 +140,8 @@ module.exports = class KnowledgeGraph {
           //value_type_id: 'bts:' + key,
         });
       }
-    } else { //handle non-trapi APIs (Situation B of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208)
+    } else {
+      //handle non-trapi APIs (Situation B of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208)
       attributes = [...attributes];
       //primary knowledge source
       if (Array.from(kgEdge.sources).length) {
@@ -137,7 +151,7 @@ module.exports = class KnowledgeGraph {
             attribute_type_id: 'biolink:primary_knowledge_source',
             value: Array.from(kgEdge.sources),
             value_type_id: 'biolink:InformationResource',
-          }
+          },
         ];
       }
       //aggregator knowledge source
@@ -148,7 +162,7 @@ module.exports = class KnowledgeGraph {
             attribute_type_id: 'biolink:aggregator_knowledge_source',
             value: Array.from(kgEdge.inforesCuries),
             value_type_id: 'biolink:InformationResource',
-          }
+          },
         ];
       }
       //publications
@@ -159,7 +173,7 @@ module.exports = class KnowledgeGraph {
             attribute_type_id: 'biolink:publications',
             value: Array.from(kgEdge.publications),
             // value_type_id: 'biolink:publications',
-          }
+          },
         ];
       }
 
@@ -180,6 +194,7 @@ module.exports = class KnowledgeGraph {
       predicate: kgEdge.predicate,
       subject: kgEdge.subject,
       object: kgEdge.object,
+      qualifiers: this._createQualifiers(kgEdge),
       attributes: this._createAttributes(kgEdge),
     };
   }
