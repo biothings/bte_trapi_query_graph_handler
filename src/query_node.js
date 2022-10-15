@@ -185,6 +185,10 @@ module.exports = class QNode {
         return this.equivalentIDs;
     }
 
+    removeEquivalentID(id) {
+        delete this.equivalentIDs[id];
+    }
+
     getCategories() {
         if (this.hasEquivalentIDs() === false) {
         const categories = utils.toArray(this.category);

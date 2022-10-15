@@ -17,7 +17,7 @@ module.exports = class NodesUpdateHandler {
         return;
       }
       if (qXEdge.hasInput()) {
-        const inputCategories = qXEdge.getSubject().getCategories();
+        const inputCategories = qXEdge.getInputNode().getCategories();
         inputCategories.map((category) => {
           if (!(category in curies)) {
             curies[category] = [];
@@ -53,7 +53,7 @@ module.exports = class NodesUpdateHandler {
         }, {});
         debug(`Got Edge Equivalent IDs successfully.`);
       if (Object.keys(edgeEquivalentIDs).length > 0) {
-        qXEdge.input_equivalent_identifiers = edgeEquivalentIDs;
+        qXEdge.getInputNode().setEquivalentIDs(edgeEquivalentIDs);
       }
     });
     return;

@@ -24,9 +24,7 @@ module.exports = class QEdge {
     this.init();
 
     this.reverse = reverse;
-    //object and subject aliases
-    this.input_equivalent_identifiers = info.input_equivalent_identifiers === undefined ? {} : info.input_equivalent_identifiers;
-    this.output_equivalent_identifiers = info.output_equivalent_identifiers === undefined ? {} : info.output_equivalent_identifiers;
+
     //edge has been fully executed
     this.executed = info.executed === undefined ? false : info.executed;
     //run initial checks
@@ -44,7 +42,6 @@ module.exports = class QEdge {
       expanded_predicates: this.expanded_predicates,
       executed: this.executed,
       reverse: this.reverse,
-      input_equivalent_identifiers: this.input_equivalent_identifiers,
       logs: this.logs,
       subject: this.subject.freeze(),
       object: this.object.freeze(),
@@ -484,7 +481,7 @@ module.exports = class QEdge {
 
   getHashedEdgeRepresentation() {
     const toBeHashed =
-      this.getSubject().getCategories() + this.getPredicate() + this.getObject().getCategories() + this.getInputCurie();
+      this.getInputNode().getCategories() + this.getPredicate() + this.getOutputNode().getCategories() + this.getInputCurie();
     return helper._generateHash(toBeHashed);
   }
 
@@ -507,14 +504,14 @@ module.exports = class QEdge {
       .filter((item) => !(typeof item === 'undefined'));
   }
 
-  getSubject() {
+  getInputNode() {
     if (this.reverse) {
       return this.object;
     }
     return this.subject;
   }
 
-  getObject() {
+  getOutputNode() {
     if (this.reverse) {
       return this.subject;
     }
@@ -542,7 +539,7 @@ module.exports = class QEdge {
   }
 
   hasInputResolved() {
-    return !(Object.keys(this.input_equivalent_identifiers).length === 0);
+    return this.getInputNode().hasEquivalentIDs();
   }
 
   hasInput() {

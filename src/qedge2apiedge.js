@@ -32,20 +32,20 @@ module.exports = class QEdge2APIEdgeHandler {
    * @param {object} qXEdge - TRAPI Query Edge Object
    */
   getMetaXEdges(qXEdge, metaKG = this.metaKG) {
-    debug(`Subject node is ${qXEdge.getSubject().id}`);
-    debug(`Object node is ${qXEdge.getObject().id}`);
+    debug(`Input node is ${qXEdge.getInputNode().id}`);
+    debug(`Output node is ${qXEdge.getOutputNode().id}`);
     this.logs.push(
       new LogEntry(
         'DEBUG',
         null,
-        `BTE is trying to find metaKG edges (smartAPI registry, x-bte annotation) connecting from ${qXEdge.getSubject().getCategories()} to ${qXEdge
-          .getObject()
+        `BTE is trying to find metaKG edges (smartAPI registry, x-bte annotation) connecting from ${qXEdge.getInputNode().getCategories()} to ${qXEdge
+          .getOutputNode()
           .getCategories()} with predicate ${qXEdge.getPredicate()}`,
       ).getLog(),
     );
     let filterCriteria = {
-      input_type: qXEdge.getSubject().getCategories(),
-      output_type: qXEdge.getObject().getCategories(),
+      input_type: qXEdge.getInputNode().getCategories(),
+      output_type: qXEdge.getOutputNode().getCategories(),
       predicate: qXEdge.getPredicate(),
     };
     debug(`KG Filters: ${JSON.stringify(filterCriteria, null, 2)}`);
@@ -83,7 +83,7 @@ module.exports = class QEdge2APIEdgeHandler {
     const APIEdges = [];
     const inputPrefix = metaXEdge.association.input_id;
     const inputType = metaXEdge.association.input_type;
-    const resolvedCuries = metaXEdge.reasoner_edge.input_equivalent_identifiers;
+    const resolvedCuries = metaXEdge.reasoner_edge.getInputNode().getEquivalentIDs();
     for (const curie in resolvedCuries) {
       await Promise.all(resolvedCuries[curie].map(async (entity) => {
         if (entity.semanticType === inputType && inputPrefix in entity.dbIDs) {
@@ -134,7 +134,7 @@ module.exports = class QEdge2APIEdgeHandler {
     const input_resolved_identifiers = {};
     const inputPrefix = metaXEdge.association.input_id;
     const inputType = metaXEdge.association.input_type;
-    let resolvedCuries = metaXEdge.reasoner_edge.input_equivalent_identifiers;
+    let resolvedCuries = metaXEdge.reasoner_edge.getInputNode().getEquivalentIDs();
     // debug(`Resolved ids: ${JSON.stringify(resolvedIDs)}`);
     debug(`Input prefix: ${inputPrefix}`);
     for (const curie in resolvedCuries) {
@@ -205,7 +205,7 @@ module.exports = class QEdge2APIEdgeHandler {
     const APIEdges = [];
     const inputPrefix = metaXEdge.association.input_id;
     const inputType = metaXEdge.association.input_type;
-    const resolvedCuries = metaXEdge.reasoner_edge.input_equivalent_identifiers;
+    const resolvedCuries = metaXEdge.reasoner_edge.getInputNode().getEquivalentIDs()
     for (const curie in resolvedCuries) {
       resolvedCuries[curie].map((entity) => {
         if (entity.semanticType === inputType && inputPrefix in entity.dbIDs) {
@@ -246,7 +246,7 @@ module.exports = class QEdge2APIEdgeHandler {
     const input_resolved_identifiers = {};
     const inputPrefix = metaXEdge.association.input_id;
     const inputType = metaXEdge.association.input_type;
-    let resolvedCuries = metaXEdge.reasoner_edge.input_equivalent_identifiers;
+    let resolvedCuries = metaXEdge.reasoner_edge.getInputNode().getEquivalentIDs();
     // debug(`Resolved ids: ${JSON.stringify(resolvedIDs)}`);
     debug(`Input prefix: ${inputPrefix}`);
     for (const curie in resolvedCuries) {

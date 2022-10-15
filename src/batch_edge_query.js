@@ -78,7 +78,7 @@ module.exports = class BatchEdgeQueryHandler {
         node.curie.forEach((curie) => {
           // if the curie is already present, or an equivalent is, remove it
           if (!reducedCuries.includes(curie)) {
-            const equivalentAlreadyIncluded = qXEdge.input_equivalent_identifiers[curie][0].curies.some(
+            const equivalentAlreadyIncluded = qXEdge.getInputNode().getEquivalentIDs()[curie][0].curies.some(
               (equivalentCurie) => reducedCuries.includes(equivalentCurie),
             );
             if (!equivalentAlreadyIncluded) {
@@ -99,7 +99,7 @@ module.exports = class BatchEdgeQueryHandler {
         }
       });
       strippedCuries.forEach((curie) => {
-        delete qXEdge.input_equivalent_identifiers[curie];
+        qXEdge.getInputNode().removeEquivalentID(curie);
       });
     });
   }
