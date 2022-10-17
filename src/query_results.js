@@ -433,7 +433,16 @@ module.exports = class TrapiResultsAssembler {
 
     debug(`Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`);
     this.logs.push(
-      new LogEntry('DEBUG', null, `Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`).getLog(),
+      new LogEntry(
+        'DEBUG', 
+        null, 
+        `Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`,
+        {
+          type: 'scoring',
+          scored: resultsWithScore,
+          unscored: resultsWithoutScore
+        }
+        ).getLog(),
     );
   }
 };

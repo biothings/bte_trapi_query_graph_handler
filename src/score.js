@@ -14,7 +14,10 @@ async function query(queryPairs) {
     let axios_queries = chunked_input.map((input) => {
       return axios.post(
         url,
-        {umls: input},
+        {
+          umls: input,
+          expand: "both"
+        },
       );
     });
     //convert res array into single object with all curies
@@ -63,20 +66,35 @@ async function getScores (recordsByQEdgeID) {
   return results || []; // in case results is undefined, avoid TypeErrors
 }
 
-//multiply the inverses of the ngds together to get the total score for a combo
+// //multiply the inverses of the ngds together to get the total score for a combo
+// function calculateScore(comboInfo, scoreCombos) {
+//   let score = 1;
+
+//   Object.keys(comboInfo).forEach((edgeKey) => {
+//     let multiplier = 0;
+
+//     for (const combo of scoreCombos) {
+//       if (comboInfo[edgeKey].inputUMLS?.includes(combo.umls[0]) && comboInfo[edgeKey].outputUMLS?.includes(combo.umls[1])) {
+//         multiplier = Math.max(1/combo.ngd, multiplier);
+//       }
+//     }
+
+//     score *= multiplier;
+//   })
+
+//   return score;
+// }
+
+//addition of scores
 function calculateScore(comboInfo, scoreCombos) {
-  let score = 1;
+  let score = 0;
 
   Object.keys(comboInfo).forEach((edgeKey) => {
-    let multiplier = 0;
-
     for (const combo of scoreCombos) {
       if (comboInfo[edgeKey].inputUMLS?.includes(combo.umls[0]) && comboInfo[edgeKey].outputUMLS?.includes(combo.umls[1])) {
-        multiplier = Math.max(1/combo.ngd, multiplier);
+        score += 1/combo.ngd;
       }
     }
-
-    score *= multiplier;
   })
 
   return score;
