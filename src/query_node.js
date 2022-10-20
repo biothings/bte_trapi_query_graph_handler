@@ -182,7 +182,7 @@ module.exports = class QNode {
     }
 
     getEquivalentIDs() {
-        return this.equivalentIDs;
+        return this.equivalentIDs ?? {};
     }
 
     removeEquivalentID(id) {
@@ -191,20 +191,20 @@ module.exports = class QNode {
 
     getCategories() {
         if (this.hasEquivalentIDs() === false) {
-        const categories = utils.toArray(this.category);
-        let expanded_categories = [];
-        categories.map((category) => {
-            expanded_categories = [
-            ...expanded_categories,
-            ...biolink.getDescendantClasses(utils.removeBioLinkPrefix(category)),
-            ];
-        });
-        return utils.getUnique(expanded_categories);
+            const categories = utils.toArray(this.category);
+            let expanded_categories = [];
+            categories.map((category) => {
+                expanded_categories = [
+                ...expanded_categories,
+                ...biolink.getDescendantClasses(utils.removeBioLinkPrefix(category)),
+                ];
+            });
+            return utils.getUnique(expanded_categories);
         }
         let categories = [];
         Object.values(this.equivalentIDs).map((entities) => {
         entities.map((entity) => {
-            categories = [...categories, ...entity.semanticTypes];
+            categories = [...categories, ...entity.semanticTypes.map(semantic => utils.removeBioLinkPrefix(semantic))];
         });
         });
         return utils.getUnique(categories);
@@ -237,7 +237,7 @@ module.exports = class QNode {
     }
 
     hasEquivalentIDs() {
-        return !(typeof this.equivalentIDs === 'undefined');
+        return !(typeof this.equivalentIDs === 'undefined' || this.equivalentIDs === {});
     }
 
     getEntityCount() {

@@ -82,10 +82,9 @@ module.exports = class NodesUpdateHandler {
     queryRecords.map((record) => {
       if (
         record &&
-        !(record.object.curie in record.qXEdge.output_equivalent_identifiers)
+        !(record.object.curie in record.qXEdge.getOutputNode().getEquivalentIDs())
       ) {
-        record.qXEdge.output_equivalent_identifiers[record.object.curie] =
-          record.object.normalizedInfo;
+        record.qXEdge.getOutputNode().updateEquivalentIDs({[record.object.curie]: record.object.normalizedInfo});
       }
     });
   }

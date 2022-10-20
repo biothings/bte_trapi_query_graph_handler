@@ -45,7 +45,6 @@ module.exports = class QEdge {
       logs: this.logs,
       subject: this.subject.freeze(),
       object: this.object.freeze(),
-      output_equivalent_identifiers: this.output_equivalent_identifiers,
       predicate: this.predicate,
       records: this.records.map(record => record.freeze())
     };
