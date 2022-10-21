@@ -262,7 +262,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       Object.values(item).forEach((element) => {
         element.constraints?.forEach((constraint) => constraints.add(constraint.name));
         element.attribute_constraints?.forEach((constraint) => constraints.add(constraint.name));
-        element.qualifier_constraints?.forEach((constraint) => constraints.add(constraint.name));
+        // element.qualifier_constraints?.forEach((constraint) => constraints.add(constraint.name));
       });
     });
     if (constraints.size) {
