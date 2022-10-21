@@ -7,11 +7,10 @@ const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error')
 module.exports = class QNode {
     /**
      *
-     * @param {string} id - QNode ID
-     * @param {object} info - Qnode info, e.g. curie, category
+     * @param {object} info - Qnode info, e.g. ID, curie, category
      */
-    constructor(id, info) {
-        this.id = id;
+    constructor(info) {
+        this.id = info.id;
         this.category = info.categories || 'NamedThing';
         // mainIDs
         this.curie = info.ids;
@@ -48,11 +47,6 @@ module.exports = class QNode {
         id: this.id,
         is_set: this.is_set
       }
-    }
-
-    static unfreeze(json) {
-      var node = new QNode(json.id, json);
-      return node;
     }
 
     isSet() {

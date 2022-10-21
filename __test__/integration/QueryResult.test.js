@@ -8,9 +8,9 @@ const config = require('../../src/config.js');
 describe('Testing QueryResults Module', () => {
   describe('"Real" Records', () => {
     describe('Single Record', () => {
-      const gene_node1 = new QNode('n1', { categories: ['Gene'], ids: ['NCBIGene:632'] });
-      const chemical_node1 = new QNode('n2', { categories: ['ChemicalSubstance'] });
-      const edge1 = new QEdge('e01', { subject: gene_node1, object: chemical_node1 });
+      const gene_node1 = new QNode({ id: 'n1', categories: ['Gene'], ids: ['NCBIGene:632'] }) ;
+      const chemical_node1 = new QNode({ id: 'n2', categories: ['ChemicalSubstance'] }) ;
+      const edge1 = new QEdge({ id: 'e01', subject: gene_node1, object: chemical_node1 });
       const record = new Record(
         {
           publications: ['PMID:8366144', 'PMID:8381250'],
@@ -76,12 +76,12 @@ describe('Testing QueryResults Module', () => {
 
     describe('Two Records', () => {
       describe('query graph: gene1-disease1-gene1', () => {
-        const gene_node_start = new QNode('n1', { categories: ['Gene'] });
-        const disease_node = new QNode('n2', { categories: ['Disease'] });
-        const gene_node_end = new QNode('n3', { categories: ['Gene'] });
+        const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'] }) ;
+        const disease_node = new QNode({ id: 'n2', categories: ['Disease'] }) ;
+        const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'] }) ;
 
-        const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
-        const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
+        const edge1 = new QEdge({ id: 'e01', subject: gene_node_start, object: disease_node });
+        const edge2 = new QEdge({ id: 'e02', subject: disease_node, object: gene_node_end });
 
         const record1 = new Record(
           {
@@ -197,12 +197,12 @@ describe('Testing QueryResults Module', () => {
       });
 
       describe('query graph: gene1-disease1-gene2 (no ids params)', () => {
-        const gene_node_start = new QNode('n1', { categories: ['Gene'] });
-        const disease_node = new QNode('n2', { categories: ['Disease'] });
-        const gene_node_end = new QNode('n3', { categories: ['Gene'] });
+        const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'] }) ;
+        const disease_node = new QNode({ id: 'n2', categories: ['Disease'] }) ;
+        const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'] }) ;
 
-        const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
-        const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
+        const edge1 = new QEdge({ id: 'e01', subject: gene_node_start, object: disease_node });
+        const edge2 = new QEdge({ id: 'e02', subject: disease_node, object: gene_node_end });
 
         const record1 = new Record(
           {
@@ -317,12 +317,12 @@ describe('Testing QueryResults Module', () => {
       });
 
       describe('query graph: gene1-disease1-gene2 (gene1 has ids param)', () => {
-        const gene_node_start = new QNode('n1', { categories: ['Gene'], ids: ['NCBIGene:3778'] });
-        const disease_node = new QNode('n2', { categories: ['Disease'] });
-        const gene_node_end = new QNode('n3', { categories: ['Gene'] });
+        const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'], ids: ['NCBIGene:3778'] }) ;
+        const disease_node = new QNode({ id: 'n2', categories: ['Disease'] }) ;
+        const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'] }) ;
 
-        const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
-        const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
+        const edge1 = new QEdge({ id: 'e01', subject: gene_node_start, object: disease_node });
+        const edge2 = new QEdge({ id: 'e02', subject: disease_node, object: gene_node_end });
 
         const record1 = new Record(
           {
@@ -437,12 +437,12 @@ describe('Testing QueryResults Module', () => {
       });
 
       describe('query graph: gene1-disease1-gene2 (gene1 & gene2 have ids params)', () => {
-        const gene_node_start = new QNode('n1', { categories: ['Gene'], ids: ['NCBIGene:3778'] });
-        const disease_node = new QNode('n2', { categories: ['Disease'] });
-        const gene_node_end = new QNode('n3', { categories: ['Gene'], ids: ['NCBIGene:7289'] });
+        const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'], ids: ['NCBIGene:3778'] }) ;
+        const disease_node = new QNode({ id: 'n2', categories: ['Disease'] }) ;
+        const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'], ids: ['NCBIGene:7289'] }) ;
 
-        const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
-        const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
+        const edge1 = new QEdge({ id: 'e01', subject: gene_node_start, object: disease_node });
+        const edge2 = new QEdge({ id: 'e02', subject: disease_node, object: gene_node_end });
 
         const record1 = new Record(
           {
@@ -559,12 +559,12 @@ describe('Testing QueryResults Module', () => {
       });
 
       describe('query graph: gene1-disease1-gene2 (gene2 has ids param)', () => {
-        const gene_node_start = new QNode('n1', { categories: ['Gene'] });
-        const disease_node = new QNode('n2', { categories: ['Disease'] });
-        const gene_node_end = new QNode('n3', { categories: ['Gene'], ids: ['NCBIGene:7289'] });
+        const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'] }) ;
+        const disease_node = new QNode({ id: 'n2', categories: ['Disease'] }) ;
+        const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'], ids: ['NCBIGene:7289'] }) ;
 
-        const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
-        const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
+        const edge1 = new QEdge({ id: 'e01', subject: gene_node_start, object: disease_node });
+        const edge2 = new QEdge({ id: 'e02', subject: disease_node, object: gene_node_end });
 
         const record1 = new Record(
           {
@@ -682,12 +682,12 @@ describe('Testing QueryResults Module', () => {
     });
 
     describe('Three Records', () => {
-      const gene_node_start = new QNode('n1', { categories: ['Gene'], ids: ['NCBIGene:3778'] });
-      const disease_node = new QNode('n2', { categories: ['Disease'] });
-      const gene_node_end = new QNode('n3', { categories: ['Gene'] });
+      const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'], ids: ['NCBIGene:3778'] }) ;
+      const disease_node = new QNode({ id: 'n2', categories: ['Disease'] }) ;
+      const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'] }) ;
 
-      const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
-      const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
+      const edge1 = new QEdge({ id: 'e01', subject: gene_node_start, object: disease_node });
+      const edge2 = new QEdge({ id: 'e02', subject: disease_node, object: gene_node_end });
 
       const record1 = new Record(
         {

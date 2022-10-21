@@ -258,10 +258,10 @@ module.exports = class QueryGraphHandler {
               ).getLog(),
             );
           }
-          nodes[qNodeID] = new QNode(qNodeID, this.queryGraph.nodes[qNodeID]);
+          nodes[qNodeID] = new QNode({id: qNodeID, ...this.queryGraph.nodes[qNodeID]});
         } else {
           debug(`Creating node...`);
-          nodes[qNodeID] = new QNode(qNodeID, this.queryGraph.nodes[qNodeID]);
+          nodes[qNodeID] = new QNode({id: qNodeID, ...this.queryGraph.nodes[qNodeID]});
         }
         
         if (nodes[qNodeID].category !== undefined) {
@@ -305,7 +305,7 @@ module.exports = class QueryGraphHandler {
       this.nodes[this.queryGraph.edges[qEdgeID].subject].updateConnection(qEdgeID);
       this.nodes[this.queryGraph.edges[qEdgeID].object].updateConnection(qEdgeID);
 
-      edges[edge_index] = [new QEdge(qEdgeID, edge_info)];
+      edges[edge_index] = [new QEdge({id: qEdgeID, ...edge_info})];
       edge_index++;
     }
     this.logs.push(

@@ -5,7 +5,8 @@ describe("Test QEdge class", () => {
     describe("Test getPredicate function", () => {
 
         test("Non reversed edge should return predicates itself", () => {
-            const edge = new qEdge('e01', {
+            const edge = new qEdge({
+                id: 'e01',
                 predicates: 'biolink:treats',
                 object: {
                     getCurie() {
@@ -30,7 +31,8 @@ describe("Test QEdge class", () => {
         })
 
         test("An array of non-undefined predicates should return itself", () => {
-            const edge = new qEdge('e01', {
+            const edge = new qEdge({
+                id: 'e01',
                 predicates: ['biolink:treats', 'biolink:targets'],
                 object: {
                     getCurie() {
@@ -50,7 +52,8 @@ describe("Test QEdge class", () => {
 
         test("An array of non-undefined predicates with reverse edge should exclude return value if undefined", () => {
 
-            const edge = new qEdge('e01', {
+            const edge = new qEdge({
+                id: 'e01',
                 predicates: ['biolink:treats', 'biolink:targets'],
                 object: {
                     getCurie() {
@@ -68,7 +71,8 @@ describe("Test QEdge class", () => {
         })
 
         test("An array of non-undefined predicates with reverse edge should return reversed predicates if not undefined", () => {
-            const edge = new qEdge('e01', {
+            const edge = new qEdge({
+                id: 'e01',
                 predicates: ['biolink:treats', 'biolink:targets'],
                 object: {
                     getCurie() {
@@ -89,7 +93,8 @@ describe("Test QEdge class", () => {
     describe("Test getOutputNode function", () => {
         test("reversed edge should return the subject", () => {
 
-            const edge = new qEdge('e01', {
+            const edge = new qEdge({
+                id: 'e01',
                 predicates: ['biolink:treats', 'biolink:targets'],
                 object: {
                     getCurie() {
@@ -113,7 +118,8 @@ describe("Test QEdge class", () => {
         })
 
         test("non reversed edge should return the object", () => {
-            const edge = new qEdge('e01', {
+            const edge = new qEdge({
+                id: 'e01',
                 predicates: ['biolink:treats', 'biolink:targets'],
                 object: {
                     getCurie() {

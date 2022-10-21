@@ -8,17 +8,17 @@ const QNode = require('./query_node');
 module.exports = class QEdge {
   /**
    *
-   * @param {string} id - QEdge ID
-   * @param {object} info - QEdge info, e.g. subject, object, predicate
+   * @param {object} info - QEdge info, e.g. ID, subject, object, predicate
    * @param {boolean} reverse - is QEdge reversed?
    */
-  constructor(id, info, reverse = null) {
-    this.id = id;
+  constructor(info, reverse = null) {
+    this.id = info.id;
     this.predicate = info.predicates;
-    this.subject = info.frozen === true ? QNode.unfreeze(info.subject) : info.subject;
-    this.object = info.frozen === true ? QNode.unfreeze(info.object) : info.object;
+    this.subject = info.frozen === true ? new QNode(info.subject) : info.subject;
+    this.object = info.frozen === true ? new QNode(info.object) : info.object;
     this.expanded_predicates = [];
 
+    if (info.reverse !== undefined) reverse = info.reverse;
     if (reverse === null) reverse = !(info.subject?.getCurie()) && !!(info.object?.getCurie());
 
     this.init();
@@ -29,8 +29,11 @@ module.exports = class QEdge {
     this.executed = info.executed === undefined ? false : info.executed;
     //run initial checks
     this.logs = info.logs === undefined ? [] : info.logs;
+
     //this edges query response records
-    this.records = [];
+    if (info.records && info.frozen === true) this.records = info.records.map(recordJSON => new Record(recordJSON));
+    else this.records = [];
+
     debug(`(2) Created Edge` +
     ` ${JSON.stringify(this.getID())} Reverse = ${this.reverse}`)
   }
@@ -46,14 +49,9 @@ module.exports = class QEdge {
       subject: this.subject.freeze(),
       object: this.object.freeze(),
       predicate: this.predicate,
-      records: this.records.map(record => record.freeze())
+      records: this.records.map(record => record.freeze()),
+      frozen: true
     };
-  }
-
-  static unfreeze(json) {
-    var output = new MegaQEdge(json.id, { ...json, frozen: true }, json.reverse === undefined ? false : json.reverse);
-    output.records = json.records.map(recordJSON => new Record(recordJSON));
-    return output;
   }
 
   init() {
