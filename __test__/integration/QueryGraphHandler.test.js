@@ -169,6 +169,58 @@ describe('Testing QueryGraphHandler Module', () => {
     },
   };
 
+  const QueryWithNullValues = {
+    nodes: {
+      n0: {
+        ...disease_entity_node,
+        categories: null,
+      },
+      n1: {
+        ...gene_class_node,
+        ids: null,
+      },
+    },
+    edges: {
+      e01: {
+        subject: 'n0',
+        object: 'n1',
+      },
+    },
+  };
+
+  const QueryWithNullPredicate = {
+    nodes: {
+      n0: disease_entity_node,
+      n1: gene_class_node,
+    },
+    edges: {
+      e01: {
+        subject: 'n0',
+        object: 'n1',
+        predicate: null,
+      },
+    },
+  };
+
+  const QueryWithNullIds = {
+    nodes: {
+      n0: {
+        ...disease_entity_node,
+        ids: [],
+      },
+      n1: {
+        ...gene_class_node,
+        ids: null,
+      },
+    },
+    edges: {
+      e01: {
+        subject: 'n0',
+        object: 'n1',
+      },
+    },
+  };
+
   describe('test _storeNodes function', () => {
     test('test if storeNodes with one hop query', async () => {
       let handler = new QueryGraphHandler(OneHopQuery);
@@ -228,6 +280,23 @@ describe('Testing QueryGraphHandler Module', () => {
     });
     test('Query Graph Cycle #2', async () => {
       const handler = new QueryGraphHandler(QueryWithCycle2);
+      expect(handler.calculateEdges()).rejects.toThrow(InvalidQueryGraphError);
+    });
+  });
+
+  describe('test chandling of null ids / categories / predicates', () => {
+    test('Null id/categories graph', async () => {
+      const handler = new QueryGraphHandler(QueryWithNullValues);
+      await expect(handler.calculateEdges()).resolves.not.toThrow();
+    });
+    test('Null predicate graph', async () => {
+      const handler = new QueryGraphHandler(QueryWithNullPredicate);
+      const edges = await handler.calculateEdges();
+      // if this is undefined (not null) then smartapi-kg treats as if the field doesn't exist (desired behavior)
+      expect(edges[0][0].getPredicate()).toBe(undefined);
+    });
+    test('Graph without any ids', async () => {
+      const handler = new QueryGraphHandler(QueryWithNullIds);
       expect(handler.calculateEdges()).rejects.toThrow(InvalidQueryGraphError);
     });
   });

@@ -38,7 +38,7 @@ module.exports = class QEdge {
   }
 
   getPredicate() {
-    if (this.predicate === undefined) {
+    if (this.predicate === undefined || this.predicate === null) {
       return undefined;
     }
     const predicates = utils.toArray(this.predicate).map((item) => utils.removeBioLinkPrefix(item));
