@@ -158,4 +158,42 @@ describe('Testing QueryEdge Module', () => {
       expect(res).toContain('amelio');
     });
   });
+
+  describe('chooseLowerEntityValue', () => {
+    test('Should reverse if subject has more curies', () => {
+      const qEdgeClone = new QEdge(edge1.freeze());
+      qEdgeClone.subject.entity_count = 2;
+      qEdgeClone.object.entity_count = 1;
+
+      qEdgeClone.chooseLowerEntityValue();
+
+      expect(qEdgeClone.isReversed()).toBeTruthy();
+    });
+
+    test("Shouldn't reverse if object has more curies", () => {
+      const qEdgeClone = new QEdge(edge1.freeze());
+      qEdgeClone.subject.entity_count = 1;
+      qEdgeClone.object.entity_count = 2;
+
+      qEdgeClone.chooseLowerEntityValue();
+
+      expect(qEdgeClone.isReversed()).toBeFalsy();
+    });
+
+    test("Shouldn't reverse if both have same number", () => {
+      const qEdgeClone = new QEdge(edge1.freeze());
+      qEdgeClone.subject.entity_count = 2;
+      qEdgeClone.object.entity_count = 2;
+
+      qEdgeClone.chooseLowerEntityValue();
+
+      expect(qEdgeClone.isReversed()).toBeFalsy();
+    });
+  });
+
+  test('getHashedEdgeRepresentation', () => {
+    const qEdge1 = new QEdge({ id: 'e01', subject: type_node, object: disease1_node, predicates: ['biolink:treats'] });
+    const qEdge2 = new QEdge(qEdge1.freeze(), true);
+    expect(qEdge1.getHashedEdgeRepresentation()).not.toEqual(qEdge2.getHashedEdgeRepresentation());
+  });
 });

@@ -11,19 +11,22 @@ module.exports = class QEdge {
    * @param {object} info - QEdge info, e.g. ID, subject, object, predicate
    * @param {boolean} reverse - is QEdge reversed?
    */
-  constructor(info, reverse = null) {
+  constructor(info, reverse) {
     this.id = info.id;
     this.predicate = info.predicates;
     this.subject = info.frozen === true ? new QNode(info.subject) : info.subject;
     this.object = info.frozen === true ? new QNode(info.object) : info.object;
     this.expanded_predicates = [];
 
-    if (info.reverse !== undefined) reverse = info.reverse;
-    if (reverse === null) reverse = !(info.subject?.getCurie()) && !!(info.object?.getCurie());
+    this.reverse = this.subject?.getCurie?.() === undefined && this.object?.getCurie?.() !== undefined;
+
+    this.reverse = info.reverse !== undefined
+      ? info.reverse
+      : this.reverse;
+    this.reverse = reverse !== undefined ? reverse : this.reverse;
 
     this.init();
 
-    this.reverse = reverse;
 
     //edge has been fully executed
     this.executed = info.executed === undefined ? false : info.executed;
@@ -64,7 +67,7 @@ module.exports = class QEdge {
 
   getHashedEdgeRepresentation() {
     const toBeHashed =
-      this.subject.getCategories() + this.predicate + this.object.getCategories() + this.getInputCurie();
+      this.getInputNode().getCategories() + this.getPredicate() + this.getOutputNode().getCategories() + this.getInputCurie();
     return helper._generateHash(toBeHashed);
   }
 

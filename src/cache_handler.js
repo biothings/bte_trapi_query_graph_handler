@@ -83,8 +83,7 @@ class DelimitedChunksEncoder extends Transform {
 }
 
 module.exports = class {
-  constructor(qXEdges, caching, metaKG = undefined, recordConfig = {}, logs = []) {
-    this.qXEdges = qXEdges;
+  constructor(caching, metaKG = undefined, recordConfig = {}, logs = []) {
     this.metaKG = metaKG;
     this.logs = logs;
     this.cacheEnabled =

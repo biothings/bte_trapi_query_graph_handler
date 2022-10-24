@@ -240,14 +240,22 @@ describe('Testing QueryGraphHandler Module', () => {
     });
   });
 
+  describe('test calculateEdges function', () => {
+    test('test storeEdges with one hop query', async () => {
+      let handler = new QueryGraphHandler(OneHopQuery);
+      await handler.calculateEdges();
+      expect(handler.edges).toHaveProperty('e01');
+      expect(handler.edges).not.toHaveProperty('e02');
+      expect(handler.edges.e01).toBeInstanceOf(QEdge);
+      expect(handler.edges.e01.getInputNode()).toBeInstanceOf(QNode2);
+    });
+  });
+
   describe('test _createQueryPaths function', () => {
     test('test createQueryPaths with three hop explain query', async () => {
       let handler = new QueryGraphHandler(ThreeHopExplainQuery);
       let edges = await handler.calculateEdges();
       expect(Object.keys(edges)).toHaveLength(3);
-      expect(edges[0]).toHaveLength(1);
-      expect(edges[1]).toHaveLength(1);
-      expect(edges[2]).toHaveLength(1);
     });
   });
   describe('test cycle/duplicate edge detection for query graphs', () => {
@@ -274,7 +282,7 @@ describe('Testing QueryGraphHandler Module', () => {
       const handler = new QueryGraphHandler(QueryWithNullPredicate);
       const edges = await handler.calculateEdges();
       // if this is undefined (not null) then smartapi-kg treats as if the field doesn't exist (desired behavior)
-      expect(edges[0][0].getPredicate()).toBe(undefined);
+      expect(edges[0].getPredicate()).toBe(undefined);
     });
     test('Graph without any ids', async () => {
       const handler = new QueryGraphHandler(QueryWithNullIds);

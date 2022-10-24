@@ -8,7 +8,7 @@ const config = require('./config');
 module.exports = class QueryExecutionEdgeManager {
     constructor(edges) {
         // flatten list of all edges available
-        this._qXEdges = _.flatten(Object.values(edges));
+        this._qEdges = _.flatten(edges);
         this.logs = [];
         this._records = [];
         //organized by edge with refs to connected edges
@@ -27,12 +27,12 @@ module.exports = class QueryExecutionEdgeManager {
     }
 
     init() {
-        debug(`(3) Edge manager is managing ${this._qXEdges.length} qEdges.`);
+        debug(`(3) Edge manager is managing ${this._qEdges.length} qEdges.`);
         this.logs.push(
             new LogEntry(
                 'DEBUG',
                 null,
-                `Edge manager is managing ${this._qXEdges.length} qEdges.`,
+                `Edge manager is managing ${this._qEdges.length} qEdges.`,
             ).getLog(),
         );
     }
@@ -41,7 +41,7 @@ module.exports = class QueryExecutionEdgeManager {
         //returns next edge with lowest entity count on
         //either object or subject OR no count last
         // available not yet executed
-        let available_edges = this._qXEdges
+        let available_edges = this._qEdges
         .filter(qXEdge => !qXEdge.executed);
         //safeguard for making sure there's available
         //edges when calling getNext
@@ -116,7 +116,7 @@ module.exports = class QueryExecutionEdgeManager {
     }
 
     logEntityCounts() {
-        this._qXEdges.forEach((qXEdge) => {
+        this._qEdges.forEach((qXEdge) => {
             debug(`'${qXEdge.getID()}'` +
             ` : (${qXEdge.subject.entity_count || 0}) ` +
             `${qXEdge.reverse ? '<--' : '-->'}` +
@@ -179,7 +179,7 @@ module.exports = class QueryExecutionEdgeManager {
 
     getEdgesNotExecuted() {
         //simply returns a number of edges not marked as executed
-        let found = this._qXEdges.filter(edge => !edge.executed);
+        let found = this._qEdges.filter(edge => !edge.executed);
         let not_executed = found.length;
         if(not_executed) debug(`(4) Edges not yet executed = ${not_executed}`);
         return not_executed;
@@ -308,7 +308,7 @@ module.exports = class QueryExecutionEdgeManager {
         let brokenEdges = [];
         debug(`(11) Collecting records...`);
         //First: go through edges and filter that each edge is holding
-        this._qXEdges.forEach((qXEdge) => {
+        this._qEdges.forEach((qXEdge) => {
             let qEdgeID = qXEdge.getID();
             let filteredRecords = qXEdge.records.map(record => record.queryDirection());
             if (filteredRecords.length == 0) {
@@ -400,7 +400,7 @@ module.exports = class QueryExecutionEdgeManager {
         if (left_connections.length) {
             //find edge by id
             left_connections.forEach((qEdgeID) => {
-                let edge = this._qXEdges.find((edge) => edge.getID() == qEdgeID);
+                let edge = this._qEdges.find((edge) => edge.getID() == qEdgeID);
                 if (edge && edge.records.length) {
                     debug(`Updating "${edge.getID()}" neighbor edge of ${currentQEdgeID}`);
                     debug(`Updating neighbor (X)<----()`);
@@ -412,7 +412,7 @@ module.exports = class QueryExecutionEdgeManager {
         if (right_connections.length) {
             //find edge by id
             right_connections.forEach((neighbor_id) => {
-                let edge = this._qXEdges.find((edge) => edge.getID() == neighbor_id);
+                let edge = this._qEdges.find((edge) => edge.getID() == neighbor_id);
                 if (edge && edge.records.length) {
                     debug(`Updating "${edge.getID()}" neighbor edge of ${currentQEdgeID}`);
                     debug(`Updating neighbor ()---->(X)`);
@@ -426,7 +426,7 @@ module.exports = class QueryExecutionEdgeManager {
         //update and filter all other edges
         debug(`Updating all other edges...`);
         let currentQEdgeID = currentQXEdge.getID();
-        this._qXEdges.forEach((qXEdge) => {
+        this._qEdges.forEach((qXEdge) => {
             if (qXEdge.getID() !== currentQEdgeID && qXEdge.records.length) {
                 debug(`Updating "${qXEdge.getID()}"...`);
                 this.updateEdgeRecords(qXEdge);
