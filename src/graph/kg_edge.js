@@ -60,6 +60,12 @@ module.exports = class KGEdge {
   }
 
   addAdditionalAttributes(name, value) {
+    // special handling for full edge attributes
+    if (name === 'edge-attributes') {
+      this.attributes[name] = value;
+      return;
+    }
+
     if (!(name in this.attributes)) {
       this.attributes[name] = new Set();
     }
