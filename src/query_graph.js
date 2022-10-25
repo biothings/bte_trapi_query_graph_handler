@@ -101,7 +101,7 @@ module.exports = class QueryGraphHandler {
         new LogEntry(
           'WARNING',
           null,
-          `We've encountered one or more properties on a QNode that we don't recognize: ${Array.from(badProperties).join(',')}. We will ignore them and continue execution.`,
+          `Encountered one or more properties on a QNode that we don't recognize: ${Array.from(badProperties).join(',')}. Properties will be ignored.`,
         ).getLog()
       );
     }
@@ -124,7 +124,7 @@ module.exports = class QueryGraphHandler {
         new LogEntry(
           'WARNING',
           null,
-          `We've encountered one or more properties on a QEdge that we don't recognize: ${Array.from(badProperties).join(',')}. We will ignore them and continue execution.`,
+          `Encountered one or more properties on a QEdge that we don't recognize: ${Array.from(badProperties).join(',')}. Properties will be ignored.`,
         ).getLog()
       );
     }
