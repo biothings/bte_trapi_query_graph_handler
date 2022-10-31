@@ -65,7 +65,7 @@ module.exports = class KnowledgeGraph {
   }
 
   _createQualifiers(kgEdge) {
-    const qualifiers = Object.entries(kgEdge.qualifiers).map(([qualifierType, qualifier]) => {
+    const qualifiers = Object.entries(kgEdge.qualifiers || {}).map(([qualifierType, qualifier]) => {
       return {
         qualifier_type_id: qualifierType,
         qualifier_value: qualifier,
