@@ -1,5 +1,5 @@
 const helper = require('./helper');
-const debug = require('debug')('bte:biothings-explorer-trapi:MegaQEdge');
+const debug = require('debug')('bte:biothings-explorer-trapi:QEdge');
 const utils = require('./utils');
 const biolink = require('./biolink');
 const { Record } = require('@biothings-explorer/api-response-transform');
@@ -20,13 +20,10 @@ module.exports = class QEdge {
 
     this.reverse = this.subject?.getCurie?.() === undefined && this.object?.getCurie?.() !== undefined;
 
-    this.reverse = info.reverse !== undefined
-      ? info.reverse
-      : this.reverse;
+    this.reverse = info.reverse !== undefined ? info.reverse : this.reverse;
     this.reverse = reverse !== undefined ? reverse : this.reverse;
 
     this.init();
-
 
     //edge has been fully executed
     this.executed = info.executed === undefined ? false : info.executed;
@@ -34,11 +31,10 @@ module.exports = class QEdge {
     this.logs = info.logs === undefined ? [] : info.logs;
 
     //this edges query response records
-    if (info.records && info.frozen === true) this.records = info.records.map(recordJSON => new Record(recordJSON));
+    if (info.records && info.frozen === true) this.records = info.records.map((recordJSON) => new Record(recordJSON));
     else this.records = [];
 
-    debug(`(2) Created Edge` +
-    ` ${JSON.stringify(this.getID())} Reverse = ${this.reverse}`)
+    debug(`(2) Created Edge` + ` ${JSON.stringify(this.getID())} Reverse = ${this.reverse}`);
   }
 
   freeze() {
@@ -52,8 +48,8 @@ module.exports = class QEdge {
       subject: this.subject.freeze(),
       object: this.object.freeze(),
       predicate: this.predicate,
-      records: this.records.map(record => record.freeze()),
-      frozen: true
+      records: this.records.map((record) => record.freeze()),
+      frozen: true,
     };
   }
 
@@ -67,7 +63,10 @@ module.exports = class QEdge {
 
   getHashedEdgeRepresentation() {
     const toBeHashed =
-      this.getInputNode().getCategories() + this.getPredicate() + this.getOutputNode().getCategories() + this.getInputCurie();
+      this.getInputNode().getCategories() +
+      this.getPredicate() +
+      this.getOutputNode().getCategories() +
+      this.getInputCurie();
     return helper._generateHash(toBeHashed);
   }
 
@@ -100,8 +99,7 @@ module.exports = class QEdge {
         this.reverse = false;
         this.object.holdCurie();
         debug(`(8) Sub - Obj were same but chose subject (${this.subject.entity_count})`);
-      }
-      else if (this.object.entity_count > this.subject.entity_count) {
+      } else if (this.object.entity_count > this.subject.entity_count) {
         //(#) ---> ()
         this.reverse = false;
         //tell node to hold curie in a temp field
@@ -123,19 +121,18 @@ module.exports = class QEdge {
     //will give you all curies found by semantic type, each type will have
     //a main ID and all of it's aliases
     debug(`(7) Updating Entities in "${this.getID()}"`);
-    let typesToInclude = isReversed ?
-    this.subject.getCategories() :
-    this.object.getCategories();
+    let typesToInclude = isReversed ? this.subject.getCategories() : this.object.getCategories();
     debug(`(7) Collecting Types: "${JSON.stringify(typesToInclude)}"`);
     let all = {};
     records.forEach((record) => {
-
       record.subject.normalizedInfo.forEach((o) => {
         //create semantic type if not included
         let type = o._leafSemanticType;
-        if (typesToInclude.includes(type) ||
+        if (
+          typesToInclude.includes(type) ||
           typesToInclude.includes('NamedThing') ||
-          typesToInclude.toString().includes(type)) {
+          typesToInclude.toString().includes(type)
+        ) {
           if (!Object.hasOwnProperty.call(all, type)) {
             all[type] = {};
           }
@@ -182,7 +179,7 @@ module.exports = class QEdge {
           }
           //else #2 check curie
           else if (Object.hasOwnProperty.call(o, 'curie')) {
-            if (Array.isArray( o.curie)) {
+            if (Array.isArray(o.curie)) {
               all[type][original] = o.curie;
             } else {
               all[type][original] = [o.curie];
@@ -198,9 +195,11 @@ module.exports = class QEdge {
       record.object.normalizedInfo.forEach((o) => {
         //create semantic type if not included
         let type = o._leafSemanticType;
-        if (typesToInclude.includes(type) ||
+        if (
+          typesToInclude.includes(type) ||
           typesToInclude.includes('NamedThing') ||
-          typesToInclude.toString().includes(type))  {
+          typesToInclude.toString().includes(type)
+        ) {
           if (!Object.hasOwnProperty.call(all, type)) {
             all[type] = {};
           }
@@ -248,7 +247,7 @@ module.exports = class QEdge {
           }
           //else #2 check curie
           else if (Object.hasOwnProperty.call(o, 'curie')) {
-            if (Array.isArray( o.curie)) {
+            if (Array.isArray(o.curie)) {
               all[type][original] = o.curie;
             } else {
               all[type][original] = [o.curie];
@@ -260,7 +259,6 @@ module.exports = class QEdge {
           }
         }
       });
-
     });
     // {Gene:{'id': ['alias']}}
     debug(`Collected entity ids in records: ${JSON.stringify(Object.keys(all))}`);
@@ -271,7 +269,7 @@ module.exports = class QEdge {
     //combine all curies in case there are
     //multiple categories in this node since
     //they are separated by type
-    let combined  = {};
+    let combined = {};
     for (const type in curies) {
       for (const original in curies[type]) {
         combined[original] = curies[type][original];
@@ -284,15 +282,11 @@ module.exports = class QEdge {
     //update node queried (1) ---> (update)
     let curies_by_semantic_type = this.extractCuriesFromRecords(records, this.reverse);
     let combined_curies = this._combineCuries(curies_by_semantic_type);
-    this.reverse ?
-    this.subject.updateCuries(combined_curies) :
-    this.object.updateCuries(combined_curies);
+    this.reverse ? this.subject.updateCuries(combined_curies) : this.object.updateCuries(combined_curies);
     //update node used as input (1 [update]) ---> ()
     let curies_by_semantic_type_2 = this.extractCuriesFromRecords(records, !this.reverse);
     let combined_curies_2 = this._combineCuries(curies_by_semantic_type_2);
-    !this.reverse ?
-    this.subject.updateCuries(combined_curies_2) :
-    this.object.updateCuries(combined_curies_2);
+    !this.reverse ? this.subject.updateCuries(combined_curies_2) : this.object.updateCuries(combined_curies_2);
   }
 
   applyNodeConstraints() {
@@ -310,7 +304,7 @@ module.exports = class QEdge {
         //apply constraints
         for (let x = 0; x < sub_constraints.length; x++) {
           const constraint = sub_constraints[x];
-          keep = this.meetsConstraint(constraint, res, from)
+          keep = this.meetsConstraint(constraint, res, from);
         }
         //pass or not
         if (keep) {
@@ -330,7 +324,7 @@ module.exports = class QEdge {
         //apply constraints
         for (let x = 0; x < obj_constraints.length; x++) {
           const constraint = obj_constraints[x];
-          keep = this.meetsConstraint(constraint, res, from)
+          keep = this.meetsConstraint(constraint, res, from);
         }
         //pass or not
         if (keep) {
@@ -340,7 +334,7 @@ module.exports = class QEdge {
     }
     if (save_kept) {
       //only override recordss if there was any filtering done.
-      this.records =  kept;
+      this.records = kept;
       debug(`(6) Reduced to (${this.records.length}) records.`);
     } else {
       debug(`(6) No constraints. Skipping...`);
@@ -351,7 +345,7 @@ module.exports = class QEdge {
     //list of attribute ids in node
     let available_attributes = new Set();
     for (const key in record[from].attributes) {
-      available_attributes.add(key)
+      available_attributes.add(key);
     }
     available_attributes = [...available_attributes];
     // debug(`ATTRS ${JSON.stringify(record[from].normalizedInfo[0]._leafSemanticType)}` +
@@ -368,53 +362,59 @@ module.exports = class QEdge {
         node_attributes[filter] = record[from].attributes[filter];
       });
       switch (constraint.operator) {
-        case "==":
-            for (const key in node_attributes) {
-              if (!isNaN(constraint.value)) {
-                if (Array.isArray(node_attributes[key])) {
-                  if (node_attributes[key].includes(constraint.value) ||
-                  node_attributes[key].includes(constraint.value.toString())) {
-                    return true;
-                  }
-                } else {
-                  if (node_attributes[key] == constraint.value ||
-                    node_attributes[key] == constraint.value.toString() ||
-                    node_attributes[key] == parseInt(constraint.value)) {
-                    return true;
-                  }
+        case '==':
+          for (const key in node_attributes) {
+            if (!isNaN(constraint.value)) {
+              if (Array.isArray(node_attributes[key])) {
+                if (
+                  node_attributes[key].includes(constraint.value) ||
+                  node_attributes[key].includes(constraint.value.toString())
+                ) {
+                  return true;
                 }
               } else {
-                if (Array.isArray(node_attributes[key])) {
-                  if (node_attributes[key].includes(constraint.value)) {
-                    return true;
-                  }
-                } else {
-                  if (node_attributes[key] == constraint.value ||
-                    node_attributes[key] == constraint.value.toString() ||
-                    node_attributes[key] == parseInt(constraint.value)) {
-                    return true;
-                  }
+                if (
+                  node_attributes[key] == constraint.value ||
+                  node_attributes[key] == constraint.value.toString() ||
+                  node_attributes[key] == parseInt(constraint.value)
+                ) {
+                  return true;
                 }
               }
-            }
-            return false;
-        case ">":
-            for (const key in node_attributes) {
+            } else {
               if (Array.isArray(node_attributes[key])) {
-                for (let index = 0; index < node_attributes[key].length; index++) {
-                  const element = node_attributes[key][index];
-                  if (parseInt(element) > parseInt(constraint.value)) {
-                    return true;
-                  }
+                if (node_attributes[key].includes(constraint.value)) {
+                  return true;
                 }
               } else {
-                if (parseInt(node_attributes[key]) > parseInt(constraint.value)) {
+                if (
+                  node_attributes[key] == constraint.value ||
+                  node_attributes[key] == constraint.value.toString() ||
+                  node_attributes[key] == parseInt(constraint.value)
+                ) {
                   return true;
                 }
               }
             }
-            return false;
-        case ">=":
+          }
+          return false;
+        case '>':
+          for (const key in node_attributes) {
+            if (Array.isArray(node_attributes[key])) {
+              for (let index = 0; index < node_attributes[key].length; index++) {
+                const element = node_attributes[key][index];
+                if (parseInt(element) > parseInt(constraint.value)) {
+                  return true;
+                }
+              }
+            } else {
+              if (parseInt(node_attributes[key]) > parseInt(constraint.value)) {
+                return true;
+              }
+            }
+          }
+          return false;
+        case '>=':
           for (const key in node_attributes) {
             if (Array.isArray(node_attributes[key])) {
               for (let index = 0; index < node_attributes[key].length; index++) {
@@ -430,7 +430,7 @@ module.exports = class QEdge {
             }
           }
           return false;
-        case "<":
+        case '<':
           for (const key in node_attributes) {
             if (Array.isArray(node_attributes[key])) {
               for (let index = 0; index < node_attributes[key].length; index++) {
@@ -446,7 +446,7 @@ module.exports = class QEdge {
             }
           }
           return false;
-        case "<=":
+        case '<=':
           for (const key in node_attributes) {
             if (Array.isArray(node_attributes[key])) {
               for (let index = 0; index < node_attributes[key].length; index++) {
@@ -465,7 +465,7 @@ module.exports = class QEdge {
         default:
           debug(`Node operator not handled ${constraint.operator}`);
           return false;
-      };
+      }
     }
   }
 
@@ -481,7 +481,10 @@ module.exports = class QEdge {
 
   getHashedEdgeRepresentation() {
     const toBeHashed =
-      this.getInputNode().getCategories() + this.getPredicate() + this.getOutputNode().getCategories() + this.getInputCurie();
+      this.getInputNode().getCategories() +
+      this.getPredicate() +
+      this.getOutputNode().getCategories() +
+      this.getInputCurie();
     return helper._generateHash(toBeHashed);
   }
 
