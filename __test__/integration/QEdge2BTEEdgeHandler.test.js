@@ -5,12 +5,15 @@ const NodeUpdateHandler = require('../../src/update_nodes');
 describe('Testing NodeUpdateHandler Module', () => {
   const gene_node1 = new QNode({ id: 'n1', categories: ['Gene'], ids: ['NCBIGene:1017'] });
   const node1_equivalent_ids = {
-    'NCBIGene:1017': {
-      db_ids: {
-        NCBIGene: ['1017'],
-        SYMBOL: ['CDK2'],
+    'NCBIGene:1017': [
+      {
+        semanticTypes: [],
+        db_ids: {
+          NCBIGene: ['1017'],
+          SYMBOL: ['CDK2'],
+        },
       },
-    },
+    ],
   };
 
   const gene_node2 = new QNode({ id: 'n2', categories: ['Gene'], ids: ['NCBIGene:1017', 'NCBIGene:1018'] });
