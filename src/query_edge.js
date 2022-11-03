@@ -17,6 +17,7 @@ module.exports = class QEdge {
     this.subject = info.frozen === true ? new QNode(info.subject) : info.subject;
     this.object = info.frozen === true ? new QNode(info.object) : info.object;
     this.expanded_predicates = [];
+    this.qualifier_constraints = info.qualifier_constraints;
 
     this.reverse = this.subject?.getCurie?.() === undefined && this.object?.getCurie?.() !== undefined;
 
@@ -42,6 +43,7 @@ module.exports = class QEdge {
       id: this.id,
       predicate: this.predicate,
       expanded_predicates: this.expanded_predicates,
+      qualifier_constraints: this.qualifier_constraints,
       executed: this.executed,
       reverse: this.reverse,
       logs: this.logs,
@@ -87,6 +89,41 @@ module.exports = class QEdge {
         return this.isReversed() === true ? biolink.reverse(predicate) : predicate;
       })
       .filter((item) => !(typeof item === 'undefined'));
+  }
+
+  getQualifierConstraints() {
+    if (this.isReversed()) {
+      return this.qualifier_constraints.map((qualifierSetObj) => {
+        return {
+          qualifier_set: qualifierSetObj.qualifier_set.map(({qualifier_type_id, qualifier_value}) => {
+            let newQualifierType;
+            let newQualifierValue;
+            if (qualifier_type_id.includes("predicate")) {
+              newQualifierValue = this.getReversedPredicate(qualifier_value);
+            }
+            if (qualifier_type_id.includes("subject")) {
+              newQualifierType = qualifier_type_id.replace("subject", "object");
+            }
+            if (qualifier_type_id.includes("object")) {
+              newQualifierType = qualifier_type_id.replace("object", "subject");
+            }
+            return {
+              qualifier_type_id: newQualifierType,
+              qualifier_value: newQualifierValue,
+            }
+          })
+        }
+      });
+    }
+    return this.qualifier_constraints;
+  }
+
+  getSimpleQualifierConstraints() {
+    return this.getQualifierConstraints().map((qualifierSetObj) => {
+      return Object.fromEntries(
+        qualifierSetObj.qualifier_set.map(({qualifier_type_id, qualifier_value}) => [qualifier_type_id, qualifier_value]),
+      );
+    });
   }
 
   chooseLowerEntityValue() {
