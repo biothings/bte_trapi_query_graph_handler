@@ -1544,17 +1544,11 @@ describe('Testing QueryResults Module', () => {
         await queryResult.update({
           e0_left_is_set: {
             connected_to: ['e1'],
-            records: [
-              new Record(record0_n0a_n1a_left_is_set, config),
-              new Record(record0_n0b_n1a_left_is_set, config)
-            ],
+            records: [new Record(record0_n0a_n1a_left_is_set, config), new Record(record0_n0b_n1a_left_is_set, config)],
           },
           e1: {
             connected_to: ['e0_left_is_set'],
-            records: [
-              new Record(record1_n1a_n2a, config),
-              new Record(record1_n1a_n2b, config)
-            ],
+            records: [new Record(record1_n1a_n2a, config), new Record(record1_n1a_n2b, config)],
           },
         });
         const results = queryResult.getResults();
@@ -1581,10 +1575,7 @@ describe('Testing QueryResults Module', () => {
           },
           e1_left_is_set: {
             connected_to: ['e0_right_is_set'],
-            records: [
-              new Record(record1_n1a_n2a_left_is_set, config),
-              new Record(record1_n1a_n2b_left_is_set, config)
-            ],
+            records: [new Record(record1_n1a_n2a_left_is_set, config), new Record(record1_n1a_n2b_left_is_set, config)],
           },
         });
         const results = queryResult.getResults();
@@ -1764,39 +1755,35 @@ describe('Testing QueryResults Module', () => {
         // generate connected records
         range(0, n1Count).forEach((n1Index) => {
           e0Records.push(
-            new Record(
-              {
-                subject: {
-                  ...n0.a,
-                },
-                object: {
-                  ...n1.a,
-                  curie: `n1_${n1Index}`,
-                },
-                predicate: 'biolink:record0_pred0',
-                ...source0,
-                ...api0,
-              }
-            ),
+            new Record({
+              subject: {
+                ...n0.a,
+              },
+              object: {
+                ...n1.a,
+                curie: `n1_${n1Index}`,
+              },
+              predicate: 'biolink:record0_pred0',
+              ...source0,
+              ...api0,
+            }),
           );
 
           range(0, n2Count).forEach((n2Index) => {
             e1Records.push(
-              new Record(
-                {
-                  subject: {
-                    ...n1.a,
-                    curie: `n1_${n1Index}`,
-                  },
-                  object: {
-                    ...n2.a,
-                    curie: `n2_${n2Index}`,
-                  },
-                  predicate: 'biolink:record1_pred0',
-                  ...source1,
-                  ...api1,
-                }
-              ),
+              new Record({
+                subject: {
+                  ...n1.a,
+                  curie: `n1_${n1Index}`,
+                },
+                object: {
+                  ...n2.a,
+                  curie: `n2_${n2Index}`,
+                },
+                predicate: 'biolink:record1_pred0',
+                ...source1,
+                ...api1,
+              }),
             );
           });
         });
@@ -1804,39 +1791,35 @@ describe('Testing QueryResults Module', () => {
         // generate unconnected records
         range(0, n1Count).forEach((n1Index) => {
           e0Records.push(
-            new Record(
-              {
-                subject: {
-                  ...n0.a,
-                },
-                object: {
-                  ...n1.a,
-                  curie: 'n1_unconnected_e0record_'
-                },
-                predicate: 'biolink:record0_pred0',
-                ...source0,
-                ...api0,
-              }
-            ),
+            new Record({
+              subject: {
+                ...n0.a,
+              },
+              object: {
+                ...n1.a,
+                curie: 'n1_unconnected_e0record_',
+              },
+              predicate: 'biolink:record0_pred0',
+              ...source0,
+              ...api0,
+            }),
           );
 
           range(0, n2Count).forEach((n2Index) => {
             e1Records.push(
-              new Record(
-                {
-                  subject: {
-                    ...n1.a,
-                    curie: `n1_unconnected_e1record_${n1Index}`
-                  },
-                  object: {
-                    ...n2.a,
-                    curie: `n2_${n2Index}`,
-                  },
-                  predicate: 'biolink:record1_pred0',
-                  ...source1,
-                  ...api1,
-                }
-              ),
+              new Record({
+                subject: {
+                  ...n1.a,
+                  curie: `n1_unconnected_e1record_${n1Index}`,
+                },
+                object: {
+                  ...n2.a,
+                  curie: `n2_${n2Index}`,
+                },
+                predicate: 'biolink:record1_pred0',
+                ...source1,
+                ...api1,
+              }),
             );
           });
         });
@@ -1882,58 +1865,52 @@ describe('Testing QueryResults Module', () => {
 
         // generate connected records
         e0Records.push(
-          new Record(
-            {
-              subject: {
-                ...n0.a,
-              },
-              object: {
-                ...n1.a,
-                curie: 'n1_connected'
-              },
-              predicate: 'biolink:record0_pred0',
-              ...source0,
-              ...api0,
-            }
-          ),
+          new Record({
+            subject: {
+              ...n0.a,
+            },
+            object: {
+              ...n1.a,
+              curie: 'n1_connected',
+            },
+            predicate: 'biolink:record0_pred0',
+            ...source0,
+            ...api0,
+          }),
         );
 
         e1Records.push(
-          new Record(
-            {
-              subject: {
-                ...n1.a,
-                curie: 'n1_connected'
-              },
-              object: {
-                ...n2.a,
-                curie: 'n2_connected'
-              },
-              predicate: 'biolink:record1_pred0',
-              ...source1,
-              ...api1,
-            }
-          ),
+          new Record({
+            subject: {
+              ...n1.a,
+              curie: 'n1_connected',
+            },
+            object: {
+              ...n2.a,
+              curie: 'n2_connected',
+            },
+            predicate: 'biolink:record1_pred0',
+            ...source1,
+            ...api1,
+          }),
         );
 
         // generate unconnected records
         range(0, 50000).forEach((n2Index) => {
           e1Records.push(
-            new Record(
-              {
-                subject: {
-                  ...n1.a,
-                  curie: 'n1_unconnected',
-                },
-                object: {
-                  ...n2.a,
-                  curie: `n2_unconnected_${n2Index}`
-                },
-                predicate: 'biolink:record1_pred0',
-                ...source1,
-                ...api1,
-              }
-            ),
+            new Record({
+              subject: {
+                ...n1.a,
+                curie: 'n1_unconnected',
+              },
+              object: {
+                ...n2.a,
+                curie: `n2_unconnected_${n2Index}`,
+              },
+              predicate: 'biolink:record1_pred0',
+              ...source1,
+              ...api1,
+            }),
           );
         });
 
@@ -3066,58 +3043,72 @@ describe('Testing QueryResults Module', () => {
     //    });
     test('Records with different predicates should not be merged', async () => {
       const record1 = new Record({
-        "subject": {
-          "original":"NCBIGene:3265",
-          "qNodeID":"n1",
-          "isSet":false,
-          "curie":"NCBIGene:3265",
-          "UMLS":["C0079471","C1569842"],
-          "semanticType":"Gene",
-          "label":"HRAS",
-          "attributes":{}
+        subject: {
+          original: 'NCBIGene:3265',
+          qNodeID: 'n1',
+          isSet: false,
+          curie: 'NCBIGene:3265',
+          UMLS: ['C0079471', 'C1569842'],
+          semanticType: 'Gene',
+          label: 'HRAS',
+          attributes: {},
         },
-        "object": {
-          "original":"BIOPLANET:bioplanet_1498",
-          "qNodeID":"n0",
-          "isSet":false,
-          "curie":"BIOPLANET:bioplanet_1498",
-          "semanticType":"Pathway",
-          "label":"BIOPLANET:bioplanet_1498",
-          "attributes":{}
+        object: {
+          original: 'BIOPLANET:bioplanet_1498',
+          qNodeID: 'n0',
+          isSet: false,
+          curie: 'BIOPLANET:bioplanet_1498',
+          semanticType: 'Pathway',
+          label: 'BIOPLANET:bioplanet_1498',
+          attributes: {},
         },
-        "predicate":"biolink:actively_involved_in",
-        "mappedResponse":{
-          "pathway_name":"Cell surface interactions at the vascular wall",
-          "pathway_categories": ["Cardiovascular disease","Circulatory system","Hemostasis","Immune disease","Immune system","Infectious disease"],
-          "gene_symbol":"HRAS"
-        }
+        predicate: 'biolink:actively_involved_in',
+        mappedResponse: {
+          pathway_name: 'Cell surface interactions at the vascular wall',
+          pathway_categories: [
+            'Cardiovascular disease',
+            'Circulatory system',
+            'Hemostasis',
+            'Immune disease',
+            'Immune system',
+            'Infectious disease',
+          ],
+          gene_symbol: 'HRAS',
+        },
       });
       const record2 = new Record({
-        "subject": {
-          "original":"NCBIGene:3265",
-          "qNodeID":"n1",
-          "isSet":false,
-          "curie":"NCBIGene:3265",
-          "UMLS":["C0079471","C1569842"],
-          "semanticType":"Gene",
-          "label":"HRAS",
-          "attributes":{}
+        subject: {
+          original: 'NCBIGene:3265',
+          qNodeID: 'n1',
+          isSet: false,
+          curie: 'NCBIGene:3265',
+          UMLS: ['C0079471', 'C1569842'],
+          semanticType: 'Gene',
+          label: 'HRAS',
+          attributes: {},
         },
-        "object": {
-          "original":"BIOPLANET:bioplanet_1498",
-          "qNodeID":"n0",
-          "isSet":false,
-          "curie":"BIOPLANET:bioplanet_1498",
-          "semanticType":"Pathway",
-          "label":"BIOPLANET:bioplanet_1498",
-          "attributes":{}
+        object: {
+          original: 'BIOPLANET:bioplanet_1498',
+          qNodeID: 'n0',
+          isSet: false,
+          curie: 'BIOPLANET:bioplanet_1498',
+          semanticType: 'Pathway',
+          label: 'BIOPLANET:bioplanet_1498',
+          attributes: {},
         },
-        "predicate":"biolink:related_to",
-        "mappedResponse":{
-          "pathway_name":"Cell surface interactions at the vascular wall",
-          "pathway_categories": ["Cardiovascular disease","Circulatory system","Hemostasis","Immune disease","Immune system","Infectious disease"],
-          "gene_symbol":"HRAS"
-        }
+        predicate: 'biolink:related_to',
+        mappedResponse: {
+          pathway_name: 'Cell surface interactions at the vascular wall',
+          pathway_categories: [
+            'Cardiovascular disease',
+            'Circulatory system',
+            'Hemostasis',
+            'Immune disease',
+            'Immune system',
+            'Infectious disease',
+          ],
+          gene_symbol: 'HRAS',
+        },
       });
       const queryResult = new QueryResult();
       await queryResult.update({
@@ -3127,7 +3118,7 @@ describe('Testing QueryResults Module', () => {
         },
       });
       expect(queryResult.getResults()[0].edge_bindings.e01.length).toEqual(2);
-    })
+    });
   });
 
   describe('Graph structure', () => {
@@ -3136,46 +3127,40 @@ describe('Testing QueryResults Module', () => {
         e0: {
           connected_to: ['e1', 'e2'],
           records: [
-            new Record(
-              {
-                subject: {
-                  qNodeID: 'n2',
-                },
-                object: {
-                  qNodeID: 'n1'
-                },
-              }
-            )
+            new Record({
+              subject: {
+                qNodeID: 'n2',
+              },
+              object: {
+                qNodeID: 'n1',
+              },
+            }),
           ],
         },
         e1: {
           connected_to: ['e0'],
           records: [
-            new Record(
-              {
-                subject: {
-                  qNodeID: 'n2'
-                },
-                object: {
-                  qNodeID: 'n3'
-                }
-              }
-            )
+            new Record({
+              subject: {
+                qNodeID: 'n2',
+              },
+              object: {
+                qNodeID: 'n3',
+              },
+            }),
           ],
         },
         e2: {
           connected_to: ['e0'],
           records: [
-            new Record(
-              {
-                subject: {
-                  qNodeID: 'n0'
-                },
-                object: {
-                  qNodeID: 'n1'
-                }
-              }
-            )
+            new Record({
+              subject: {
+                qNodeID: 'n0',
+              },
+              object: {
+                qNodeID: 'n1',
+              },
+            }),
           ],
         },
       };
