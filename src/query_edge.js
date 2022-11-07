@@ -17,7 +17,7 @@ module.exports = class QEdge {
     this.subject = info.frozen === true ? new QNode(info.subject) : info.subject;
     this.object = info.frozen === true ? new QNode(info.object) : info.object;
     this.expanded_predicates = [];
-    this.qualifier_constraints = info.qualifier_constraints;
+    this.qualifier_constraints = info.qualifier_constraints || [];
 
     this.reverse = this.subject?.getCurie?.() === undefined && this.object?.getCurie?.() !== undefined;
 
@@ -93,7 +93,7 @@ module.exports = class QEdge {
 
   getQualifierConstraints() {
     if (!this.qualifier_constraints) {
-      return;
+      return [];
     }
     if (this.isReversed()) {
       return this.qualifier_constraints.map((qualifierSetObj) => {
@@ -125,7 +125,7 @@ module.exports = class QEdge {
     return this.getQualifierConstraints().map((qualifierSetObj) => {
       return Object.fromEntries(
         qualifierSetObj.qualifier_set.map(({ qualifier_type_id, qualifier_value }) => [
-          qualifier_type_id,
+          qualifier_type_id.replace('biolink:', ''),
           qualifier_value,
         ]),
       );
