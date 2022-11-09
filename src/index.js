@@ -40,12 +40,14 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     const configListApis = this.options.apiList['include'];
     const smartapiRegistry = await fs.readFile(this.path);
     const smartapiIds = [];
+    const inforesIds = [];
 
-    JSON.parse(smartapiRegistry)['hits'].forEach((smartapiRegistration) =>
-      smartapiIds.push(smartapiRegistration['_id']),
-    );
+    JSON.parse(smartapiRegistry)['hits'].forEach((smartapiRegistration) => {
+      smartapiIds.push(smartapiRegistration['_id'])
+      inforesIds.push(smartapiRegistration.info?.['x-translator']?.infores)
+    });
     configListApis.forEach((configListApi) => {
-      if (smartapiIds.includes(configListApi['id']) === false) {
+      if (smartapiIds.includes(configListApi['id']) === false && inforesIds.includes(configListApi['id']) === false) {
         debug(`${configListApi['name']} not found in smartapi registry`);
       }
     });
