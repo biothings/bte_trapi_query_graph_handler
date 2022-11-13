@@ -88,13 +88,20 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         let expanded = Object.values(getDescendants(queryGraph.nodes[nodeId].ids)).flat();
         console.log(expanded.length);
         expanded = _.uniq([...queryGraph.nodes[nodeId].ids, ...expanded]);
-        queryGraph.nodes[nodeId].ids = expanded;
         
         let log_msg = `Expanded ids for node ${nodeId}: (${queryGraph.nodes[nodeId].ids.length} ids -> ${expanded.length} ids)`;
         debug(log_msg);
         this.logs.push(new LogEntry('INFO', null, log_msg).getLog());
+
+        queryGraph.nodes[nodeId].ids = expanded;
         
-        queryGraph.nodes[nodeId].is_set = true;
+        //make sure is_set is true
+        if (!queryGraph.nodes[nodeId].hasOwnProperty('is_set') || !queryGraph.nodes[nodeId].is_set) {
+          queryGraph.nodes[nodeId].is_set = true;
+          log_msg = `Added is_set:true to node ${nodeId}`;
+          debug(log_msg);
+          this.logs.push(new LogEntry('INFO', null, log_msg).getLog());
+        }
 
       }
     }
