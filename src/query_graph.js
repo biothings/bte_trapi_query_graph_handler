@@ -93,6 +93,24 @@ module.exports = class QueryGraphHandler {
     }
   }
 
+  _validateNoDuplicateQualifierTypes(queryGraph) {
+    Object.entries(queryGraph.edges).forEach(([id, edge]) => {
+      if (edge.qualifier_constraints) {
+        edge.qualifier_constraints.forEach((qualifierSet, i) => {
+          const qualifierTypes = new Set();
+          qualifierSet.qualifier_set.forEach(({ qualifier_type_id }) => {
+            if (qualifierTypes.has(qualifier_type_id)) {
+              throw new InvalidQueryGraphError(
+                `Query edge ${id} qualifier set ${i} contains duplicate qualifier_type_id ${qualifier_type_id}`,
+              );
+            }
+            qualifierTypes.add(qualifier_type_id);
+          });
+        });
+      }
+    });
+  }
+
   _validate(queryGraph) {
     this._validateEmptyEdges(queryGraph);
     this._validateEmptyNodes(queryGraph);
@@ -100,6 +118,7 @@ module.exports = class QueryGraphHandler {
     this._validateNodeEdgeCorrespondence(queryGraph);
     this._validateDuplicateEdges(queryGraph);
     this._validateCycles(queryGraph);
+    this._validateNoDuplicateQualifierTypes(queryGraph);
   }
 
   /**
