@@ -99,10 +99,10 @@ module.exports = class QEdge {
       return this.qualifier_constraints.map((qualifierSetObj) => {
         return {
           qualifier_set: qualifierSetObj.qualifier_set.map(({ qualifier_type_id, qualifier_value }) => {
-            let newQualifierType;
-            let newQualifierValue;
+            let newQualifierType = qualifier_type_id;
+            let newQualifierValue = qualifier_value;
             if (qualifier_type_id.includes('predicate')) {
-              newQualifierValue = this.getReversedPredicate(qualifier_value);
+              newQualifierValue = `biolink:${this.getReversedPredicate(qualifier_value.replace('biolink:', ''))}`;
             }
             if (qualifier_type_id.includes('subject')) {
               newQualifierType = qualifier_type_id.replace('subject', 'object');
