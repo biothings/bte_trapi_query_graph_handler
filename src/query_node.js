@@ -194,13 +194,20 @@ module.exports = class QNode {
       });
       return utils.getUnique(expanded_categories);
     }
+    let ancestors = new Set(
+      utils
+        .toArray(this.category)
+        .map((category) => utils.removeBioLinkPrefix(category))
+        .reduce((arr, category) => [...arr, ...biolink.getAncestorClasses(category)], [])
+        .filter((category) => !utils.toArray(this.category).includes(`biolink:${category}`)),
+    );
     let categories = [];
     Object.values(this.equivalentIDs).map((entities) => {
       entities.map((entity) => {
         categories = [...categories, ...entity.semanticTypes.map((semantic) => utils.removeBioLinkPrefix(semantic))];
       });
     });
-    return utils.getUnique(categories);
+    return utils.getUnique(categories).filter(category => !ancestors.has(category));
   }
 
   getEntities() {
