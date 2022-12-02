@@ -26,6 +26,22 @@ class BioLinkModel {
     return undefined;
   }
 
+  getAncestorClasses(className) {
+    if (className in this.biolink.classTree.objects) {
+      const ancestors = this.biolink.classTree.getAncestors(className).map((entity) => entity.name);
+      return [...ancestors, ...[className]];
+    }
+    return className;
+  }
+
+  getAncestorPredicates(predicate) {
+    if (predicate in this.biolink.slotTree.objects) {
+      const ancestors = this.biolink.slotTree.getAncestors(predicate).map((entity) => entity.name);
+      return [...ancestors, ...[predicate]];
+    }
+    return predicate;
+  }
+
   getDescendantClasses(className) {
     if (className in this.biolink.classTree.objects) {
       const descendants = this.biolink.classTree.getDescendants(className).map((entity) => entity.name);

@@ -372,7 +372,7 @@ module.exports = class InferredQueryHandler {
         if (queryHadResults) resultQueries.push(i);
         Object.entries(mergedResults).forEach((result, countMerged) => {
           mergedResultsCount[result] =
-            result in mergedResultsCount ? countMerged : mergedResultsCount[result] + countMerged;
+            result in mergedResultsCount ? mergedResultsCount[result] + countMerged : countMerged;
         });
         // log to user if we should stop
         if (creativeLimitHit) {
