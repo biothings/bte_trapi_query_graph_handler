@@ -194,20 +194,23 @@ module.exports = class QNode {
       });
       return utils.getUnique(expanded_categories);
     }
-    let ancestors = new Set(
-      utils
-        .toArray(this.category)
-        .map((category) => utils.removeBioLinkPrefix(category))
-        .reduce((arr, category) => [...arr, ...biolink.getAncestorClasses(category)], [])
-        .filter((category) => !utils.toArray(this.category).includes(`biolink:${category}`)),
-    );
-    let categories = [];
+    // let ancestors = new Set(
+    //   utils
+    //     .toArray(this.category)
+    //     .map((category) => utils.removeBioLinkPrefix(category))
+    //     .reduce((arr, category) => [...arr, ...biolink.getAncestorClasses(category)], [])
+    //     .filter((category) => !utils.toArray(this.category).includes(`biolink:${category}`)),
+    // );
+    let categories = utils.toArray(this.category).map((category) => utils.removeBioLinkPrefix(category));
     Object.values(this.equivalentIDs).map((entities) => {
       entities.map((entity) => {
-        categories = [...categories, ...entity.semanticTypes.map((semantic) => utils.removeBioLinkPrefix(semantic))];
+        categories = [...categories, entity.semanticType];
       });
     });
-    return utils.getUnique(categories).filter(category => !ancestors.has(category));
+    return utils.getUnique(
+      utils.getUnique(categories).reduce((arr, category) => [...arr, ...biolink.getDescendantClasses(category)], []),
+    );
+    // .filter(category => !ancestors.has(category));
   }
 
   getEntities() {
