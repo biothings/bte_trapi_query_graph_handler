@@ -80,7 +80,7 @@ describe("Test graph class", () => {
         expect(Array.from(g.edges['ead33fce1d19dc004679aa389eca7ff4'].apis)).toEqual(['API1']);
         expect(Array.from(g.edges['ead33fce1d19dc004679aa389eca7ff4'].sources)).toEqual(['source1']);
         expect(Array.from(g.edges['ead33fce1d19dc004679aa389eca7ff4'].publications)).toEqual(['PMID:1', 'PMID:2']);
-        expect(g.edges['ead33fce1d19dc004679aa389eca7ff4'].attributes).toHaveProperty('relation', 'relation1')
+        expect(g.edges['ead33fce1d19dc004679aa389eca7ff4'].attributes).toHaveProperty('relation', new Set(['relation1']))
     })
 
     test("Multiple query results are correctly updated for two edges having same input, predicate and output", () => {
@@ -101,13 +101,13 @@ describe("Test graph class", () => {
         expect(Array.from(g.edges['ead33fce1d19dc004679aa389eca7ff4'].apis)).toEqual(['API1']);
         expect(Array.from(g.edges['ead33fce1d19dc004679aa389eca7ff4'].sources)).toEqual(['source1']);
         expect(Array.from(g.edges['ead33fce1d19dc004679aa389eca7ff4'].publications)).toEqual(['PMID:1', 'PMID:2']);
-        expect(g.edges['ead33fce1d19dc004679aa389eca7ff4'].attributes).toHaveProperty('relation', 'relation1')
+        expect(g.edges['ead33fce1d19dc004679aa389eca7ff4'].attributes).toHaveProperty('relation', new Set(['relation1']))
 
         expect(g.edges).toHaveProperty('37a029a060de5df47516d73e7d2a0d19');
         expect(Array.from(g.edges['37a029a060de5df47516d73e7d2a0d19'].apis)).toEqual(['API2']);
         expect(Array.from(g.edges['37a029a060de5df47516d73e7d2a0d19'].sources)).toEqual(['source2']);
         expect(Array.from(g.edges['37a029a060de5df47516d73e7d2a0d19'].publications)).toEqual(['PMC:1', 'PMC:2']);
-        expect(g.edges['37a029a060de5df47516d73e7d2a0d19'].attributes).toHaveProperty('relation', 'relation2')
+        expect(g.edges['37a029a060de5df47516d73e7d2a0d19'].attributes).toHaveProperty('relation', new Set(['relation2']))
     })
 
     test("Multiple query results for different edges are correctly updated", () => {
@@ -128,18 +128,18 @@ describe("Test graph class", () => {
         expect(Array.from(g.edges['ead33fce1d19dc004679aa389eca7ff4'].apis)).toEqual(['API1']);
         expect(Array.from(g.edges['ead33fce1d19dc004679aa389eca7ff4'].sources)).toEqual(['source1']);
         expect(Array.from(g.edges['ead33fce1d19dc004679aa389eca7ff4'].publications)).toEqual(['PMID:1', 'PMID:2']);
-        expect(g.edges['ead33fce1d19dc004679aa389eca7ff4'].attributes).toHaveProperty('relation', 'relation1')
+        expect(g.edges['ead33fce1d19dc004679aa389eca7ff4'].attributes).toHaveProperty('relation', new Set(['relation1']))
 
         expect(g.edges).toHaveProperty('37a029a060de5df47516d73e7d2a0d19');
         expect(Array.from(g.edges['37a029a060de5df47516d73e7d2a0d19'].apis)).toEqual(['API2']);
         expect(Array.from(g.edges['37a029a060de5df47516d73e7d2a0d19'].sources)).toEqual(['source2']);
         expect(Array.from(g.edges['37a029a060de5df47516d73e7d2a0d19'].publications)).toEqual(['PMC:1', 'PMC:2']);
-        expect(g.edges['37a029a060de5df47516d73e7d2a0d19'].attributes).toHaveProperty('relation', 'relation2')
+        expect(g.edges['37a029a060de5df47516d73e7d2a0d19'].attributes).toHaveProperty('relation', new Set(['relation2']))
 
         expect(g.edges).toHaveProperty('30b7230795a102faeac8fe417b477524');
         expect(Array.from(g.edges['30b7230795a102faeac8fe417b477524'].apis)).toEqual(['API3']);
         expect(Array.from(g.edges['30b7230795a102faeac8fe417b477524'].sources)).toEqual(['source3']);
         expect(Array.from(g.edges['30b7230795a102faeac8fe417b477524'].publications)).toEqual(['PMC:3', 'PMC:4']);
-        expect(g.edges['30b7230795a102faeac8fe417b477524'].attributes).toHaveProperty('relation', 'relation3')
+        expect(g.edges['30b7230795a102faeac8fe417b477524'].attributes).toHaveProperty('relation', new Set(['relation3']))
     })
 })
