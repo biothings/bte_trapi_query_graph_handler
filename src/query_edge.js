@@ -64,11 +64,22 @@ module.exports = class QEdge {
   }
 
   getHashedEdgeRepresentation() {
+    // all values sorted so same qEdge with slightly different orders will hash the same
+    const qualifiersSorted = this.getSimpleQualifierConstraints()
+      .map((qualifierSet) => {
+        return Object.entries(qualifierSet)
+          .sort(([qTa, qVa], [qTb, qVb]) => qTa.localeCompare(qTb))
+          .reduce((str, [qType, qVal]) => `${str}${qType}:${qVal};`, '');
+      })
+      .sort((setString1, setString2) => setString1.localeCompare(setString2));
+
     const toBeHashed =
-      this.getInputNode().getCategories() +
-      this.getPredicate() +
-      this.getOutputNode().getCategories() +
-      this.getInputCurie();
+      this.getInputNode().getCategories().sort() +
+      this.getPredicate().sort() +
+      this.getOutputNode().getCategories().sort() +
+      this.getInputCurie().sort() +
+      qualifiersSorted;
+
     return helper._generateHash(toBeHashed);
   }
 
@@ -521,15 +532,6 @@ module.exports = class QEdge {
     this.applyNodeConstraints();
     debug(`(7) Updating nodes based on edge records...`);
     this.updateNodesCuries(records);
-  }
-
-  getHashedEdgeRepresentation() {
-    const toBeHashed =
-      this.getInputNode().getCategories() +
-      this.getPredicate() +
-      this.getOutputNode().getCategories() +
-      this.getInputCurie();
-    return helper._generateHash(toBeHashed);
   }
 
   expandPredicates(predicates) {
