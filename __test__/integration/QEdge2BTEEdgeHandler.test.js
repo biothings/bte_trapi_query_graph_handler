@@ -39,11 +39,12 @@ describe('Testing NodeUpdateHandler Module', () => {
       expect(res.Gene.length).toEqual(2);
     });
 
-    test('test edge with input node annotated should return an empty array', () => {
-      const nodeUpdater = new NodeUpdateHandler([edge2]);
-      const res = nodeUpdater._getCuries([edge2]);
-      expect(res).toEqual({});
-    });
+    // test deprecated: proper update handling outside of updater ensures minimal redundancy
+    // test('test edge with input node annotated should return an empty array', () => {
+    //   const nodeUpdater = new NodeUpdateHandler([edge2]);
+    //   const res = nodeUpdater._getCuries([edge2]);
+    //   expect(res).toEqual({});
+    // });
 
     test('test edge with input on object end should be handled', () => {
       const nodeUpdater = new NodeUpdateHandler([edge4]);

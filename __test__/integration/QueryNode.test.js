@@ -142,24 +142,27 @@ describe('Testing QueryNode Module', () => {
       expect(node.getCategories()).toEqual(['Gene']);
     });
 
-    test('If equivalent ids are not empty, return all semantic types defined in the entity', () => {
+    test('If equivalent ids are not empty, return all primary semantic types defined in equivalent entities', () => {
       const node = new QNode({ id: 'n1', categories: 'Gene' });
       node.equivalentIDs = {
         A: [
           {
+            semanticType: 'm',
             semanticTypes: ['m', 'n'],
           },
           {
+            semanticType: 'p',
             semanticTypes: ['p', 'q'],
           },
         ],
         B: [
           {
+            semanticType: 'x',
             semanticTypes: ['x', 'y'],
           },
         ],
       };
-      expect(node.getCategories()).toEqual(['m', 'n', 'p', 'q', 'x', 'y']);
+      expect(node.getCategories()).toEqual(['Gene', 'm', 'p', 'x']);
     });
   });
 });
