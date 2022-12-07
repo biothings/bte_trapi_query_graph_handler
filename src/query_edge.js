@@ -122,14 +122,15 @@ module.exports = class QEdge {
   }
 
   getSimpleQualifierConstraints() {
-    return this.getQualifierConstraints().map((qualifierSetObj) => {
+    const constraints = this.getQualifierConstraints().map((qualifierSetObj) => {
       return Object.fromEntries(
         qualifierSetObj.qualifier_set.map(({ qualifier_type_id, qualifier_value }) => [
           qualifier_type_id.replace('biolink:', ''),
-          qualifier_value,
+          qualifier_value.replace('biolink:', ''),
         ]),
       );
     });
+    return constraints.length > 0 ? constraints : undefined;
   }
 
   chooseLowerEntityValue() {
