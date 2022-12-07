@@ -74,10 +74,10 @@ module.exports = class QEdge {
       .sort((setString1, setString2) => setString1.localeCompare(setString2));
 
     const toBeHashed =
-      this.getInputNode().getCategories().sort() +
-      this.getPredicate().sort() +
-      this.getOutputNode().getCategories().sort() +
-      this.getInputCurie().sort() +
+      (this.getInputNode().getCategories() || []).sort() +
+      (this.getPredicate() || []).sort() +
+      (this.getOutputNode().getCategories() || []).sort() +
+      (this.getInputCurie() || []).sort() +
       qualifiersSorted;
 
     return helper._generateHash(toBeHashed);
@@ -539,20 +539,6 @@ module.exports = class QEdge {
     return Array.from(new Set(predicates.reduce(reducer, [])));
   }
 
-  getPredicate() {
-    if (this.predicate === undefined || this.predicate === null) {
-      return undefined;
-    }
-    const predicates = utils.toArray(this.predicate).map((item) => utils.removeBioLinkPrefix(item));
-    const expandedPredicates = this.expandPredicates(predicates);
-    debug(`Expanded edges: ${expandedPredicates}`);
-    return expandedPredicates
-      .map((predicate) => {
-        return this.isReversed() === true ? biolink.reverse(predicate) : predicate;
-      })
-      .filter((item) => !(typeof item === 'undefined'));
-  }
-
   getInputNode() {
     if (this.reverse) {
       return this.object;
@@ -577,14 +563,6 @@ module.exports = class QEdge {
       return curie;
     }
     return [curie];
-  }
-
-  getInputNode() {
-    return this.reverse ? this.object : this.subject;
-  }
-
-  getOutputNode() {
-    return this.reverse ? this.subject : this.object;
   }
 
   hasInputResolved() {
