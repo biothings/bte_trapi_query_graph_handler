@@ -65,7 +65,7 @@ module.exports = class QEdge {
 
   getHashedEdgeRepresentation() {
     // all values sorted so same qEdge with slightly different orders will hash the same
-    const qualifiersSorted = this.getSimpleQualifierConstraints()
+    const qualifiersSorted = (this.getSimpleQualifierConstraints() || [])
       .map((qualifierSet) => {
         return Object.entries(qualifierSet)
           .sort(([qTa, qVa], [qTb, qVb]) => qTa.localeCompare(qTb))

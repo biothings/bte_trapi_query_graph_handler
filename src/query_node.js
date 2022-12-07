@@ -189,7 +189,7 @@ module.exports = class QNode {
       categories.map((category) => {
         expanded_categories = [
           ...expanded_categories,
-          ...biolink.getDescendantClasses(utils.removeBioLinkPrefix(category)),
+          ...(biolink.getDescendantClasses(utils.removeBioLinkPrefix(category)) || []),
         ];
       });
       return utils.getUnique(expanded_categories);
@@ -208,7 +208,7 @@ module.exports = class QNode {
       });
     });
     return utils.getUnique(
-      utils.getUnique(categories).reduce((arr, category) => [...arr, ...biolink.getDescendantClasses(category)], []),
+      utils.getUnique(categories).reduce((arr, category) => [...arr, ...(biolink.getDescendantClasses(category) || [])], []),
     );
     // .filter(category => !ancestors.has(category));
   }
