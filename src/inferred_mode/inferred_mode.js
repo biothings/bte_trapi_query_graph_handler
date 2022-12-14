@@ -106,18 +106,31 @@ module.exports = class InferredQueryHandler {
     const expandedObject = qObject.categories.reduce((arr, objectCategory) => {
       return utils.getUnique([...arr, ...biolink.getDescendantClasses(utils.removeBioLinkPrefix(objectCategory))]);
     }, []);
+    const qualifierConstraints = (qEdge.qualifier_constraints || []).map((qualifierSetObj) => {
+      return Object.fromEntries(
+        qualifierSetObj.qualifier_set.map(({ qualifier_type_id, qualifier_value }) => [
+          qualifier_type_id.replace('biolink:', ''),
+          qualifier_value.replace('biolink:', ''),
+        ]),
+      );
+    });
+    if (qualifierConstraints.length === 0) qualifierConstraints.push({});
     const lookupObjects = expandedSubject.reduce((arr, subjectCategory) => {
       let templates = expandedObject.reduce((arr2, objectCategory) => {
-        return [
-          ...arr2,
-          ...expandedPredicates.map((predicate) => {
-            return {
-              subject: utils.removeBioLinkPrefix(subjectCategory),
-              object: utils.removeBioLinkPrefix(objectCategory),
-              predicate: utils.removeBioLinkPrefix(predicate),
-            };
-          }),
-        ];
+        let templates2 = qualifierConstraints.reduce((arr3, qualifierSet) => {
+          return [
+            ...arr3,
+            ...expandedPredicates.map((predicate) => {
+              return {
+                subject: utils.removeBioLinkPrefix(subjectCategory),
+                object: utils.removeBioLinkPrefix(objectCategory),
+                predicate: utils.removeBioLinkPrefix(predicate),
+                qualifiers: qualifierSet,
+              };
+            }),
+          ];
+        }, []);
+        return [...arr2, ...templates2];
       }, []);
       return [...arr, ...templates];
     }, []);
