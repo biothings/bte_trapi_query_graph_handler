@@ -432,6 +432,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       //execute current edge query
       let queryRecords = await handler.query(handler.qEdges, unavailableAPIs);
       this.logs = [...this.logs, ...handler.logs];
+      if (queryRecords === undefined) return;
       // create an edge execution summary
       let success = 0,
         fail = 0,
