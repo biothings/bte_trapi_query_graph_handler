@@ -20,17 +20,17 @@ module.exports = class BatchEdgeQueryHandler {
   }
 
   /**
-   * @param {Array} qXEdges - an array of TRAPI Query Edges;
+   * @param {Array} qEdges - an array of TRAPI Query Edges;
    */
-  setEdges(qXEdges) {
-    this.qXEdges = qXEdges;
+  setEdges(qEdges) {
+    this.qEdges = qEdges;
   }
 
   /**
    *
    */
   getEdges() {
-    return this.qXEdges;
+    return this.qEdges;
   }
 
   /**
@@ -64,23 +64,26 @@ module.exports = class BatchEdgeQueryHandler {
    * Remove curies which resolve to the same thing, keeping the first.
    * @private
    */
-  async _rmEquivalentDuplicates(qXEdges) {
-    Object.values(qXEdges).forEach((qXEdge) => {
+  async _rmEquivalentDuplicates(qEdges) {
+    Object.values(qEdges).forEach((qEdge) => {
       const nodes = {
-        subject: qXEdge.subject,
-        object: qXEdge.object,
+        subject: qEdge.subject,
+        object: qEdge.object,
       };
       const strippedCuries = [];
       Object.entries(nodes).forEach(([nodeType, node]) => {
         const reducedCuries = [];
         const nodeStrippedCuries = [];
-        if (!node.curie) { return; }
+        if (!node.curie) {
+          return;
+        }
         node.curie.forEach((curie) => {
           // if the curie is already present, or an equivalent is, remove it
           if (!reducedCuries.includes(curie)) {
-            const equivalentAlreadyIncluded = qXEdge.input_equivalent_identifiers[curie][0].curies.some(
-              (equivalentCurie) => reducedCuries.includes(equivalentCurie),
-            );
+            const equivalentAlreadyIncluded = qEdge
+              .getInputNode()
+              .getEquivalentIDs()
+              [curie][0].curies.some((equivalentCurie) => reducedCuries.includes(equivalentCurie));
             if (!equivalentAlreadyIncluded) {
               reducedCuries.push(curie);
             } else {
@@ -99,34 +102,34 @@ module.exports = class BatchEdgeQueryHandler {
         }
       });
       strippedCuries.forEach((curie) => {
-        delete qXEdge.input_equivalent_identifiers[curie];
+        qEdge.getInputNode().removeEquivalentID(curie);
       });
     });
   }
 
-  async query(qXEdges, unavailableAPIs = {}) {
+  async query(qEdges, unavailableAPIs = {}) {
     debug('Node Update Start');
     //it's now a single edge but convert to arr to simplify refactoring
-    qXEdges = Array.isArray(qXEdges) ? qXEdges : [qXEdges];
-    const nodeUpdate = new NodesUpdateHandler(qXEdges);
+    qEdges = Array.isArray(qEdges) ? qEdges : [qEdges];
+    const nodeUpdate = new NodesUpdateHandler(qEdges);
     //difference is there is no previous edge info anymore
-    await nodeUpdate.setEquivalentIDs(qXEdges);
-    await this._rmEquivalentDuplicates(qXEdges);
+    await nodeUpdate.setEquivalentIDs(qEdges);
+    await this._rmEquivalentDuplicates(qEdges);
     debug('Node Update Success');
     const cacheHandler = new CacheHandler(this.caching, this.metaKG, this.recordConfig);
-    const { cachedRecords, nonCachedQXEdges } = await cacheHandler.categorizeEdges(qXEdges);
+    const { cachedRecords, nonCachedQEdges } = await cacheHandler.categorizeEdges(qEdges);
     this.logs = [...this.logs, ...cacheHandler.logs];
     let queryRecords;
 
-    if (nonCachedQXEdges.length === 0) {
+    if (nonCachedQEdges.length === 0) {
       queryRecords = [];
       if (parentPort) {
         parentPort.postMessage({ cacheDone: true });
       }
     } else {
-      debug('Start to convert qXEdges into APIEdges....');
-      const edgeConverter = new QEdge2APIEdgeHandler(nonCachedQXEdges, this.metaKG);
-      const APIEdges = await edgeConverter.convert(nonCachedQXEdges);
+      debug('Start to convert qEdges into APIEdges....');
+      const edgeConverter = new QEdge2APIEdgeHandler(nonCachedQEdges, this.metaKG);
+      const APIEdges = await edgeConverter.convert(nonCachedQEdges);
       debug(`qEdges are successfully converted into ${APIEdges.length} APIEdges....`);
       this.logs = [...this.logs, ...edgeConverter.logs];
       if (APIEdges.length === 0 && cachedRecords.length === 0) {
@@ -142,7 +145,8 @@ module.exports = class BatchEdgeQueryHandler {
       debug(`Total number of records is (${queryRecords.length})`);
       if (!isMainThread) {
         cacheHandler.cacheEdges(queryRecords);
-      } else { // await caching if async so end of job doesn't cut it off
+      } else {
+        // await caching if async so end of job doesn't cut it off
         await cacheHandler.cacheEdges(queryRecords);
       }
     }

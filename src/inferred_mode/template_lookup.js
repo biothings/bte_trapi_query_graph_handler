@@ -26,7 +26,10 @@ exports.getTemplates = async (lookups) => {
         return (
           group.subject.includes(lookup.subject) &&
           group.object.includes(lookup.object) &&
-          group.predicate.includes(lookup.predicate)
+          group.predicate.includes(lookup.predicate) &&
+          Object.entries(lookup.qualifiers || {}).every(([qualifierType, qualifierValue]) => {
+            return (group.qualifiers || {})[qualifierType] && group.qualifiers[qualifierType] === qualifierValue;
+          })
         );
       });
 
