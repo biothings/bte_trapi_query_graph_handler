@@ -44,7 +44,10 @@ exports.getTemplates = async (lookups) => {
     }, []),
   ];
   return await async.map(matchingTemplatePaths, async (templatePath) => {
-    return JSON.parse(await fs.readFile(templatePath)).message.query_graph;
+    return {
+      template: templatePath.substring(templatePath.lastIndexOf('/') + 1),
+      queryGraph: JSON.parse(await fs.readFile(templatePath)).message.query_graph,
+    };
   });
 };
 
