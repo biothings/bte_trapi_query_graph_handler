@@ -242,7 +242,7 @@ module.exports = class TrapiResultsAssembler {
    * @param {RecordsByQEdgeID} recordsByQEdgeID
    * @return {undefined} nothing returned; just cache this._results
    */
-  async update(recordsByQEdgeID, shouldScore) {
+  async update(recordsByQEdgeID, shouldScore = false) {
     debug(`Updating query results now!`);
 
     let scoreCombos = [];
