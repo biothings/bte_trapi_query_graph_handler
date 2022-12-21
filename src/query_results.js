@@ -405,6 +405,8 @@ module.exports = class TrapiResultsAssembler {
       } else {
         resultsWithScore++;
       }
+      
+      if (!shouldScore) delete result.score;
 
       consolidatedSolution.forEach(({
         inputQNodeID, outputQNodeID,
@@ -432,7 +434,7 @@ module.exports = class TrapiResultsAssembler {
 
       return result;
     })
-    .sort((result1, result2) => (result2.score - result1.score)); //sort by decreasing score
+    .sort((result1, result2) => (result2.score ?? 0) - (result1.score ?? 0)); //sort by decreasing score
 
     if (shouldScore) {
       debug(`Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`);
