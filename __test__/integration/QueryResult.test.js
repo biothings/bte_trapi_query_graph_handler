@@ -8,9 +8,9 @@ const config = require('../../src/config.js');
 describe('Testing QueryResults Module', () => {
   describe('"Real" Records', () => {
     describe('Single Record', () => {
-      const gene_node1 = new QNode('n1', { categories: ['Gene'], ids: ['NCBIGene:632'] });
-      const chemical_node1 = new QNode('n2', { categories: ['ChemicalSubstance'] });
-      const edge1 = new QEdge('e01', { subject: gene_node1, object: chemical_node1 });
+      const gene_node1 = new QNode({ id: 'n1', categories: ['Gene'], ids: ['NCBIGene:632'] }) ;
+      const chemical_node1 = new QNode({ id: 'n2', categories: ['ChemicalSubstance'] }) ;
+      const edge1 = new QEdge({ id: 'e01', subject: gene_node1, object: chemical_node1 });
       const record = new Record(
         {
           publications: ['PMID:8366144', 'PMID:8381250'],
@@ -76,12 +76,12 @@ describe('Testing QueryResults Module', () => {
 
     describe('Two Records', () => {
       describe('query graph: gene1-disease1-gene1', () => {
-        const gene_node_start = new QNode('n1', { categories: ['Gene'] });
-        const disease_node = new QNode('n2', { categories: ['Disease'] });
-        const gene_node_end = new QNode('n3', { categories: ['Gene'] });
+        const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'] }) ;
+        const disease_node = new QNode({ id: 'n2', categories: ['Disease'] }) ;
+        const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'] }) ;
 
-        const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
-        const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
+        const edge1 = new QEdge({ id: 'e01', subject: gene_node_start, object: disease_node });
+        const edge2 = new QEdge({ id: 'e02', subject: disease_node, object: gene_node_end });
 
         const record1 = new Record(
           {
@@ -197,12 +197,12 @@ describe('Testing QueryResults Module', () => {
       });
 
       describe('query graph: gene1-disease1-gene2 (no ids params)', () => {
-        const gene_node_start = new QNode('n1', { categories: ['Gene'] });
-        const disease_node = new QNode('n2', { categories: ['Disease'] });
-        const gene_node_end = new QNode('n3', { categories: ['Gene'] });
+        const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'] }) ;
+        const disease_node = new QNode({ id: 'n2', categories: ['Disease'] }) ;
+        const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'] }) ;
 
-        const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
-        const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
+        const edge1 = new QEdge({ id: 'e01', subject: gene_node_start, object: disease_node });
+        const edge2 = new QEdge({ id: 'e02', subject: disease_node, object: gene_node_end });
 
         const record1 = new Record(
           {
@@ -317,12 +317,12 @@ describe('Testing QueryResults Module', () => {
       });
 
       describe('query graph: gene1-disease1-gene2 (gene1 has ids param)', () => {
-        const gene_node_start = new QNode('n1', { categories: ['Gene'], ids: ['NCBIGene:3778'] });
-        const disease_node = new QNode('n2', { categories: ['Disease'] });
-        const gene_node_end = new QNode('n3', { categories: ['Gene'] });
+        const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'], ids: ['NCBIGene:3778'] }) ;
+        const disease_node = new QNode({ id: 'n2', categories: ['Disease'] }) ;
+        const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'] }) ;
 
-        const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
-        const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
+        const edge1 = new QEdge({ id: 'e01', subject: gene_node_start, object: disease_node });
+        const edge2 = new QEdge({ id: 'e02', subject: disease_node, object: gene_node_end });
 
         const record1 = new Record(
           {
@@ -437,12 +437,12 @@ describe('Testing QueryResults Module', () => {
       });
 
       describe('query graph: gene1-disease1-gene2 (gene1 & gene2 have ids params)', () => {
-        const gene_node_start = new QNode('n1', { categories: ['Gene'], ids: ['NCBIGene:3778'] });
-        const disease_node = new QNode('n2', { categories: ['Disease'] });
-        const gene_node_end = new QNode('n3', { categories: ['Gene'], ids: ['NCBIGene:7289'] });
+        const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'], ids: ['NCBIGene:3778'] }) ;
+        const disease_node = new QNode({ id: 'n2', categories: ['Disease'] }) ;
+        const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'], ids: ['NCBIGene:7289'] }) ;
 
-        const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
-        const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
+        const edge1 = new QEdge({ id: 'e01', subject: gene_node_start, object: disease_node });
+        const edge2 = new QEdge({ id: 'e02', subject: disease_node, object: gene_node_end });
 
         const record1 = new Record(
           {
@@ -559,12 +559,12 @@ describe('Testing QueryResults Module', () => {
       });
 
       describe('query graph: gene1-disease1-gene2 (gene2 has ids param)', () => {
-        const gene_node_start = new QNode('n1', { categories: ['Gene'] });
-        const disease_node = new QNode('n2', { categories: ['Disease'] });
-        const gene_node_end = new QNode('n3', { categories: ['Gene'], ids: ['NCBIGene:7289'] });
+        const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'] }) ;
+        const disease_node = new QNode({ id: 'n2', categories: ['Disease'] }) ;
+        const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'], ids: ['NCBIGene:7289'] }) ;
 
-        const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
-        const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
+        const edge1 = new QEdge({ id: 'e01', subject: gene_node_start, object: disease_node });
+        const edge2 = new QEdge({ id: 'e02', subject: disease_node, object: gene_node_end });
 
         const record1 = new Record(
           {
@@ -682,12 +682,12 @@ describe('Testing QueryResults Module', () => {
     });
 
     describe('Three Records', () => {
-      const gene_node_start = new QNode('n1', { categories: ['Gene'], ids: ['NCBIGene:3778'] });
-      const disease_node = new QNode('n2', { categories: ['Disease'] });
-      const gene_node_end = new QNode('n3', { categories: ['Gene'] });
+      const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'], ids: ['NCBIGene:3778'] }) ;
+      const disease_node = new QNode({ id: 'n2', categories: ['Disease'] }) ;
+      const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'] }) ;
 
-      const edge1 = new QEdge('e01', { subject: gene_node_start, object: disease_node });
-      const edge2 = new QEdge('e02', { subject: disease_node, object: gene_node_end });
+      const edge1 = new QEdge({ id: 'e01', subject: gene_node_start, object: disease_node });
+      const edge2 = new QEdge({ id: 'e02', subject: disease_node, object: gene_node_end });
 
       const record1 = new Record(
         {
@@ -1544,17 +1544,11 @@ describe('Testing QueryResults Module', () => {
         await queryResult.update({
           e0_left_is_set: {
             connected_to: ['e1'],
-            records: [
-              new Record(record0_n0a_n1a_left_is_set, config),
-              new Record(record0_n0b_n1a_left_is_set, config)
-            ],
+            records: [new Record(record0_n0a_n1a_left_is_set, config), new Record(record0_n0b_n1a_left_is_set, config)],
           },
           e1: {
             connected_to: ['e0_left_is_set'],
-            records: [
-              new Record(record1_n1a_n2a, config),
-              new Record(record1_n1a_n2b, config)
-            ],
+            records: [new Record(record1_n1a_n2a, config), new Record(record1_n1a_n2b, config)],
           },
         });
         const results = queryResult.getResults();
@@ -1581,10 +1575,7 @@ describe('Testing QueryResults Module', () => {
           },
           e1_left_is_set: {
             connected_to: ['e0_right_is_set'],
-            records: [
-              new Record(record1_n1a_n2a_left_is_set, config),
-              new Record(record1_n1a_n2b_left_is_set, config)
-            ],
+            records: [new Record(record1_n1a_n2a_left_is_set, config), new Record(record1_n1a_n2b_left_is_set, config)],
           },
         });
         const results = queryResult.getResults();
@@ -1764,39 +1755,35 @@ describe('Testing QueryResults Module', () => {
         // generate connected records
         range(0, n1Count).forEach((n1Index) => {
           e0Records.push(
-            new Record(
-              {
-                subject: {
-                  ...n0.a,
-                },
-                object: {
-                  ...n1.a,
-                  curie: `n1_${n1Index}`,
-                },
-                predicate: 'biolink:record0_pred0',
-                ...source0,
-                ...api0,
-              }
-            ),
+            new Record({
+              subject: {
+                ...n0.a,
+              },
+              object: {
+                ...n1.a,
+                curie: `n1_${n1Index}`,
+              },
+              predicate: 'biolink:record0_pred0',
+              ...source0,
+              ...api0,
+            }),
           );
 
           range(0, n2Count).forEach((n2Index) => {
             e1Records.push(
-              new Record(
-                {
-                  subject: {
-                    ...n1.a,
-                    curie: `n1_${n1Index}`,
-                  },
-                  object: {
-                    ...n2.a,
-                    curie: `n2_${n2Index}`,
-                  },
-                  predicate: 'biolink:record1_pred0',
-                  ...source1,
-                  ...api1,
-                }
-              ),
+              new Record({
+                subject: {
+                  ...n1.a,
+                  curie: `n1_${n1Index}`,
+                },
+                object: {
+                  ...n2.a,
+                  curie: `n2_${n2Index}`,
+                },
+                predicate: 'biolink:record1_pred0',
+                ...source1,
+                ...api1,
+              }),
             );
           });
         });
@@ -1804,39 +1791,35 @@ describe('Testing QueryResults Module', () => {
         // generate unconnected records
         range(0, n1Count).forEach((n1Index) => {
           e0Records.push(
-            new Record(
-              {
-                subject: {
-                  ...n0.a,
-                },
-                object: {
-                  ...n1.a,
-                  curie: 'n1_unconnected_e0record_'
-                },
-                predicate: 'biolink:record0_pred0',
-                ...source0,
-                ...api0,
-              }
-            ),
+            new Record({
+              subject: {
+                ...n0.a,
+              },
+              object: {
+                ...n1.a,
+                curie: 'n1_unconnected_e0record_',
+              },
+              predicate: 'biolink:record0_pred0',
+              ...source0,
+              ...api0,
+            }),
           );
 
           range(0, n2Count).forEach((n2Index) => {
             e1Records.push(
-              new Record(
-                {
-                  subject: {
-                    ...n1.a,
-                    curie: `n1_unconnected_e1record_${n1Index}`
-                  },
-                  object: {
-                    ...n2.a,
-                    curie: `n2_${n2Index}`,
-                  },
-                  predicate: 'biolink:record1_pred0',
-                  ...source1,
-                  ...api1,
-                }
-              ),
+              new Record({
+                subject: {
+                  ...n1.a,
+                  curie: `n1_unconnected_e1record_${n1Index}`,
+                },
+                object: {
+                  ...n2.a,
+                  curie: `n2_${n2Index}`,
+                },
+                predicate: 'biolink:record1_pred0',
+                ...source1,
+                ...api1,
+              }),
             );
           });
         });
@@ -1882,58 +1865,52 @@ describe('Testing QueryResults Module', () => {
 
         // generate connected records
         e0Records.push(
-          new Record(
-            {
-              subject: {
-                ...n0.a,
-              },
-              object: {
-                ...n1.a,
-                curie: 'n1_connected'
-              },
-              predicate: 'biolink:record0_pred0',
-              ...source0,
-              ...api0,
-            }
-          ),
+          new Record({
+            subject: {
+              ...n0.a,
+            },
+            object: {
+              ...n1.a,
+              curie: 'n1_connected',
+            },
+            predicate: 'biolink:record0_pred0',
+            ...source0,
+            ...api0,
+          }),
         );
 
         e1Records.push(
-          new Record(
-            {
-              subject: {
-                ...n1.a,
-                curie: 'n1_connected'
-              },
-              object: {
-                ...n2.a,
-                curie: 'n2_connected'
-              },
-              predicate: 'biolink:record1_pred0',
-              ...source1,
-              ...api1,
-            }
-          ),
+          new Record({
+            subject: {
+              ...n1.a,
+              curie: 'n1_connected',
+            },
+            object: {
+              ...n2.a,
+              curie: 'n2_connected',
+            },
+            predicate: 'biolink:record1_pred0',
+            ...source1,
+            ...api1,
+          }),
         );
 
         // generate unconnected records
         range(0, 50000).forEach((n2Index) => {
           e1Records.push(
-            new Record(
-              {
-                subject: {
-                  ...n1.a,
-                  curie: 'n1_unconnected',
-                },
-                object: {
-                  ...n2.a,
-                  curie: `n2_unconnected_${n2Index}`
-                },
-                predicate: 'biolink:record1_pred0',
-                ...source1,
-                ...api1,
-              }
-            ),
+            new Record({
+              subject: {
+                ...n1.a,
+                curie: 'n1_unconnected',
+              },
+              object: {
+                ...n2.a,
+                curie: `n2_unconnected_${n2Index}`,
+              },
+              predicate: 'biolink:record1_pred0',
+              ...source1,
+              ...api1,
+            }),
           );
         });
 
@@ -3066,58 +3043,72 @@ describe('Testing QueryResults Module', () => {
     //    });
     test('Records with different predicates should not be merged', async () => {
       const record1 = new Record({
-        "subject": {
-          "original":"NCBIGene:3265",
-          "qNodeID":"n1",
-          "isSet":false,
-          "curie":"NCBIGene:3265",
-          "UMLS":["C0079471","C1569842"],
-          "semanticType":"Gene",
-          "label":"HRAS",
-          "attributes":{}
+        subject: {
+          original: 'NCBIGene:3265',
+          qNodeID: 'n1',
+          isSet: false,
+          curie: 'NCBIGene:3265',
+          UMLS: ['C0079471', 'C1569842'],
+          semanticType: 'Gene',
+          label: 'HRAS',
+          attributes: {},
         },
-        "object": {
-          "original":"BIOPLANET:bioplanet_1498",
-          "qNodeID":"n0",
-          "isSet":false,
-          "curie":"BIOPLANET:bioplanet_1498",
-          "semanticType":"Pathway",
-          "label":"BIOPLANET:bioplanet_1498",
-          "attributes":{}
+        object: {
+          original: 'BIOPLANET:bioplanet_1498',
+          qNodeID: 'n0',
+          isSet: false,
+          curie: 'BIOPLANET:bioplanet_1498',
+          semanticType: 'Pathway',
+          label: 'BIOPLANET:bioplanet_1498',
+          attributes: {},
         },
-        "predicate":"biolink:actively_involved_in",
-        "mappedResponse":{
-          "pathway_name":"Cell surface interactions at the vascular wall",
-          "pathway_categories": ["Cardiovascular disease","Circulatory system","Hemostasis","Immune disease","Immune system","Infectious disease"],
-          "gene_symbol":"HRAS"
-        }
+        predicate: 'biolink:actively_involved_in',
+        mappedResponse: {
+          pathway_name: 'Cell surface interactions at the vascular wall',
+          pathway_categories: [
+            'Cardiovascular disease',
+            'Circulatory system',
+            'Hemostasis',
+            'Immune disease',
+            'Immune system',
+            'Infectious disease',
+          ],
+          gene_symbol: 'HRAS',
+        },
       });
       const record2 = new Record({
-        "subject": {
-          "original":"NCBIGene:3265",
-          "qNodeID":"n1",
-          "isSet":false,
-          "curie":"NCBIGene:3265",
-          "UMLS":["C0079471","C1569842"],
-          "semanticType":"Gene",
-          "label":"HRAS",
-          "attributes":{}
+        subject: {
+          original: 'NCBIGene:3265',
+          qNodeID: 'n1',
+          isSet: false,
+          curie: 'NCBIGene:3265',
+          UMLS: ['C0079471', 'C1569842'],
+          semanticType: 'Gene',
+          label: 'HRAS',
+          attributes: {},
         },
-        "object": {
-          "original":"BIOPLANET:bioplanet_1498",
-          "qNodeID":"n0",
-          "isSet":false,
-          "curie":"BIOPLANET:bioplanet_1498",
-          "semanticType":"Pathway",
-          "label":"BIOPLANET:bioplanet_1498",
-          "attributes":{}
+        object: {
+          original: 'BIOPLANET:bioplanet_1498',
+          qNodeID: 'n0',
+          isSet: false,
+          curie: 'BIOPLANET:bioplanet_1498',
+          semanticType: 'Pathway',
+          label: 'BIOPLANET:bioplanet_1498',
+          attributes: {},
         },
-        "predicate":"biolink:related_to",
-        "mappedResponse":{
-          "pathway_name":"Cell surface interactions at the vascular wall",
-          "pathway_categories": ["Cardiovascular disease","Circulatory system","Hemostasis","Immune disease","Immune system","Infectious disease"],
-          "gene_symbol":"HRAS"
-        }
+        predicate: 'biolink:related_to',
+        mappedResponse: {
+          pathway_name: 'Cell surface interactions at the vascular wall',
+          pathway_categories: [
+            'Cardiovascular disease',
+            'Circulatory system',
+            'Hemostasis',
+            'Immune disease',
+            'Immune system',
+            'Infectious disease',
+          ],
+          gene_symbol: 'HRAS',
+        },
       });
       const queryResult = new QueryResult();
       await queryResult.update({
@@ -3127,7 +3118,7 @@ describe('Testing QueryResults Module', () => {
         },
       });
       expect(queryResult.getResults()[0].edge_bindings.e01.length).toEqual(2);
-    })
+    });
   });
 
   describe('Graph structure', () => {
@@ -3136,46 +3127,40 @@ describe('Testing QueryResults Module', () => {
         e0: {
           connected_to: ['e1', 'e2'],
           records: [
-            new Record(
-              {
-                subject: {
-                  qNodeID: 'n2',
-                },
-                object: {
-                  qNodeID: 'n1'
-                },
-              }
-            )
+            new Record({
+              subject: {
+                qNodeID: 'n2',
+              },
+              object: {
+                qNodeID: 'n1',
+              },
+            }),
           ],
         },
         e1: {
           connected_to: ['e0'],
           records: [
-            new Record(
-              {
-                subject: {
-                  qNodeID: 'n2'
-                },
-                object: {
-                  qNodeID: 'n3'
-                }
-              }
-            )
+            new Record({
+              subject: {
+                qNodeID: 'n2',
+              },
+              object: {
+                qNodeID: 'n3',
+              },
+            }),
           ],
         },
         e2: {
           connected_to: ['e0'],
           records: [
-            new Record(
-              {
-                subject: {
-                  qNodeID: 'n0'
-                },
-                object: {
-                  qNodeID: 'n1'
-                }
-              }
-            )
+            new Record({
+              subject: {
+                qNodeID: 'n0',
+              },
+              object: {
+                qNodeID: 'n1',
+              },
+            }),
           ],
         },
       };
