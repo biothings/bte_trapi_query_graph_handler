@@ -4,6 +4,7 @@ const debug = require('debug')('bte:biothings-explorer-trapi:pfocr');
 const { intersection } = require('../utils');
 const { _, merge } = require('lodash');
 const { default: Analyze } = require('chi-square-p-value');
+const LogEntry = require('../log_entry');
 
 // the minimum acceptable intersection size between the CURIEs
 // in a TRAPI result and in a PFOCR figure.
@@ -123,9 +124,17 @@ function getMatchableQNodeIDs(allTrapiResults) {
  */
 async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
   const matchableQNodeIDs = getMatchableQNodeIDs(allTrapiResults);
+  const logs = [];
+  let resultsWithTruncatedFigures = 0;
+  const truncatedFigures = new Set();
 
   if (matchableQNodeIDs.size < MATCH_COUNT_MIN) {
     // No TRAPI result can satisfy MATCH_COUNT_MIN
+    logs.push(new LogEntry(
+      "DEBUG",
+      null,
+      "Query does not match criteria, skipping PFOCR figure enrichment."
+    ).getLog());
     return;
   }
 
@@ -183,10 +192,6 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
       continue
     }
 
-    if (figuresByCuries[trapiResultToCurieSet.get(trapiResult)].length > FIGURE_COUNT_MAX) {
-      debug(`Truncating PFOCR figures at ${FIGURE_COUNT_MAX} for TRAPI result w/ ${trapiResultToCurieSet.get(trapiResult)}`)
-    }
-
     const resultCuries = new Set();
       [...matchableQNodeIDs].forEach((QNodeID) => {
         trapiResult.node_bindings[QNodeID].map((node_binding) => node_binding.id)
@@ -222,16 +227,19 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
         );
       });
 
+      // If we've matched on 2 curies, but we haven't actually matched on multiple nodes
+      if (matchedQNodes.length < 2) return;
+
       const figureCurieSet = new Set(figure.associatedWith.mentions.genes.ncbigene)
 
       const resultGenesInFigure = intersection(
         resultCuries,
         figureCurieSet,
-      ).size;
+      );
 
-      const otherGenesInFigure = figureCurieSet.size - resultGenesInFigure;
+      const otherGenesInFigure = figureCurieSet.size - resultGenesInFigure.size;
 
-      let resultGenesInOtherFigures = resultGenesInAllFigures - resultGenesInFigure;
+      let resultGenesInOtherFigures = resultGenesInAllFigures - resultGenesInFigure.size;
       let otherGenesInOtherFigures = allGenesInAllFigures - resultGenesInOtherFigures;
 
 
@@ -241,30 +249,51 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
         // TODO: do we want to include figure title? Note: this would need to be added to queryBody.
         //title: figure.associatedWith.title,
         nodes: matchedQNodes,
-        // TODO: do we want to include the list of matched CURIEs?
-        // TODO: add score
+        matchedCuries: [...resultGenesInFigure].map((geneID) => `NCBIGene:${geneID}`),
         score: 1 - parseFloat(Analyze([
-          [resultGenesInFigure, resultGenesInOtherFigures],
+          [resultGenesInFigure.size, resultGenesInOtherFigures],
           [otherGenesInFigure, otherGenesInOtherFigures],
         ]).pValue)
       });
-      matchedFigures.add(figure);
       matchedTrapiResults.add(trapiResult);
     });
 
     // Sort by score and cut down to top 20
-    trapiResult.pfocr = trapiResult.pfocr.sort((figA, figB) => {
+    const sortedFigures = trapiResult.pfocr.sort((figA, figB) => {
       return figB.score - figA.score;
     })
-    .slice(0, 20);
+
+    if (sortedFigures.length > FIGURE_COUNT_MAX) {
+      resultsWithTruncatedFigures += 1;
+      sortedFigures.slice(20).forEach(figure => truncatedFigures.add(figure.figureUrl));
+      // debug(`Truncating ${sortedFigures.length} PFOCR figures to ${FIGURE_COUNT_MAX} for TRAPI result w/ curies ${trapiResultToCurieSet.get(trapiResult).split(' ').map((ID) => `NCBIGene:${ID}`).join(', ')}`)
+    }
+
+    trapiResult.pfocr = sortedFigures.slice(0, 20);
+    trapiResult.pfocr.map((figure) => matchedFigures.add(figure.figureUrl));
 
   }
 
   // Each of the matched figures has at least one TRAPI result with an overlap of 2+ genes.
   // Each of the matched TRAPI results has at least one figure with an overlap of 2+ genes.
+  // TODO count number of truncated figures and number of results with truncated sections
+  const message = `${resultsWithTruncatedFigures} results had pfocr figures truncated to max of 20 (${truncatedFigures.size} unique figures removed).`
+  debug(message);
+  logs.push(new LogEntry(
+    'DEBUG',
+    null,
+    message
+  ).getLog());
   debug(
     `${MATCH_COUNT_MIN}+ CURIE matches: ${matchedFigures.size} PFOCR figures and ${matchedTrapiResults.size} TRAPI results`
   );
+  logs.push(new LogEntry(
+    'INFO',
+    null,
+    `${matchedTrapiResults.size} results successfully enriched with ${matchedFigures.size} unique PFOCR figures.`
+  ).getLog());
+
+  return logs;
 }
 
 module.exports.enrichTrapiResultsWithPfocrFigures = enrichTrapiResultsWithPfocrFigures;
