@@ -456,7 +456,7 @@ module.exports = class TrapiResultsAssembler {
         new LogEntry(
           'DEBUG', 
           null, 
-          `Did not score results for this endpoint. Use /v1/query or /v1/asyncquery for scoring.`,
+          `Scoring disabled for KP endpoints; results not scored. Use ARA endpoints (/v1/query or /v1/asyncquery) for scoring.`,
           {
             type: 'scoring',
             scored: resultsWithScore,
