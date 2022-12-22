@@ -328,7 +328,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     ];
   }
 
-  async query(shouldScore = false) {
+  async query() {
     this._initializeResponse();
     debug('Start to load metakg.');
     const metaKG = this._loadMetaKG();
@@ -467,7 +467,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     // update query graph
     this.bteGraph.update(manager.getRecords());
     //update query results
-    await this.trapiResultsAssembler.update(manager.getOrganizedRecords(), shouldScore);
+    await this.trapiResultsAssembler.update(manager.getOrganizedRecords(), !(this.options.smartAPIID || this.options.teamName));
     this.logs = [...this.logs, ...this.trapiResultsAssembler.logs];
     // prune bteGraph
     this.bteGraph.prune(this.trapiResultsAssembler.getResults());
