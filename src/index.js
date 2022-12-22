@@ -468,7 +468,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     // update query graph
     this.bteGraph.update(manager.getRecords());
     //update query results
-    await this.trapiResultsAssembler.update(manager.getOrganizedRecords());
+    await this.trapiResultsAssembler.update(manager.getOrganizedRecords(), !(this.options.smartAPIID || this.options.teamName));
     this.logs = [...this.logs, ...this.trapiResultsAssembler.logs];
     // prune bteGraph
     this.bteGraph.prune(this.trapiResultsAssembler.getResults());

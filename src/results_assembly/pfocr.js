@@ -135,7 +135,7 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
       null,
       "Query does not match criteria, skipping PFOCR figure enrichment."
     ).getLog());
-    return;
+    return logs;
   }
 
   // TODO: currently just NCBIGene CURIEs. Expand to handle any CURIE in PFOCR.
@@ -276,7 +276,6 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
 
   // Each of the matched figures has at least one TRAPI result with an overlap of 2+ genes.
   // Each of the matched TRAPI results has at least one figure with an overlap of 2+ genes.
-  // TODO count number of truncated figures and number of results with truncated sections
   const message = `${resultsWithTruncatedFigures} results had pfocr figures truncated to max of 20 (${truncatedFigures.size} unique figures removed).`
   debug(message);
   logs.push(new LogEntry(
