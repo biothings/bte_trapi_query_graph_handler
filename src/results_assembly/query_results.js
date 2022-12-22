@@ -441,17 +441,16 @@ module.exports = class TrapiResultsAssembler {
       new LogEntry('DEBUG', null, `Got ${this._results.length} TRAPI result(s)`).getLog(),
     );
 
-    try {
-      const pfocrEnrichmentLogs = await enrichTrapiResultsWithPfocrFigures(this._results);
-      this.logs.push(...pfocrEnrichmentLogs);
-    } catch (err) {
-      debug("Error enriching with PFOCR figures: ", err);
-      this.logs.push(
-        new LogEntry('DEBUG', null, "Error enriching with PFOCR figures: ", err).getLog(),
-      );
-    }
-
     if (shouldScore) {
+      try {
+        const pfocrEnrichmentLogs = await enrichTrapiResultsWithPfocrFigures(this._results);
+        this.logs.push(...pfocrEnrichmentLogs);
+      } catch (err) {
+        debug("Error enriching with PFOCR figures: ", err);
+        this.logs.push(
+          new LogEntry('DEBUG', null, "Error enriching with PFOCR figures: ", err).getLog(),
+        );
+      }
       debug(`Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`);
       this.logs.push(
         new LogEntry(
@@ -471,7 +470,7 @@ module.exports = class TrapiResultsAssembler {
         new LogEntry(
           'DEBUG',
           null,
-          `Scoring disabled for KP endpoints; results not scored. Use ARA endpoints (/v1/query or /v1/asyncquery) for scoring.`,
+          `Scoring/PFOCR figures disabled for KP endpoints; results not scored. Use ARA endpoints (/v1/query or /v1/asyncquery) for scoring/PFOCR figures.`,
           {
             type: 'scoring',
             scored: resultsWithScore,
