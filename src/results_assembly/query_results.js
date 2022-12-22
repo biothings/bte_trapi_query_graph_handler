@@ -1,4 +1,4 @@
-const { keys, spread, toPairs, zip } = require('lodash');
+const { zip } = require('lodash');
 const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
 const LogEntry = require('../log_entry');
 const { getScores, calculateScore } = require('./score');
@@ -62,7 +62,7 @@ module.exports = class TrapiResultsAssembler {
    */
   _getValidInitialPairs(recordsByQEdgeID) {
     // qNodeID: set{qEdgeID} for node: edges using node
-    const qNodeEdgeCounts = toPairs(recordsByQEdgeID).reduce(
+    const qNodeEdgeCounts = Object.entries(recordsByQEdgeID).reduce(
       (qNodeCounts, [queryEdgeID, { connected_to, records }]) => {
         [
           records[0].subject.qNodeID,
@@ -78,7 +78,7 @@ module.exports = class TrapiResultsAssembler {
       {},
     );
     // qNodeID: qEdgeID for valid 'leaf' nodes, sorted by # records ascending
-    const validNodes = toPairs(qNodeEdgeCounts)
+    const validNodes = Object.entries(qNodeEdgeCounts)
       .filter(([qNodeID, qEdgeIDs]) => qEdgeIDs.size < 2)
       .map(([qNodeID, qEdgeIDs]) => [qNodeID, [...qEdgeIDs][0]])
       .sort(([qNodeID_0, qEdgeID_0], [qNodeID_1, qEdgeID_1]) => {
@@ -257,13 +257,13 @@ module.exports = class TrapiResultsAssembler {
 
     this._results = [];
 
-    const qEdgeIDs = new Set(keys(recordsByQEdgeID));
+    const qEdgeIDs = new Set(Object.keys(recordsByQEdgeID));
     const qEdgeCount = qEdgeIDs.size;
 
     // find all QNodes having is_set params
     // NOTE: is_set in the query graph and the JavaScript Set object below refer to different sets.
     const qNodeIDsWithIsSet = new Set();
-    toPairs(recordsByQEdgeID).forEach(([qEdgeID, {connected_to, records}]) => {
+    Object.entries(recordsByQEdgeID).forEach(([qEdgeID, {connected_to, records}]) => {
 
       const inputQNodeID = records[0].subject.qNodeID;
       const outputQNodeID = records[0].object.qNodeID;
@@ -359,11 +359,9 @@ module.exports = class TrapiResultsAssembler {
       solutionsByTrapiResultID[trapiResultID].push(queryGraphSolution)
     });
 
-    const consolidatedSolutions = toPairs(solutionsByTrapiResultID).map(([trapiResultID, queryGraphSolutions]) => {
+    const consolidatedSolutions = Object.entries(solutionsByTrapiResultID).map(([trapiResultID, queryGraphSolutions]) => {
       debug(`result ID: ${trapiResultID} has ${queryGraphSolutions.length}`)
-      // spread is like Fn.apply
-      // TODO: maybe just use ...
-      return spread(zip)(queryGraphSolutions).map(solutionRecords => {
+      return zip(...queryGraphSolutions).map(solutionRecords => {
         const solutionRecord_0 = solutionRecords[0];
         const consolidatedSolutionRecord = {
           inputQNodeID: solutionRecord_0.inputQNodeID,
@@ -439,10 +437,8 @@ module.exports = class TrapiResultsAssembler {
     );
 
     try {
-      await enrichTrapiResultsWithPfocrFigures(this._results);
-      this.logs.push(
-        new LogEntry('DEBUG', null, "Enriched TRAPI results with PFOCR figures").getLog(),
-      );
+      const pfocrEnrichmentLogs = await enrichTrapiResultsWithPfocrFigures(this._results);
+      this.logs.push(...pfocrEnrichmentLogs);
     } catch (err) {
       debug("Error enriching with PFOCR figures: ", err);
       this.logs.push(
@@ -453,8 +449,8 @@ module.exports = class TrapiResultsAssembler {
     debug(`Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`);
     this.logs.push(
       new LogEntry(
-        'DEBUG', 
-        null, 
+        'DEBUG',
+        null,
         `Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`,
         {
           type: 'scoring',
