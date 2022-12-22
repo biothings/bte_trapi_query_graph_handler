@@ -240,22 +240,14 @@ describe('Testing QueryGraphHandler Module', () => {
     });
   });
 
-  describe('test _storeEdges function', () => {
+  describe('test calculateEdges function', () => {
     test('test storeEdges with one hop query', async () => {
       let handler = new QueryGraphHandler(OneHopQuery);
-      let edges = await handler._storeEdges();
-      expect(edges).toHaveProperty('e01');
-      expect(edges).not.toHaveProperty('e02');
-      expect(edges.e01).toBeInstanceOf(QEdge);
-      expect(edges.e01.getSubject()).toBeInstanceOf(QNode2);
-    });
-
-    test('test storeEdges with multi hop query', async () => {
-      let handler = new QueryGraphHandler(FourHopQuery);
-      let edges = await handler._storeEdges();
-      expect(edges).toHaveProperty('e01');
-      expect(edges).toHaveProperty('e02');
-      expect(edges.e01).toBeInstanceOf(QEdge);
+      await handler.calculateEdges();
+      expect(handler.edges).toHaveProperty('e01');
+      expect(handler.edges).not.toHaveProperty('e02');
+      expect(handler.edges.e01).toBeInstanceOf(QEdge);
+      expect(handler.edges.e01.getInputNode()).toBeInstanceOf(QNode2);
     });
   });
 
@@ -264,23 +256,20 @@ describe('Testing QueryGraphHandler Module', () => {
       let handler = new QueryGraphHandler(ThreeHopExplainQuery);
       let edges = await handler.calculateEdges();
       expect(Object.keys(edges)).toHaveLength(3);
-      expect(edges[0]).toHaveLength(1);
-      expect(edges[1]).toHaveLength(1);
-      expect(edges[2]).toHaveLength(1);
     });
   });
   describe('test cycle/duplicate edge detection for query graphs', () => {
     test('Duplicate Edge Graph #1', async () => {
       const handler = new QueryGraphHandler(QueryWithDuplicateEdge1);
-      expect(handler.calculateEdges()).rejects.toThrow(InvalidQueryGraphError);
+      await expect(handler.calculateEdges()).rejects.toThrow(InvalidQueryGraphError);
     });
     test('Query Graph Cycle #1', async () => {
       const handler = new QueryGraphHandler(QueryWithCycle1);
-      expect(handler.calculateEdges()).rejects.toThrow(InvalidQueryGraphError);
+      await expect(handler.calculateEdges()).rejects.toThrow(InvalidQueryGraphError);
     });
     test('Query Graph Cycle #2', async () => {
       const handler = new QueryGraphHandler(QueryWithCycle2);
-      expect(handler.calculateEdges()).rejects.toThrow(InvalidQueryGraphError);
+      await expect(handler.calculateEdges()).rejects.toThrow(InvalidQueryGraphError);
     });
   });
 
@@ -293,7 +282,7 @@ describe('Testing QueryGraphHandler Module', () => {
       const handler = new QueryGraphHandler(QueryWithNullPredicate);
       const edges = await handler.calculateEdges();
       // if this is undefined (not null) then smartapi-kg treats as if the field doesn't exist (desired behavior)
-      expect(edges[0][0].getPredicate()).toBe(undefined);
+      expect(edges[0].getPredicate()).toBe(undefined);
     });
     test('Graph without any ids', async () => {
       const handler = new QueryGraphHandler(QueryWithNullIds);

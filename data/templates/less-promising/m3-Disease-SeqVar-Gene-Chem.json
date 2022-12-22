@@ -29,7 +29,7 @@
                 "eC": {
                     "subject": "nB",
                     "object": "creativeQuerySubject",
-                    "predicates": ["biolink:entity_regulated_by_entity"]
+                    "predicates": ["biolink:regulated_by", "biolink:affected_by"]
                 }
             }
         }
