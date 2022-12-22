@@ -1,10 +1,8 @@
-const { keys, spread, toPairs, zip } = require('lodash');
+const { cloneDeep, keys, spread, toPairs, values, zip } = require('lodash');
 const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
-const LogEntry = require('../log_entry');
+const LogEntry = require('./log_entry');
 const { getScores, calculateScore } = require('./score');
 const { Record } = require('@biothings-explorer/api-response-transform');
-const { enrichTrapiResultsWithPfocrFigures } = require('./pfocr');
-
 
 /**
  * @type { Record }
@@ -432,23 +430,6 @@ module.exports = class TrapiResultsAssembler {
       return result;
     })
     .sort((result1, result2) => (result2.score - result1.score)); //sort by decreasing score
-
-    debug(`Got ${this._results.length} TRAPI result(s)`)
-    this.logs.push(
-      new LogEntry('DEBUG', null, `Got ${this._results.length} TRAPI result(s)`).getLog(),
-    );
-
-    try {
-      await enrichTrapiResultsWithPfocrFigures(this._results);
-      this.logs.push(
-        new LogEntry('DEBUG', null, "Enriched TRAPI results with PFOCR figures").getLog(),
-      );
-    } catch (err) {
-      debug("Error enriching with PFOCR figures: ", err);
-      this.logs.push(
-        new LogEntry('DEBUG', null, "Error enriching with PFOCR figures: ", err).getLog(),
-      );
-    }
 
     debug(`Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`);
     this.logs.push(
