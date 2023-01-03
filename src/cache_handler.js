@@ -98,20 +98,20 @@ module.exports = class {
     );
   }
 
-  async categorizeEdges(qXEdges) {
+  async categorizeEdges(qEdges) {
     if (this.cacheEnabled === false || process.env.INTERNAL_DISABLE_REDIS) {
       return {
         cachedRecords: [],
-        nonCachedQXEdges: qXEdges,
+        nonCachedQEdges: qEdges,
       };
     }
-    let nonCachedQXEdges = [];
+    let nonCachedQEdges = [];
     let cachedRecords = [];
     debug('Begin edge cache lookup...');
-    await async.eachSeries(qXEdges, async (qXEdge) => {
-      const qXEdgeMetaKGHash = this._hashEdgeByMetaKG(qXEdge.getHashedEdgeRepresentation());
+    await async.eachSeries(qEdges, async (qEdge) => {
+      const qEdgeMetaKGHash = this._hashEdgeByMetaKG(qEdge.getHashedEdgeRepresentation());
       const unpackedRecords = await new Promise(async (resolve) => {
-        const redisID = 'bte:edgeCache:' + qXEdgeMetaKGHash;
+        const redisID = 'bte:edgeCache:' + qEdgeMetaKGHash;
         await redisClient.client.usingLock([`redisLock:${redisID}`], 600000, async (signal) => {
           try {
             const compressedRecordPack = await redisClient.client.hgetallTimeout(redisID);
@@ -129,7 +129,7 @@ module.exports = class {
               recordStream
                 .pipe(this.createDecodeStream())
                 .on('data', (obj) => recordPack.push(obj))
-                .on('end', () => resolve(Record.unpackRecords(recordPack, qXEdge, this.recordConfig)));
+                .on('end', () => resolve(Record.unpackRecords(recordPack, qEdge, this.recordConfig)));
             } else {
               resolve(null);
             }
@@ -145,47 +145,47 @@ module.exports = class {
           new LogEntry(
             'DEBUG',
             null,
-            `BTE finds cached records for ${qXEdge.getID()}`,
+            `BTE finds cached records for ${qEdge.getID()}`,
             {
               type: 'cacheHit',
-              qEdgeID: qXEdge.getID(),
+              qEdgeID: qEdge.getID(),
             }
           ).getLog()
         );
         cachedRecords = [...cachedRecords, ...unpackedRecords];
       } else {
-        nonCachedQXEdges.push(qXEdge);
+        nonCachedQEdges.push(qEdge);
       }
       debug(`Found (${cachedRecords.length}) cached records.`);
     });
 
-    return { cachedRecords, nonCachedQXEdges };
+    return { cachedRecords, nonCachedQEdges };
   }
 
-  _hashEdgeByMetaKG(qXEdgeHash) {
+  _hashEdgeByMetaKG(qEdgeHash) {
     if (!this.metaKG) {
-      return qXEdgeHash;
+      return qEdgeHash;
     }
     const len = String(this.metaKG.ops.length);
     const allIDs = Array.from(new Set(this.metaKG.ops.map((op) => op.association.smartapi.id))).join('');
-    return helper._generateHash(qXEdgeHash + len + allIDs);
+    return helper._generateHash(qEdgeHash + len + allIDs);
   }
 
-  _groupQueryRecordsByQXEdgeHash(queryRecords) {
+  _groupQueryRecordsByQEdgeHash(queryRecords) {
     let groupedRecords = {};
     queryRecords.map((record) => {
       try {
-        const qXEdgeMetaKGHash = this._hashEdgeByMetaKG(record.qXEdge.getHashedEdgeRepresentation());
-        if (!(qXEdgeMetaKGHash in groupedRecords)) {
-          groupedRecords[qXEdgeMetaKGHash] = [];
+        const qEdgeMetaKGHash = this._hashEdgeByMetaKG(record.qEdge.getHashedEdgeRepresentation());
+        if (!(qEdgeMetaKGHash in groupedRecords)) {
+          groupedRecords[qEdgeMetaKGHash] = [];
         }
-        groupedRecords[qXEdgeMetaKGHash].push(record);
+        groupedRecords[qEdgeMetaKGHash].push(record);
       } catch (e) {
         debug('skipping malformed record');
       }
     });
-    Object.entries(groupedRecords).forEach(([qXEdgeMetaKGHash, records]) => {
-      groupedRecords[qXEdgeMetaKGHash] = Record.packRecords(records);
+    Object.entries(groupedRecords).forEach(([qEdgeMetaKGHash, records]) => {
+      groupedRecords[qEdgeMetaKGHash] = Record.packRecords(records);
     });
     return groupedRecords;
   }
@@ -210,11 +210,11 @@ module.exports = class {
     }
     debug('Start to cache query records.');
     try {
-      const groupedRecords = this._groupQueryRecordsByQXEdgeHash(queryRecords);
-      const qXEdgeHashes = Array.from(Object.keys(groupedRecords));
-      debug(`Number of hashed edges: ${qXEdgeHashes.length}`);
+      const groupedRecords = this._groupQueryRecordsByQEdgeHash(queryRecords);
+      const qEdgeHashes = Array.from(Object.keys(groupedRecords));
+      debug(`Number of hashed edges: ${qEdgeHashes.length}`);
       const failedHashes = [];
-      await async.eachSeries(qXEdgeHashes, async (hash) => {
+      await async.eachSeries(qEdgeHashes, async (hash) => {
         // lock to prevent caching to/reading from actively caching edge
         const redisID = 'bte:edgeCache:' + hash;
         if (parentPort) {
@@ -236,7 +236,7 @@ module.exports = class {
                     try {
                       await redisClient.client.delTimeout(redisID);
                     } catch (e) {
-                      debug(`Unable to remove partial cache ${redisID} from redis during cache failure due to error ${error}. This may result in failed or improper cache retrieval of this qXEdge.`)
+                      debug(`Unable to remove partial cache ${redisID} from redis during cache failure due to error ${error}. This may result in failed or improper cache retrieval of this qEdge.`)
                     }
                   }
                 })
@@ -247,7 +247,7 @@ module.exports = class {
             await redisClient.client.expireTimeout(redisID, process.env.REDIS_KEY_EXPIRE_TIME || 1800);
           } catch (error) {
             failedHashes.push(hash);
-            debug(`Failed to cache qXEdge ${hash} records due to error ${error}. This does not stop other edges from caching nor terminate the query.`)
+            debug(`Failed to cache qEdge ${hash} records due to error ${error}. This does not stop other edges from caching nor terminate the query.`)
           } finally {
             if (parentPort) {
               parentPort.postMessage({ completeCacheKey: redisID });
@@ -261,7 +261,7 @@ module.exports = class {
       if (successCount) {
         debug(`Successfully cached (${successCount}) query records.`);
       } else {
-        debug(`qXEdge caching failed.`);
+        debug(`qEdge caching failed.`);
       }
     } catch (error) {
       debug(`Caching failed due to ${error}. This does not terminate the query.`);

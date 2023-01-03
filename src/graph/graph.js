@@ -64,6 +64,9 @@ module.exports = class BTEGraph {
           .map((item) => {
             this.edges[recordHash].addAdditionalAttributes(item, record.mappedResponse[item]);
           });
+        Object.entries(record.qualifiers).forEach(([qualifierType, qualifier]) => {
+          this.edges[recordHash].addQualifier(qualifierType, qualifier);
+        })
       }
     });
   }
