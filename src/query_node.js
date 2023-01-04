@@ -12,6 +12,8 @@ module.exports = class QNode {
   constructor(info) {
     this.id = info.id;
     this.category = info.categories || 'NamedThing';
+    this.expandedCategories = this.category;
+    this.equivalentIDsUpdated = false;
     // mainIDs
     this.curie = info.ids;
     //is_set
@@ -31,6 +33,7 @@ module.exports = class QNode {
     //object-ify array of initial curies
     if (info.expanded_curie === undefined) this.expandCurie();
     this.validateConstraints();
+    this.expandCategories();
   }
 
   freeze() {
@@ -140,18 +143,16 @@ module.exports = class QNode {
 
   intersectWithExpandedCuries(newCuries) {
     let keep = {};
-    for (const mainID in newCuries) {
-      let current_list_of_aliases = newCuries[mainID];
-      for (const existingMainID in this.expanded_curie) {
-        let existing_list_of_aliases = this.expanded_curie[existingMainID];
-        let idsMatchFound = _.intersection(current_list_of_aliases, existing_list_of_aliases);
-        if (idsMatchFound.length) {
-          if (!Object.hasOwnProperty.call(keep, mainID)) {
-            keep[mainID] = current_list_of_aliases;
-          }
-        }
+    // If a new entity has any alias intersection with an existing entity, keep it
+    Object.entries(newCuries).forEach(([newMainID, currentAliases]) => {
+      const someIntersection = Object.entries(this.expanded_curie).some(([existingMainID, existingAliases]) => {
+        return currentAliases.some((currentAlias) => existingAliases.includes(currentAlias));
+      });
+      if (someIntersection) {
+        if (!keep[newMainID]) keep[newMainID] = currentAliases;
       }
-    }
+    });
+
     //save expanded curies (main + aliases)
     this.expanded_curie = keep;
     //save curies (main ids)
@@ -183,6 +184,12 @@ module.exports = class QNode {
   }
 
   getCategories() {
+    if (this.equivalentIDsUpdated) this.expandCategories();
+    return this.expandedCategories;
+  }
+
+  expandCategories() {
+    this.equivalentIDsUpdated = false;
     if (this.hasEquivalentIDs() === false) {
       const categories = utils.toArray(this.category);
       let expanded_categories = [];
@@ -192,7 +199,8 @@ module.exports = class QNode {
           ...(biolink.getDescendantClasses(utils.removeBioLinkPrefix(category)) || []),
         ];
       });
-      return utils.getUnique(expanded_categories);
+      this.expandedCategories = utils.getUnique(expanded_categories);
+      return;
     }
     // let ancestors = new Set(
     //   utils
@@ -207,7 +215,7 @@ module.exports = class QNode {
         categories = [...categories, entity.semanticType];
       });
     });
-    return utils.getUnique(
+    this.expandedCategories = utils.getUnique(
       utils.getUnique(categories).reduce((arr, category) => [...arr, ...(biolink.getDescendantClasses(category) || [])], []),
     );
     // .filter(category => !ancestors.has(category));
@@ -225,6 +233,7 @@ module.exports = class QNode {
 
   setEquivalentIDs(equivalentIDs) {
     this.equivalentIDs = equivalentIDs;
+    this.equivalentIDsUpdated = true;
   }
 
   updateEquivalentIDs(equivalentIDs) {
@@ -233,6 +242,7 @@ module.exports = class QNode {
     } else {
       this.equivalentIDs = { ...this.equivalentIDs, ...equivalentIDs };
     }
+    this.equivalentIDsUpdated = true;
   }
 
   hasInput() {
