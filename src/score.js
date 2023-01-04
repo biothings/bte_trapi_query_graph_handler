@@ -14,7 +14,10 @@ async function query(queryPairs) {
     let axios_queries = chunked_input.map((input) => {
       return axios.post(
         url,
-        {umls: input},
+        {
+          umls: input,
+          expand: "both"
+        },
       );
     });
     //convert res array into single object with all curies

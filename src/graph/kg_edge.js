@@ -8,6 +8,7 @@ module.exports = class KGEdge {
     this.inforesCuries = new Set();
     this.sources = new Set();
     this.publications = new Set();
+    this.qualifiers = {};
     this.attributes = {};
   }
 
@@ -57,6 +58,10 @@ module.exports = class KGEdge {
     publication.map((item) => {
       this.publications.add(item);
     });
+  }
+
+  addQualifier(name, value) {
+    this.qualifiers[name] = value;
   }
 
   addAdditionalAttributes(name, value) {

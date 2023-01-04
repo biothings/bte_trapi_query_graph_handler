@@ -22,7 +22,7 @@ describe('Testing TRAPI QueryHandler Generalized Query Handling', () => {
 
   describe('Testing query function', () => {
     test.skip('One hop has only nodes specified', async (done) => {
-      const queryHandler = new TRAPIQueryHandler.TRAPIQueryHandler({});
+      const queryHandler = new TRAPIQueryHandler.TRAPIQueryHandler();
       queryHandler.setQueryGraph(OneHopQuery);
       await queryHandler.query();
       let res = queryHandler.getResponse();

@@ -17,7 +17,7 @@
                 "eA": {
                     "subject": "creativeQuerySubject",
                     "object": "nA",
-                    "predicates": ["biolink:entity_regulates_entity"]
+                    "predicates": ["biolink:regulates", "biolink:affects"]
                 },
                 "eB": {
                     "subject": "nA",
