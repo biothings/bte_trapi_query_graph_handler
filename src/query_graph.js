@@ -98,10 +98,12 @@ module.exports = class QueryGraphHandler {
     const schemProps = this.schema?.components?.schemas?.QNode?.properties ? this.schema.components.schemas.QNode.properties : {};
     const nodeProperties = new Set(Object.keys(schemProps));
     const badProperties = new Set();
+    const badNodes = new Set();
     for (const nodeID in queryGraph.nodes) {
       for (const property in queryGraph.nodes[nodeID]) {
         if (!nodeProperties.has(property)) {
           badProperties.add(property);
+          badNodes.add(nodeID);
         }
       }
     }
@@ -111,7 +113,7 @@ module.exports = class QueryGraphHandler {
         new LogEntry(
           'WARNING',
           null,
-          `Encountered one or more properties on a QNode that we don't recognize: ${Array.from(badProperties).join(',')}. Properties will be ignored.`,
+          `Ignoring unrecognized properties (${[...badProperties].join(',')}) on nodes (${[...badNodes].join(',')}).`,
         ).getLog()
       );
     }
@@ -121,10 +123,12 @@ module.exports = class QueryGraphHandler {
     const schemProps = this.schema?.components?.schemas?.QEdge?.properties ? this.schema.components.schemas.QEdge.properties : {};
     const edgeProperties = new Set(Object.keys(schemProps));
     const badProperties = new Set();
+    const badEdges = new Set();
     for (const edgeID in queryGraph.edges) {
       for (const property in queryGraph.edges[edgeID]) {
         if (!edgeProperties.has(property)) {
           badProperties.add(property);
+          badEdges.add(edgeID);
         }
       }
     }
@@ -134,7 +138,7 @@ module.exports = class QueryGraphHandler {
         new LogEntry(
           'WARNING',
           null,
-          `Encountered one or more properties on a QEdge that we don't recognize: ${Array.from(badProperties).join(',')}. Properties will be ignored.`,
+          `Ignoring unrecognized properties (${[...badProperties].join(',')}) on edges (${[...badEdges].join(',')}).`,
         ).getLog()
       );
     }
