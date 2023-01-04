@@ -3,8 +3,7 @@ const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
 const LogEntry = require('../log_entry');
 const { getScores, calculateScore } = require('./score');
 const { Record } = require('@biothings-explorer/api-response-transform');
-const { enrichTrapiResultsWithPfocrFigures } = require('./pfocr');
-
+const { enrichTrapiResultsWithPfocrFigures } = require('./pfocr')
 
 /**
  * @type { Record }
@@ -435,11 +434,6 @@ module.exports = class TrapiResultsAssembler {
       return result;
     })
     .sort((result1, result2) => (result2.score ?? 0) - (result1.score ?? 0)); //sort by decreasing score
-
-    debug(`Got ${this._results.length} TRAPI result(s)`)
-    this.logs.push(
-      new LogEntry('DEBUG', null, `Got ${this._results.length} TRAPI result(s)`).getLog(),
-    );
 
     if (shouldScore) {
       try {
