@@ -242,15 +242,18 @@ module.exports = class TrapiResultsAssembler {
    * @param {RecordsByQEdgeID} recordsByQEdgeID
    * @return {undefined} nothing returned; just cache this._results
    */
-  async update(recordsByQEdgeID) {
+  async update(recordsByQEdgeID, shouldScore = true) {
     debug(`Updating query results now!`);
 
     let scoreCombos = [];
-    try {
-      scoreCombos = await getScores(recordsByQEdgeID);
-      debug(`Successfully got ${scoreCombos.length} score combos.`);
-    } catch (err) {
-      debug("Error getting scores: ", err);
+    
+    if (shouldScore) {
+      try {
+        scoreCombos =  await getScores(recordsByQEdgeID);
+        debug(`Successfully got ${scoreCombos.length} score combos.`);
+      } catch (err) {
+        debug("Error getting scores: ", err);
+      }
     }
 
     this._results = [];
@@ -402,6 +405,8 @@ module.exports = class TrapiResultsAssembler {
       } else {
         resultsWithScore++;
       }
+      
+      if (!shouldScore) delete result.score;
 
       consolidatedSolution.forEach(({
         inputQNodeID, outputQNodeID,
@@ -429,20 +434,36 @@ module.exports = class TrapiResultsAssembler {
 
       return result;
     })
-    .sort((result1, result2) => (result2.score - result1.score)); //sort by decreasing score
+    .sort((result1, result2) => (result2.score ?? 0) - (result1.score ?? 0)); //sort by decreasing score
 
-    debug(`Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`);
-    this.logs.push(
-      new LogEntry(
-        'DEBUG', 
-        null, 
-        `Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`,
-        {
-          type: 'scoring',
-          scored: resultsWithScore,
-          unscored: resultsWithoutScore
-        }
-        ).getLog(),
-    );
+    if (shouldScore) {
+      debug(`Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`);
+      this.logs.push(
+        new LogEntry(
+          'DEBUG', 
+          null, 
+          `Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`,
+          {
+            type: 'scoring',
+            scored: resultsWithScore,
+            unscored: resultsWithoutScore
+          }
+          ).getLog(),
+      );
+    } else {
+      debug(`Did not score results for this endpoint.`);
+      this.logs.push(
+        new LogEntry(
+          'DEBUG', 
+          null, 
+          `Scoring disabled for KP endpoints; results not scored. Use ARA endpoints (/v1/query or /v1/asyncquery) for scoring.`,
+          {
+            type: 'scoring',
+            scored: resultsWithScore,
+            unscored: resultsWithoutScore
+          }
+          ).getLog(),
+      );
+    }
   }
 };

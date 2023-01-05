@@ -4,7 +4,7 @@ const { Readable } = require('stream');
 const { Record } = require('@biothings-explorer/api-response-transform');
 const Redis = require('ioredis-mock');
 
-const qXedges = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/qXEdges.json')), { encoding: 'utf8' });
+const qEdges = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/qEdges.json')), { encoding: 'utf8' });
 
 const records = Record.unfreezeRecords(
   JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/queryRecords.json')), { encoding: 'utf8' }),
@@ -31,19 +31,19 @@ describe('test cache handler', () => {
       const cacheHandler = new CacheHandler(false);
       const categorizeEdges = jest.spyOn(CacheHandler.prototype, 'categorizeEdges');
       const _hashEdgeByMetaKG = jest.spyOn(CacheHandler.prototype, '_hashEdgeByMetaKG');
-      const _groupQueryRecordsByQXEdgeHash = jest.spyOn(CacheHandler.prototype, '_groupQueryRecordsByQXEdgeHash');
+      const _groupQueryRecordsByQEdgeHash = jest.spyOn(CacheHandler.prototype, '_groupQueryRecordsByQEdgeHash');
 
       expect(cacheHandler.cacheEnabled).toBeFalsy();
 
-      const { cachedRecords, nonCachedQXEdges } = await cacheHandler.categorizeEdges(qXedges);
+      const { cachedRecords, nonCachedQEdges } = await cacheHandler.categorizeEdges(qEdges);
       expect(categorizeEdges).toHaveBeenCalledTimes(1);
       expect(_hashEdgeByMetaKG).toHaveBeenCalledTimes(0);
       expect(cachedRecords).toHaveLength(0);
-      expect(nonCachedQXEdges).toHaveLength(1);
-      expect(nonCachedQXEdges).toEqual(qXedges);
+      expect(nonCachedQEdges).toHaveLength(1);
+      expect(nonCachedQEdges).toEqual(qEdges);
 
       await cacheHandler.cacheEdges(records);
-      expect(_groupQueryRecordsByQXEdgeHash).toHaveBeenCalledTimes(0);
+      expect(_groupQueryRecordsByQEdgeHash).toHaveBeenCalledTimes(0);
     });
 
     test("don't use cache when explicitely disabled by ENV", async () => {
@@ -54,19 +54,19 @@ describe('test cache handler', () => {
       const cacheHandler = new CacheHandler(true);
       const categorizeEdges = jest.spyOn(CacheHandler.prototype, 'categorizeEdges');
       const _hashEdgeByMetaKG = jest.spyOn(CacheHandler.prototype, '_hashEdgeByMetaKG');
-      const _groupQueryRecordsByQXEdgeHash = jest.spyOn(CacheHandler.prototype, '_groupQueryRecordsByQXEdgeHash');
+      const _groupQueryRecordsByQEdgeHash = jest.spyOn(CacheHandler.prototype, '_groupQueryRecordsByQEdgeHash');
 
       expect(cacheHandler.cacheEnabled).toBeFalsy();
 
-      const { cachedRecords, nonCachedQXEdges } = await cacheHandler.categorizeEdges(qXedges);
+      const { cachedRecords, nonCachedQEdges } = await cacheHandler.categorizeEdges(qEdges);
       expect(categorizeEdges).toHaveBeenCalledTimes(1);
       expect(_hashEdgeByMetaKG).toHaveBeenCalledTimes(0);
       expect(cachedRecords).toHaveLength(0);
-      expect(nonCachedQXEdges).toHaveLength(1);
-      expect(nonCachedQXEdges).toEqual(qXedges);
+      expect(nonCachedQEdges).toHaveLength(1);
+      expect(nonCachedQEdges).toEqual(qEdges);
 
       await cacheHandler.cacheEdges(records);
-      expect(_groupQueryRecordsByQXEdgeHash).toHaveBeenCalledTimes(0);
+      expect(_groupQueryRecordsByQEdgeHash).toHaveBeenCalledTimes(0);
     });
 
     test("don't use cache when redis disabled", async () => {
@@ -74,19 +74,19 @@ describe('test cache handler', () => {
       const cacheHandler = new CacheHandler(true);
       const categorizeEdges = jest.spyOn(CacheHandler.prototype, 'categorizeEdges');
       const _hashEdgeByMetaKG = jest.spyOn(CacheHandler.prototype, '_hashEdgeByMetaKG');
-      const _groupQueryRecordsByQXEdgeHash = jest.spyOn(CacheHandler.prototype, '_groupQueryRecordsByQXEdgeHash');
+      const _groupQueryRecordsByQEdgeHash = jest.spyOn(CacheHandler.prototype, '_groupQueryRecordsByQEdgeHash');
 
       expect(cacheHandler.cacheEnabled).toBeFalsy();
 
-      const { cachedRecords, nonCachedQXEdges } = await cacheHandler.categorizeEdges(qXedges);
+      const { cachedRecords, nonCachedQEdges } = await cacheHandler.categorizeEdges(qEdges);
       expect(categorizeEdges).toHaveBeenCalledTimes(1);
       expect(_hashEdgeByMetaKG).toHaveBeenCalledTimes(0);
       expect(cachedRecords).toHaveLength(0);
-      expect(nonCachedQXEdges).toHaveLength(1);
-      expect(nonCachedQXEdges).toEqual(qXedges);
+      expect(nonCachedQEdges).toHaveLength(1);
+      expect(nonCachedQEdges).toEqual(qEdges);
 
       await cacheHandler.cacheEdges(records);
-      expect(_groupQueryRecordsByQXEdgeHash).toHaveBeenCalledTimes(0);
+      expect(_groupQueryRecordsByQEdgeHash).toHaveBeenCalledTimes(0);
     });
 
     test("don't use cache when redis specially disabled", async () => {
@@ -97,17 +97,17 @@ describe('test cache handler', () => {
       const cacheHandler = new CacheHandler(true);
       const categorizeEdges = jest.spyOn(CacheHandler.prototype, 'categorizeEdges');
       const _hashEdgeByMetaKG = jest.spyOn(CacheHandler.prototype, '_hashEdgeByMetaKG');
-      const _groupQueryRecordsByQXEdgeHash = jest.spyOn(CacheHandler.prototype, '_groupQueryRecordsByQXEdgeHash');
+      const _groupQueryRecordsByQEdgeHash = jest.spyOn(CacheHandler.prototype, '_groupQueryRecordsByQEdgeHash');
 
-      const { cachedRecords, nonCachedQXEdges } = await cacheHandler.categorizeEdges(qXedges);
+      const { cachedRecords, nonCachedQEdges } = await cacheHandler.categorizeEdges(qEdges);
       expect(categorizeEdges).toHaveBeenCalledTimes(1);
       expect(_hashEdgeByMetaKG).toHaveBeenCalledTimes(0);
       expect(cachedRecords).toHaveLength(0);
-      expect(nonCachedQXEdges).toHaveLength(1);
-      expect(nonCachedQXEdges).toEqual(qXedges);
+      expect(nonCachedQEdges).toHaveLength(1);
+      expect(nonCachedQEdges).toEqual(qEdges);
 
       await cacheHandler.cacheEdges(records);
-      expect(_groupQueryRecordsByQXEdgeHash).toHaveBeenCalledTimes(0);
+      expect(_groupQueryRecordsByQEdgeHash).toHaveBeenCalledTimes(0);
     });
   });
 
@@ -240,15 +240,15 @@ describe('test cache handler', () => {
     });
   });
 
-  test('_groupQueryRecordsByQXEdgeHash', () => {
+  test('_groupQueryRecordsByQEdgeHash', () => {
     process.env.REDIS_HOST = 'mocked';
     process.env.REDIS_PORT = 'mocked';
     const CacheHandler = require('../../src/cache_handler');
     const cacheHandler = new CacheHandler(true);
-    const groups = cacheHandler._groupQueryRecordsByQXEdgeHash(records);
+    const groups = cacheHandler._groupQueryRecordsByQEdgeHash(records);
 
     const numHashes = records.reduce((set, record) => {
-      set.add(record.qXEdge.getHashedEdgeRepresentation());
+      set.add(record.qEdge.getHashedEdgeRepresentation());
       return set;
     }, new Set()).size;
 
@@ -269,16 +269,16 @@ describe('test cache handler', () => {
     const redisClient = new Redis();
 
     await cacheHandler.cacheEdges(records);
-    const qXEdges = Object.values(
+    const qEdges = Object.values(
       records.reduce((obj, record) => {
-        if (!(record.qXEdge.getHashedEdgeRepresentation() in obj)) {
-          obj[record.qXEdge.getHashedEdgeRepresentation()] = record.qXEdge;
+        if (!(record.qEdge.getHashedEdgeRepresentation() in obj)) {
+          obj[record.qEdge.getHashedEdgeRepresentation()] = record.qEdge;
         }
         return obj;
       }, {}),
     );
-    const { cachedRecords, nonCachedQXEdges } = await cacheHandler.categorizeEdges(qXEdges);
-    expect(nonCachedQXEdges).toHaveLength(0);
+    const { cachedRecords, nonCachedQEdges } = await cacheHandler.categorizeEdges(qEdges);
+    expect(nonCachedQEdges).toHaveLength(0);
     expect(cachedRecords).toHaveLength(records.length);
     // TODO get each record sorted by hash to compare individually
     const originalRecordHashes = records.reduce((set, record) => {
