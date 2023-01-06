@@ -50,7 +50,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       smartapiIds.push(smartapiRegistration._id)
       inforesIds.push(smartapiRegistration.info?.['x-translator']?.infores)
     });
-    configListApis.forEach((configListApi) => {
+    configListAPIs.forEach((configListApi) => {
       if (smartapiIds.includes(configListApi.id ?? null) === false && inforesIds.includes(configListApi.infores ?? null) === false) {
         unregisteredAPIs.push(configListApi.id ?? configListApi.infores);
         debug(`${configListApi['name']} not found in smartapi registry`);
