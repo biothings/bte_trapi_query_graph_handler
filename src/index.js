@@ -46,13 +46,13 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     const inforesIds = [];
     const unregisteredAPIs = [];
 
-    JSON.parse(smartapiRegistry)['hits'].forEach((smartapiRegistration) => {
-      smartapiIds.push(smartapiRegistration['_id'])
+    JSON.parse(smartapiRegistry).hits.forEach((smartapiRegistration) => {
+      smartapiIds.push(smartapiRegistration._id)
       inforesIds.push(smartapiRegistration.info?.['x-translator']?.infores)
     });
     configListApis.forEach((configListApi) => {
-      if (smartapiIds.includes(configListApi['id']) === false && inforesIds.includes(configListApi['id']) === false) {
-        unregisteredAPIs.push(configListApi.id);
+      if (smartapiIds.includes(configListApi.id ?? null) === false && inforesIds.includes(configListApi.infores ?? null) === false) {
+        unregisteredAPIs.push(configListApi.id ?? configListApi.infores);
         debug(`${configListApi['name']} not found in smartapi registry`);
       }
     });
