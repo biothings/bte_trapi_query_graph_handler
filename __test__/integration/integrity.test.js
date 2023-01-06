@@ -25,7 +25,7 @@ describe('Testing TRAPIQueryHandler Module', () => {
     queryHandler.setQueryGraph(query.message.query_graph);
     await queryHandler.query();
     const res = queryHandler.getResponse();
-    console.log(res);
+    // console.log(res);
     expect(res.message.knowledge_graph.nodes).toHaveProperty('NCBIGene:111');
   });
 
