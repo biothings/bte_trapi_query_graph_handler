@@ -4,7 +4,7 @@ const axios = require('axios');
 const _ = require('lodash');
 
 async function query(queryPairs) {
-  const url = 'http://biothings.ncats.io/semmeddb/query/ngd';
+  const url = 'https://biothings.ncats.io/semmeddb/query/ngd';
   const batchSize = 1000;
 
   debug("Querying", queryPairs.length, "combos.");
