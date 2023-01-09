@@ -41,16 +41,19 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   async findUnregisteredAPIs() {
     const configListAPIs = this.options.apiList['include'];
     const smartapiRegistry = await fs.readFile(this.path);
-    const smartapiIDs = [];
+    
+    const smartapiIds = [];
+    const inforesIds = [];
     const unregisteredAPIs = [];
 
-    JSON.parse(smartapiRegistry).hits.forEach((smartapiRegistration) =>
-      smartapiIDs.push(smartapiRegistration._id),
-    );
+    JSON.parse(smartapiRegistry).hits.forEach((smartapiRegistration) => {
+      smartapiIds.push(smartapiRegistration._id)
+      inforesIds.push(smartapiRegistration.info?.['x-translator']?.infores)
+    });
     configListAPIs.forEach((configListApi) => {
-      if (smartapiIDs.includes(configListApi.id) === false) {
-        unregisteredAPIs.push(configListApi.id);
-        debug(`${configListApi.name} not found in smartapi registry`);
+      if (smartapiIds.includes(configListApi.id ?? null) === false && inforesIds.includes(configListApi.infores ?? null) === false) {
+        unregisteredAPIs.push(configListApi.id ?? configListApi.infores);
+        debug(`${configListApi['name']} not found in smartapi registry`);
       }
     });
     return unregisteredAPIs;
