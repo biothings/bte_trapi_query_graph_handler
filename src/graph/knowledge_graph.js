@@ -86,7 +86,13 @@ module.exports = class KnowledgeGraph {
 
     if (kgEdge.attributes['edge-attributes']) {
       //handle TRAPI APIs (Situation A of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208) and APIs that define 'edge-atributes' in x-bte
-      attributes = [...attributes, ...kgEdge.attributes['edge-attributes']];
+      const kgEdgeAggregator = kgEdge.attributes['edge-attributes'].find(attr => attr.attribute_type_id === 'biolink:aggregator_knowledge_source');
+      if (kgEdgeAggregator) {
+        kgEdgeAggregator.value = Array.isArray(kgEdgeAggregator.value) ? ['infores:biothings-explorer', ...kgEdgeAggregator.value] : ['infores:biothings-explorer', kgEdgeAggregator.value]
+        attributes = [...kgEdge.attributes['edge-attributes'].filter(attr => attr.attribute_type_id !== 'biolink:aggregator_knowledge_source'), kgEdgeAggregator]
+      } else {
+        attributes = [...attributes, ...kgEdge.attributes['edge-attributes']];
+      }
     } else if (
       //handle direct info providers (Situation C of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208)
       [
@@ -113,10 +119,10 @@ module.exports = class KnowledgeGraph {
       //aggregator knowledge source
       if (Array.from(kgEdge.inforesCuries).length) {
         attributes = [
-          ...attributes,
+          ...attributes.filter(attr => attr.attribute_type_id !== 'biolink:aggregator_knowledge_source'),
           {
             attribute_type_id: 'biolink:aggregator_knowledge_source',
-            value: Array.from(kgEdge.inforesCuries),
+            value: ['infores:biothings-explorer', ...Array.from(kgEdge.inforesCuries)],
             value_type_id: 'biolink:InformationResource',
           },
         ];
@@ -157,10 +163,10 @@ module.exports = class KnowledgeGraph {
       //aggregator knowledge source
       if (Array.from(kgEdge.inforesCuries).length) {
         attributes = [
-          ...attributes,
+          ...attributes.filter(attr => attr.attribute_type_id !== 'biolink:aggregator_knowledge_source'),
           {
             attribute_type_id: 'biolink:aggregator_knowledge_source',
-            value: Array.from(kgEdge.inforesCuries),
+            value: ['infores:biothings-explorer', ...Array.from(kgEdge.inforesCuries)],
             value_type_id: 'biolink:InformationResource',
           },
         ];
