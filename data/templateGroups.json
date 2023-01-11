@@ -13,5 +13,43 @@
       "m4-Chem-Gene-DoP.json",
       "m1-Chem-Pheno-DoP.json"
     ]
+  },
+  {
+    "name": "Chem increases Gene's activity or abundance",
+    "subject": ["Drug", "SmallMolecule", 
+                "ChemicalEntity", "ComplexMolecularMixture", "MolecularMixture"
+               ],
+    "predicate": ["affects"],
+    "qualifiers": {
+      "object_aspect_qualifier": "activity_or_abundance",
+      "object_direction_qualifier": "increased"
+    }, 
+    "object": ["Gene", "Protein"],
+    "templates": [
+      "direct-increase.json",
+      "increase-another-gene-that-upregs.json",
+      "decrease-another-gene-that-downregs.json",
+      "interacts-with-another-gene-that-upregs.json",
+      "Chem-interacts-with-Gene.json"
+    ]
+  },
+  {
+    "name": "Chem decreases Gene's activity or abundance",
+    "subject": ["Drug", "SmallMolecule", 
+                "ChemicalEntity", "ComplexMolecularMixture", "MolecularMixture"
+               ],
+    "predicate": ["affects"],
+    "qualifiers": {
+      "object_aspect_qualifier": "activity_or_abundance",
+      "object_direction_qualifier": "decreased"
+    }, 
+    "object": ["Gene", "Protein"],
+    "templates": [
+      "direct-decrease.json",
+      "increase-another-gene-that-downregs.json",
+      "decrease-another-gene-that-upregs.json",
+      "interacts-with-another-gene-that-downregs.json",
+      "Chem-interacts-with-Gene.json"
+    ]
   }
 ]
