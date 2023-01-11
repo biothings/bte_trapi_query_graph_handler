@@ -162,10 +162,11 @@ describe('Test InferredQueryHandler', () => {
       const { qEdgeID, qEdge, qSubject, qObject } = handler.getQueryParts();
 
       const templates = await handler.findTemplates(qEdge, qSubject, qObject);
+      console.log(templates);
       expect(templates.length).toBeGreaterThan(1);
       expect(
-        templates.every((template) => {
-          return 'creativeQuerySubject' in template.nodes && 'creativeQueryObject' in template.nodes;
+        templates.every(({ queryGraph }) => {
+          return 'creativeQuerySubject' in queryGraph.nodes && 'creativeQueryObject' in queryGraph.nodes;
         }),
       ).toBeTruthy();
     });
@@ -201,27 +202,48 @@ describe('Test InferredQueryHandler', () => {
 
     const templates = [
       {
-        nodes: {
-          creativeQuerySubject: {
-            categories: [],
+        queryGraph: {
+          nodes: {
+            creativeQueryObject: {
+              categories: [],
+              ids: [],
+            },
+            creativeQuerySubject: {
+              categories: [],
+            },
           },
-          nA: {
-            categories: [],
-          },
-          creativeQueryObject: {
-            categories: [],
+          edges: {
+            e01: {
+              subject: 'creativeQuerySubject',
+              object: 'creativeQueryObject',
+              predicates: [],
+              knowledge_type: 'inferred',
+            },
           },
         },
-        edges: {
-          eA: {
-            subject: 'creativeQuerySubject',
-            object: 'nA',
-            predicates: [],
+        template: {
+          nodes: {
+            creativeQuerySubject: {
+              categories: [],
+            },
+            nA: {
+              categories: [],
+            },
+            creativeQueryObject: {
+              categories: [],
+            },
           },
-          eB: {
-            subject: 'nA',
-            object: 'creativeQueryObject',
-            predicates: [],
+          edges: {
+            eA: {
+              subject: 'creativeQuerySubject',
+              object: 'nA',
+              predicates: [],
+            },
+            eB: {
+              subject: 'nA',
+              object: 'creativeQueryObject',
+              predicates: [],
+            },
           },
         },
       },
@@ -241,7 +263,7 @@ describe('Test InferredQueryHandler', () => {
     const subQueries = await handler.createQueries(qEdge, qSubject, qObject);
     expect(spy).toHaveBeenCalled();
 
-    subQueries.forEach((queryGraph) => {
+    subQueries.forEach(({ template, queryGraph }) => {
       expect(queryGraph.nodes.creativeQuerySubject.categories).toContain('biolink:ChemicalEntity');
       expect(queryGraph.nodes.creativeQueryObject.categories).toContain('biolink:Disease');
       expect(queryGraph.nodes.creativeQueryObject.ids).toContain('MONDO:0007035');
@@ -281,10 +303,10 @@ describe('Test InferredQueryHandler', () => {
     spy.mockResolvedValueOnce(templates);
     const subQueries1 = await handler2.createQueries(qEdge1, qSubject1, qObject1);
     expect(spy).toHaveBeenCalled();
-    expect(subQueries1[0].nodes.creativeQuerySubject.categories).toBeUndefined();
-    expect(subQueries1[0].nodes.creativeQueryObject.categories).toBeUndefined();
-    expect(subQueries1[0].nodes.creativeQuerySubject.ids).toBeUndefined();
-    expect(subQueries1[0].nodes.creativeQueryObject.ids).toBeUndefined();
+    expect(subQueries1[0].queryGraph.nodes.creativeQuerySubject.categories).toBeUndefined();
+    expect(subQueries1[0].queryGraph.nodes.creativeQueryObject.categories).toBeUndefined();
+    expect(subQueries1[0].queryGraph.nodes.creativeQuerySubject.ids).toBeUndefined();
+    expect(subQueries1[0].queryGraph.nodes.creativeQueryObject.ids).toBeUndefined();
   });
 
   test('combineResponse', () => {
@@ -917,7 +939,9 @@ describe('Test InferredQueryHandler', () => {
     expect(response.message.knowledge_graph.nodes).toHaveProperty('creativeQueryObject');
     expect(response.message.results[0].node_bindings).toHaveProperty('creativeQuerySubject');
     expect(response.message.results[0].node_bindings).toHaveProperty('creativeQueryObject');
-    expect(response.logs.map(log => log.message)).toContain('Addition of 1 results from Template 0 meets creative result maximum of 1 (reaching 1 merged). Response will be truncated to top-scoring 1 results. Skipping remaining 3 templates.')
+    expect(response.logs.map((log) => log.message)).toContain(
+      'Addition of 1 results from Template 0 meets creative result maximum of 1 (reaching 1 merged). Response will be truncated to top-scoring 1 results. Skipping remaining 2 templates.',
+    );
   });
 
   test('supportedLookups', async () => {
