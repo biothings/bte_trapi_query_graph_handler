@@ -41,7 +41,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   async findUnregisteredAPIs() {
     const configListAPIs = this.options.apiList['include'];
     const smartapiRegistry = await fs.readFile(this.path);
-    
+
     const smartapiIds = [];
     const inforesIds = [];
     const unregisteredAPIs = [];
@@ -94,7 +94,6 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       // perform node expansion
       if (queryGraph.nodes[nodeId].ids && !this._queryUsesInferredMode()) {
         let expanded = Object.values(getDescendants(queryGraph.nodes[nodeId].ids)).flat();
-        console.log(expanded.length);
         expanded = _.uniq([...queryGraph.nodes[nodeId].ids, ...expanded]);
 
         let log_msg = `Expanded ids for node ${nodeId}: (${queryGraph.nodes[nodeId].ids.length} ids -> ${expanded.length} ids)`;
