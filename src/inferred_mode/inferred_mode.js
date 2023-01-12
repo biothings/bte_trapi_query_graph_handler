@@ -258,7 +258,7 @@ module.exports = class InferredQueryHandler {
         .join(',');
       const resultID = `${resultCreativeSubjectID}-${resultCreativeObjectID}`;
       if (resultID in combinedResponse.message.results) {
-        report.mergedResults[resultID] = report.mergedResults[resultID] ? report.mergedResults[resultID] + 1 : 1; // accounting for initial + first merged
+        report.mergedResults[resultID] = report.mergedResults[resultID] ? report.mergedResults[resultID] + 1 : 1;
         Object.entries(translatedResult.node_bindings).forEach(([nodeID, bindings]) => {
           combinedResponse.message.results[resultID].node_bindings[nodeID] = bindings;
         });
@@ -428,7 +428,7 @@ module.exports = class InferredQueryHandler {
     // log about merged Results
     if (Object.keys(mergedResultsCount).length) {
       // Add 1 for first instance of result (not counted during merging)
-      const total = Object.values(mergedResultsCount).reduce((sum, count) => sum + count, 0) + 1;
+      const total = Object.values(mergedResultsCount).reduce((sum, count) => sum + count, 0);
       const message = `(${total}) inferred-template results were merged into (${
         Object.keys(mergedResultsCount).length
       }) final results.`;
