@@ -258,7 +258,7 @@ module.exports = class InferredQueryHandler {
         .join(',');
       const resultID = `${resultCreativeSubjectID}-${resultCreativeObjectID}`;
       if (resultID in combinedResponse.message.results) {
-        report.mergedResults[resultID] = report.mergedResults[resultID] ? report.mergedResults[resultID] + 1 : 2; // accounting for initial + first merged
+        report.mergedResults[resultID] = report.mergedResults[resultID] ? report.mergedResults[resultID] + 1 : 1; // accounting for initial + first merged
         Object.entries(translatedResult.node_bindings).forEach(([nodeID, bindings]) => {
           combinedResponse.message.results[resultID].node_bindings[nodeID] = bindings;
         });
@@ -387,7 +387,7 @@ module.exports = class InferredQueryHandler {
         // update values used in logging
         successfulQueries += querySuccess;
         if (queryHadResults) resultQueries.push(i);
-        Object.entries(mergedResults).forEach((result, countMerged) => {
+        Object.entries(mergedResults).forEach(([result, countMerged]) => {
           mergedResultsCount[result] =
             result in mergedResultsCount ? mergedResultsCount[result] + countMerged : countMerged;
         });
@@ -427,14 +427,17 @@ module.exports = class InferredQueryHandler {
     this.pruneKnowledgeGraph(combinedResponse);
     // log about merged Results
     if (Object.keys(mergedResultsCount).length) {
-      const total = Object.values(mergedResultsCount).reduce((sum, count) => sum + count, 0);
+      // Add 1 for first instance of result (not counted during merging)
+      const total = Object.values(mergedResultsCount).reduce((sum, count) => sum + count, 0) + 1;
+      const message = `(${total}) inferred-template results were merged into (${
+        Object.keys(mergedResultsCount).length
+      }) final results.`;
+      debug(message);
       combinedResponse.logs.push(
         new LogEntry(
           'INFO',
           null,
-          `(${total}) inferred-template results were merged into (${
-            Object.keys(mergedResultsCount).length
-          }) final results.`,
+          message,
         ).getLog(),
       );
     }
