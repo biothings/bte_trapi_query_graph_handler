@@ -18,13 +18,12 @@ const FIGURE_COUNT_MAX = 20;
  * All queries must include size: 1000, with_total: true
  * Subsequent queries must use `from` to designate a starting point
  */
-async function getAllByScrolling(baseUrl, queryBody, batchIndex, hits=[]) {
+async function getAllByScrolling(baseUrl, queryBody, batchIndex, hits = []) {
   queryBody.from = batchIndex;
-  const { data } = await axios.post(baseUrl, queryBody)
-    .catch(err => {
-      debug('Error in scrolling request', err);
-      throw err;
-    });
+  const { data } = await axios.post(baseUrl, queryBody).catch((err) => {
+    debug('Error in scrolling request', err);
+    throw err;
+  });
 
   hits.push(...data.hits);
   debug(`Batch window ${batchIndex}-${batchIndex + 1000}: ${data.hits.length} hits retrieved for PFOCR figure data`);
@@ -45,30 +44,26 @@ async function getPfocrFigures(qTerms) {
    * detailed here: https://github.com/biothings/pending.api/issues/88
    */
 
-  const figureResults = []
-  await Promise.all(_.chunk(Array.from(qTerms), 1000).map(async (qTermBatch) => {
-    const queryBody = {
-      q: Array.from(qTermBatch),
-      scopes: "associatedWith.mentions.genes.ncbigene", // TODO better system when we use more than NCBIGene
-      fields: [
-        "_id",
-        "associatedWith.mentions.genes.ncbigene",
-        "associatedWith.pmc",
-        "associatedWith.figureUrl",
-      ],
-      operator: "OR",
-      analyzer: "whitespace",
-      minimum_should_match: MATCH_COUNT_MIN,
-      size: 1000,
-      with_total: true,
-    }
+  const figureResults = [];
+  await Promise.all(
+    _.chunk([...qTerms], 1000).map(async (qTermBatch) => {
+      const queryBody = {
+        q: [...qTermBatch],
+        scopes: 'associatedWith.mentions.genes.ncbigene', // TODO better system when we use more than NCBIGene
+        fields: ['_id', 'associatedWith.mentions.genes.ncbigene', 'associatedWith.pmc', 'associatedWith.figureUrl'],
+        operator: 'OR',
+        analyzer: 'whitespace',
+        minimum_should_match: MATCH_COUNT_MIN,
+        size: 1000,
+        with_total: true,
+      };
 
-    figureResults.push(...(await getAllByScrolling(url, queryBody, 0)));
-
-  })).catch(err => {
+      figureResults.push(...(await getAllByScrolling(url, queryBody, 0)));
+    }),
+  ).catch((err) => {
     debug('Error getting PFOCR figures (getPfocrFigures)', err);
     throw err;
-  });;
+  });
 
   /*
    * When we make separate queries for different CURIEs, we can get
@@ -79,10 +74,10 @@ async function getPfocrFigures(qTerms) {
   figureResults.map((figure) => {
     const figureId = figure._id;
     if (!figure.notfound && !figuresAdded.has(figureId)) {
-      figuresAdded.add(figureId)
+      figuresAdded.add(figureId);
       mergedFigureResults[figureId] = { ...figure, query: new Set([figure.query]) };
     } else if (!figure.notfound && figuresAdded.has(figureId)) {
-      mergedFigureResults[figureId].query.add(figure.query)
+      mergedFigureResults[figureId].query.add(figure.query);
     }
   });
 
@@ -113,7 +108,7 @@ function getMatchableQNodeIDs(allTrapiResults) {
     }
   }
 
-  debug(`QNode(s) having CURIEs that PFOCR could potentially match: ${Array.from(matchableQNodeIDs)}`)
+  debug(`QNode(s) having CURIEs that PFOCR could potentially match: ${[...matchableQNodeIDs]}`);
   return matchableQNodeIDs;
 }
 
@@ -130,11 +125,7 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
 
   if (matchableQNodeIDs.size < MATCH_COUNT_MIN) {
     // No TRAPI result can satisfy MATCH_COUNT_MIN
-    logs.push(new LogEntry(
-      "DEBUG",
-      null,
-      "Query does not match criteria, skipping PFOCR figure enrichment."
-    ).getLog());
+    logs.push(new LogEntry('DEBUG', null, 'Query does not match criteria, skipping PFOCR figure enrichment.').getLog());
     return logs;
   }
 
@@ -142,40 +133,44 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
 
   const trapiResultToCurieSet = new Map();
 
-  const curieCombinations = new Set(allTrapiResults.map((res) => {
-    const resultCuries = new Set();
-    [...matchableQNodeIDs].forEach((QNodeID) => {
-      res.node_bindings[QNodeID]
-        .map(node_binding => node_binding.id)
-        .filter(curie => curie.startsWith('NCBIGene:'))
-        .forEach((curie) => {
-          resultCuries.add(curie);
-        });
-    });
+  const curieCombinations = new Set(
+    allTrapiResults.reduce((arr, res) => {
+      const resultCuries = new Set();
+      const matchedQNodes = new Set();
+      [...matchableQNodeIDs].forEach((qNodeID) => {
+        res.node_bindings[qNodeID]
+          .map((node_binding) => node_binding.id)
+          .filter((curie) => curie.startsWith('NCBIGene:'))
+          .forEach((curie) => {
+            resultCuries.add(curie);
+            matchedQNodes.add(qNodeID);
+          });
+      });
 
-    const resultCuriesString = [...resultCuries].map(curie => curie.replace("NCBIGene:", "")).join(" ");
+      const resultCuriesString = [...resultCuries].map((curie) => curie.replace('NCBIGene:', '')).join(' ');
 
-    if (resultCuries.size >= MATCH_COUNT_MIN) {
-      trapiResultToCurieSet.set(res, resultCuriesString);
-    }
+      if (resultCuries.size >= MATCH_COUNT_MIN && matchedQNodes.size >= MATCH_COUNT_MIN) {
+        trapiResultToCurieSet.set(res, resultCuriesString);
+        arr.push(resultCuriesString);
+      }
 
-    return resultCuriesString;
-  }).filter(str => str.split(" ").length >= MATCH_COUNT_MIN));
+      return arr;
+    }, []),
+  );
 
-  const figures = await getPfocrFigures(curieCombinations).catch(err => {
+  const figures = await getPfocrFigures(curieCombinations).catch((err) => {
     debug('Error getting PFOCR figures (enrichTrapiResultsWithPfocrFigures)', err);
     throw err;
-  });;
+  });
 
   debug(`${figures.length} PFOCR figures match at least ${MATCH_COUNT_MIN} genes from any TRAPI result`);
 
   const figuresByCuries = {};
   figures.forEach((figure) => {
     [...figure.query].forEach((queryCuries) => {
-      figuresByCuries[queryCuries] = queryCuries in figuresByCuries
-        ? [...figuresByCuries[queryCuries], figure]
-        : [figure];
-    })
+      figuresByCuries[queryCuries] =
+        queryCuries in figuresByCuries ? [...figuresByCuries[queryCuries], figure] : [figure];
+    });
   });
 
   const matchedFigures = new Set();
@@ -184,64 +179,55 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
   const allGenesInAllFigures = figures.reduce((set, fig) => {
     fig.associatedWith.mentions.genes.ncbigene.forEach((gene) => set.add(gene));
     return set;
-  }, new Set()).size;
+  }, new Set());
 
   for (const trapiResult of allTrapiResults) {
     // No figures match this result
-    if (!figuresByCuries[trapiResultToCurieSet.get(trapiResult)]) {
-      continue
-    }
+    if (!figuresByCuries[trapiResultToCurieSet.get(trapiResult)]) continue;
 
     const resultCuries = new Set();
-      [...matchableQNodeIDs].forEach((QNodeID) => {
-        trapiResult.node_bindings[QNodeID].map((node_binding) => node_binding.id)
-          .filter((curie) => curie.startsWith('NCBIGene:'))
-          .forEach((curie) => {
-            resultCuries.add(curie.replace('NCBIGene:', ''));
-          });
-      });
+    const resultMatchableQNodeIDs = new Set();
+    [...matchableQNodeIDs].forEach((qNodeID) => {
+      trapiResult.node_bindings[qNodeID]
+        .map((node_binding) => node_binding.id)
+        .filter((curie) => curie.startsWith('NCBIGene:'))
+        .forEach((curie) => {
+          resultCuries.add(curie.replace('NCBIGene:', ''));
+          resultMatchableQNodeIDs.add(qNodeID);
+        });
+    });
+    if (resultMatchableQNodeIDs.size < 2) continue;
 
-    const resultGenesInAllFigures = figures.filter((fig) => {
-      return fig.associatedWith.mentions.genes.ncbigene.some((gene) => resultCuries.has(gene));
-    }).length;
-
-    figuresByCuries[trapiResultToCurieSet.get(trapiResult)].forEach((figure) => {
+    (figuresByCuries[trapiResultToCurieSet.get(trapiResult)] ?? []).forEach((figure, i) => {
       if (!trapiResult.hasOwnProperty('pfocr')) {
         trapiResult.pfocr = [];
       }
-      const matchedQNodes = [...matchableQNodeIDs].filter(matchableQNodeID => {
+
+      const figureCurieSet = new Set(figure.associatedWith.mentions.genes.ncbigene);
+      const resultGenesInFigure = intersection(resultCuries, figureCurieSet);
+
+      const matchedQNodes = [...matchableQNodeIDs].filter((matchableQNodeID) => {
         const currentQNodeCurieSet = new Set(
-          trapiResult.node_bindings[matchableQNodeID]
-          .map(node_binding => node_binding.id)
+          trapiResult.node_bindings[matchableQNodeID].map((node_binding) => node_binding.id),
         );
 
         return (
-          intersection(
-            currentQNodeCurieSet,
-            new Set(
-              [...figure.query].reduce((arr, queryCuries) => {
-                return [...arr, ...queryCuries.split(' ').map((curie) => `NCBIGene:${curie}`)];
-              }, []),
-            ),
-          ).size > 0
+          intersection(currentQNodeCurieSet, new Set([...resultGenesInFigure].map((geneID) => `NCBIGene:${geneID}`)))
+            .size > 0
         );
       });
 
       // If we've matched on 2 curies, but we haven't actually matched on multiple nodes
       if (matchedQNodes.length < 2) return;
 
-      const figureCurieSet = new Set(figure.associatedWith.mentions.genes.ncbigene)
-
-      const resultGenesInFigure = intersection(
-        resultCuries,
-        figureCurieSet,
-      );
-
       const otherGenesInFigure = figureCurieSet.size - resultGenesInFigure.size;
 
-      let resultGenesInOtherFigures = resultGenesInAllFigures - resultGenesInFigure.size;
-      let otherGenesInOtherFigures = allGenesInAllFigures - resultGenesInOtherFigures;
-
+      let resultGenesInOtherFigures = [...resultCuries].filter((gene) => {
+        return figures.some((fig) => fig.associatedWith.mentions.genes.ncbigene.includes(gene));
+      }).length;
+      let otherGenesInOtherFigures = [...allGenesInAllFigures].filter((gene) => {
+        return !resultCuries.has(gene) && !figureCurieSet.has(gene);
+      }).size;
 
       trapiResult.pfocr.push({
         figureUrl: figure.associatedWith.figureUrl,
@@ -250,10 +236,14 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
         //title: figure.associatedWith.title,
         nodes: matchedQNodes,
         matchedCuries: [...resultGenesInFigure].map((geneID) => `NCBIGene:${geneID}`),
-        score: 1 - parseFloat(Analyze([
-          [resultGenesInFigure.size, resultGenesInOtherFigures],
-          [otherGenesInFigure, otherGenesInOtherFigures],
-        ]).pValue)
+        score:
+          1 -
+          parseFloat(
+            Analyze([
+              [resultGenesInFigure.size, resultGenesInOtherFigures],
+              [otherGenesInFigure, otherGenesInOtherFigures],
+            ]).pValue,
+          ),
       });
       matchedTrapiResults.add(trapiResult);
     });
@@ -261,36 +251,34 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
     // Sort by score and cut down to top 20
     const sortedFigures = trapiResult.pfocr.sort((figA, figB) => {
       return figB.score - figA.score;
-    })
+    });
 
     if (sortedFigures.length > FIGURE_COUNT_MAX) {
       resultsWithTruncatedFigures += 1;
-      sortedFigures.slice(20).forEach(figure => truncatedFigures.add(figure.figureUrl));
+      sortedFigures.slice(20).forEach((figure) => truncatedFigures.add(figure.figureUrl));
       // debug(`Truncating ${sortedFigures.length} PFOCR figures to ${FIGURE_COUNT_MAX} for TRAPI result w/ curies ${trapiResultToCurieSet.get(trapiResult).split(' ').map((ID) => `NCBIGene:${ID}`).join(', ')}`)
     }
 
     trapiResult.pfocr = sortedFigures.slice(0, 20);
     trapiResult.pfocr.map((figure) => matchedFigures.add(figure.figureUrl));
-
   }
 
   // Each of the matched figures has at least one TRAPI result with an overlap of 2+ genes.
   // Each of the matched TRAPI results has at least one figure with an overlap of 2+ genes.
-  const message = `${resultsWithTruncatedFigures} results had pfocr figures truncated to max of 20 (${truncatedFigures.size} unique figures removed).`
+  const unusedFigures = [...truncatedFigures].filter((figureUrl) => !matchedFigures.has(figureUrl)).length;
+  const message = `${resultsWithTruncatedFigures} results had pfocr figures truncated to max of 20 (${truncatedFigures.size} unique figures removed, ${unusedFigures} not appearing elsewhere in results).`;
   debug(message);
-  logs.push(new LogEntry(
-    'DEBUG',
-    null,
-    message
-  ).getLog());
+  logs.push(new LogEntry('DEBUG', null, message).getLog());
   debug(
-    `${MATCH_COUNT_MIN}+ CURIE matches: ${matchedFigures.size} PFOCR figures and ${matchedTrapiResults.size} TRAPI results`
+    `${MATCH_COUNT_MIN}+ CURIE matches: ${matchedFigures.size} PFOCR figures and ${matchedTrapiResults.size} TRAPI results`,
   );
-  logs.push(new LogEntry(
-    'INFO',
-    null,
-    `${matchedTrapiResults.size} results successfully enriched with ${matchedFigures.size} unique PFOCR figures.`
-  ).getLog());
+  logs.push(
+    new LogEntry(
+      'INFO',
+      null,
+      `${matchedTrapiResults.size} results successfully enriched with ${matchedFigures.size} unique PFOCR figures.`,
+    ).getLog(),
+  );
 
   return logs;
 }
