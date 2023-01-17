@@ -138,6 +138,7 @@ module.exports = class BatchEdgeQueryHandler {
       const expanded_APIEdges = this._expandAPIEdges(APIEdges);
       debug('Start to query APIEdges....');
       queryRecords = await this._queryAPIEdges(expanded_APIEdges, unavailableAPIs);
+      if (queryRecords === undefined) return;
       debug('APIEdges are successfully queried....');
       debug(`Filtering out any "undefined" items in (${queryRecords.length}) records`);
       queryRecords = queryRecords.filter((record) => record !== undefined);

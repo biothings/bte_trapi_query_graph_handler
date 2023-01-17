@@ -5,10 +5,6 @@
                 "creativeQuerySubject": {
                     "categories":["biolink:ChemicalEntity"]
                 },
-                "nA": {
-                    "categories":["biolink:DiseaseOrPhenotypicFeature"],
-                    "is_set": true
-                },
                 "creativeQueryObject": {
                     "categories":["biolink:DiseaseOrPhenotypicFeature"]
                }
@@ -16,13 +12,8 @@
             "edges": {
                 "eA": {
                     "subject": "creativeQuerySubject",
-                    "object": "nA",
-                    "predicates": ["biolink:treats"]
-                },
-                "eB": {
-                    "subject": "nA",
                     "object": "creativeQueryObject",
-                    "predicates": ["biolink:subclass_of"]
+                    "predicates": ["biolink:treats"]
                 }
             }
         }

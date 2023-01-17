@@ -9,8 +9,9 @@ const _ = require('lodash');
 const utils = require('./utils');
 
 module.exports = class QueryGraphHandler {
-  constructor(queryGraph) {
+  constructor(queryGraph, schema) {
     this.queryGraph = queryGraph;
+    this.schema = schema;
     this.logs = [];
   }
 
@@ -93,6 +94,56 @@ module.exports = class QueryGraphHandler {
     }
   }
 
+  _validateNodeProperties(queryGraph) {
+    const schemProps = this.schema?.components?.schemas?.QNode?.properties ? this.schema.components.schemas.QNode.properties : {};
+    const nodeProperties = new Set(Object.keys(schemProps));
+    const badProperties = new Set();
+    const badNodes = new Set();
+    for (const nodeID in queryGraph.nodes) {
+      for (const property in queryGraph.nodes[nodeID]) {
+        if (!nodeProperties.has(property)) {
+          badProperties.add(property);
+          badNodes.add(nodeID);
+        }
+      }
+    }
+
+    if (badProperties.size !== 0) {
+      this.logs.push(
+        new LogEntry(
+          'WARNING',
+          null,
+          `Ignoring unrecognized properties (${[...badProperties].join(',')}) on nodes (${[...badNodes].join(',')}).`,
+        ).getLog()
+      );
+    }
+  }
+
+  _validateEdgeProperties(queryGraph) {
+    const schemProps = this.schema?.components?.schemas?.QEdge?.properties ? this.schema.components.schemas.QEdge.properties : {};
+    const edgeProperties = new Set(Object.keys(schemProps));
+    const badProperties = new Set();
+    const badEdges = new Set();
+    for (const edgeID in queryGraph.edges) {
+      for (const property in queryGraph.edges[edgeID]) {
+        if (!edgeProperties.has(property)) {
+          badProperties.add(property);
+          badEdges.add(edgeID);
+        }
+      }
+    }
+
+    if (badProperties.size !== 0) {
+      this.logs.push(
+        new LogEntry(
+          'WARNING',
+          null,
+          `Ignoring unrecognized properties (${[...badProperties].join(',')}) on edges (${[...badEdges].join(',')}).`,
+        ).getLog()
+      );
+    }
+  }
+
   _validateNoDuplicateQualifierTypes(queryGraph) {
     Object.entries(queryGraph.edges).forEach(([id, edge]) => {
       if (edge.qualifier_constraints) {
@@ -117,6 +168,8 @@ module.exports = class QueryGraphHandler {
     this._validateOneNodeID(queryGraph);
     this._validateNodeEdgeCorrespondence(queryGraph);
     this._validateDuplicateEdges(queryGraph);
+    this._validateNodeProperties(queryGraph);
+    this._validateEdgeProperties(queryGraph);
     this._validateCycles(queryGraph);
     this._validateNoDuplicateQualifierTypes(queryGraph);
   }

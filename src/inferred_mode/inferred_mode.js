@@ -15,7 +15,7 @@ module.exports = class InferredQueryHandler {
     this.path = path;
     this.predicatePath = predicatePath;
     this.includeReasoner = includeReasoner;
-    this.CREATIVE_LIMIT = 1000;
+    this.CREATIVE_LIMIT = 500;
   }
 
   get queryIsValid() {
@@ -152,37 +152,37 @@ module.exports = class InferredQueryHandler {
   async createQueries(qEdge, qSubject, qObject) {
     const templates = await this.findTemplates(qEdge, qSubject, qObject);
     // combine creative query with templates
-    const subQueries = templates.map((template) => {
-      template.nodes.creativeQuerySubject.categories = [
-        ...new Set([...template.nodes.creativeQuerySubject.categories, ...qSubject.categories]),
+    const subQueries = templates.map(({template, queryGraph}) => {
+      queryGraph.nodes.creativeQuerySubject.categories = [
+        ...new Set([...queryGraph.nodes.creativeQuerySubject.categories, ...qSubject.categories]),
       ];
       const creativeQuerySubjectIDs = qSubject.ids ? qSubject.ids : [];
-      template.nodes.creativeQuerySubject.ids = template.nodes.creativeQuerySubject.ids
-        ? [...new Set([...template.nodes.creativeQuerySubject.ids, ...creativeQuerySubjectIDs])]
+      queryGraph.nodes.creativeQuerySubject.ids = queryGraph.nodes.creativeQuerySubject.ids
+        ? [...new Set([...queryGraph.nodes.creativeQuerySubject.ids, ...creativeQuerySubjectIDs])]
         : creativeQuerySubjectIDs;
 
-      template.nodes.creativeQueryObject.categories = [
-        ...new Set([...template.nodes.creativeQueryObject.categories, ...qObject.categories]),
+      queryGraph.nodes.creativeQueryObject.categories = [
+        ...new Set([...queryGraph.nodes.creativeQueryObject.categories, ...qObject.categories]),
       ];
       const qEdgeObjectIDs = qObject.ids ? qObject.ids : [];
-      template.nodes.creativeQueryObject.ids = template.nodes.creativeQueryObject.ids
-        ? [...new Set([...template.nodes.creativeQueryObject.ids, ...qEdgeObjectIDs])]
+      queryGraph.nodes.creativeQueryObject.ids = queryGraph.nodes.creativeQueryObject.ids
+        ? [...new Set([...queryGraph.nodes.creativeQueryObject.ids, ...qEdgeObjectIDs])]
         : qEdgeObjectIDs;
 
-      if (!template.nodes.creativeQuerySubject.categories.length) {
-        delete template.nodes.creativeQuerySubject.categories;
+      if (!queryGraph.nodes.creativeQuerySubject.categories.length) {
+        delete queryGraph.nodes.creativeQuerySubject.categories;
       }
-      if (!template.nodes.creativeQueryObject.categories.length) {
-        delete template.nodes.creativeQueryObject.categories;
+      if (!queryGraph.nodes.creativeQueryObject.categories.length) {
+        delete queryGraph.nodes.creativeQueryObject.categories;
       }
-      if (!template.nodes.creativeQuerySubject.ids.length) {
-        delete template.nodes.creativeQuerySubject.ids;
+      if (!queryGraph.nodes.creativeQuerySubject.ids.length) {
+        delete queryGraph.nodes.creativeQuerySubject.ids;
       }
-      if (!template.nodes.creativeQueryObject.ids.length) {
-        delete template.nodes.creativeQueryObject.ids;
+      if (!queryGraph.nodes.creativeQueryObject.ids.length) {
+        delete queryGraph.nodes.creativeQueryObject.ids;
       }
 
-      return template;
+      return {template, queryGraph};
     });
 
     return subQueries;
@@ -258,7 +258,7 @@ module.exports = class InferredQueryHandler {
         .join(',');
       const resultID = `${resultCreativeSubjectID}-${resultCreativeObjectID}`;
       if (resultID in combinedResponse.message.results) {
-        report.mergedResults[resultID] = report.mergedResults[resultID] ? report.mergedResults[resultID] + 1 : 2; // accounting for initial + first merged
+        report.mergedResults[resultID] = report.mergedResults[resultID] ? report.mergedResults[resultID] + 1 : 1;
         Object.entries(translatedResult.node_bindings).forEach(([nodeID, bindings]) => {
           combinedResponse.message.results[resultID].node_bindings[nodeID] = bindings;
         });
@@ -364,9 +364,13 @@ module.exports = class InferredQueryHandler {
     let stop = false;
     let mergedResultsCount = {};
 
-    await async.eachOfSeries(subQueries, async (queryGraph, i) => {
+    await async.eachOfSeries(subQueries, async ({template, queryGraph}, i) => {
       if (stop) {
         return;
+      }
+      if (global.queryInformation?.queryGraph) {
+        global.queryInformation.isCreativeMode = true;
+        global.queryInformation.creativeTemplate = template;
       }
       const handler = new this.TRAPIQueryHandler(this.options, this.path, this.predicatePath, this.includeReasoner);
       try {
@@ -383,7 +387,7 @@ module.exports = class InferredQueryHandler {
         // update values used in logging
         successfulQueries += querySuccess;
         if (queryHadResults) resultQueries.push(i);
-        Object.entries(mergedResults).forEach((result, countMerged) => {
+        Object.entries(mergedResults).forEach(([result, countMerged]) => {
           mergedResultsCount[result] =
             result in mergedResultsCount ? mergedResultsCount[result] + countMerged : countMerged;
         });
@@ -423,14 +427,17 @@ module.exports = class InferredQueryHandler {
     this.pruneKnowledgeGraph(combinedResponse);
     // log about merged Results
     if (Object.keys(mergedResultsCount).length) {
-      const total = Object.values(mergedResultsCount).reduce((sum, count) => sum + count, 0);
+      // Add 1 for first instance of result (not counted during merging)
+      const total = Object.values(mergedResultsCount).reduce((sum, count) => sum + count, 0) + Object.keys(mergedResultsCount).length;
+      const message = `(${total}) inferred-template results were merged into (${
+        Object.keys(mergedResultsCount).length
+      }) final results, reducing result count by (${total - Object.keys(mergedResultsCount).length})`;
+      debug(message);
       combinedResponse.logs.push(
         new LogEntry(
           'INFO',
           null,
-          `(${total}) inferred-template results were merged into (${
-            Object.keys(mergedResultsCount).length
-          }) final results.`,
+          message,
         ).getLog(),
       );
     }

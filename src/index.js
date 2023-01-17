@@ -14,6 +14,7 @@ const LogEntry = require('./log_entry');
 const { redisClient } = require('./redis-client');
 const config = require('./config');
 const fs = require('fs').promises;
+const { getDescendants } = require('@biothings-explorer/node-expansion');
 const { getTemplates, supportedLookups } = require('./inferred_mode/template_lookup');
 const handleInferredMode = require('./inferred_mode/inferred_mode');
 const id_resolver = require('biomedical_id_resolver');
@@ -40,16 +41,19 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   async findUnregisteredAPIs() {
     const configListAPIs = this.options.apiList['include'];
     const smartapiRegistry = await fs.readFile(this.path);
-    const smartapiIDs = [];
+
+    const smartapiIds = [];
+    const inforesIds = [];
     const unregisteredAPIs = [];
 
-    JSON.parse(smartapiRegistry).hits.forEach((smartapiRegistration) =>
-      smartapiIDs.push(smartapiRegistration._id),
-    );
+    JSON.parse(smartapiRegistry).hits.forEach((smartapiRegistration) => {
+      smartapiIds.push(smartapiRegistration._id)
+      inforesIds.push(smartapiRegistration.info?.['x-translator']?.infores)
+    });
     configListAPIs.forEach((configListApi) => {
-      if (smartapiIDs.includes(configListApi.id) === false) {
-        unregisteredAPIs.push(configListApi.id);
-        debug(`${configListApi.name} not found in smartapi registry`);
+      if (smartapiIds.includes(configListApi.id ?? null) === false && inforesIds.includes(configListApi.infores ?? null) === false) {
+        unregisteredAPIs.push(configListApi.id ?? configListApi.infores);
+        debug(`${configListApi['name']} not found in smartapi registry`);
       }
     });
     return unregisteredAPIs;
@@ -57,7 +61,12 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
 
   _loadMetaKG() {
     const metaKG = new meta_kg.default(this.path, this.predicatePath);
-    debug(`Query options are: ${JSON.stringify(this.options)}`);
+    debug(
+      `Query options are: ${JSON.stringify({
+        ...this.options,
+        schema: this.options.schema ? this.options.schema.info.version : 'not included',
+      })}`,
+    );
     debug(`SmartAPI Specs read from path: ${this.path}`);
     metaKG.constructMetaKGSync(this.includeReasoner, this.options);
     return metaKG;
@@ -81,6 +90,28 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
    */
   setQueryGraph(queryGraph) {
     this.queryGraph = queryGraph;
+    for (const nodeId in queryGraph.nodes) {
+      // perform node expansion
+      if (queryGraph.nodes[nodeId].ids && !this._queryUsesInferredMode()) {
+        let expanded = Object.values(getDescendants(queryGraph.nodes[nodeId].ids)).flat();
+        expanded = _.uniq([...queryGraph.nodes[nodeId].ids, ...expanded]);
+
+        let log_msg = `Expanded ids for node ${nodeId}: (${queryGraph.nodes[nodeId].ids.length} ids -> ${expanded.length} ids)`;
+        debug(log_msg);
+        this.logs.push(new LogEntry('INFO', null, log_msg).getLog());
+
+        queryGraph.nodes[nodeId].ids = expanded;
+
+        //make sure is_set is true
+        if (!queryGraph.nodes[nodeId].hasOwnProperty('is_set') || !queryGraph.nodes[nodeId].is_set) {
+          queryGraph.nodes[nodeId].is_set = true;
+          log_msg = `Added is_set:true to node ${nodeId}`;
+          debug(log_msg);
+          this.logs.push(new LogEntry('INFO', null, log_msg).getLog());
+        }
+
+      }
+    }
   }
 
   _initializeResponse() {
@@ -96,7 +127,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
    */
   async _processQueryGraph(queryGraph) {
     try {
-      let queryGraphHandler = new QueryGraph(queryGraph);
+      let queryGraphHandler = new QueryGraph(queryGraph, this.options.schema);
       let queryEdges = await queryGraphHandler.calculateEdges();
       this.logs = [...this.logs, ...queryGraphHandler.logs];
       return queryEdges;
@@ -401,6 +432,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       //execute current edge query
       let queryRecords = await handler.query(handler.qEdges, unavailableAPIs);
       this.logs = [...this.logs, ...handler.logs];
+      if (queryRecords === undefined) return;
       // create an edge execution summary
       let success = 0,
         fail = 0,
