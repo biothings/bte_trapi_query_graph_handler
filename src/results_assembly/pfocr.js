@@ -227,7 +227,7 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
       }).length;
       let otherGenesInOtherFigures = [...allGenesInAllFigures].filter((gene) => {
         return !resultCuries.has(gene) && !figureCurieSet.has(gene);
-      }).size;
+      }).length;
 
       trapiResult.pfocr.push({
         figureUrl: figure.associatedWith.figureUrl,
