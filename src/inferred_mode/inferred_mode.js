@@ -428,10 +428,10 @@ module.exports = class InferredQueryHandler {
     // log about merged Results
     if (Object.keys(mergedResultsCount).length) {
       // Add 1 for first instance of result (not counted during merging)
-      const total = Object.values(mergedResultsCount).reduce((sum, count) => sum + count, 0);
+      const total = Object.values(mergedResultsCount).reduce((sum, count) => sum + count, 0) + Object.keys(mergedResultsCount).length;
       const message = `(${total}) inferred-template results were merged into (${
         Object.keys(mergedResultsCount).length
-      }) final results.`;
+      }) final results, reducing result count by (${total - Object.keys(mergedResultsCount).length})`;
       debug(message);
       combinedResponse.logs.push(
         new LogEntry(
