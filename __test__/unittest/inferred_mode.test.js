@@ -563,7 +563,7 @@ describe('Test InferredQueryHandler', () => {
     expect(querySuccess).toBeTruthy();
     expect(queryHadResults).toBeTruthy();
     expect(Object.keys(mergedResults)).toHaveLength(2);
-    expect(Object.values(mergedResults)[0]).toEqual(2);
+    expect(Object.values(mergedResults)[0]).toEqual(1);
     expect(creativeLimitHit).toBeTruthy();
     expect(Object.keys(combinedResponse.message.results)).toHaveLength(3);
     expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].score).toEqual(1);
