@@ -86,13 +86,7 @@ module.exports = class KnowledgeGraph {
 
     if (kgEdge.attributes['edge-attributes']) {
       //handle TRAPI APIs (Situation A of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208) and APIs that define 'edge-atributes' in x-bte
-      const kgEdgeAggregator = kgEdge.attributes['edge-attributes'].find(attr => attr.attribute_type_id === 'biolink:aggregator_knowledge_source');
-      if (kgEdgeAggregator) {
-        kgEdgeAggregator.value = Array.isArray(kgEdgeAggregator.value) ? ['infores:biothings-explorer', ...kgEdgeAggregator.value] : ['infores:biothings-explorer', kgEdgeAggregator.value]
-        attributes = [...kgEdge.attributes['edge-attributes'].filter(attr => attr.attribute_type_id !== 'biolink:aggregator_knowledge_source'), kgEdgeAggregator]
-      } else {
-        attributes = [...attributes, ...kgEdge.attributes['edge-attributes']];
-      }
+      attributes = [...attributes, ...kgEdge.attributes['edge-attributes']];
     } else if (
       //handle direct info providers (Situation C of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208)
       [
