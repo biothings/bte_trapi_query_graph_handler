@@ -6,7 +6,8 @@
                     "categories":["biolink:ChemicalEntity"]
                 },
                 "nA": {
-                    "categories":["biolink:Gene", "biolink:Protein"]
+                    "categories":["biolink:Gene", "biolink:Protein"],
+                    "is_set": true
                },
                 "creativeQueryObject": {
                     "categories":["biolink:Gene", "biolink:Protein"]
