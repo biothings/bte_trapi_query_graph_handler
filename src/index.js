@@ -328,7 +328,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     const resultQueries = logs.filter(({ message, data }) => {
       const correctType = data?.type === 'query' && data?.hits;
       if (resultTemplates) {
-        return correctType && resultTemplates.some((queryIndex) => message.includes(`[Template-${queryIndex}]`));
+        return correctType && resultTemplates.some((queryIndex) => message.includes(`[Template-${queryIndex + 1}]`));
       }
       return correctType;
     }).length;
@@ -339,7 +339,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
           .filter(({ message, data }) => {
             const correctType = data?.type === 'query' && data?.hits;
             if (resultTemplates) {
-              return correctType && resultTemplates.some((queryIndex) => message.includes(`[Template-${queryIndex}]`));
+              return correctType && resultTemplates.some((queryIndex) => message.includes(`[Template-${queryIndex + 1}]`));
             }
             return correctType;
           })
