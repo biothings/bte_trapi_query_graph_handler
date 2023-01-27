@@ -568,8 +568,8 @@ describe('Test InferredQueryHandler', () => {
     expect(Object.keys(combinedResponse.message.results)).toHaveLength(3);
     expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].score).toEqual(1);
     expect(combinedResponse.message.results['fakeCompound3-fakeDisease1'].score).toEqual(0.2);
-    expect(combinedResponse.logs).toHaveLength(2);
-    expect(combinedResponse.logs[1].message).toMatch('Template-1');
+    expect(combinedResponse.logs).toHaveLength(3);
+    expect(combinedResponse.logs[1].message).toMatch('Template-2');
 
     const trapiQueryHandler1 = new TRAPIQueryHandler();
     trapiQueryHandler1.getResponse = () => ({
@@ -940,7 +940,7 @@ describe('Test InferredQueryHandler', () => {
     expect(response.message.results[0].node_bindings).toHaveProperty('creativeQuerySubject');
     expect(response.message.results[0].node_bindings).toHaveProperty('creativeQueryObject');
     expect(response.logs.map((log) => log.message)).toContain(
-      'Addition of 1 results from Template 0 meets creative result maximum of 1 (reaching 1 merged). Response will be truncated to top-scoring 1 results. Skipping remaining 2 templates.',
+      'Addition of 1 results from Template 1 meets creative result maximum of 1 (reaching 1 merged). Response will be truncated to top-scoring 1 results. Skipping remaining 2 templates.',
     );
   });
 
