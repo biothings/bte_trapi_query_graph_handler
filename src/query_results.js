@@ -246,7 +246,7 @@ module.exports = class TrapiResultsAssembler {
     debug(`Updating query results now!`);
 
     let scoreCombos = [];
-    
+
     if (shouldScore) {
       try {
         scoreCombos =  await getScores(recordsByQEdgeID);
@@ -400,12 +400,12 @@ module.exports = class TrapiResultsAssembler {
 
       // TODO: replace with better score implementation later
       const result = {node_bindings: {}, edge_bindings: {}, score: calculateScore(consolidatedSolution, scoreCombos)};
-      if (result.score == 0) {
+      if (result.score === 0.1) {
         resultsWithoutScore++;
       } else {
         resultsWithScore++;
       }
-      
+
       if (!shouldScore) delete result.score;
 
       consolidatedSolution.forEach(({
@@ -440,8 +440,8 @@ module.exports = class TrapiResultsAssembler {
       debug(`Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`);
       this.logs.push(
         new LogEntry(
-          'DEBUG', 
-          null, 
+          'DEBUG',
+          null,
           `Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`,
           {
             type: 'scoring',
@@ -454,8 +454,8 @@ module.exports = class TrapiResultsAssembler {
       debug(`Did not score results for this endpoint.`);
       this.logs.push(
         new LogEntry(
-          'DEBUG', 
-          null, 
+          'DEBUG',
+          null,
           `Scoring disabled for KP endpoints; results not scored. Use ARA endpoints (/v1/query or /v1/asyncquery) for scoring.`,
           {
             type: 'scoring',

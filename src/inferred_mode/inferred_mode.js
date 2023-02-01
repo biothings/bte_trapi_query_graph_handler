@@ -482,7 +482,7 @@ module.exports = class InferredQueryHandler {
       let scoredResults = 0;
       let unscoredResults = 0;
       combinedResponse.message.results.forEach((result) => {
-        if (result.score > 0) {
+        if (result.score > 0.1) {
           scoredResults += 1;
         } else {
           unscoredResults += 1;
