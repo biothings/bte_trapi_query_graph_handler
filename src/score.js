@@ -87,7 +87,7 @@ async function getScores (recordsByQEdgeID) {
 
 //addition of scores
 function calculateScore(comboInfo, scoreCombos) {
-  let score = 0;
+  let score = 0.1;
 
   Object.keys(comboInfo).forEach((edgeKey) => {
     for (const combo of scoreCombos) {
