@@ -482,7 +482,10 @@ module.exports = class InferredQueryHandler {
       let scoredResults = 0;
       let unscoredResults = 0;
       combinedResponse.message.results.forEach((result) => {
-        if (result.score > 0.1) {
+        const scoreFromEdges = Object.values(result.edge_bindings).reduce((count, qEdge_bindings) => {
+          return count + qEdge_bindings.length;
+        }, 0);
+        if (result.score > scoreFromEdges) {
           scoredResults += 1;
         } else {
           unscoredResults += 1;

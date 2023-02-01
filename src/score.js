@@ -87,17 +87,19 @@ async function getScores (recordsByQEdgeID) {
 
 //addition of scores
 function calculateScore(comboInfo, scoreCombos) {
-  let score = 0.1;
-
+  let score = 0;
+  let scoredByNGD = false;
   Object.keys(comboInfo).forEach((edgeKey) => {
+    score += 0.1 * comboInfo[edgeKey].recordHashes.size;
     for (const combo of scoreCombos) {
       if (comboInfo[edgeKey].inputUMLS?.includes(combo.umls[0]) && comboInfo[edgeKey].outputUMLS?.includes(combo.umls[1])) {
         score += 1/combo.ngd;
+        scoredByNGD = true;
       }
     }
   })
 
-  return score;
+  return { score, scoredByNGD };
 }
 
 module.exports.getScores = getScores;
