@@ -13,7 +13,7 @@
                 "eA": {
                     "subject": "creativeQuerySubject",
                     "object": "creativeQueryObject",
-                    "predicates": ["biolink:physically_interacts_with"]
+                    "predicates": ["biolink:interacts_with"]
                 }
             }
         }
