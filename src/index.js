@@ -100,10 +100,13 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         debug(log_msg);
         this.logs.push(new LogEntry('INFO', null, log_msg).getLog());
 
+        const foundExpandedIds = expanded.length > queryGraph.nodes[nodeId].ids.length;
         queryGraph.nodes[nodeId].ids = expanded;
 
+        const nodeMissingIsSet = !queryGraph.nodes[nodeId].hasOwnProperty('is_set') || !queryGraph.nodes[nodeId].is_set;
+
         //make sure is_set is true
-        if (!queryGraph.nodes[nodeId].hasOwnProperty('is_set') || !queryGraph.nodes[nodeId].is_set) {
+        if (foundExpandedIds && nodeMissingIsSet) {
           queryGraph.nodes[nodeId].is_set = true;
           log_msg = `Added is_set:true to node ${nodeId}`;
           debug(log_msg);
@@ -328,7 +331,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     const resultQueries = logs.filter(({ message, data }) => {
       const correctType = data?.type === 'query' && data?.hits;
       if (resultTemplates) {
-        return correctType && resultTemplates.some((queryIndex) => message.includes(`[Template-${queryIndex}]`));
+        return correctType && resultTemplates.some((queryIndex) => message.includes(`[Template-${queryIndex + 1}]`));
       }
       return correctType;
     }).length;
@@ -339,7 +342,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
           .filter(({ message, data }) => {
             const correctType = data?.type === 'query' && data?.hits;
             if (resultTemplates) {
-              return correctType && resultTemplates.some((queryIndex) => message.includes(`[Template-${queryIndex}]`));
+              return correctType && resultTemplates.some((queryIndex) => message.includes(`[Template-${queryIndex + 1}]`));
             }
             return correctType;
           })

@@ -398,11 +398,12 @@ module.exports = class TrapiResultsAssembler {
     this._results = consolidatedSolutions.map((consolidatedSolution) => {
 
       // TODO: replace with better score implementation later
-      const result = {node_bindings: {}, edge_bindings: {}, score: calculateScore(consolidatedSolution, scoreCombos)};
-      if (result.score == 0) {
-        resultsWithoutScore++;
-      } else {
+      const { score, scoredByNGD } = calculateScore(consolidatedSolution, scoreCombos);
+      const result = {node_bindings: {}, edge_bindings: {}, score: score};
+      if (scoredByNGD) {
         resultsWithScore++;
+      } else {
+        resultsWithoutScore++;
       }
 
       if (!shouldScore) delete result.score;

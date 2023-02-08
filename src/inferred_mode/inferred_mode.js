@@ -196,6 +196,8 @@ module.exports = class InferredQueryHandler {
       mergedResults: {},
       creativeLimitHit: false,
     };
+    let mergedThisTemplate = 0;
+    const resultIDsFromPrevious = new Set(Object.keys(combinedResponse.message.results));
     // add non-duplicate nodes
     Object.entries(newResponse.message.knowledge_graph.nodes).forEach(([curie, node]) => {
       if (!(curie in combinedResponse.message.knowledge_graph.nodes)) {
@@ -259,6 +261,7 @@ module.exports = class InferredQueryHandler {
       const resultID = `${resultCreativeSubjectID}-${resultCreativeObjectID}`;
       if (resultID in combinedResponse.message.results) {
         report.mergedResults[resultID] = report.mergedResults[resultID] ? report.mergedResults[resultID] + 1 : 1;
+        mergedThisTemplate += 1;
         Object.entries(translatedResult.node_bindings).forEach(([nodeID, bindings]) => {
           combinedResponse.message.results[resultID].node_bindings[nodeID] = bindings;
         });
@@ -278,6 +281,10 @@ module.exports = class InferredQueryHandler {
         combinedResponse.message.results[resultID] = translatedResult;
       }
     });
+    const mergedWithinTemplate = Object.entries(report.mergedResults).reduce((count, [resultID, merged]) => {
+      return !resultIDsFromPrevious.has(resultID) ? count + merged : count;
+    }, 0)
+
     // fix/combine logs
     handler.logs.forEach((log) => {
       Object.entries(nodeMapping).forEach(([oldID, newID]) => {
@@ -286,10 +293,21 @@ module.exports = class InferredQueryHandler {
       Object.entries(edgeMapping).forEach(([oldID, newID]) => {
         log.message = log.message.replace(oldID, newID);
       });
-      log.message = `[Template-${queryNum}]: ${log.message}`;
+      log.message = `[Template-${queryNum + 1}]: ${log.message}`;
 
       combinedResponse.logs.push(log);
     });
+
+    const mergeMessage = [
+      `(${mergedWithinTemplate}) results from Template-${queryNum + 1} `,
+      `were merged with other results from the template. `,
+      `(${mergedThisTemplate - mergedWithinTemplate}) results `,
+      `were merged with existing results from previous templates. `,
+      `Current result count is ${Object.keys(combinedResponse.message.results).length} `,
+      `(+${newResponse.message.results.length - mergedThisTemplate})`
+    ].join('');
+    debug(mergeMessage);
+    combinedResponse.logs.push(new LogEntry('INFO', null, mergeMessage).getLog());
 
     if (newResponse.message.results.length) {
       report.queryHadResults = true;
@@ -395,7 +413,7 @@ module.exports = class InferredQueryHandler {
         if (creativeLimitHit) {
           stop = true;
           const message = [
-            `Addition of ${creativeLimitHit} results from Template ${i}`,
+            `Addition of ${creativeLimitHit} results from Template ${i + 1}`,
             Object.keys(combinedResponse.message.results).length === this.CREATIVE_LIMIT ? ' meets ' : ' exceeds ',
             `creative result maximum of ${this.CREATIVE_LIMIT} (reaching ${
               Object.keys(combinedResponse.message.results).length
@@ -412,24 +430,17 @@ module.exports = class InferredQueryHandler {
         handler.logs.forEach((log) => {
           combinedResponse.logs.push(log);
         });
-        const message = `ERROR: subQuery ${i} failed due to error ${error}`;
+        const message = `ERROR:  Template-${i + 1} failed due to error ${error}`;
         debug(message);
         combinedResponse.logs.push(new LogEntry(`ERROR`, null, message).getLog());
         return;
       }
     });
-    // sort records by score
-    combinedResponse.message.results = Object.values(combinedResponse.message.results).sort((a, b) => {
-      return b.score - a.score ? b.score - a.score : 0;
-    });
-    // trim extra results and prune kg
-    combinedResponse.message.results = combinedResponse.message.results.slice(0, this.CREATIVE_LIMIT);
-    this.pruneKnowledgeGraph(combinedResponse);
     // log about merged Results
     if (Object.keys(mergedResultsCount).length) {
       // Add 1 for first instance of result (not counted during merging)
       const total = Object.values(mergedResultsCount).reduce((sum, count) => sum + count, 0) + Object.keys(mergedResultsCount).length;
-      const message = `(${total}) inferred-template results were merged into (${
+      const message = `Merging Summary: (${total}) inferred-template results were merged into (${
         Object.keys(mergedResultsCount).length
       }) final results, reducing result count by (${total - Object.keys(mergedResultsCount).length})`;
       debug(message);
@@ -441,15 +452,40 @@ module.exports = class InferredQueryHandler {
         ).getLog(),
       );
     }
+    if (Object.keys(combinedResponse.message.results).length) {
+      combinedResponse.logs.push(
+        new LogEntry(
+          'INFO',
+          null,
+          [
+            `Final result count`,
+            Object.keys(combinedResponse.message.results).length > this.CREATIVE_LIMIT
+              ? " (before truncation):" : ":",
+            ` ${Object.keys(combinedResponse.message.results).length}`
+          ].join('')
+        ).getLog()
+      )
+    }
+    // sort records by score
+    combinedResponse.message.results = Object.values(combinedResponse.message.results).sort((a, b) => {
+      return b.score - a.score ? b.score - a.score : 0;
+    });
+    // trim extra results and prune kg
+    combinedResponse.message.results = combinedResponse.message.results.slice(0, this.CREATIVE_LIMIT);
+    this.pruneKnowledgeGraph(combinedResponse);
     // get the final summary log
     if (successfulQueries) {
+
       this.parent
         .getSummaryLog(combinedResponse, combinedResponse.logs, resultQueries)
         .forEach((log) => combinedResponse.logs.push(log));
       let scoredResults = 0;
       let unscoredResults = 0;
       combinedResponse.message.results.forEach((result) => {
-        if (result.score > 0) {
+        const scoreFromEdges = Object.values(result.edge_bindings).reduce((count, qEdge_bindings) => {
+          return count + qEdge_bindings.length;
+        }, 0);
+        if (result.score > scoreFromEdges) {
           scoredResults += 1;
         } else {
           unscoredResults += 1;
