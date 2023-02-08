@@ -225,9 +225,12 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
       let resultGenesInOtherFigures = [...resultCuries].filter((gene) => {
         return figures.some((fig) => fig.associatedWith.mentions.genes.ncbigene.includes(gene));
       }).length;
-      let otherGenesInOtherFigures = [...allGenesInAllFigures].filter((gene) => {
-        return !resultCuries.has(gene) && !figureCurieSet.has(gene);
-      }).length;
+      // let otherGenesInOtherFigures = [...allGenesInAllFigures].filter((gene) => {
+      //   return !resultCuries.has(gene) && !figureCurieSet.has(gene);
+      // }).length;
+
+      const precision = resultGenesInFigure.size / (resultGenesInFigure.size + otherGenesInFigure)
+      const recall = resultGenesInFigure.size / (resultGenesInFigure.size + resultGenesInOtherFigures)
 
       trapiResult.pfocr.push({
         figureUrl: figure.associatedWith.figureUrl,
@@ -236,14 +239,14 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
         //title: figure.associatedWith.title,
         nodes: matchedQNodes,
         matchedCuries: [...resultGenesInFigure].map((geneID) => `NCBIGene:${geneID}`),
-        score:
-          1 -
-          parseFloat(
-            Analyze([
-              [resultGenesInFigure.size, resultGenesInOtherFigures],
-              [otherGenesInFigure, otherGenesInOtherFigures],
-            ]).pValue,
-          ),
+        score: 2 * ((precision * recall) / (precision + recall))
+          // 1 -
+          // parseFloat(
+          //   Analyze([
+          //     [resultGenesInFigure.size, resultGenesInOtherFigures],
+          //     [otherGenesInFigure, otherGenesInOtherFigures],
+          //   ]).pValue,
+          // ),
       });
       matchedTrapiResults.add(trapiResult);
     });
