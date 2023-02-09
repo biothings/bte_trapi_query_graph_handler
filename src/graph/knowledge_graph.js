@@ -113,10 +113,10 @@ module.exports = class KnowledgeGraph {
       //aggregator knowledge source
       if (Array.from(kgEdge.inforesCuries).length) {
         attributes = [
-          ...attributes,
+          ...attributes.filter(attr => attr.attribute_type_id !== 'biolink:aggregator_knowledge_source'),
           {
             attribute_type_id: 'biolink:aggregator_knowledge_source',
-            value: Array.from(kgEdge.inforesCuries),
+            value: ['infores:biothings-explorer', ...Array.from(kgEdge.inforesCuries)],
             value_type_id: 'biolink:InformationResource',
           },
         ];
@@ -136,7 +136,7 @@ module.exports = class KnowledgeGraph {
       for (const key in kgEdge.attributes) {
         attributes.push({
           attribute_type_id: key,
-          value: kgEdge.attributes[key],
+          value: Array.from(kgEdge.attributes[key]),
           //value_type_id: 'bts:' + key,
         });
       }
@@ -157,10 +157,10 @@ module.exports = class KnowledgeGraph {
       //aggregator knowledge source
       if (Array.from(kgEdge.inforesCuries).length) {
         attributes = [
-          ...attributes,
+          ...attributes.filter(attr => attr.attribute_type_id !== 'biolink:aggregator_knowledge_source'),
           {
             attribute_type_id: 'biolink:aggregator_knowledge_source',
-            value: Array.from(kgEdge.inforesCuries),
+            value: ['infores:biothings-explorer', ...Array.from(kgEdge.inforesCuries)],
             value_type_id: 'biolink:InformationResource',
           },
         ];
@@ -180,7 +180,7 @@ module.exports = class KnowledgeGraph {
       for (const key in kgEdge.attributes) {
         attributes.push({
           attribute_type_id: key,
-          value: kgEdge.attributes[key],
+          value: Array.from(kgEdge.attributes[key]),
           //value_type_id: 'bts:' + key,
         });
       }
