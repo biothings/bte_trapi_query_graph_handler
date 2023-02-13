@@ -2,6 +2,7 @@ const { Record } = require('@biothings-explorer/api-response-transform');
 const path = require('path');
 const fs = require('fs');
 const _ = require('lodash');
+const og_axios = jest.requireActual('axios')
 
 const records = Record.unfreezeRecords(
   JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/queryRecords.json'))),
@@ -82,6 +83,10 @@ describe('test TRAPIQueryHandler methods', () => {
   });
 
   test('query', async () => {
+    jest.mock("axios")
+    const axios = require("axios")
+    axios.post.mockResolvedValue({data: {"WIKIPATHWAYS:WP195":null}})
+
     const query = JSON.parse(
       fs.readFileSync(path.resolve(__dirname, '../data/chemicals_targeting_IL1_Signaling_Pathway.json')),
     );
