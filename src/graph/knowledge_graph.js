@@ -85,7 +85,7 @@ module.exports = class KnowledgeGraph {
       },
     ];
 
-    const direct_info_providers = this.apiList.filter(e => e.primarySource).map(e => e.name)
+    const direct_info_providers = this.apiList?.filter(e => e.primarySource)?.map(e => e.name) ?? []
 
     if (kgEdge.attributes['edge-attributes']) {
       //handle TRAPI APIs (Situation A of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208) and APIs that define 'edge-atributes' in x-bte
