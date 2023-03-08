@@ -508,6 +508,8 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     // prune bteGraph
     this.bteGraph.prune(this.trapiResultsAssembler.getResults());
     this.bteGraph.notify();
+    // check primary knowledge sources
+    this.logs = [...this.logs, ...this.bteGraph.checkPrimaryKnowledgeSources(this.knowledgeGraph)]
     // finishing logs
     this.getSummaryLog(this.getResponse(), this.logs).forEach((log) => this.logs.push(log));
     debug(`(14) TRAPI query finished.`);
