@@ -111,7 +111,6 @@ module.exports = class BTEGraph {
           logMsg,
         ).getLog())
       }
-      console.log(edge, knowledgeGraph.edges[edge], this.edges[edge])
     });
     return logs
   }
