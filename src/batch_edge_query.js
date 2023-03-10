@@ -54,10 +54,10 @@ module.exports = class BatchEdgeQueryHandler {
   /**
    * @private
    */
-  async _postQueryFilter(response) {
-    debug(`Filtering out "undefined" items (${response.length}) records`);
-    response = response.filter((res) => res !== undefined);
-    return response;
+  async _postQueryFilter(records) {
+    debug(`Filtering out "undefined" items (${records.length}) records`);
+    records = records.filter((record) => record !== undefined);
+    return records;
   }
 
   /**
@@ -83,7 +83,7 @@ module.exports = class BatchEdgeQueryHandler {
             const equivalentAlreadyIncluded = qEdge
               .getInputNode()
               .getEquivalentIDs()
-              [curie][0].curies.some((equivalentCurie) => reducedCuries.includes(equivalentCurie));
+              [curie].equivalentIDs.some((equivalentCurie) => reducedCuries.includes(equivalentCurie));
             if (!equivalentAlreadyIncluded) {
               reducedCuries.push(curie);
             } else {
@@ -109,13 +109,14 @@ module.exports = class BatchEdgeQueryHandler {
 
   async query(qEdges, unavailableAPIs = {}) {
     debug('Node Update Start');
-    //it's now a single edge but convert to arr to simplify refactoring
+    // it's now a single edge but convert to arr to simplify refactoring
     qEdges = Array.isArray(qEdges) ? qEdges : [qEdges];
     const nodeUpdate = new NodesUpdateHandler(qEdges);
-    //difference is there is no previous edge info anymore
+    // difference is there is no previous edge info anymore
     await nodeUpdate.setEquivalentIDs(qEdges);
     await this._rmEquivalentDuplicates(qEdges);
     debug('Node Update Success');
+
     const cacheHandler = new CacheHandler(this.caching, this.metaKG, this.recordConfig);
     const { cachedRecords, nonCachedQEdges } = await cacheHandler.categorizeEdges(qEdges);
     this.logs = [...this.logs, ...cacheHandler.logs];
@@ -140,8 +141,7 @@ module.exports = class BatchEdgeQueryHandler {
       queryRecords = await this._queryAPIEdges(expanded_APIEdges, unavailableAPIs);
       if (queryRecords === undefined) return;
       debug('APIEdges are successfully queried....');
-      debug(`Filtering out any "undefined" items in (${queryRecords.length}) records`);
-      queryRecords = queryRecords.filter((record) => record !== undefined);
+      queryRecords = await this._postQueryFilter(queryRecords);
       debug(`Total number of records is (${queryRecords.length})`);
       if (!isMainThread) {
         cacheHandler.cacheEdges(queryRecords);

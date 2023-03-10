@@ -3,12 +3,7 @@ const LogEntry = require('./log_entry');
 const config = require('./config');
 const CURIE_WITH_PREFIXES = ['MONDO', 'DOID', 'UBERON', 'EFO', 'HP', 'CHEBI', 'CL', 'MGI', 'NCIT'];
 const debug = require('debug')('bte:biothings-explorer-trapi:qedge2btedge');
-
-const setImmediatePromise = () => {
-  return new Promise((resolve) => {
-    setImmediate(() => resolve());
-  });
-};
+const async = require('async');
 
 module.exports = class QEdge2APIEdgeHandler {
   constructor(qEdges, metaKG) {
@@ -85,41 +80,26 @@ module.exports = class QEdge2APIEdgeHandler {
     const inputPrefix = metaXEdge.association.input_id;
     const inputType = metaXEdge.association.input_type;
     const resolvedCuries = metaXEdge.reasoner_edge.getInputNode().getEquivalentIDs();
-    for (const curie in resolvedCuries) {
-      await Promise.all(resolvedCuries[curie].map(async (entity) => {
-        if (entity.semanticType === inputType && inputPrefix in entity.dbIDs) {
-          await Promise.all(entity.dbIDs[inputPrefix].map(async (id) => {
-            let blockingSince = Date.now();
+    Object.entries(resolvedCuries).forEach(([curie, entity]) => {
+      if (entity.primaryTypes.includes(inputType.replace('biolink:', ''))) {
+        entity.equivalentIDs.forEach((equivalentCurie) => {
+          if (equivalentCurie.includes(inputPrefix)) {
+            const id = equivalentCurie.split(':').slice(1).join(':');
             const APIEdge = { ...metaXEdge };
-            if (blockingSince + (parseInt(process.env.SETIMMEDIATE_TIME) || 3) < Date.now()) {
-              await setImmediatePromise();
-              blockingSince = Date.now();
-            }
             APIEdge.input = id;
             APIEdge.input_resolved_identifiers = {
-              [curie]: [entity],
+              [curie]: entity,
             };
-            if (CURIE_WITH_PREFIXES.includes(inputPrefix) || id.toString().includes(':')) {
-              APIEdge.original_input = {
-                [id]: curie,
-              };
-            } else {
-              APIEdge.original_input = {
-                [inputPrefix + ':' + id]: curie,
-              };
-            }
-            blockingSince = Date.now();
+            APIEdge.original_input = {
+              [equivalentCurie]: curie,
+            };
             const edgeToBePushed = APIEdge;
-            if (blockingSince + (parseInt(process.env.SETIMMEDIATE_TIME) || 3) < Date.now()) {
-              await setImmediatePromise();
-              blockingSince = Date.now();
-            }
             edgeToBePushed.reasoner_edge = metaXEdge.reasoner_edge;
             APIEdges.push(edgeToBePushed);
-          }));
-        }
-      }));
-    }
+          }
+        });
+      }
+    });
     return APIEdges;
   }
 
@@ -138,27 +118,24 @@ module.exports = class QEdge2APIEdgeHandler {
     let resolvedCuries = metaXEdge.reasoner_edge.getInputNode().getEquivalentIDs();
     // debug(`Resolved ids: ${JSON.stringify(resolvedIDs)}`);
     debug(`Input prefix: ${inputPrefix}`);
-    for (const curie in resolvedCuries) {
-      resolvedCuries[curie].map((entity) => {
-        if (metaXEdge.tags.includes('bte-trapi')) {
-          if (entity.semanticType === inputType) {
-            input_resolved_identifiers[curie] = [entity];
-            inputs.push(entity.primaryID);
-            id_mapping[entity.primaryID] = curie;
-          }
-        } else if (entity.semanticType === inputType && inputPrefix in entity.dbIDs) {
-          entity.dbIDs[inputPrefix].map((id) => {
-            if (CURIE_WITH_PREFIXES.includes(inputPrefix) || id.includes(':')) {
-              id_mapping[id] = curie;
-            } else {
-              id_mapping[inputPrefix + ':' + id] = curie;
-            }
-            input_resolved_identifiers[curie] = [entity];
-            inputs.push(id);
-          });
+    Object.entries(resolvedCuries).forEach(([curie, entity]) => {
+      if (metaXEdge.tags.includes('bte-trapi')) {
+        if (entity.primaryTypes.includes(inputType.replace('biolink:', ''))) {
+          input_resolved_identifiers[curie] = entity;
+          inputs.push(entity.primaryID);
+          id_mapping[entity.primaryID] = curie;
         }
-      });
-    }
+      } else if (entity.primaryTypes.includes(inputType.replace('biolink:', ''))) {
+        entity.equivalentIDs.forEach((equivalentCurie) => {
+          if (equivalentCurie.includes(inputPrefix)) {
+            const id = equivalentCurie.split(':').slice(1).join(':');
+            id_mapping[id] = curie;
+            input_resolved_identifiers[curie] = entity;
+            inputs.push(id);
+          }
+        });
+      }
+    });
 
     let batchSize = Infinity;
     if (metaXEdge.tags.includes('biothings')) {
@@ -178,21 +155,15 @@ module.exports = class QEdge2APIEdgeHandler {
       ? hardLimit.max
       : configuredLimit ? configuredLimit : batchSize;
     if (Object.keys(id_mapping).length > 0) {
-      await Promise.all(_.chunk(inputs, batchSize).map(async (chunk) => {
-        let blockingSince = Date.now();
+      _.chunk(inputs, batchSize).forEach((chunk) => {
         const APIEdge = { ...metaXEdge };
-        if (blockingSince + (parseInt(process.env.SETIMMEDIATE_TIME) || 3) < Date.now()) {
-          await setImmediatePromise();
-          blockingSince = Date.now();
-        }
         APIEdge.input = chunk;
         APIEdge.input_resolved_identifiers = input_resolved_identifiers;
         APIEdge.original_input = id_mapping;
         const edgeToBePushed = APIEdge;
         edgeToBePushed.reasoner_edge = metaXEdge.reasoner_edge;
         APIEdges.push(edgeToBePushed);
-        }),
-      );
+      })
     }
     return APIEdges;
   }
@@ -207,31 +178,25 @@ module.exports = class QEdge2APIEdgeHandler {
     const inputPrefix = metaXEdge.association.input_id;
     const inputType = metaXEdge.association.input_type;
     const resolvedCuries = metaXEdge.reasoner_edge.getInputNode().getEquivalentIDs()
-    for (const curie in resolvedCuries) {
-      resolvedCuries[curie].map((entity) => {
-        if (entity.semanticType === inputType && inputPrefix in entity.dbIDs) {
-          entity.dbIDs[inputPrefix].map((id) => {
+    Object.entries(resolvedCuries).forEach(([curie, entity]) => {
+      if (entity.primaryTypes.includes(inputType.replace('biolink:', ''))) {
+        entity.equivalentIDs.forEach((equivalentCurie) => {
+          if (equivalentCurie.includes(inputPrefix)) {
             const APIEdge = { ...metaXEdge };
-            APIEdge.input = { queryInputs: id, ...APIEdge.query_operation.templateInputs };
+            APIEdge.input = { queryInputs: equivalentCurie, ...APIEdge.query_operation.templateInputs };
             APIEdge.input_resolved_identifiers = {
-              [curie]: [entity],
+              [curie]: entity,
             };
-            if (CURIE_WITH_PREFIXES.includes(inputPrefix) || id.toString().includes(':')) {
-              APIEdge.original_input = {
-                [id]: curie,
-              };
-            } else {
-              APIEdge.original_input = {
-                [inputPrefix + ':' + id]: curie,
-              };
-            }
+            APIEdge.original_input = {
+              [equivalentCurie]: curie,
+            };
             const edgeToBePushed = APIEdge;
             edgeToBePushed.reasoner_edge = metaXEdge.reasoner_edge;
             APIEdges.push(edgeToBePushed);
-          });
-        }
-      });
-    }
+          }
+        });
+      }
+    });
     return APIEdges;
   }
 
@@ -250,27 +215,24 @@ module.exports = class QEdge2APIEdgeHandler {
     let resolvedCuries = metaXEdge.reasoner_edge.getInputNode().getEquivalentIDs();
     // debug(`Resolved ids: ${JSON.stringify(resolvedIDs)}`);
     debug(`Input prefix: ${inputPrefix}`);
-    for (const curie in resolvedCuries) {
-      resolvedCuries[curie].map((entity) => {
-        if (metaXEdge.tags.includes('bte-trapi')) {
-          if (entity.semanticType === inputType) {
-            input_resolved_identifiers[curie] = [entity];
-            inputs.push(entity.primaryID);
-            id_mapping[entity.primaryID] = curie;
-          }
-        } else if (entity.semanticType === inputType && inputPrefix in entity.dbIDs) {
-          entity.dbIDs[inputPrefix].map((id) => {
-            if (CURIE_WITH_PREFIXES.includes(inputPrefix) || id.includes(':')) {
-              id_mapping[id] = curie;
-            } else {
-              id_mapping[inputPrefix + ':' + id] = curie;
-            }
-            input_resolved_identifiers[curie] = [entity];
-            inputs.push(id);
-          });
+    Object.entries(resolvedCuries).forEach(([curie, entity]) => {
+      if (metaXEdge.tags.includes('bte-trapi')) {
+        if (entity.primaryTypes.includes(inputType.replace('biolink:', ''))) {
+          input_resolved_identifiers[curie] = entity;
+          inputs.push(entity.primaryID);
+          id_mapping[entity.primaryID] = curie;
         }
-      });
-    }
+      } else if (entity.primaryTypes.includes(inputType.replace('biolink:', ''))) {
+        entity.equivalentIDs.forEach((equivalentCurie) => {
+          if (equivalentCurie.includes(inputPrefix)) {
+            const id = equivalentCurie.split(':').slice(1).join(':');
+            id_mapping[id] = curie;
+            input_resolved_identifiers[curie] = entity;
+            inputs.push(id);
+          }
+        });
+      }
+    })
     let batchSize = Infinity;
     if (metaXEdge.tags.includes('biothings')) {
       batchSize = 1000;
@@ -284,20 +246,15 @@ module.exports = class QEdge2APIEdgeHandler {
       ? hardLimit.max
       : configuredLimit ? configuredLimit : batchSize;
     if (Object.keys(id_mapping).length > 0) {
-      await Promise.all(_.chunk(inputs, batchSize).map(async (chunk) => {
-        let blockingSince = Date.now();
+      _.chunk(inputs, batchSize).forEach((chunk) => {
         const APIEdge = { ...metaXEdge };
-        if (blockingSince + (parseInt(process.env.SETIMMEDIATE_TIME) || 3) < Date.now()) {
-          await setImmediatePromise();
-          blockingSince = Date.now();
-        }
         APIEdge.input = { queryInputs: chunk, ...APIEdge.query_operation.templateInputs };
         APIEdge.input_resolved_identifiers = input_resolved_identifiers;
         APIEdge.original_input = id_mapping;
         const edgeToBePushed = APIEdge;
         edgeToBePushed.reasoner_edge = metaXEdge.reasoner_edge;
         APIEdges.push(edgeToBePushed);
-      }));
+      });
     }
     return APIEdges;
   }
