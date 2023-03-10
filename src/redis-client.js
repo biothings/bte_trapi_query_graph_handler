@@ -38,9 +38,12 @@ const addPrefixToAll = (func) => {
 
 const lockPrefix = (func) => {
   return async (...args) => {
-    return await func(args[0].map((lockName) => `${prefix}:${lockName}`), ...args.slice(1));
-  }
-}
+    return await func(
+      args[0].map((lockName) => `${prefix}:${lockName}`),
+      ...args.slice(1),
+    );
+  };
+};
 
 class RedisClient {
   constructor() {
@@ -56,7 +59,14 @@ class RedisClient {
     if (process.env.REDIS_CLUSTER === 'true') {
       let cluster;
 
-      const details = { redisOptions: {} };
+      const details = {
+        redisOptions: {
+          connectTimeout: 20000,
+        },
+        clusterRetryStrategy(times) {
+          return Math.min(times * 100, 5000);
+        },
+      };
 
       if (process.env.REDIS_PASSWORD) {
         details.redisOptions.password = process.env.REDIS_PASSWORD;
@@ -65,15 +75,18 @@ class RedisClient {
         details.redisOptions.tls = { checkServerIdentity: () => undefined };
       }
 
-      cluster = new Redis.Cluster([
-        {
-          host: process.env.REDIS_HOST,
-          port: process.env.REDIS_PORT,
-        },
-      ], details);
+      cluster = new Redis.Cluster(
+        [
+          {
+            host: process.env.REDIS_HOST,
+            port: process.env.REDIS_PORT,
+          },
+        ],
+        details,
+      );
 
       // allow up to 10 minutes to acquire lock (in case of large items being saved/retrieved)
-      const redlock = new Redlock([cluster], {retryDelay: 500, retryCount: 1200});
+      const redlock = new Redlock([cluster], { retryDelay: 500, retryCount: 1200 });
 
       this.client = {
         ...cluster,
@@ -96,6 +109,10 @@ class RedisClient {
       const details = {
         host: process.env.REDIS_HOST,
         port: process.env.REDIS_PORT,
+        connectTimeout: 20000,
+        retryStrategy(times) {
+          return Math.min(times * 100, 5000);
+        },
       };
       if (process.env.REDIS_PASSWORD) {
         details.password = process.env.REDIS_PASSWORD;
@@ -106,7 +123,7 @@ class RedisClient {
       client = new Redis(details);
 
       // allow up to 10 minutes to acquire lock (in case of large items being saved/retrieved)
-      const redlock = new Redlock([client], {retryDelay: 500, retryCount: 1200});
+      const redlock = new Redlock([client], { retryDelay: 500, retryCount: 1200 });
 
       this.client = {
         ...client,
