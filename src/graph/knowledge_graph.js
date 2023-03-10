@@ -96,7 +96,7 @@ module.exports = class KnowledgeGraph {
     ) {
       attributes = [...attributes];
       //primary knowledge source
-      if (Array.from(kgEdge.sources).length) {
+      if (Array.from(kgEdge.sources).length || Array.from(kgEdge.inforesCuries).length) {
         attributes = [
           ...attributes,
           {
