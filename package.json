@@ -50,6 +50,7 @@
     "async": "^3.2.1",
     "biolink-model": "^0.4.0",
     "biomedical_id_resolver": "^3.10.0",
+    "chi-square-p-value": "^1.0.5",
     "debug": "^4.3.1",
     "ioredis": "^5.0.6",
     "lodash": "^4.17.21",
