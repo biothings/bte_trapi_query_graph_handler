@@ -4,7 +4,7 @@ const utils = require('../utils');
 const async = require('async');
 const biolink = require('../biolink');
 const { getTemplates } = require('./template_lookup');
-const { addNormalizedScores } = require('../score');
+const { addNormalizedScores } = require('../results_assembly/score');
 
 module.exports = class InferredQueryHandler {
   constructor(parent, TRAPIQueryHandler, queryGraph, logs, options, path, predicatePath, includeReasoner) {
