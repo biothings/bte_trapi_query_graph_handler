@@ -88,6 +88,8 @@ class RedisClient {
       // allow up to 10 minutes to acquire lock (in case of large items being saved/retrieved)
       const redlock = new Redlock([cluster], { retryDelay: 500, retryCount: 1200 });
 
+      this.internalClient = cluster;
+
       this.client = {
         ...cluster,
         getTimeout: addPrefix(timeoutFunc((...args) => cluster.get(...args))),
@@ -125,6 +127,8 @@ class RedisClient {
       // allow up to 10 minutes to acquire lock (in case of large items being saved/retrieved)
       const redlock = new Redlock([client], { retryDelay: 500, retryCount: 1200 });
 
+      this.internalClient = client;
+
       this.client = {
         ...client,
         getTimeout: timeoutFunc((...args) => client.get(...args)),
@@ -147,4 +151,13 @@ class RedisClient {
   }
 }
 
-exports.redisClient = new RedisClient();
+const primaryClient = new RedisClient();
+
+const classClientFactory = {
+  redisClient: primaryClient,
+  getNewRedisClient() {
+    return new RedisClient();
+  }
+}
+
+module.exports = classClientFactory

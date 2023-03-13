@@ -10,7 +10,7 @@ const EdgeManager = require('./edge_manager');
 const _ = require('lodash');
 const QEdge2APIEdgeHandler = require('./qedge2apiedge');
 const LogEntry = require('./log_entry');
-const { redisClient } = require('./redis-client');
+const { redisClient, getNewRedisClient} = require('./redis-client');
 const config = require('./config');
 const fs = require('fs').promises;
 const { getDescendants } = require('@biothings-explorer/node-expansion');
@@ -21,6 +21,7 @@ const InferredQueryHandler = require('./inferred_mode/inferred_mode');
 
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 exports.redisClient = redisClient;
+exports.getNewRedisClient = getNewRedisClient;
 exports.LogEntry = LogEntry;
 exports.getTemplates = getTemplates;
 exports.supportedLookups = supportedLookups;
