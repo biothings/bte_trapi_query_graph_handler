@@ -162,7 +162,7 @@ describe('Test InferredQueryHandler', () => {
       const { qEdgeID, qEdge, qSubject, qObject } = handler.getQueryParts();
 
       const templates = await handler.findTemplates(qEdge, qSubject, qObject);
-      console.log(templates);
+      // console.log(templates);
       expect(templates.length).toBeGreaterThan(1);
       expect(
         templates.every(({ queryGraph }) => {

@@ -8,8 +8,8 @@ const config = require('../../src/config.js');
 describe('Testing QueryResults Module', () => {
   describe('"Real" Records', () => {
     describe('Single Record', () => {
-      const gene_node1 = new QNode({ id: 'n1', categories: ['Gene'], ids: ['NCBIGene:632'] }) ;
-      const chemical_node1 = new QNode({ id: 'n2', categories: ['ChemicalSubstance'] }) ;
+      const gene_node1 = new QNode({ id: 'n1', categories: ['Gene'], ids: ['NCBIGene:632'] });
+      const chemical_node1 = new QNode({ id: 'n2', categories: ['ChemicalSubstance'] });
       const edge1 = new QEdge({ id: 'e01', subject: gene_node1, object: chemical_node1 });
       const record = new Record(
         {
@@ -21,32 +21,19 @@ describe('Testing QueryResults Module', () => {
           },
           subject: {
             original: 'SYMBOL:BGLAP',
-            normalizedInfo: [
-              {
-                primaryID: 'NCBIGene:632',
-                label: 'BGLAP',
-                dbIDs: {
-                  SYMBOL: 'BGLAP',
-                  NCBIGene: '632',
-                },
-                curies: ['SYMBOL:BGLAP', 'NCBIGene:632'],
-              },
-            ],
+            normalizedInfo: {
+              primaryID: 'NCBIGene:632',
+              label: 'BGLAP',
+              equivalentIDs: ['SYMBOL:BGLAP', 'NCBIGene:632'],
+            },
           },
           object: {
             original: 'CHEMBL.COMPOUND:CHEMBL1200983',
-            normalizedInfo: [
-              {
-                primaryID: 'CHEMBL.COMPOUND:CHEMBL1200983',
-                label: 'GALLIUM NITRATE',
-                dbIDs: {
-                  'CHEMBL.COMPOUND': 'CHEMBL1200983',
-                  'PUBCHEM.COMPOUND': '5282394',
-                  name: 'GALLIUM NITRATE',
-                },
-                curies: ['CHEMBL.COMPOUND:CHEMBL1200983', 'PUBCHEM.COMPOUND:5282394', 'name:GALLIUM NITRATE'],
-              },
-            ],
+            normalizedInfo: {
+              primaryID: 'CHEMBL.COMPOUND:CHEMBL1200983',
+              label: 'GALLIUM NITRATE',
+              equivalentIDs: ['CHEMBL.COMPOUND:CHEMBL1200983', 'PUBCHEM.COMPOUND:5282394', 'name:GALLIUM NITRATE'],
+            },
           },
         },
         config,
@@ -76,9 +63,9 @@ describe('Testing QueryResults Module', () => {
 
     describe('Two Records', () => {
       describe('query graph: gene1-disease1-gene1', () => {
-        const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'] }) ;
-        const disease_node = new QNode({ id: 'n2', categories: ['Disease'] }) ;
-        const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'] }) ;
+        const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'] });
+        const disease_node = new QNode({ id: 'n2', categories: ['Disease'] });
+        const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'] });
 
         const edge1 = new QEdge({ id: 'e01', subject: gene_node_start, object: disease_node });
         const edge2 = new QEdge({ id: 'e02', subject: disease_node, object: gene_node_end });
@@ -88,32 +75,19 @@ describe('Testing QueryResults Module', () => {
             publications: ['PMID:123', 'PMID:1234'],
             subject: {
               original: 'SYMBOL:KCNMA1',
-              normalizedInfo: [
-                {
-                  primaryID: 'NCBIGene:3778',
-                  label: 'KCNMA1',
-                  dbIDs: {
-                    SYMBOL: 'KCNMA1',
-                    NCBIGene: '3778',
-                  },
-                  curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
-                },
-              ],
+              normalizedInfo: {
+                primaryID: 'NCBIGene:3778',
+                label: 'KCNMA1',
+                equivalentIDs: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
+              },
             },
             object: {
               original: 'MONDO:0011122',
-              normalizedInfo: [
-                {
-                  primaryID: 'MONDO:0011122',
-                  label: 'obesity disorder',
-                  dbIDs: {
-                    MONDO: '0011122',
-                    MESH: 'D009765',
-                    name: 'obesity disorder',
-                  },
-                  curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-                },
-              ],
+              normalizedInfo: {
+                primaryID: 'MONDO:0011122',
+                label: 'obesity disorder',
+                equivalentIDs: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+              },
             },
           },
           config,
@@ -129,32 +103,19 @@ describe('Testing QueryResults Module', () => {
             publications: ['PMID:345', 'PMID:456'],
             subject: {
               original: 'MONDO:0011122',
-              normalizedInfo: [
-                {
-                  primaryID: 'MONDO:0011122',
-                  label: 'obesity disorder',
-                  dbIDs: {
-                    MONDO: '0011122',
-                    MESH: 'D009765',
-                    name: 'obesity disorder',
-                  },
-                  curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-                },
-              ],
+              normalizedInfo: {
+                primaryID: 'MONDO:0011122',
+                label: 'obesity disorder',
+                equivalentIDs: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+              },
             },
             object: {
               original: 'SYMBOL:KCNMA1',
-              normalizedInfo: [
-                {
-                  primaryID: 'NCBIGene:3778',
-                  label: 'KCNMA1',
-                  dbIDs: {
-                    SYMBOL: 'KCNMA1',
-                    NCBIGene: '3778',
-                  },
-                  curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
-                },
-              ],
+              normalizedInfo: {
+                primaryID: 'NCBIGene:3778',
+                label: 'KCNMA1',
+                equivalentIDs: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
+              },
             },
           },
           config,
@@ -197,9 +158,9 @@ describe('Testing QueryResults Module', () => {
       });
 
       describe('query graph: gene1-disease1-gene2 (no ids params)', () => {
-        const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'] }) ;
-        const disease_node = new QNode({ id: 'n2', categories: ['Disease'] }) ;
-        const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'] }) ;
+        const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'] });
+        const disease_node = new QNode({ id: 'n2', categories: ['Disease'] });
+        const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'] });
 
         const edge1 = new QEdge({ id: 'e01', subject: gene_node_start, object: disease_node });
         const edge2 = new QEdge({ id: 'e02', subject: disease_node, object: gene_node_end });
@@ -209,32 +170,19 @@ describe('Testing QueryResults Module', () => {
             publications: ['PMID:123', 'PMID:1234'],
             subject: {
               original: 'SYMBOL:KCNMA1',
-              normalizedInfo: [
-                {
-                  primaryID: 'NCBIGene:3778',
-                  label: 'KCNMA1',
-                  dbIDs: {
-                    SYMBOL: 'KCNMA1',
-                    NCBIGene: '3778',
-                  },
-                  curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
-                },
-              ],
+              normalizedInfo: {
+                primaryID: 'NCBIGene:3778',
+                label: 'KCNMA1',
+                equivalentIDs: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
+              },
             },
             object: {
               original: 'MONDO:0011122',
-              normalizedInfo: [
-                {
-                  primaryID: 'MONDO:0011122',
-                  label: 'obesity disorder',
-                  dbIDs: {
-                    MONDO: '0011122',
-                    MESH: 'D009765',
-                    name: 'obesity disorder',
-                  },
-                  curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-                },
-              ],
+              normalizedInfo: {
+                primaryID: 'MONDO:0011122',
+                label: 'obesity disorder',
+                equivalentIDs: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+              },
             },
           },
           config,
@@ -250,32 +198,19 @@ describe('Testing QueryResults Module', () => {
             publications: ['PMID:345', 'PMID:456'],
             subject: {
               original: 'MONDO:0011122',
-              normalizedInfo: [
-                {
-                  primaryID: 'MONDO:0011122',
-                  label: 'obesity disorder',
-                  dbIDs: {
-                    MONDO: '0011122',
-                    MESH: 'D009765',
-                    name: 'obesity disorder',
-                  },
-                  curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-                },
-              ],
+              normalizedInfo: {
+                primaryID: 'MONDO:0011122',
+                label: 'obesity disorder',
+                equivalentIDs: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+              },
             },
             object: {
               original: 'SYMBOL:TULP3',
-              normalizedInfo: [
-                {
-                  primaryID: 'NCBIGene:7289',
-                  label: 'TULP3',
-                  dbIDs: {
-                    SYMBOL: 'TULP3',
-                    NCBIGene: '7289',
-                  },
-                  curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
-                },
-              ],
+              normalizedInfo: {
+                primaryID: 'NCBIGene:7289',
+                label: 'TULP3',
+                equivalentIDs: ['SYMBOL:TULP3', 'NCBIGene:7289'],
+              },
             },
           },
           config,
@@ -317,9 +252,9 @@ describe('Testing QueryResults Module', () => {
       });
 
       describe('query graph: gene1-disease1-gene2 (gene1 has ids param)', () => {
-        const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'], ids: ['NCBIGene:3778'] }) ;
-        const disease_node = new QNode({ id: 'n2', categories: ['Disease'] }) ;
-        const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'] }) ;
+        const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'], ids: ['NCBIGene:3778'] });
+        const disease_node = new QNode({ id: 'n2', categories: ['Disease'] });
+        const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'] });
 
         const edge1 = new QEdge({ id: 'e01', subject: gene_node_start, object: disease_node });
         const edge2 = new QEdge({ id: 'e02', subject: disease_node, object: gene_node_end });
@@ -329,32 +264,19 @@ describe('Testing QueryResults Module', () => {
             publications: ['PMID:123', 'PMID:1234'],
             subject: {
               original: 'SYMBOL:KCNMA1',
-              normalizedInfo: [
-                {
-                  primaryID: 'NCBIGene:3778',
-                  label: 'KCNMA1',
-                  dbIDs: {
-                    SYMBOL: 'KCNMA1',
-                    NCBIGene: '3778',
-                  },
-                  curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
-                },
-              ],
+              normalizedInfo: {
+                primaryID: 'NCBIGene:3778',
+                label: 'KCNMA1',
+                equivalentIDs: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
+              },
             },
             object: {
               original: 'MONDO:0011122',
-              normalizedInfo: [
-                {
-                  primaryID: 'MONDO:0011122',
-                  label: 'obesity disorder',
-                  dbIDs: {
-                    MONDO: '0011122',
-                    MESH: 'D009765',
-                    name: 'obesity disorder',
-                  },
-                  curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-                },
-              ],
+              normalizedInfo: {
+                primaryID: 'MONDO:0011122',
+                label: 'obesity disorder',
+                equivalentIDs: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+              },
             },
           },
           config,
@@ -370,32 +292,19 @@ describe('Testing QueryResults Module', () => {
             publications: ['PMID:345', 'PMID:456'],
             subject: {
               original: 'MONDO:0011122',
-              normalizedInfo: [
-                {
-                  primaryID: 'MONDO:0011122',
-                  label: 'obesity disorder',
-                  dbIDs: {
-                    MONDO: '0011122',
-                    MESH: 'D009765',
-                    name: 'obesity disorder',
-                  },
-                  curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-                },
-              ],
+              normalizedInfo: {
+                primaryID: 'MONDO:0011122',
+                label: 'obesity disorder',
+                equivalentIDs: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+              },
             },
             object: {
               original: 'SYMBOL:TULP3',
-              normalizedInfo: [
-                {
-                  primaryID: 'NCBIGene:7289',
-                  label: 'TULP3',
-                  dbIDs: {
-                    SYMBOL: 'TULP3',
-                    NCBIGene: '7289',
-                  },
-                  curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
-                },
-              ],
+              normalizedInfo: {
+                primaryID: 'NCBIGene:7289',
+                label: 'TULP3',
+                equivalentIDs: ['SYMBOL:TULP3', 'NCBIGene:7289'],
+              },
             },
           },
           config,
@@ -437,9 +346,9 @@ describe('Testing QueryResults Module', () => {
       });
 
       describe('query graph: gene1-disease1-gene2 (gene1 & gene2 have ids params)', () => {
-        const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'], ids: ['NCBIGene:3778'] }) ;
-        const disease_node = new QNode({ id: 'n2', categories: ['Disease'] }) ;
-        const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'], ids: ['NCBIGene:7289'] }) ;
+        const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'], ids: ['NCBIGene:3778'] });
+        const disease_node = new QNode({ id: 'n2', categories: ['Disease'] });
+        const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'], ids: ['NCBIGene:7289'] });
 
         const edge1 = new QEdge({ id: 'e01', subject: gene_node_start, object: disease_node });
         const edge2 = new QEdge({ id: 'e02', subject: disease_node, object: gene_node_end });
@@ -449,32 +358,19 @@ describe('Testing QueryResults Module', () => {
             publications: ['PMID:123', 'PMID:1234'],
             subject: {
               original: 'SYMBOL:KCNMA1',
-              normalizedInfo: [
-                {
-                  primaryID: 'NCBIGene:3778',
-                  label: 'KCNMA1',
-                  dbIDs: {
-                    SYMBOL: 'KCNMA1',
-                    NCBIGene: '3778',
-                  },
-                  curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
-                },
-              ],
+              normalizedInfo: {
+                primaryID: 'NCBIGene:3778',
+                label: 'KCNMA1',
+                equivalentIDs: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
+              },
             },
             object: {
               original: 'MONDO:0011122',
-              normalizedInfo: [
-                {
-                  primaryID: 'MONDO:0011122',
-                  label: 'obesity disorder',
-                  dbIDs: {
-                    MONDO: '0011122',
-                    MESH: 'D009765',
-                    name: 'obesity disorder',
-                  },
-                  curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-                },
-              ],
+              normalizedInfo: {
+                primaryID: 'MONDO:0011122',
+                label: 'obesity disorder',
+                equivalentIDs: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+              },
             },
           },
           config,
@@ -492,32 +388,19 @@ describe('Testing QueryResults Module', () => {
             publications: ['PMID:345', 'PMID:456'],
             subject: {
               original: 'SYMBOL:TULP3',
-              normalizedInfo: [
-                {
-                  primaryID: 'NCBIGene:7289',
-                  label: 'TULP3',
-                  dbIDs: {
-                    SYMBOL: 'TULP3',
-                    NCBIGene: '7289',
-                  },
-                  curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
-                },
-              ],
+              normalizedInfo: {
+                primaryID: 'NCBIGene:7289',
+                label: 'TULP3',
+                equivalentIDs: ['SYMBOL:TULP3', 'NCBIGene:7289'],
+              },
             },
             object: {
               original: 'MONDO:0011122',
-              normalizedInfo: [
-                {
-                  primaryID: 'MONDO:0011122',
-                  label: 'obesity disorder',
-                  dbIDs: {
-                    MONDO: '0011122',
-                    MESH: 'D009765',
-                    name: 'obesity disorder',
-                  },
-                  curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-                },
-              ],
+              normalizedInfo: {
+                primaryID: 'MONDO:0011122',
+                label: 'obesity disorder',
+                equivalentIDs: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+              },
             },
           },
           config,
@@ -559,9 +442,9 @@ describe('Testing QueryResults Module', () => {
       });
 
       describe('query graph: gene1-disease1-gene2 (gene2 has ids param)', () => {
-        const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'] }) ;
-        const disease_node = new QNode({ id: 'n2', categories: ['Disease'] }) ;
-        const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'], ids: ['NCBIGene:7289'] }) ;
+        const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'] });
+        const disease_node = new QNode({ id: 'n2', categories: ['Disease'] });
+        const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'], ids: ['NCBIGene:7289'] });
 
         const edge1 = new QEdge({ id: 'e01', subject: gene_node_start, object: disease_node });
         const edge2 = new QEdge({ id: 'e02', subject: disease_node, object: gene_node_end });
@@ -571,32 +454,19 @@ describe('Testing QueryResults Module', () => {
             publications: ['PMID:123', 'PMID:1234'],
             subject: {
               original: 'SYMBOL:KCNMA1',
-              normalizedInfo: [
-                {
-                  primaryID: 'NCBIGene:3778',
-                  label: 'KCNMA1',
-                  dbIDs: {
-                    SYMBOL: 'KCNMA1',
-                    NCBIGene: '3778',
-                  },
-                  curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
-                },
-              ],
+              normalizedInfo: {
+                primaryID: 'NCBIGene:3778',
+                label: 'KCNMA1',
+                equivalentIDs: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
+              },
             },
             object: {
               original: 'MONDO:0011122',
-              normalizedInfo: [
-                {
-                  primaryID: 'MONDO:0011122',
-                  label: 'obesity disorder',
-                  dbIDs: {
-                    MONDO: '0011122',
-                    MESH: 'D009765',
-                    name: 'obesity disorder',
-                  },
-                  curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-                },
-              ],
+              normalizedInfo: {
+                primaryID: 'MONDO:0011122',
+                label: 'obesity disorder',
+                equivalentIDs: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+              },
             },
           },
           config,
@@ -614,32 +484,19 @@ describe('Testing QueryResults Module', () => {
             publications: ['PMID:345', 'PMID:456'],
             subject: {
               original: 'SYMBOL:TULP3',
-              normalizedInfo: [
-                {
-                  primaryID: 'NCBIGene:7289',
-                  label: 'TULP3',
-                  dbIDs: {
-                    SYMBOL: 'TULP3',
-                    NCBIGene: '7289',
-                  },
-                  curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
-                },
-              ],
+              normalizedInfo: {
+                primaryID: 'NCBIGene:7289',
+                label: 'TULP3',
+                equivalentIDs: ['SYMBOL:TULP3', 'NCBIGene:7289'],
+              },
             },
             object: {
               original: 'MONDO:0011122',
-              normalizedInfo: [
-                {
-                  primaryID: 'MONDO:0011122',
-                  label: 'obesity disorder',
-                  dbIDs: {
-                    MONDO: '0011122',
-                    MESH: 'D009765',
-                    name: 'obesity disorder',
-                  },
-                  curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-                },
-              ],
+              normalizedInfo: {
+                primaryID: 'MONDO:0011122',
+                label: 'obesity disorder',
+                equivalentIDs: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+              },
             },
           },
           config,
@@ -682,9 +539,9 @@ describe('Testing QueryResults Module', () => {
     });
 
     describe('Three Records', () => {
-      const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'], ids: ['NCBIGene:3778'] }) ;
-      const disease_node = new QNode({ id: 'n2', categories: ['Disease'] }) ;
-      const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'] }) ;
+      const gene_node_start = new QNode({ id: 'n1', categories: ['Gene'], ids: ['NCBIGene:3778'] });
+      const disease_node = new QNode({ id: 'n2', categories: ['Disease'] });
+      const gene_node_end = new QNode({ id: 'n3', categories: ['Gene'] });
 
       const edge1 = new QEdge({ id: 'e01', subject: gene_node_start, object: disease_node });
       const edge2 = new QEdge({ id: 'e02', subject: disease_node, object: gene_node_end });
@@ -694,32 +551,19 @@ describe('Testing QueryResults Module', () => {
           publications: ['PMID:123', 'PMID:1234'],
           subject: {
             original: 'SYMBOL:KCNMA1',
-            normalizedInfo: [
-              {
-                primaryID: 'NCBIGene:3778',
-                label: 'KCNMA1',
-                dbIDs: {
-                  SYMBOL: 'KCNMA1',
-                  NCBIGene: '3778',
-                },
-                curies: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
-              },
-            ],
+            normalizedInfo: {
+              primaryID: 'NCBIGene:3778',
+              label: 'KCNMA1',
+              equivalentIDs: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
+            },
           },
           object: {
             original: 'MONDO:0011122',
-            normalizedInfo: [
-              {
-                primaryID: 'MONDO:0011122',
-                label: 'obesity disorder',
-                dbIDs: {
-                  MONDO: '0011122',
-                  MESH: 'D009765',
-                  name: 'obesity disorder',
-                },
-                curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-              },
-            ],
+            normalizedInfo: {
+              primaryID: 'MONDO:0011122',
+              label: 'obesity disorder',
+              equivalentIDs: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+            },
           },
         },
         config,
@@ -735,32 +579,19 @@ describe('Testing QueryResults Module', () => {
           publications: ['PMID:345', 'PMID:456'],
           subject: {
             original: 'MONDO:0011122',
-            normalizedInfo: [
-              {
-                primaryID: 'MONDO:0011122',
-                label: 'obesity disorder',
-                dbIDs: {
-                  MONDO: '0011122',
-                  MESH: 'D009765',
-                  name: 'obesity disorder',
-                },
-                curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-              },
-            ],
+            normalizedInfo: {
+              primaryID: 'MONDO:0011122',
+              label: 'obesity disorder',
+              equivalentIDs: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+            },
           },
           object: {
             original: 'SYMBOL:TULP3',
-            normalizedInfo: [
-              {
-                primaryID: 'NCBIGene:7289',
-                label: 'TULP3',
-                dbIDs: {
-                  SYMBOL: 'TULP3',
-                  NCBIGene: '7289',
-                },
-                curies: ['SYMBOL:TULP3', 'NCBIGene:7289'],
-              },
-            ],
+            normalizedInfo: {
+              primaryID: 'NCBIGene:7289',
+              label: 'TULP3',
+              equivalentIDs: ['SYMBOL:TULP3', 'NCBIGene:7289'],
+            },
           },
         },
         config,
@@ -776,32 +607,19 @@ describe('Testing QueryResults Module', () => {
           publications: ['PMID:987', 'PMID:876'],
           subject: {
             original: 'MONDO:0011122',
-            normalizedInfo: [
-              {
-                primaryID: 'MONDO:0011122',
-                label: 'obesity disorder',
-                dbIDs: {
-                  MONDO: '0011122',
-                  MESH: 'D009765',
-                  name: 'obesity disorder',
-                },
-                curies: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
-              },
-            ],
+            normalizedInfo: {
+              primaryID: 'MONDO:0011122',
+              label: 'obesity disorder',
+              equivalentIDs: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
+            },
           },
           object: {
             original: 'SYMBOL:TECR',
-            normalizedInfo: [
-              {
-                primaryID: 'NCBIGene:9524',
-                label: 'TECR',
-                dbIDs: {
-                  SYMBOL: 'TECR',
-                  NCBIGene: '9524',
-                },
-                curies: ['SYMBOL:TECR', 'NCBIGene:9524'],
-              },
-            ],
+            normalizedInfo: {
+              primaryID: 'NCBIGene:9524',
+              label: 'TECR',
+              equivalentIDs: ['SYMBOL:TECR', 'NCBIGene:9524'],
+            },
           },
         },
         config,
@@ -822,7 +640,7 @@ describe('Testing QueryResults Module', () => {
           },
           e02: {
             connected_to: ['e01'],
-            records: [record2, new Record(record3, config)],
+            records: [record2, record3],
           },
         });
 
@@ -1011,7 +829,7 @@ describe('Testing QueryResults Module', () => {
       object: { ...n1.a },
     };
 
-    record2_n1b_n3a = {
+    const record2_n1b_n3a = {
       subject: { ...n1.b },
       object: { ...n3.a },
       ...recordPred[2],
@@ -3049,7 +2867,7 @@ describe('Testing QueryResults Module', () => {
           isSet: false,
           curie: 'NCBIGene:3265',
           UMLS: ['C0079471', 'C1569842'],
-          semanticType: 'Gene',
+          semanticType: ['Gene'],
           label: 'HRAS',
           attributes: {},
         },
@@ -3058,7 +2876,7 @@ describe('Testing QueryResults Module', () => {
           qNodeID: 'n0',
           isSet: false,
           curie: 'BIOPLANET:bioplanet_1498',
-          semanticType: 'Pathway',
+          semanticType: ['Pathway'],
           label: 'BIOPLANET:bioplanet_1498',
           attributes: {},
         },
@@ -3083,7 +2901,7 @@ describe('Testing QueryResults Module', () => {
           isSet: false,
           curie: 'NCBIGene:3265',
           UMLS: ['C0079471', 'C1569842'],
-          semanticType: 'Gene',
+          semanticType: ['Gene'],
           label: 'HRAS',
           attributes: {},
         },
@@ -3092,7 +2910,7 @@ describe('Testing QueryResults Module', () => {
           qNodeID: 'n0',
           isSet: false,
           curie: 'BIOPLANET:bioplanet_1498',
-          semanticType: 'Pathway',
+          semanticType: ['Pathway'],
           label: 'BIOPLANET:bioplanet_1498',
           attributes: {},
         },

@@ -49,29 +49,23 @@ describe('Testing QueryNode Module', () => {
     test('If equivalent ids are not empty, should return an array of bioentities', () => {
       const gene_node = new QNode({ id: 'n1', categories: 'Gene' });
       gene_node.equivalentIDs = {
-        A: [
-          {
-            a: 'b',
-          },
-          {
-            c: 'd',
-          },
-        ],
-        B: [
-          {
-            e: 'f',
-          },
-        ],
+        A: {
+          primaryID: 'a',
+          equivalentIDs: ['b', 'c'],
+        },
+        B: {
+          primaryID: 'd',
+          equivalentIDs: ['e'],
+        },
       };
       expect(gene_node.getEntities()).toEqual([
         {
-          a: 'b',
+          primaryID: 'a',
+          equivalentIDs: ['b', 'c'],
         },
         {
-          c: 'd',
-        },
-        {
-          e: 'f',
+          primaryID: 'd',
+          equivalentIDs: ['e'],
         },
       ]);
     });
@@ -87,21 +81,16 @@ describe('Testing QueryNode Module', () => {
     test('If equivalent ids are not empty, should return an array of primaryIDs', () => {
       const gene_node = new QNode({ id: 'n1', categories: 'Gene' });
       gene_node.equivalentIDs = {
-        A: [
-          {
-            primaryID: 'b',
-          },
-          {
-            primaryID: 'c',
-          },
-        ],
-        B: [
-          {
-            primaryID: 'd',
-          },
-        ],
+        A: {
+          primaryID: 'a',
+          equivalentIDs: ['b', 'c'],
+        },
+        B: {
+          primaryID: 'd',
+          equivalentIDs: ['e'],
+        },
       };
-      expect(gene_node.getPrimaryIDs()).toEqual(['b', 'c', 'd']);
+      expect(gene_node.getPrimaryIDs()).toEqual(['a', 'd']);
     });
   });
 
@@ -145,24 +134,18 @@ describe('Testing QueryNode Module', () => {
     test('If equivalent ids are not empty, return all primary semantic types defined in equivalent entities', () => {
       const node = new QNode({ id: 'n1', categories: 'Gene' });
       node.setEquivalentIDs({
-        A: [
+        A:
           {
-            semanticType: 'm',
-            semanticTypes: ['m', 'n'],
+            primaryTypes: ['m', 'p'],
+            semanticTypes: ['m', 'n', 'p', 'q'],
           },
+        B:
           {
-            semanticType: 'p',
-            semanticTypes: ['p', 'q'],
-          },
-        ],
-        B: [
-          {
-            semanticType: 'x',
+            primaryTypes: ['x'],
             semanticTypes: ['x', 'y'],
           },
-        ],
       });
-      console.log(node.getCategories())
+      // console.log(node.getCategories());
       expect(node.getCategories()).toEqual(['Gene', 'm', 'p', 'x']);
     });
   });

@@ -77,6 +77,7 @@ describe('test TRAPIQueryHandler methods', () => {
     spy.mockResolvedValue('fakeResponse');
     const { TRAPIQueryHandler } = require('../../src/index');
     const handler = new TRAPIQueryHandler();
+    handler.setQueryGraph(query.message.query_graph);
     await handler._handleInferredEdges();
     expect(handler.getResponse()).toEqual('fakeResponse');
   });
