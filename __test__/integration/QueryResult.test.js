@@ -50,7 +50,7 @@ describe('Testing QueryResults Module', () => {
         await queryResult.update({
           e01: {
             connected_to: [],
-            records: [new Record(record, config)],
+            records: [record],
           },
         });
         expect(queryResult.getResults().length).toEqual(1);

@@ -89,13 +89,13 @@ describe('test TRAPIQueryHandler methods', () => {
     const { TRAPIQueryHandler } = require('../../src/index');
     const handler1 = new TRAPIQueryHandler({
       smartAPIID: 'fakeID',
-    });
+    }, undefined, undefined, false);
     handler1.setQueryGraph(query.message.query_graph);
     await handler1.query();
     expect(handler1.logs.map((log) => log.level)).toContain('ERROR');
     const handler2 = new TRAPIQueryHandler({
       teamName: 'fakeID',
-    });
+    }, undefined, undefined, false);
     handler2.setQueryGraph(query.message.query_graph);
     await handler2.query();
     expect(handler2.logs.map((log) => log.level)).toContain('ERROR');

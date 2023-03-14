@@ -1,4 +1,5 @@
 const TRAPIQueryHandler = require('../../src/index');
+const path = require('path');
 
 describe('Testing TRAPIQueryHandler Module', () => {
   const disease_entity_node = {
@@ -22,7 +23,11 @@ describe('Testing TRAPIQueryHandler Module', () => {
   };
   describe('Testing query function', () => {
     test('test with one query edge', async () => {
-      const queryHandler = new TRAPIQueryHandler.TRAPIQueryHandler();
+      const queryHandler = new TRAPIQueryHandler.TRAPIQueryHandler(
+        {},
+        path.resolve(__dirname, '../../../bte-trapi/data/smartapi_specs.json'),
+        path.resolve(__dirname, '../../../bte-trapi/data/predicates.json')
+      );
       queryHandler.setQueryGraph(OneHopQuery);
       await queryHandler.query();
       expect(queryHandler.knowledgeGraph.kg).toHaveProperty('nodes');
