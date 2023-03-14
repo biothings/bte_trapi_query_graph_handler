@@ -1,3 +1,9 @@
+// if needed
+const og_axios = jest.requireActual("axios")
+
+jest.mock('axios');
+const axios = require("axios");
+
 const QueryGraphHandler = require('../../src/query_graph');
 const QNode2 = require('../../src/query_node');
 const QEdge = require('../../src/query_edge');
@@ -223,6 +229,7 @@ describe('Testing QueryGraphHandler Module', () => {
 
   describe('test _storeNodes function', () => {
     test('test if storeNodes with one hop query', async () => {
+      axios.post.mockResolvedValueOnce({ data: {"MONDO:0005737":{"id":{"identifier":"MONDO:0005737","label":"Ebola hemorrhagic fever"},"equivalent_identifiers":[{"identifier":"MONDO:0005737","label":"Ebola hemorrhagic fever"},{"identifier":"DOID:4325","label":"Ebola hemorrhagic fever"},{"identifier":"ORPHANET:319218"},{"identifier":"UMLS:C0282687","label":"Hemorrhagic Fever, Ebola"},{"identifier":"MESH:D019142","label":"Hemorrhagic Fever, Ebola"},{"identifier":"MEDDRA:10014071"},{"identifier":"MEDDRA:10014072"},{"identifier":"MEDDRA:10014074"},{"identifier":"MEDDRA:10055245"},{"identifier":"NCIT:C36171","label":"Ebola Hemorrhagic Fever"},{"identifier":"SNOMEDCT:37109004"},{"identifier":"ICD10:A98.4"}],"type":["biolink:Disease","biolink:DiseaseOrPhenotypicFeature","biolink:ThingWithTaxon","biolink:BiologicalEntity","biolink:NamedThing","biolink:Entity"],"information_content":100}}})
       let handler = new QueryGraphHandler(OneHopQuery);
       let nodes = await handler._storeNodes();
       expect(nodes).toHaveProperty('n0');
@@ -231,6 +238,7 @@ describe('Testing QueryGraphHandler Module', () => {
     });
 
     test('test if storeNodes with multi hop query', async () => {
+      axios.post.mockResolvedValueOnce({ data: {"MONDO:0005737":{"id":{"identifier":"MONDO:0005737","label":"Ebola hemorrhagic fever"},"equivalent_identifiers":[{"identifier":"MONDO:0005737","label":"Ebola hemorrhagic fever"},{"identifier":"DOID:4325","label":"Ebola hemorrhagic fever"},{"identifier":"ORPHANET:319218"},{"identifier":"UMLS:C0282687","label":"Hemorrhagic Fever, Ebola"},{"identifier":"MESH:D019142","label":"Hemorrhagic Fever, Ebola"},{"identifier":"MEDDRA:10014071"},{"identifier":"MEDDRA:10014072"},{"identifier":"MEDDRA:10014074"},{"identifier":"MEDDRA:10055245"},{"identifier":"NCIT:C36171","label":"Ebola Hemorrhagic Fever"},{"identifier":"SNOMEDCT:37109004"},{"identifier":"ICD10:A98.4"}],"type":["biolink:Disease","biolink:DiseaseOrPhenotypicFeature","biolink:ThingWithTaxon","biolink:BiologicalEntity","biolink:NamedThing","biolink:Entity"],"information_content":100}}})
       let handler = new QueryGraphHandler(FourHopQuery);
       let nodes = await handler._storeNodes();
       expect(nodes).toHaveProperty('n0');
@@ -242,6 +250,7 @@ describe('Testing QueryGraphHandler Module', () => {
 
   describe('test calculateEdges function', () => {
     test('test storeEdges with one hop query', async () => {
+      axios.post.mockResolvedValueOnce({ data: {"MONDO:0005737":{"id":{"identifier":"MONDO:0005737","label":"Ebola hemorrhagic fever"},"equivalent_identifiers":[{"identifier":"MONDO:0005737","label":"Ebola hemorrhagic fever"},{"identifier":"DOID:4325","label":"Ebola hemorrhagic fever"},{"identifier":"ORPHANET:319218"},{"identifier":"UMLS:C0282687","label":"Hemorrhagic Fever, Ebola"},{"identifier":"MESH:D019142","label":"Hemorrhagic Fever, Ebola"},{"identifier":"MEDDRA:10014071"},{"identifier":"MEDDRA:10014072"},{"identifier":"MEDDRA:10014074"},{"identifier":"MEDDRA:10055245"},{"identifier":"NCIT:C36171","label":"Ebola Hemorrhagic Fever"},{"identifier":"SNOMEDCT:37109004"},{"identifier":"ICD10:A98.4"}],"type":["biolink:Disease","biolink:DiseaseOrPhenotypicFeature","biolink:ThingWithTaxon","biolink:BiologicalEntity","biolink:NamedThing","biolink:Entity"],"information_content":100}}})
       let handler = new QueryGraphHandler(OneHopQuery);
       await handler.calculateEdges();
       expect(handler.edges).toHaveProperty('e01');
@@ -253,6 +262,9 @@ describe('Testing QueryGraphHandler Module', () => {
 
   describe('test _createQueryPaths function', () => {
     test('test createQueryPaths with three hop explain query', async () => {
+      axios.post
+        .mockResolvedValueOnce({ data: {"MONDO:0005737":{"id":{"identifier":"MONDO:0005737","label":"Ebola hemorrhagic fever"},"equivalent_identifiers":[{"identifier":"MONDO:0005737","label":"Ebola hemorrhagic fever"},{"identifier":"DOID:4325","label":"Ebola hemorrhagic fever"},{"identifier":"ORPHANET:319218"},{"identifier":"UMLS:C0282687","label":"Hemorrhagic Fever, Ebola"},{"identifier":"MESH:D019142","label":"Hemorrhagic Fever, Ebola"},{"identifier":"MEDDRA:10014071"},{"identifier":"MEDDRA:10014072"},{"identifier":"MEDDRA:10014074"},{"identifier":"MEDDRA:10055245"},{"identifier":"NCIT:C36171","label":"Ebola Hemorrhagic Fever"},{"identifier":"SNOMEDCT:37109004"},{"identifier":"ICD10:A98.4"}],"type":["biolink:Disease","biolink:DiseaseOrPhenotypicFeature","biolink:ThingWithTaxon","biolink:BiologicalEntity","biolink:NamedThing","biolink:Entity"],"information_content":100}}})
+        .mockResolvedValueOnce({ data : {"NCBIGene:1017":{"id":{"identifier":"NCBIGene:1017","label":"CDK2"},"equivalent_identifiers":[{"identifier":"NCBIGene:1017","label":"CDK2"},{"identifier":"ENSEMBL:ENSG00000123374"},{"identifier":"HGNC:1771","label":"CDK2"},{"identifier":"OMIM:116953"},{"identifier":"UMLS:C1332733","label":"CDK2 gene"},{"identifier":"UniProtKB:A0A024RB10","label":"A0A024RB10_HUMAN Cyclin-dependent kinase 2, isoform CRA_a (trembl)"},{"identifier":"UniProtKB:A0A024RB77","label":"A0A024RB77_HUMAN Cyclin-dependent kinase 2, isoform CRA_b (trembl)"},{"identifier":"UniProtKB:B4DDL9","label":"B4DDL9_HUMAN cDNA FLJ54979, highly similar to Homo sapiens cyclin-dependent kinase 2 (CDK2), transcript variant 2, mRNA (trembl)"},{"identifier":"UniProtKB:E7ESI2","label":"E7ESI2_HUMAN Cyclin-dependent kinase 2 (trembl)"},{"identifier":"ENSEMBL:ENSP00000393605"},{"identifier":"UniProtKB:G3V5T9","label":"G3V5T9_HUMAN Cyclin-dependent kinase 2 (trembl)"},{"identifier":"ENSEMBL:ENSP00000452514"},{"identifier":"UniProtKB:P24941","label":"CDK2_HUMAN Cyclin-dependent kinase 2 (sprot)"},{"identifier":"PR:P24941","label":"cyclin-dependent kinase 2 (human)"},{"identifier":"UMLS:C0108855","label":"CDK2 protein, human"}],"type":["biolink:Gene","biolink:GeneOrGeneProduct","biolink:GenomicEntity","biolink:ChemicalEntityOrGeneOrGeneProduct","biolink:PhysicalEssence","biolink:OntologyClass","biolink:BiologicalEntity","biolink:NamedThing","biolink:Entity","biolink:PhysicalEssenceOrOccurrent","biolink:ThingWithTaxon","biolink:MacromolecularMachineMixin","biolink:Protein","biolink:GeneProductMixin","biolink:Polypeptide","biolink:ChemicalEntityOrProteinOrPolypeptide"],"information_content":100}}})
       let handler = new QueryGraphHandler(ThreeHopExplainQuery);
       let edges = await handler.calculateEdges();
       expect(Object.keys(edges)).toHaveLength(3);
@@ -275,10 +287,12 @@ describe('Testing QueryGraphHandler Module', () => {
 
   describe('test chandling of null ids / categories / predicates', () => {
     test('Null id/categories graph', async () => {
+      axios.post.mockResolvedValueOnce({ data: {"MONDO:0005737":{"id":{"identifier":"MONDO:0005737","label":"Ebola hemorrhagic fever"},"equivalent_identifiers":[{"identifier":"MONDO:0005737","label":"Ebola hemorrhagic fever"},{"identifier":"DOID:4325","label":"Ebola hemorrhagic fever"},{"identifier":"ORPHANET:319218"},{"identifier":"UMLS:C0282687","label":"Hemorrhagic Fever, Ebola"},{"identifier":"MESH:D019142","label":"Hemorrhagic Fever, Ebola"},{"identifier":"MEDDRA:10014071"},{"identifier":"MEDDRA:10014072"},{"identifier":"MEDDRA:10014074"},{"identifier":"MEDDRA:10055245"},{"identifier":"NCIT:C36171","label":"Ebola Hemorrhagic Fever"},{"identifier":"SNOMEDCT:37109004"},{"identifier":"ICD10:A98.4"}],"type":["biolink:Disease","biolink:DiseaseOrPhenotypicFeature","biolink:ThingWithTaxon","biolink:BiologicalEntity","biolink:NamedThing","biolink:Entity"],"information_content":100}}})
       const handler = new QueryGraphHandler(QueryWithNullValues);
       await expect(handler.calculateEdges()).resolves.not.toThrow();
     });
     test('Null predicate graph', async () => {
+      axios.post.mockResolvedValueOnce({ data: {"MONDO:0005737":{"id":{"identifier":"MONDO:0005737","label":"Ebola hemorrhagic fever"},"equivalent_identifiers":[{"identifier":"MONDO:0005737","label":"Ebola hemorrhagic fever"},{"identifier":"DOID:4325","label":"Ebola hemorrhagic fever"},{"identifier":"ORPHANET:319218"},{"identifier":"UMLS:C0282687","label":"Hemorrhagic Fever, Ebola"},{"identifier":"MESH:D019142","label":"Hemorrhagic Fever, Ebola"},{"identifier":"MEDDRA:10014071"},{"identifier":"MEDDRA:10014072"},{"identifier":"MEDDRA:10014074"},{"identifier":"MEDDRA:10055245"},{"identifier":"NCIT:C36171","label":"Ebola Hemorrhagic Fever"},{"identifier":"SNOMEDCT:37109004"},{"identifier":"ICD10:A98.4"}],"type":["biolink:Disease","biolink:DiseaseOrPhenotypicFeature","biolink:ThingWithTaxon","biolink:BiologicalEntity","biolink:NamedThing","biolink:Entity"],"information_content":100}}})
       const handler = new QueryGraphHandler(QueryWithNullPredicate);
       const edges = await handler.calculateEdges();
       // if this is undefined (not null) then smartapi-kg treats as if the field doesn't exist (desired behavior)
