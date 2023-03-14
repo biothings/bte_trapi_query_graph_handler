@@ -182,68 +182,51 @@ module.exports = class QEdge {
     records.forEach((record) => {
       const subjectTypes = record.subject.semanticType.map((type) => type.replace('biolink:', ''));
       const objectTypes = record.object.semanticType.map((type) => type.replace('biolink:', ''));
-      const subjectOriginal = record.subject.original;
-      const objectOriginal = record.object.original;
+      const nodeOriginals = {
+        subject: record.subject.original,
+        object: record.object.original,
+      };
 
-      subjectTypes.forEach((subjectType) => {
-        if (!typesToInclude.includes(subjectType) && !typesToInclude.includes('NamedThing')) {
-          return;
-        }
-        if (!all[subjectType]) {
-          all[subjectType] = {};
-        }
-        let originalAliases = new Set();
-        record.subject.equivalentCuries.forEach((curie) => {
-          originalAliases.add(curie);
-        });
-        originalAliases = [...originalAliases];
-        //check and add only unique
-        let wasFound = false;
-        originalAliases.forEach((alias) => {
-          if (all[subjectType][alias]) {
-            wasFound = true;
+      Object.entries({ subject: subjectTypes, object: objectTypes }).forEach(([node, nodeTypes]) => {
+        nodeTypes.forEach((nodeType) => {
+          const nodeOriginal = nodeOriginals[node];
+
+          if (!typesToInclude.includes(nodeType) && !typesToInclude.includes('NamedThing')) {
+            return;
+          }
+          if (!all[nodeType]) {
+            all[nodeType] = {};
+          }
+          let originalAliases = new Set();
+          record[node].equivalentCuries.forEach((curie) => {
+            originalAliases.add(curie);
+          });
+          originalAliases = [...originalAliases];
+          // check and add only unique
+          let wasFound = false;
+          originalAliases.forEach((alias) => {
+            if (all[nodeType][alias]) {
+              wasFound = true;
+            }
+          });
+          if (!wasFound) {
+            all[nodeType][nodeOriginal] = originalAliases;
+          }
+
+          if (!all[nodeType][nodeOriginal] || all[nodeType][nodeOriginal].length === 0) {
+            if (record[node].curie.length > 0) {
+              // else #2 check curie
+              all[nodeType][nodeOriginal] = [record[node].curie];
+            } else {
+              // #3 last resort check original
+              all[nodeType][nodeOriginal] = [nodeOriginal];
+            }
           }
         });
-        if (!wasFound) {
-          all[subjectType][subjectOriginal] = originalAliases;
-        } else if (record.subject.curie.length > 0) {
-          //else #2 check curie
-          all[subjectType][subjectOriginal] = [record.subject.curie];
-        } else {
-          //#3 last resort check original
-          all[subjectType][subjectOriginal] = [subjectOriginal];
-        }
       });
 
-      objectTypes.forEach((objectType) => {
-        if (!typesToInclude.includes(objectType) && !typesToInclude.includes('NamedThing')) {
-          return;
-        }
-        if (!all[objectType]) {
-          all[objectType] = {};
-        }
-        let originalAliases = new Set();
-        record.object.equivalentCuries.forEach((curie) => {
-          originalAliases.add(curie);
-        });
-        originalAliases = [...originalAliases];
-        //check and add only unique
-        let wasFound = false;
-        originalAliases.forEach((alias) => {
-          if (all[objectType][alias]) {
-            wasFound = true;
-          }
-        });
-        if (!wasFound) {
-          all[objectType][objectOriginal] = originalAliases;
-        } else if (record.object.curie.length > 0) {
-          //else #2 check curie
-          all[objectType][objectOriginal] = [record.object.curie];
-        } else {
-          //#3 last resort check original
-          all[objectType][objectOriginal] = [objectOriginal];
-        }
-      });
+      debug(`Collected entity ids in records: ${JSON.stringify(Object.keys(all))}`);
+      return all;
 
       // record.subject.normalizedInfo.forEach((o) => {
       //   //create semantic type if not included
@@ -368,8 +351,6 @@ module.exports = class QEdge {
       // });
     });
     // {Gene:{'id': ['alias']}}
-    debug(`Collected entity ids in records: ${JSON.stringify(Object.keys(all))}`);
-    return all;
   }
 
   _combineCuries(curies) {
