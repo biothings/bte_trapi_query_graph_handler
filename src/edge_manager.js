@@ -173,10 +173,6 @@ module.exports = class QueryEdgeManager {
     return not_executed;
   }
 
-  _filterRecords(records, qEdge) {
-
-  }
-
   _filterEdgeRecords(qEdge) {
     let keep = [];
     let records = qEdge.records;
