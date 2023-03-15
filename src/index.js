@@ -118,7 +118,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   }
 
   _initializeResponse() {
-    this.knowledgeGraph = new KnowledgeGraph();
+    this.knowledgeGraph = new KnowledgeGraph(this.options?.apiList?.include);
     this.trapiResultsAssembler = new TrapiResultsAssembler();
     this.bteGraph = new Graph();
     this.bteGraph.subscribe(this.knowledgeGraph);
