@@ -225,9 +225,6 @@ module.exports = class QEdge {
         });
       });
 
-      debug(`Collected entity ids in records: ${JSON.stringify(Object.keys(all))}`);
-      return all;
-
       // record.subject.normalizedInfo.forEach((o) => {
       //   //create semantic type if not included
       //   let type = o._leafSemanticType;
@@ -350,6 +347,8 @@ module.exports = class QEdge {
       //   }
       // });
     });
+    debug(`Collected entity ids in records: ${JSON.stringify(Object.keys(all))}`);
+    return all;
     // {Gene:{'id': ['alias']}}
   }
 
