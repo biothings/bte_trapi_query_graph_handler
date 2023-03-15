@@ -403,9 +403,12 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       return;
     }
     const manager = new EdgeManager(queryEdges, metaKG, this.options);
-    await manager.executeEdges();
 
+    const executionSuccess = await manager.executeEdges();
     this.logs = [...this.logs, ...manager.logs];
+    if (!executionSuccess) {
+      return;
+    }
     // update query graph
     this.bteGraph.update(manager.getRecords());
     //update query results

@@ -409,11 +409,11 @@ module.exports = class QueryEdgeManager {
         );
         return;
       }
-      //storing records will trigger a node entity count update
+      // storing records will trigger a node entity count update
       currentQEdge.storeRecords(queryRecords);
-      //filter records
+      // filter records
       this.updateEdgeRecords(currentQEdge);
-      //update and filter neighbors
+      // update and filter neighbors
       this.updateAllOtherEdges(currentQEdge);
       // check that any records are kept
       if (!currentQEdge.records.length) {
@@ -439,5 +439,6 @@ module.exports = class QueryEdgeManager {
     if (process.env.DUMP_RECORDS) {
       await this.dumpRecords(this.getRecords());
     }
+    return true;
   }
 };
