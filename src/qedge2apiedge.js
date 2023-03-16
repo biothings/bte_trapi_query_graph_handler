@@ -33,9 +33,9 @@ module.exports = class QEdge2APIEdgeHandler {
       new LogEntry(
         'DEBUG',
         null,
-        `BTE is trying to find metaKG edges (smartAPI registry, x-bte annotation) connecting from ${qEdge.getInputNode().getCategories()} to ${qEdge
-          .getOutputNode()
-          .getCategories()} with predicate ${qEdge.getPredicate()}`,
+        `BTE is trying to find metaKG edges (smartAPI registry, x-bte annotation) connecting from ${qEdge
+          .getInputNode()
+          .getCategories()} to ${qEdge.getOutputNode().getCategories()} with predicate ${qEdge.getPredicate()}`,
       ).getLog(),
     );
     let filterCriteria = {
@@ -129,9 +129,9 @@ module.exports = class QEdge2APIEdgeHandler {
         entity.equivalentIDs.forEach((equivalentCurie) => {
           if (equivalentCurie.includes(inputPrefix)) {
             const id = equivalentCurie.split(':').slice(1).join(':');
-            id_mapping[id] = curie;
+            id_mapping[equivalentCurie] = curie;
             input_resolved_identifiers[curie] = entity;
-            inputs.push(id);
+            inputs.push(CURIE_WITH_PREFIXES.includes(equivalentCurie.split(':')[0]) ? equivalentCurie : id);
           }
         });
       }
@@ -142,18 +142,17 @@ module.exports = class QEdge2APIEdgeHandler {
       batchSize = 1000;
     }
     let configuredLimit = metaXEdge.query_operation.batchSize;
-    if (metaXEdge.association["x-trapi"]?.batch_size_limit) {
-      configuredLimit = metaXEdge.association["x-trapi"].batch_size_limit < configuredLimit || !configuredLimit
-        ? metaXEdge.association["x-trapi"].batch_size_limit
-        : configuredLimit;
+    if (metaXEdge.association['x-trapi']?.batch_size_limit) {
+      configuredLimit =
+        metaXEdge.association['x-trapi'].batch_size_limit < configuredLimit || !configuredLimit
+          ? metaXEdge.association['x-trapi'].batch_size_limit
+          : configuredLimit;
     }
     let hardLimit = config.API_BATCH_SIZE.find((api) => {
       return api.id === metaXEdge.association.smartapi.id || api.name === metaXEdge.association.api_name;
     });
     // BTE internal configured limit takes precedence over annotated limit
-    batchSize = hardLimit
-      ? hardLimit.max
-      : configuredLimit ? configuredLimit : batchSize;
+    batchSize = hardLimit ? hardLimit.max : configuredLimit ? configuredLimit : batchSize;
     if (Object.keys(id_mapping).length > 0) {
       _.chunk(inputs, batchSize).forEach((chunk) => {
         const APIEdge = { ...metaXEdge };
@@ -163,7 +162,7 @@ module.exports = class QEdge2APIEdgeHandler {
         const edgeToBePushed = APIEdge;
         edgeToBePushed.reasoner_edge = metaXEdge.reasoner_edge;
         APIEdges.push(edgeToBePushed);
-      })
+      });
     }
     return APIEdges;
   }
@@ -177,7 +176,7 @@ module.exports = class QEdge2APIEdgeHandler {
     const APIEdges = [];
     const inputPrefix = metaXEdge.association.input_id;
     const inputType = metaXEdge.association.input_type;
-    const resolvedCuries = metaXEdge.reasoner_edge.getInputNode().getEquivalentIDs()
+    const resolvedCuries = metaXEdge.reasoner_edge.getInputNode().getEquivalentIDs();
     Object.entries(resolvedCuries).forEach(([curie, entity]) => {
       if (entity.primaryTypes.includes(inputType.replace('biolink:', ''))) {
         entity.equivalentIDs.forEach((equivalentCurie) => {
@@ -226,13 +225,13 @@ module.exports = class QEdge2APIEdgeHandler {
         entity.equivalentIDs.forEach((equivalentCurie) => {
           if (equivalentCurie.includes(inputPrefix)) {
             const id = equivalentCurie.split(':').slice(1).join(':');
-            id_mapping[id] = curie;
+            id_mapping[equivalentCurie] = curie;
             input_resolved_identifiers[curie] = entity;
-            inputs.push(id);
+            inputs.push(CURIE_WITH_PREFIXES.includes(equivalentCurie.split(':')[0]) ? equivalentCurie : id);
           }
         });
       }
-    })
+    });
     let batchSize = Infinity;
     if (metaXEdge.tags.includes('biothings')) {
       batchSize = 1000;
@@ -242,9 +241,7 @@ module.exports = class QEdge2APIEdgeHandler {
       return api.id === metaXEdge.association.smartapi.id || api.name === metaXEdge.association.api_name;
     });
     // BTE internal configured limit takes precedence over annotated limit
-    batchSize = hardLimit
-      ? hardLimit.max
-      : configuredLimit ? configuredLimit : batchSize;
+    batchSize = hardLimit ? hardLimit.max : configuredLimit ? configuredLimit : batchSize;
     if (Object.keys(id_mapping).length > 0) {
       _.chunk(inputs, batchSize).forEach((chunk) => {
         const APIEdge = { ...metaXEdge };
@@ -280,21 +277,25 @@ module.exports = class QEdge2APIEdgeHandler {
 
   async convert(qEdges) {
     let APIEdges = [];
-    await Promise.all(qEdges.map(async (qEdge) => {
-      const metaXedges = await this.getMetaXEdges(qEdge);
-      const apis = _.uniq(metaXedges.map(api => api.association.api_name));
-      debug(`${apis.length} APIs being used:`, JSON.stringify(apis));
-      debug(`${metaXedges.length} SmartAPI edges are retrieved....`);
-      await Promise.all(metaXedges.map(async (metaXEdge) => {
-        let newEdges = await this._createAPIEdges(metaXEdge);
-        debug(`${newEdges.length} metaKG are created....`);
-        newEdges = newEdges.map((e) => {
-          e.filter = qEdge.filter;
-          return e;
-        });
-        APIEdges = [...APIEdges, ...newEdges];
-      }));
-    }));
+    await Promise.all(
+      qEdges.map(async (qEdge) => {
+        const metaXedges = await this.getMetaXEdges(qEdge);
+        const apis = _.uniq(metaXedges.map((api) => api.association.api_name));
+        debug(`${apis.length} APIs being used:`, JSON.stringify(apis));
+        debug(`${metaXedges.length} SmartAPI edges are retrieved....`);
+        await Promise.all(
+          metaXedges.map(async (metaXEdge) => {
+            let newEdges = await this._createAPIEdges(metaXEdge);
+            debug(`${newEdges.length} metaKG are created....`);
+            newEdges = newEdges.map((e) => {
+              e.filter = qEdge.filter;
+              return e;
+            });
+            APIEdges = [...APIEdges, ...newEdges];
+          }),
+        );
+      }),
+    );
     if (APIEdges.length === 0) {
       debug(`No metaKG found for this query batch.`);
       this.logs.push(
