@@ -30,7 +30,7 @@ module.exports = class BTEGraph {
             equivalentCuries: record.object.equivalentCuries,
             names: record.object.names,
             label: record.object.label,
-            category: record.object.semanticType,
+            category: [record.object.semanticType[0]],
             nodeAttributes: record.object.attributes,
           });
         }
@@ -41,7 +41,7 @@ module.exports = class BTEGraph {
             equivalentCuries: record.subject.equivalentCuries,
             names: record.subject.names,
             label: record.subject.label,
-            category: record.subject.semanticType,
+            category: [record.subject.semanticType[0]],
             nodeAttributes: record.subject.attributes,
           });
         }

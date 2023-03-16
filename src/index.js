@@ -1,6 +1,5 @@
 const meta_kg = require('@biothings-explorer/smartapi-kg');
 var path = require('path');
-const BatchEdgeQueryHandler = require('./batch_edge_query');
 const QueryGraph = require('./query_graph');
 const KnowledgeGraph = require('./graph/knowledge_graph');
 const TrapiResultsAssembler = require('./results_assembly/query_results');
@@ -11,7 +10,7 @@ const EdgeManager = require('./edge_manager');
 const _ = require('lodash');
 const QEdge2APIEdgeHandler = require('./qedge2apiedge');
 const LogEntry = require('./log_entry');
-const { redisClient } = require('./redis-client');
+const { redisClient, getNewRedisClient} = require('./redis-client');
 const config = require('./config');
 const fs = require('fs').promises;
 const { getDescendants } = require('@biothings-explorer/node-expansion');
@@ -22,6 +21,7 @@ const InferredQueryHandler = require('./inferred_mode/inferred_mode');
 
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 exports.redisClient = redisClient;
+exports.getNewRedisClient = getNewRedisClient;
 exports.LogEntry = LogEntry;
 exports.getTemplates = getTemplates;
 exports.supportedLookups = supportedLookups;
@@ -47,11 +47,14 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     const unregisteredAPIs = [];
 
     JSON.parse(smartapiRegistry).hits.forEach((smartapiRegistration) => {
-      smartapiIds.push(smartapiRegistration._id)
-      inforesIds.push(smartapiRegistration.info?.['x-translator']?.infores)
+      smartapiIds.push(smartapiRegistration._id);
+      inforesIds.push(smartapiRegistration.info?.['x-translator']?.infores);
     });
     configListAPIs.forEach((configListApi) => {
-      if (smartapiIds.includes(configListApi.id ?? null) === false && inforesIds.includes(configListApi.infores ?? null) === false) {
+      if (
+        smartapiIds.includes(configListApi.id ?? null) === false &&
+        inforesIds.includes(configListApi.infores ?? null) === false
+      ) {
         unregisteredAPIs.push(configListApi.id ?? configListApi.infores);
         debug(`${configListApi['name']} not found in smartapi registry`);
       }
@@ -112,7 +115,6 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
           debug(log_msg);
           this.logs.push(new LogEntry('INFO', null, log_msg).getLog());
         }
-
       }
     }
   }
@@ -144,16 +146,6 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     }
   }
 
-  _createBatchEdgeQueryHandlersForCurrent(currentQEdge, metaKG) {
-    let handler = new BatchEdgeQueryHandler(metaKG, this.resolveOutputIDs, {
-      caching: this.options.caching,
-      submitter: this.options.submitter,
-      recordHashEdgeAttributes: config.EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,
-    });
-    handler.setEdges(currentQEdge);
-    return handler;
-  }
-
   async _edgesSupported(qEdges, metaKG) {
     if (this.options.dryrun) {
       let log_msg =
@@ -163,7 +155,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
 
     // _.cloneDeep() is resource-intensive but only runs once per query
     qEdges = _.cloneDeep(qEdges);
-    const manager = new EdgeManager(qEdges);
+    const manager = new EdgeManager(qEdges, metaKG, this.options);
     const qEdgesMissingOps = {};
     while (manager.getEdgesNotExecuted()) {
       let currentQEdge = manager.getNext();
@@ -236,18 +228,6 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     }
   }
 
-  async _logSkippedQueries(unavailableAPIs) {
-    Object.entries(unavailableAPIs).forEach(([api, { skippedQueries }]) => {
-      if (skippedQueries > 0) {
-        const skipMessage = `${skippedQueries} additional quer${skippedQueries > 1 ? 'ies' : 'y'} to ${api} ${
-          skippedQueries > 1 ? 'were' : 'was'
-        } skipped as the API was unavailable.`;
-        debug(skipMessage);
-        this.logs.push(new LogEntry('WARNING', null, skipMessage).getLog());
-      }
-    });
-  }
-
   async dumpRecords(records) {
     let filePath = path.resolve('../../..', process.env.DUMP_RECORDS);
     // create new (unique) file if arg is directory
@@ -280,6 +260,12 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   }
 
   async _handleInferredEdges(usePredicate = true) {
+    if (!this._queryIsOneHop()) {
+      const message = 'Inferred Mode edges are only supported in single-edge queries. Your query terminates.';
+      debug(message);
+      this.logs.push(new LogEntry('WARNING', null, message).getLog());
+      return;
+    }
     const inferredQueryHandler = new InferredQueryHandler(
       this,
       TRAPIQueryHandler,
@@ -290,7 +276,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       this.predicatePath,
       this.includeReasoner,
     );
-    const inferredQueryResponse = await inferredQueryHandler.query()
+    const inferredQueryResponse = await inferredQueryHandler.query();
     if (inferredQueryResponse) {
       this.getResponse = () => inferredQueryResponse;
     }
@@ -342,7 +328,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
           .filter(({ message, data }) => {
             const correctType = data?.type === 'query' && data?.hits;
             if (resultTemplates) {
-              return correctType && resultTemplates.some((queryIndex) => message.includes(`[Template-${queryIndex + 1}]`));
+              return (
+                correctType && resultTemplates.some((queryIndex) => message.includes(`[Template-${queryIndex + 1}]`))
+              );
             }
             return correctType;
           })
@@ -361,10 +349,11 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       ).getLog(),
       new LogEntry('INFO', null, `APIs: ${sources.join(', ')}`).getLog(),
     ];
-  }
+  };
 
   async query() {
     this._initializeResponse();
+
     debug('Start to load metakg.');
     const metaKG = this._loadMetaKG();
     if (!metaKG.ops.length) {
@@ -380,6 +369,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       return;
     }
     debug('MetaKG successfully loaded!');
+
     if (global.missingAPIs) {
       this.logs.push(
         new LogEntry(
@@ -391,6 +381,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         ).getLog(),
       );
     }
+
     let queryEdges = await this._processQueryGraph(this.queryGraph);
     // TODO remove this when constraints implemented
     if (await this._checkContraints()) {
@@ -403,107 +394,28 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       return;
     }
     debug(`(3) All edges created ${JSON.stringify(queryEdges)}`);
-    if (this._queryUsesInferredMode() && this._queryIsOneHop()) {
+
+    if (this._queryUsesInferredMode()) {
       await this._handleInferredEdges();
-      return;
-    } else if (this._queryUsesInferredMode() && !this._queryIsOneHop()) {
-      const message = 'Inferred Mode edges are only supported in single-edge queries. Your query terminates.';
-      debug(message);
-      this.logs.push(new LogEntry('WARNING', null, message).getLog());
       return;
     }
     if (!(await this._edgesSupported(queryEdges, metaKG))) {
       return;
     }
-    const manager = new EdgeManager(queryEdges);
-    const unavailableAPIs = {};
-    while (manager.getEdgesNotExecuted()) {
-      //next available/most efficient edge
-      let currentQEdge = manager.getNext();
-      //crate queries from edge
-      let handler = this._createBatchEdgeQueryHandlersForCurrent(currentQEdge, metaKG);
-      this.logs.push(
-        new LogEntry(
-          'INFO',
-          null,
-          `Executing ${currentQEdge.getID()}${currentQEdge.isReversed() ? ' (reversed)' : ''}: ${
-            currentQEdge.subject.id
-          } ${currentQEdge.isReversed() ? '<--' : '-->'} ${currentQEdge.object.id}`,
-        ).getLog(),
-      );
-      debug(`(5) Executing current edge >> "${currentQEdge.getID()}"`);
-      //execute current edge query
-      let queryRecords = await handler.query(handler.qEdges, unavailableAPIs);
-      this.logs = [...this.logs, ...handler.logs];
-      if (queryRecords === undefined) return;
-      // create an edge execution summary
-      let success = 0,
-        fail = 0,
-        total = 0;
-      let cached = this.logs.filter(
-        ({ data }) => data?.qEdgeID === currentQEdge.id && data?.type === 'cacheHit',
-      ).length;
-      this.logs
-        .filter(({ data }) => data?.qEdgeID === currentQEdge.id && data?.type === 'query')
-        .forEach(({ data }) => {
-          !data.error ? success++ : fail++;
-          total++;
-        });
-      this.logs.push(
-        new LogEntry(
-          'INFO',
-          null,
-          `${currentQEdge.id} execution: ${total} queries (${success} success/${fail} fail) and (${cached}) cached qEdges return (${queryRecords.length}) records`,
-          {},
-        ).getLog(),
-      );
-      if (queryRecords.length === 0) {
-        this._logSkippedQueries(unavailableAPIs);
-        debug(`(X) Terminating..."${currentQEdge.getID()}" got 0 records.`);
-        this.logs.push(
-          new LogEntry(
-            'WARNING',
-            null,
-            `qEdge (${currentQEdge.getID()}) got 0 records. Your query terminates.`,
-          ).getLog(),
-        );
-        return;
-      }
-      //storing records will trigger a node entity count update
-      currentQEdge.storeRecords(queryRecords);
-      //filter records
-      manager.updateEdgeRecords(currentQEdge);
-      //update and filter neighbors
-      manager.updateAllOtherEdges(currentQEdge);
-      // check that any records are kept
-      if (!currentQEdge.records.length) {
-        this._logSkippedQueries(unavailableAPIs);
-        debug(`(X) Terminating..."${currentQEdge.getID()}" kept 0 records.`);
-        this.logs.push(
-          new LogEntry(
-            'WARNING',
-            null,
-            `qEdge (${currentQEdge.getID()}) kept 0 records. Your query terminates.`,
-          ).getLog(),
-        );
-        return;
-      }
-      // edge all done
-      currentQEdge.executed = true;
-      debug(`(10) Edge successfully queried.`);
-    }
-    this._logSkippedQueries(unavailableAPIs);
-    // collect and organize records
-    manager.collectRecords();
-    // dump records if set to do so
-    if (process.env.DUMP_RECORDS) {
-      await this.dumpRecords(manager.getRecords());
-    }
+    const manager = new EdgeManager(queryEdges, metaKG, this.options);
+
+    const executionSuccess = await manager.executeEdges();
     this.logs = [...this.logs, ...manager.logs];
+    if (!executionSuccess) {
+      return;
+    }
     // update query graph
     this.bteGraph.update(manager.getRecords());
     //update query results
-    await this.trapiResultsAssembler.update(manager.getOrganizedRecords(), !(this.options.smartAPIID || this.options.teamName));
+    await this.trapiResultsAssembler.update(
+      manager.getOrganizedRecords(),
+      !(this.options.smartAPIID || this.options.teamName),
+    );
     this.logs = [...this.logs, ...this.trapiResultsAssembler.logs];
     // prune bteGraph
     this.bteGraph.prune(this.trapiResultsAssembler.getResults());
