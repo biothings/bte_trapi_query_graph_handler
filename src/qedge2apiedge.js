@@ -84,7 +84,9 @@ module.exports = class QEdge2APIEdgeHandler {
       if (entity.primaryTypes.includes(inputType.replace('biolink:', ''))) {
         entity.equivalentIDs.forEach((equivalentCurie) => {
           if (equivalentCurie.includes(inputPrefix)) {
-            const id = equivalentCurie.split(':').slice(1).join(':');
+            const id = CURIE_WITH_PREFIXES.includes(equivalentCurie.split(':')[0])
+              ? equivalentCurie
+              : equivalentCurie.split(':').slice(1).join(':');
             const APIEdge = { ...metaXEdge };
             APIEdge.input = id;
             APIEdge.input_resolved_identifiers = {
@@ -128,10 +130,12 @@ module.exports = class QEdge2APIEdgeHandler {
       } else if (entity.primaryTypes.includes(inputType.replace('biolink:', ''))) {
         entity.equivalentIDs.forEach((equivalentCurie) => {
           if (equivalentCurie.includes(inputPrefix)) {
-            const id = equivalentCurie.split(':').slice(1).join(':');
+            const id = CURIE_WITH_PREFIXES.includes(equivalentCurie.split(':')[0])
+              ? equivalentCurie
+              : equivalentCurie.split(':').slice(1).join(':');
             id_mapping[equivalentCurie] = curie;
             input_resolved_identifiers[curie] = entity;
-            inputs.push(CURIE_WITH_PREFIXES.includes(equivalentCurie.split(':')[0]) ? equivalentCurie : id);
+            inputs.push(id);
           }
         });
       }
@@ -181,8 +185,11 @@ module.exports = class QEdge2APIEdgeHandler {
       if (entity.primaryTypes.includes(inputType.replace('biolink:', ''))) {
         entity.equivalentIDs.forEach((equivalentCurie) => {
           if (equivalentCurie.includes(inputPrefix)) {
+            const id = CURIE_WITH_PREFIXES.includes(equivalentCurie.split(':')[0])
+              ? equivalentCurie
+              : equivalentCurie.split(':').slice(1).join(':');
             const APIEdge = { ...metaXEdge };
-            APIEdge.input = { queryInputs: equivalentCurie, ...APIEdge.query_operation.templateInputs };
+            APIEdge.input = { queryInputs: id, ...APIEdge.query_operation.templateInputs };
             APIEdge.input_resolved_identifiers = {
               [curie]: entity,
             };
@@ -224,10 +231,12 @@ module.exports = class QEdge2APIEdgeHandler {
       } else if (entity.primaryTypes.includes(inputType.replace('biolink:', ''))) {
         entity.equivalentIDs.forEach((equivalentCurie) => {
           if (equivalentCurie.includes(inputPrefix)) {
-            const id = equivalentCurie.split(':').slice(1).join(':');
+            const id = CURIE_WITH_PREFIXES.includes(equivalentCurie.split(':')[0])
+              ? equivalentCurie
+              : equivalentCurie.split(':').slice(1).join(':');
             id_mapping[equivalentCurie] = curie;
             input_resolved_identifiers[curie] = entity;
-            inputs.push(CURIE_WITH_PREFIXES.includes(equivalentCurie.split(':')[0]) ? equivalentCurie : id);
+            inputs.push(id);
           }
         });
       }
