@@ -88,7 +88,7 @@ async function getScores (recordsByQEdgeID) {
 
 // sigmoid function scaled from 0 to 1
 function scaled_sigmoid (input) {
-  const tuned_input = input/tuning_param;
+  const tuned_input = Math.max(input, 0)/tuning_param;
   const sigmoid = 1/(1 + Math.exp(-tuned_input))
   return sigmoid * 2 - 1;
 }
