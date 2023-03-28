@@ -145,7 +145,7 @@ module.exports = class BatchEdgeQueryHandler {
       debug(`Total number of records is (${queryRecords.length})`);
       const cacheTask = cacheHandler.cacheEdges(queryRecords);
       if (!(process.env.USE_THREADING === "false")) {
-        global.cachingTasks.push(cacheTask);
+        global.cachingTasks?.push(cacheTask);
       } else {
         await cacheTask;
       }
