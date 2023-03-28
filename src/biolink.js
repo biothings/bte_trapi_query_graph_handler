@@ -5,7 +5,7 @@ const debug = require('debug')('bte:biothings-explorer-trapi:EdgeReverse');
 class BioLinkModel {
   constructor() {
     if (!BioLinkModel.instance) {
-      debug('BioLink-model class is initiated.');
+      // debug('BioLink-model class is initiated.');
       this.biolink = new bl.BioLink();
       this.biolink.loadSync();
     }
