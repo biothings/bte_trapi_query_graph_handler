@@ -1,7 +1,6 @@
 const { redisClient } = require('./redis-client');
 const debug = require('debug')('bte:biothings-explorer-trapi:cache_handler');
 const LogEntry = require('./log_entry');
-const { parentPort } = require('worker_threads');
 const _ = require('lodash');
 const async = require('async');
 const helper = require('./helper');
@@ -9,6 +8,7 @@ const lz4 = require('lz4');
 const chunker = require('stream-chunker');
 const { Readable, Transform } = require('stream');
 const { Record } = require('@biothings-explorer/api-response-transform');
+const { threadId } = require('worker_threads');
 
 class DelimitedChunksDecoder extends Transform {
   constructor() {
@@ -200,13 +200,13 @@ module.exports = class {
 
   async cacheEdges(queryRecords) {
     if (this.cacheEnabled === false || process.env.INTERNAL_DISABLE_REDIS) {
-      if (parentPort) {
-        parentPort.postMessage({ cacheDone: true });
+      if (global.parentPort) {
+        global.parentPort.postMessage({ threadId, cacheDone: true });
       }
       return;
     }
-    if (parentPort) {
-      parentPort.postMessage({ cacheInProgress: 1 });
+    if (global.parentPort) {
+      global.parentPort.postMessage({ threadId, cacheInProgress: 1 });
     }
     debug('Start to cache query records.');
     try {
@@ -217,8 +217,8 @@ module.exports = class {
       await async.eachSeries(qEdgeHashes, async (hash) => {
         // lock to prevent caching to/reading from actively caching edge
         const redisID = 'bte:edgeCache:' + hash;
-        if (parentPort) {
-          parentPort.postMessage({ addCacheKey: redisID });
+        if (global.parentPort) {
+          global.parentPort.postMessage({ threadId, addCacheKey: redisID });
         }
         await redisClient.client.usingLock([`redisLock:${redisID}`], 600000, async (signal) => {
           try {
@@ -249,8 +249,8 @@ module.exports = class {
             failedHashes.push(hash);
             debug(`Failed to cache qEdge ${hash} records due to error ${error}. This does not stop other edges from caching nor terminate the query.`)
           } finally {
-            if (parentPort) {
-              parentPort.postMessage({ completeCacheKey: redisID });
+            if (global.parentPort) {
+              global.parentPort.postMessage({ threadId, completeCacheKey: redisID });
             }
           }
         });
@@ -266,8 +266,8 @@ module.exports = class {
     } catch (error) {
       debug(`Caching failed due to ${error}. This does not terminate the query.`);
     } finally {
-      if (parentPort) {
-        parentPort.postMessage({ cacheDone: 1 });
+      if (global.parentPort) {
+        global.parentPort.postMessage({ threadId, cacheDone: 1 });
       }
     }
   }
