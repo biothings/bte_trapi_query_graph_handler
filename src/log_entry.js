@@ -9,13 +9,21 @@ module.exports = class LogEntry {
   }
 
   getLog() {
-    return {
+    const log = {
       timestamp: new Date().toISOString(),
       level: this.level,
       message: this.message,
       code: this.code,
+    }
+    if (global.job) {
+      global.job.log(JSON.stringify(log, undefined, 2));
+    }
+    return {
+      ...log,
       data: this.data,
-      toJSON() { return _.omit(this, ['data', 'toJSON']) }
+      toJSON() {
+        return _.omit(this, ["data", "toJSON"]);
+      },
     };
   }
 };
