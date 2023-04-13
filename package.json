@@ -44,12 +44,12 @@
     "typescript": "^4.2.3"
   },
   "dependencies": {
-    "@biothings-explorer/call-apis": "^1.24.0",
-    "@biothings-explorer/node-expansion": "^1.0.0",
-    "@biothings-explorer/smartapi-kg": "^4.0.0",
+    "@biothings-explorer/call-apis": "file:../call-apis",
+    "@biothings-explorer/node-expansion": "file:../node-expansion",
+    "@biothings-explorer/smartapi-kg": "file:../smartapi-kg",
     "async": "^3.2.1",
-    "biolink-model": "^0.4.0",
-    "biomedical_id_resolver": "^3.10.0",
+    "biolink-model": "file:../../biolink-model",
+    "biomedical_id_resolver": "file:../../biomedical_id_resolver",
     "chi-square-p-value": "^1.0.5",
     "debug": "^4.3.1",
     "ioredis": "^5.0.6",
