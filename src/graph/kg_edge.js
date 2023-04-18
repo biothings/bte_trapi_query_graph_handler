@@ -5,6 +5,7 @@ module.exports = class KGEdge {
     this.subject = info.subject;
     this.object = info.object;
     this.apis = new Set();
+    this.api_ids = new Set();
     this.inforesCuries = new Set();
     this.sources = new Set();
     this.publications = new Set();
@@ -22,6 +23,18 @@ module.exports = class KGEdge {
     api.map((item) => {
       this.apis.add(item);
     });
+  }
+
+  addApiID(id) {
+    if (typeof id === 'undefined') {
+      return
+    }
+    if (!Array.isArray(id)) {
+      id = [id]
+    }
+    id.map((item) => {
+      this.api_ids.add(item);
+    })
   }
 
   addInforesCurie(inforesCurie) {

@@ -57,6 +57,7 @@ module.exports = class BTEGraph {
           });
         }
         this.edges[recordHash].addAPI(record.api);
+        this.edges[recordHash].addApiID(record.association.smartapi.id)
         this.edges[recordHash].addInforesCurie(record.apiInforesCurie);
         this.edges[recordHash].addSource(record.metaEdgeSource);
         this.edges[recordHash].addPublication(record.publications);
@@ -98,8 +99,8 @@ module.exports = class BTEGraph {
   checkPrimaryKnowledgeSources(knowledgeGraph) {
     let logs = []
     Object.keys(knowledgeGraph.edges).map((edge) => {
-      const has_primary_knowledge_source = knowledgeGraph.edges[edge].attributes.some(e => 
-        e.attribute_type_id === 'biolink:primary_knowledge_source' && 
+      const has_primary_knowledge_source = knowledgeGraph.edges[edge].attributes.some(e =>
+        e.attribute_type_id === 'biolink:primary_knowledge_source' &&
         ( e.value?.length || (!Array.isArray(e.value) && e.value))
       );
       if (!has_primary_knowledge_source) {
