@@ -81,7 +81,7 @@ module.exports = class BTEGraph {
       Object.entries(result.node_bindings).forEach(([node, bindings]) => {
         bindings.forEach((binding) => resultsBoundNodes.add(`${binding.id}-${node}`));
       });
-      Object.entries(result.edge_bindings).forEach(([edge, bindings]) => {
+      Object.entries(result.analyses[0].edge_bindings).forEach(([edge, bindings]) => {
         bindings.forEach((binding) => resultsBoundEdges.add(binding.id));
       });
     });
@@ -98,8 +98,8 @@ module.exports = class BTEGraph {
   checkPrimaryKnowledgeSources(knowledgeGraph) {
     let logs = []
     Object.keys(knowledgeGraph.edges).map((edge) => {
-      const has_primary_knowledge_source = knowledgeGraph.edges[edge].attributes.some(e => 
-        e.attribute_type_id === 'biolink:primary_knowledge_source' && 
+      const has_primary_knowledge_source = knowledgeGraph.edges[edge].attributes.some(e =>
+        e.attribute_type_id === 'biolink:primary_knowledge_source' &&
         ( e.value?.length || (!Array.isArray(e.value) && e.value))
       );
       if (!has_primary_knowledge_source) {

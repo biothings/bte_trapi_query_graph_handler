@@ -3,7 +3,7 @@ const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
 const LogEntry = require('../log_entry');
 const { getScores, calculateScore } = require('./score');
 const { Record } = require('@biothings-explorer/api-response-transform');
-const { enrichTrapiResultsWithPfocrFigures } = require('./pfocr')
+const { enrichTrapiResultsWithPfocrFigures } = require('./pfocr');
 
 /**
  * @type { Record }
@@ -63,10 +63,7 @@ module.exports = class TrapiResultsAssembler {
     // qNodeID: set{qEdgeID} for node: edges using node
     const qNodeEdgeCounts = Object.entries(recordsByQEdgeID).reduce(
       (qNodeCounts, [queryEdgeID, { connected_to, records }]) => {
-        [
-          records[0].subject.qNodeID,
-          records[0].object.qNodeID,
-        ].forEach((qNodeID) => {
+        [records[0].subject.qNodeID, records[0].object.qNodeID].forEach((qNodeID) => {
           if (!qNodeCounts[qNodeID]) {
             qNodeCounts[qNodeID] = new Set();
           }
@@ -127,13 +124,13 @@ module.exports = class TrapiResultsAssembler {
     queryGraphSolutions,
     queryGraphSolution,
     qNodeIDToMatch,
-    primaryCurieToMatch
+    primaryCurieToMatch,
   ) {
     //connected_to and records of starting edge of tree
-    const {connected_to, records} = recordsByQEdgeID[qEdgeID];
+    const { connected_to, records } = recordsByQEdgeID[qEdgeID];
 
     //get a valid record from records to continue
-    let record = records.find(rec => rec !== undefined);
+    let record = records.find((rec) => rec !== undefined);
 
     // queryNodeID example: 'n0'
     const inputQNodeID = record.subject.qNodeID;
@@ -156,44 +153,46 @@ module.exports = class TrapiResultsAssembler {
 
     const solutionClone = [...queryGraphSolution];
 
-    records.filter((record) => {
-      return [getMatchingPrimaryCurie(record), undefined].indexOf(primaryCurieToMatch) > -1 ;
-    }).forEach((record, i) => {
-      // primaryCurie example: 'NCBIGene:1234'
-      const matchingPrimaryCurie = getMatchingPrimaryCurie(record); //not used?
-      const otherPrimaryCurie = getOtherPrimaryCurie(record);
+    records
+      .filter((record) => {
+        return [getMatchingPrimaryCurie(record), undefined].indexOf(primaryCurieToMatch) > -1;
+      })
+      .forEach((record, i) => {
+        // primaryCurie example: 'NCBIGene:1234'
+        const matchingPrimaryCurie = getMatchingPrimaryCurie(record); //not used?
+        const otherPrimaryCurie = getOtherPrimaryCurie(record);
 
-      if (i !== 0) {
-        queryGraphSolution = [...solutionClone];
-      }
+        if (i !== 0) {
+          queryGraphSolution = [...solutionClone];
+        }
 
-      queryGraphSolution.push({
-        inputQNodeID: record.subject.qNodeID,
-        outputQNodeID: record.object.qNodeID,
-        inputPrimaryCurie: record.subject.curie,
-        outputPrimaryCurie: record.object.curie,
-        inputUMLS: record.subject.UMLS, //add umls for scoring
-        outputUMLS: record.object.UMLS, //add umls for scoring
-        qEdgeID: qEdgeID,
-        recordHash: record.recordHash,
+        queryGraphSolution.push({
+          inputQNodeID: record.subject.qNodeID,
+          outputQNodeID: record.object.qNodeID,
+          inputPrimaryCurie: record.subject.curie,
+          outputPrimaryCurie: record.object.curie,
+          inputUMLS: record.subject.UMLS, //add umls for scoring
+          outputUMLS: record.object.UMLS, //add umls for scoring
+          qEdgeID: qEdgeID,
+          recordHash: record.recordHash,
+        });
+
+        if (queryGraphSolution.length == edgeCount) {
+          queryGraphSolutions.push(queryGraphSolution);
+        }
+
+        connected_to.forEach((connectedQEdgeID) => {
+          this._getQueryGraphSolutions(
+            recordsByQEdgeID,
+            connectedQEdgeID,
+            edgeCount,
+            queryGraphSolutions,
+            queryGraphSolution,
+            otherQNodeID,
+            otherPrimaryCurie,
+          );
+        });
       });
-
-      if (queryGraphSolution.length == edgeCount) {
-        queryGraphSolutions.push(queryGraphSolution);
-      }
-
-      connected_to.forEach((connectedQEdgeID) => {
-        this._getQueryGraphSolutions(
-          recordsByQEdgeID,
-          connectedQEdgeID,
-          edgeCount,
-          queryGraphSolutions,
-          queryGraphSolution,
-          otherQNodeID,
-          otherPrimaryCurie
-        );
-      });
-    });
   }
 
   /**
@@ -250,10 +249,10 @@ module.exports = class TrapiResultsAssembler {
 
     if (shouldScore) {
       try {
-        scoreCombos =  await getScores(recordsByQEdgeID);
+        scoreCombos = await getScores(recordsByQEdgeID);
         debug(`Successfully got ${scoreCombos.length} score combos.`);
       } catch (err) {
-        debug("Error getting scores: ", err);
+        debug('Error getting scores: ', err);
       }
     }
 
@@ -265,20 +264,19 @@ module.exports = class TrapiResultsAssembler {
     // find all QNodes having is_set params
     // NOTE: is_set in the query graph and the JavaScript Set object below refer to different sets.
     const qNodeIDsWithIsSet = new Set();
-    Object.entries(recordsByQEdgeID).forEach(([qEdgeID, {connected_to, records}]) => {
-
+    Object.entries(recordsByQEdgeID).forEach(([qEdgeID, { connected_to, records }]) => {
       const inputQNodeID = records[0].subject.qNodeID;
       const outputQNodeID = records[0].object.qNodeID;
 
       if (records[0].subject.isSet) {
-        qNodeIDsWithIsSet.add(inputQNodeID)
+        qNodeIDsWithIsSet.add(inputQNodeID);
       }
       if (records[0].object.isSet) {
-        qNodeIDsWithIsSet.add(outputQNodeID)
+        qNodeIDsWithIsSet.add(outputQNodeID);
       }
     });
 
-    debug(`Nodes with "is_set": ${JSON.stringify([...qNodeIDsWithIsSet])}`)
+    debug(`Nodes with "is_set": ${JSON.stringify([...qNodeIDsWithIsSet])}`);
 
     // find a QNode having only one QEdge to use as the root node for tree traversal
     let [initialQNodeIDToMatch, initialQEdgeID] = this._getValidInitialPairs(recordsByQEdgeID)[0];
@@ -327,24 +325,18 @@ module.exports = class TrapiResultsAssembler {
       // using a set so we don't repeat a previously entered input as an output or vice versa.
       const uniqueNodeIDs = new Set();
 
-      queryGraphSolution.forEach(({
-        inputQNodeID, outputQNodeID,
-        inputPrimaryCurie, outputPrimaryCurie,
-        qEdgeID, recordHash
-      }) => {
-        uniqueNodeIDs.add(
-          this._getUniqueNodeID(qNodeIDsWithIsSet, inputQNodeID, inputPrimaryCurie)
-        );
-        uniqueNodeIDs.add(
-          this._getUniqueNodeID(qNodeIDsWithIsSet, outputQNodeID, outputPrimaryCurie)
-        );
-      });
+      queryGraphSolution.forEach(
+        ({ inputQNodeID, outputQNodeID, inputPrimaryCurie, outputPrimaryCurie, qEdgeID, recordHash }) => {
+          uniqueNodeIDs.add(this._getUniqueNodeID(qNodeIDsWithIsSet, inputQNodeID, inputPrimaryCurie));
+          uniqueNodeIDs.add(this._getUniqueNodeID(qNodeIDsWithIsSet, outputQNodeID, outputPrimaryCurie));
+        },
+      );
 
       // The separator can be anything that won't appear in the actual QNodeIDs or primaryCuries
       // Using .sort() because a JS Set is iterated in insertion order, and I haven't
       // verified the queryGraphSolutions are always in the same order. However, they should be,
       // so it's possible .sort() is not needed.
-      const trapiResultID = Array.from(uniqueNodeIDs).sort().join("_&_");
+      const trapiResultID = Array.from(uniqueNodeIDs).sort().join('_&_');
       // input_QNodeID-input_primaryCurie_&_output_QNodeID-_output_primaryCurie_&_...
       //
       // Example trapiResultIDs:
@@ -358,36 +350,36 @@ module.exports = class TrapiResultsAssembler {
       if (!solutionsByTrapiResultID.hasOwnProperty(trapiResultID)) {
         solutionsByTrapiResultID[trapiResultID] = [];
       }
-      solutionsByTrapiResultID[trapiResultID].push(queryGraphSolution)
+      solutionsByTrapiResultID[trapiResultID].push(queryGraphSolution);
     });
 
-    const consolidatedSolutions = Object.entries(solutionsByTrapiResultID).map(([trapiResultID, queryGraphSolutions]) => {
-      debug(`result ID: ${trapiResultID} has ${queryGraphSolutions.length}`)
-      return zip(...queryGraphSolutions).map(solutionRecords => {
-        const solutionRecord_0 = solutionRecords[0];
-        const consolidatedSolutionRecord = {
-          inputQNodeID: solutionRecord_0.inputQNodeID,
-          outputQNodeID: solutionRecord_0.outputQNodeID,
-          inputUMLS: solutionRecord_0.inputUMLS,
-          outputUMLS: solutionRecord_0.outputUMLS,
-          inputPrimaryCuries: new Set(),
-          outputPrimaryCuries: new Set(),
-          qEdgeID: solutionRecord_0.qEdgeID,
-          recordHashes: new Set()
-        };
-        solutionRecords.forEach(({
-          inputQNodeID, outputQNodeID,
-          inputPrimaryCurie, outputPrimaryCurie,
-          qEdgeID, recordHash
-        }) => {
-          //debug(`  inputQNodeID: ${inputQNodeID}, inputPrimaryCurie: ${inputPrimaryCurie}, outputQNodeID ${outputQNodeID}, outputPrimaryCurie: ${outputPrimaryCurie}`)
-          consolidatedSolutionRecord.inputPrimaryCuries.add(inputPrimaryCurie);
-          consolidatedSolutionRecord.outputPrimaryCuries.add(outputPrimaryCurie);
-          consolidatedSolutionRecord.recordHashes.add(recordHash);
+    const consolidatedSolutions = Object.entries(solutionsByTrapiResultID).map(
+      ([trapiResultID, queryGraphSolutions]) => {
+        debug(`result ID: ${trapiResultID} has ${queryGraphSolutions.length}`);
+        return zip(...queryGraphSolutions).map((solutionRecords) => {
+          const solutionRecord_0 = solutionRecords[0];
+          const consolidatedSolutionRecord = {
+            inputQNodeID: solutionRecord_0.inputQNodeID,
+            outputQNodeID: solutionRecord_0.outputQNodeID,
+            inputUMLS: solutionRecord_0.inputUMLS,
+            outputUMLS: solutionRecord_0.outputUMLS,
+            inputPrimaryCuries: new Set(),
+            outputPrimaryCuries: new Set(),
+            qEdgeID: solutionRecord_0.qEdgeID,
+            recordHashes: new Set(),
+          };
+          solutionRecords.forEach(
+            ({ inputQNodeID, outputQNodeID, inputPrimaryCurie, outputPrimaryCurie, qEdgeID, recordHash }) => {
+              //debug(`  inputQNodeID: ${inputQNodeID}, inputPrimaryCurie: ${inputPrimaryCurie}, outputQNodeID ${outputQNodeID}, outputPrimaryCurie: ${outputPrimaryCurie}`)
+              consolidatedSolutionRecord.inputPrimaryCuries.add(inputPrimaryCurie);
+              consolidatedSolutionRecord.outputPrimaryCuries.add(outputPrimaryCurie);
+              consolidatedSolutionRecord.recordHashes.add(recordHash);
+            },
+          );
+          return consolidatedSolutionRecord;
         });
-        return consolidatedSolutionRecord;
-      });
-    });
+      },
+    );
 
     let resultsWithoutScore = 0;
     let resultsWithScore = 0;
@@ -395,56 +387,61 @@ module.exports = class TrapiResultsAssembler {
      * The last step is to do the minor re-formatting to turn consolidatedSolutions
      * into the desired final results.
      */
-    this._results = consolidatedSolutions.map((consolidatedSolution) => {
+    this._results = consolidatedSolutions
+      .map((consolidatedSolution) => {
+        // TODO: replace with better score implementation later
+        const { score, scoredByNGD } = calculateScore(consolidatedSolution, scoreCombos);
+        const result = {
+          node_bindings: {},
+          analyses: [
+            {
+              reasoner_id: `infores:biothings-explorer`,
+              edge_bindings: {},
+              score: score,
+            },
+          ],
+        };
+        if (scoredByNGD) {
+          resultsWithScore++;
+        } else {
+          resultsWithoutScore++;
+        }
 
-      // TODO: replace with better score implementation later
-      const { score, scoredByNGD } = calculateScore(consolidatedSolution, scoreCombos);
-      const result = {node_bindings: {}, edge_bindings: {}, score: score};
-      if (scoredByNGD) {
-        resultsWithScore++;
-      } else {
-        resultsWithoutScore++;
-      }
+        if (!shouldScore) delete result.score;
 
-      if (!shouldScore) delete result.score;
+        consolidatedSolution.forEach(
+          ({ inputQNodeID, outputQNodeID, inputPrimaryCuries, outputPrimaryCuries, qEdgeID, recordHashes }) => {
+            result.node_bindings[inputQNodeID] = Array.from(inputPrimaryCuries).map((inputPrimaryCurie) => {
+              return {
+                id: inputPrimaryCurie,
+              };
+            });
 
-      consolidatedSolution.forEach(({
-        inputQNodeID, outputQNodeID,
-        inputPrimaryCuries, outputPrimaryCuries,
-        qEdgeID, recordHashes
-      }) => {
-        result.node_bindings[inputQNodeID] = Array.from(inputPrimaryCuries).map(inputPrimaryCurie => {
-          return {
-            id: inputPrimaryCurie
-          };
-        });
+            result.node_bindings[outputQNodeID] = Array.from(outputPrimaryCuries).map((outputPrimaryCurie) => {
+              return {
+                id: outputPrimaryCurie,
+              };
+            });
 
-        result.node_bindings[outputQNodeID] = Array.from(outputPrimaryCuries).map(outputPrimaryCurie => {
-          return {
-            id: outputPrimaryCurie
-          };
-        });
+            result.analyses[0].edge_bindings[qEdgeID] = Array.from(recordHashes).map((recordHash) => {
+              return {
+                id: recordHash,
+              };
+            });
+          },
+        );
 
-        result.edge_bindings[qEdgeID] = Array.from(recordHashes).map((recordHash) => {
-          return {
-            id: recordHash
-          };
-        });
-      });
-
-      return result;
-    })
-    .sort((result1, result2) => (result2.score ?? 0) - (result1.score ?? 0)); //sort by decreasing score
+        return result;
+      })
+      .sort((result1, result2) => (result2.score ?? 0) - (result1.score ?? 0)); //sort by decreasing score
 
     if (shouldScore) {
       try {
         const pfocrEnrichmentLogs = await enrichTrapiResultsWithPfocrFigures(this._results);
         this.logs.push(...pfocrEnrichmentLogs);
       } catch (err) {
-        debug("Error enriching with PFOCR figures: ", err);
-        this.logs.push(
-          new LogEntry('DEBUG', null, "Error enriching with PFOCR figures: ", err).getLog(),
-        );
+        debug('Error enriching with PFOCR figures: ', err);
+        this.logs.push(new LogEntry('DEBUG', null, 'Error enriching with PFOCR figures: ', err).getLog());
       }
       debug(`Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`);
       this.logs.push(
@@ -455,9 +452,9 @@ module.exports = class TrapiResultsAssembler {
           {
             type: 'scoring',
             scored: resultsWithScore,
-            unscored: resultsWithoutScore
-          }
-          ).getLog(),
+            unscored: resultsWithoutScore,
+          },
+        ).getLog(),
       );
     } else {
       debug(`Did not score results for this endpoint.`);
@@ -469,9 +466,9 @@ module.exports = class TrapiResultsAssembler {
           {
             type: 'scoring',
             scored: resultsWithScore,
-            unscored: resultsWithoutScore
-          }
-          ).getLog(),
+            unscored: resultsWithoutScore,
+          },
+        ).getLog(),
       );
     }
   }
