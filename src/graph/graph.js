@@ -57,7 +57,7 @@ module.exports = class BTEGraph {
           });
         }
         this.edges[recordHash].addAPI(record.api);
-        this.edges[recordHash].addApiID(record.association.smartapi.id)
+        this.edges[recordHash].addApiID(record.association?.smartapi?.id)
         this.edges[recordHash].addInforesCurie(record.apiInforesCurie);
         this.edges[recordHash].addSource(record.metaEdgeSource);
         this.edges[recordHash].addPublication(record.publications);
