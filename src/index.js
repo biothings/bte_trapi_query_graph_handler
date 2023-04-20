@@ -322,19 +322,32 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       return correctType;
     }).length;
     const queries = logs.filter(({ data }) => data?.type === 'query').length;
-    const sources = [
-      ...new Set(
-        logs
-          .filter(({ message, data }) => {
+    const query_sources = logs
+        .filter(({ message, data }) => {
             const correctType = data?.type === 'query' && data?.hits;
             if (resultTemplates) {
-              return (
+                return (
                 correctType && resultTemplates.some((queryIndex) => message.includes(`[Template-${queryIndex + 1}]`))
-              );
+                );
             }
             return correctType;
-          })
-          .map(({ data }) => data?.api_name),
+        })
+        .map(({ data }) => data?.api_name)
+    const cache_sources = logs
+        .filter(({ message, data }) => {
+            const correctType = data?.type === 'cacheHit';
+            if (resultTemplates) {
+                return (
+                    correctType && resultTemplates.some((queryIndex) => message.includes(`[Template-${queryIndex + 1}]`))
+                );
+            }
+            return correctType;
+        })
+        .map(({ data }) => data?.api_names)
+        .flat()
+    const sources = [
+      ...new Set(
+        query_sources.concat(cache_sources)
       ),
     ];
     let cached = logs.filter(({ data }) => data?.type === 'cacheHit').length;
