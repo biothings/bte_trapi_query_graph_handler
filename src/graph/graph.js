@@ -1,6 +1,7 @@
 const kg_edge = require('./kg_edge');
 const kg_node = require('./kg_node');
 const debug = require('debug')('bte:biothings-explorer-trapi:Graph');
+const LogEntry = require('../log_entry');
 
 module.exports = class BTEGraph {
   constructor() {
@@ -29,7 +30,7 @@ module.exports = class BTEGraph {
             equivalentCuries: record.object.equivalentCuries,
             names: record.object.names,
             label: record.object.label,
-            category: record.object.semanticType,
+            category: [record.object.semanticType[0]],
             nodeAttributes: record.object.attributes,
           });
         }
@@ -40,7 +41,7 @@ module.exports = class BTEGraph {
             equivalentCuries: record.subject.equivalentCuries,
             names: record.subject.names,
             label: record.subject.label,
-            category: record.subject.semanticType,
+            category: [record.subject.semanticType[0]],
             nodeAttributes: record.subject.attributes,
           });
         }
@@ -92,6 +93,26 @@ module.exports = class BTEGraph {
       .filter((recordHash) => !resultsBoundEdges.has(recordHash));
     edgesToDelete.forEach((unusedRecordHash) => delete this.edges[unusedRecordHash]);
     debug(`pruned ${nodesToDelete.length} nodes and ${edgesToDelete.length} edges from BTEGraph.`);
+  }
+
+  checkPrimaryKnowledgeSources(knowledgeGraph) {
+    let logs = []
+    Object.keys(knowledgeGraph.edges).map((edge) => {
+      const has_primary_knowledge_source = knowledgeGraph.edges[edge].attributes.some(e => 
+        e.attribute_type_id === 'biolink:primary_knowledge_source' && 
+        ( e.value?.length || (!Array.isArray(e.value) && e.value))
+      );
+      if (!has_primary_knowledge_source) {
+        const logMsg = `Edge ${edge} (APIs: ${Array.from(this.edges[edge].apis).join(', ')}) is missing a primary knowledge source`
+        debug(logMsg)
+        logs.push(new LogEntry(
+          'WARNING',
+          null,
+          logMsg,
+        ).getLog())
+      }
+    });
+    return logs
   }
 
   /**

@@ -180,144 +180,176 @@ module.exports = class QEdge {
     debug(`(7) Collecting Types: "${JSON.stringify(typesToInclude)}"`);
     let all = {};
     records.forEach((record) => {
-      record.subject.normalizedInfo.forEach((o) => {
-        //create semantic type if not included
-        let type = o._leafSemanticType;
-        if (
-          typesToInclude.includes(type) ||
-          typesToInclude.includes('NamedThing') ||
-          typesToInclude.toString().includes(type)
-        ) {
-          if (!Object.hasOwnProperty.call(all, type)) {
-            all[type] = {};
+      const subjectTypes = record.subject.semanticType.map((type) => type.replace('biolink:', ''));
+      const objectTypes = record.object.semanticType.map((type) => type.replace('biolink:', ''));
+      const nodeOriginals = {
+        subject: record.subject.original,
+        object: record.object.original,
+      };
+
+      Object.entries({ subject: subjectTypes, object: objectTypes }).forEach(([node, nodeTypes]) => {
+        nodeTypes.forEach((nodeType) => {
+          const nodeOriginal = nodeOriginals[node];
+
+          if (!typesToInclude.includes(nodeType) && !typesToInclude.includes('NamedThing')) {
+            return;
           }
-          //get original and aliases
-          let original = record.subject.original;
-          //#1 prefer equivalent ids
-          if (Object.hasOwnProperty.call(o, '_dbIDs')) {
-            let original_aliases = new Set();
-            for (const prefix in o._dbIDs) {
-              //check if array
-              if (Array.isArray(o._dbIDs[prefix])) {
-                o._dbIDs[prefix].forEach((single_alias) => {
-                  if (single_alias) {
-                    if (single_alias.includes(':')) {
-                      //value already has prefix
-                      original_aliases.add(single_alias);
-                    } else {
-                      //concat with prefix
-                      original_aliases.add(prefix + ':' + single_alias);
-                    }
-                  }
-                });
-              } else {
-                if (o._dbIDs[prefix].includes(':')) {
-                  //value already has prefix
-                  original_aliases.add(o._dbIDs[prefix]);
-                } else {
-                  //concat with prefix
-                  original_aliases.add(prefix + ':' + o._dbIDs[prefix]);
-                }
-              }
-            }
-            original_aliases = [...original_aliases];
-            //check and add only unique
-            let was_found = false;
-            original_aliases.forEach((alias) => {
-              if (Object.hasOwnProperty.call(all[type], alias)) {
-                was_found = true;
-              }
-            });
-            if (!was_found) {
-              all[type][original] = original_aliases;
-            }
+          if (!all[nodeType]) {
+            all[nodeType] = {};
           }
-          //else #2 check curie
-          else if (Object.hasOwnProperty.call(o, 'curie')) {
-            if (Array.isArray(o.curie)) {
-              all[type][original] = o.curie;
+          let originalAliases = new Set();
+          record[node].equivalentCuries.forEach((curie) => {
+            originalAliases.add(curie);
+          });
+          originalAliases = [...originalAliases];
+          // check and add only unique
+          let wasFound = false;
+          originalAliases.forEach((alias) => {
+            if (all[nodeType][alias]) {
+              wasFound = true;
+            }
+          });
+          if (!wasFound) {
+            all[nodeType][nodeOriginal] = originalAliases;
+          }
+
+          if (!all[nodeType][nodeOriginal] || all[nodeType][nodeOriginal].length === 0) {
+            if (record[node].curie.length > 0) {
+              // else #2 check curie
+              all[nodeType][nodeOriginal] = [record[node].curie];
             } else {
-              all[type][original] = [o.curie];
+              // #3 last resort check original
+              all[nodeType][nodeOriginal] = [nodeOriginal];
             }
           }
-          //#3 last resort check original
-          else {
-            all[type][original] = [original];
-          }
-        }
+        });
       });
 
-      record.object.normalizedInfo.forEach((o) => {
-        //create semantic type if not included
-        let type = o._leafSemanticType;
-        if (
-          typesToInclude.includes(type) ||
-          typesToInclude.includes('NamedThing') ||
-          typesToInclude.toString().includes(type)
-        ) {
-          if (!Object.hasOwnProperty.call(all, type)) {
-            all[type] = {};
-          }
-          //get original and aliases
-          let original = record.object.original;
+      // record.subject.normalizedInfo.forEach((o) => {
+      //   //create semantic type if not included
+      //   let type = o._leafSemanticType;
+      //   if (
+      //     typesToInclude.includes(type) ||
+      //     typesToInclude.includes('NamedThing') ||
+      //     typesToInclude.toString().includes(type)
+      //   ) {
 
-          //#1 prefer equivalent ids
-          if (Object.hasOwnProperty.call(o, '_dbIDs')) {
-            let original_aliases = new Set();
-            for (const prefix in o._dbIDs) {
-              //check if array
-              if (Array.isArray(o._dbIDs[prefix])) {
-                o._dbIDs[prefix].forEach((single_alias) => {
-                  if (single_alias) {
-                    if (single_alias.includes(':')) {
-                      //value already has prefix
-                      original_aliases.add(single_alias);
-                    } else {
-                      //concat with prefix
-                      original_aliases.add(prefix + ':' + single_alias);
-                    }
-                  }
-                });
-              } else {
-                if (o._dbIDs[prefix].includes(':')) {
-                  //value already has prefix
-                  original_aliases.add(o._dbIDs[prefix]);
-                } else {
-                  //concat with prefix
-                  original_aliases.add(prefix + ':' + o._dbIDs[prefix]);
-                }
-              }
-            }
-            original_aliases = [...original_aliases];
-            //check and add only unique
-            let was_found = false;
-            original_aliases.forEach((alias) => {
-              if (Object.hasOwnProperty.call(all[type], alias)) {
-                was_found = true;
-              }
-            });
-            if (!was_found) {
-              all[type][original] = original_aliases;
-            }
-          }
-          //else #2 check curie
-          else if (Object.hasOwnProperty.call(o, 'curie')) {
-            if (Array.isArray(o.curie)) {
-              all[type][original] = o.curie;
-            } else {
-              all[type][original] = [o.curie];
-            }
-          }
-          //#3 last resort check original
-          else {
-            all[type][original] = [original];
-          }
-        }
-      });
+      //     //get original and aliases
+      //     let original = record.subject.original;
+      //     //#1 prefer equivalent ids
+      //     if (Object.hasOwnProperty.call(o, '_dbIDs')) {
+      //       let original_aliases = new Set();
+      //       for (const prefix in o._dbIDs) {
+      //         //check if array
+      //         if (Array.isArray(o._dbIDs[prefix])) {
+      //           o._dbIDs[prefix].forEach((single_alias) => {
+      //             if (single_alias) {
+      //               if (single_alias.includes(':')) {
+      //                 //value already has prefix
+      //                 original_aliases.add(single_alias);
+      //               } else {
+      //                 //concat with prefix
+      //                 original_aliases.add(prefix + ':' + single_alias);
+      //               }
+      //             }
+      //           });
+      //         } else {
+      //           if (o._dbIDs[prefix].includes(':')) {
+      //             //value already has prefix
+      //             original_aliases.add(o._dbIDs[prefix]);
+      //           } else {
+      //             //concat with prefix
+      //             original_aliases.add(prefix + ':' + o._dbIDs[prefix]);
+      //           }
+      //         }
+      //       }
+      //       original_aliases = [...original_aliases];
+      //       //check and add only unique
+      //       let was_found = false;
+      //       original_aliases.forEach((alias) => {
+      //         if (Object.hasOwnProperty.call(all[type], alias)) {
+      //           was_found = true;
+      //         }
+      //       });
+      //       if (!was_found) {
+      //         all[type][original] = original_aliases;
+      //       }
+      //     }
+
+      //   }
+      // });
+
+      // record.object.normalizedInfo.forEach((o) => {
+      //   //create semantic type if not included
+      //   let type = o._leafSemanticType;
+      //   if (
+      //     typesToInclude.includes(type) ||
+      //     typesToInclude.includes('NamedThing') ||
+      //     typesToInclude.toString().includes(type)
+      //   ) {
+      //     if (!Object.hasOwnProperty.call(all, type)) {
+      //       all[type] = {};
+      //     }
+      //     //get original and aliases
+      //     let original = record.object.original;
+
+      //     //#1 prefer equivalent ids
+      //     if (Object.hasOwnProperty.call(o, '_dbIDs')) {
+      //       let original_aliases = new Set();
+      //       for (const prefix in o._dbIDs) {
+      //         //check if array
+      //         if (Array.isArray(o._dbIDs[prefix])) {
+      //           o._dbIDs[prefix].forEach((single_alias) => {
+      //             if (single_alias) {
+      //               if (single_alias.includes(':')) {
+      //                 //value already has prefix
+      //                 original_aliases.add(single_alias);
+      //               } else {
+      //                 //concat with prefix
+      //                 original_aliases.add(prefix + ':' + single_alias);
+      //               }
+      //             }
+      //           });
+      //         } else {
+      //           if (o._dbIDs[prefix].includes(':')) {
+      //             //value already has prefix
+      //             original_aliases.add(o._dbIDs[prefix]);
+      //           } else {
+      //             //concat with prefix
+      //             original_aliases.add(prefix + ':' + o._dbIDs[prefix]);
+      //           }
+      //         }
+      //       }
+      //       original_aliases = [...original_aliases];
+      //       //check and add only unique
+      //       let was_found = false;
+      //       original_aliases.forEach((alias) => {
+      //         if (Object.hasOwnProperty.call(all[type], alias)) {
+      //           was_found = true;
+      //         }
+      //       });
+      //       if (!was_found) {
+      //         all[type][original] = original_aliases;
+      //       }
+      //     }
+      //     //else #2 check curie
+      //     else if (Object.hasOwnProperty.call(o, 'curie')) {
+      //       if (Array.isArray(o.curie)) {
+      //         all[type][original] = o.curie;
+      //       } else {
+      //         all[type][original] = [o.curie];
+      //       }
+      //     }
+      //     //#3 last resort check original
+      //     else {
+      //       all[type][original] = [original];
+      //     }
+      //   }
+      // });
     });
-    // {Gene:{'id': ['alias']}}
     debug(`Collected entity ids in records: ${JSON.stringify(Object.keys(all))}`);
     return all;
+    // {Gene:{'id': ['alias']}}
   }
 
   _combineCuries(curies) {

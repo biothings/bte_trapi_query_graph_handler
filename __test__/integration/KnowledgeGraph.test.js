@@ -25,7 +25,7 @@ describe('Testing KnowledgeGraph Module', () => {
       'INCHIKEY:RZEKVGVHFLEQIL-UHFFFAOYSA-N',
     ],
     _names: ['Celecoxib', 'CELECOXIB', 'celecoxib', '[OBSOLETE] celecoxib'],
-    _semanticType: 'SmallMolecule',
+    _semanticType: ['biolink:SmallMolecule'],
     _nodeAttributes: {},
     _label: 'Celecoxib',
     _sourceNodes: {},

@@ -184,9 +184,9 @@ module.exports = class QueryGraphHandler {
         unknown: curies,
       });
       debug(`Query node missing categories...Looking for match...`);
-      if (Object.hasOwnProperty.call(category, curies[0]) && category[curies[0]][0]['semanticType']) {
-        category = category[curies[0]][0]['semanticType'];
-        return ['biolink:' + category];
+      if (category[curies[0]] && category[curies[0]].primaryTypes) {
+        category = category[curies[0]].primaryTypes;
+        return category.map(c => `biolink:${c}`);
       } else {
         debug(noMatchMessage);
         this.logs.push(new LogEntry('ERROR', null, noMatchMessage).getLog());
@@ -200,7 +200,7 @@ module.exports = class QueryGraphHandler {
         // get array of all unique categories for all curies
         const allCategories = [
           ...Object.values(await id_resolver.resolveSRI({ unknown: curies }))
-            .map((curie) => curie[0].semanticTypes)
+            .map((curie) => curie.semanticTypes)
             .filter((semanticTypes) => !semanticTypes.every((item) => item === null))
             .map((semanticTypes) => semanticTypes.map((t) => utils.removeBioLinkPrefix(t)))
             .reduce((set, arr) => new Set([...set, ...arr]), new Set()),

@@ -78,6 +78,7 @@ describe('test TRAPIQueryHandler methods', () => {
     spy.mockResolvedValue('fakeResponse');
     const { TRAPIQueryHandler } = require('../../src/index');
     const handler = new TRAPIQueryHandler();
+    handler.setQueryGraph(query.message.query_graph);
     await handler._handleInferredEdges();
     expect(handler.getResponse()).toEqual('fakeResponse');
   });
@@ -93,13 +94,13 @@ describe('test TRAPIQueryHandler methods', () => {
     const { TRAPIQueryHandler } = require('../../src/index');
     const handler1 = new TRAPIQueryHandler({
       smartAPIID: 'fakeID',
-    });
+    }, undefined, undefined, false);
     handler1.setQueryGraph(query.message.query_graph);
     await handler1.query();
     expect(handler1.logs.map((log) => log.level)).toContain('ERROR');
     const handler2 = new TRAPIQueryHandler({
       teamName: 'fakeID',
-    });
+    }, undefined, undefined, false);
     handler2.setQueryGraph(query.message.query_graph);
     await handler2.query();
     expect(handler2.logs.map((log) => log.level)).toContain('ERROR');

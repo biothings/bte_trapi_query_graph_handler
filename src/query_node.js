@@ -210,10 +210,8 @@ module.exports = class QNode {
     //     .filter((category) => !utils.toArray(this.category).includes(`biolink:${category}`)),
     // );
     let categories = utils.toArray(this.category).map((category) => utils.removeBioLinkPrefix(category));
-    Object.values(this.equivalentIDs).map((entities) => {
-      entities.map((entity) => {
-        categories = [...categories, entity.semanticType];
-      });
+    Object.values(this.equivalentIDs).map((entity) => {
+      categories = [...categories, ...entity.primaryTypes];
     });
     this.expandedCategories = utils.getUnique(
       utils.getUnique(categories).reduce((arr, category) => [...arr, ...(biolink.getDescendantClasses(category) || [])], []),
@@ -222,8 +220,8 @@ module.exports = class QNode {
   }
 
   getEntities() {
-    return Object.values(this.equivalentIDs).reduce((res, entities) => {
-      return [...res, ...entities];
+    return Object.values(this.equivalentIDs).reduce((res, entity) => {
+      return [...res, entity];
     }, []);
   }
 

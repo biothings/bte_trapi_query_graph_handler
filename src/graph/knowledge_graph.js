@@ -1,13 +1,14 @@
 const debug = require('debug')('bte:biothings-explorer-trapi:KnowledgeGraph');
 
 module.exports = class KnowledgeGraph {
-  constructor() {
+  constructor(apiList) {
     this.nodes = {};
     this.edges = {};
     this.kg = {
       nodes: this.nodes,
       edges: this.edges,
     };
+    this.apiList = apiList;
   }
 
   getNodes() {
@@ -20,7 +21,7 @@ module.exports = class KnowledgeGraph {
 
   _createNode(kgNode) {
     const res = {
-      categories: ['biolink:' + kgNode._semanticType],
+      categories: kgNode._semanticType,
       name: kgNode._label,
       attributes: [
         {
@@ -84,28 +85,23 @@ module.exports = class KnowledgeGraph {
       },
     ];
 
+    const direct_info_providers = this.apiList?.filter(e => e.primarySource)?.map(e => e.name) ?? []
+
     if (kgEdge.attributes['edge-attributes']) {
       //handle TRAPI APIs (Situation A of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208) and APIs that define 'edge-atributes' in x-bte
       attributes = [...attributes, ...kgEdge.attributes['edge-attributes']];
     } else if (
       //handle direct info providers (Situation C of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208)
-      [
-        'Clinical Risk KP API',
-        'Text Mining Targeted Association API',
-        'Multiomics Wellness KP API',
-        'Drug Response KP API',
-        'Text Mining Co-occurrence API',
-        'TCGA Mutation Frequency API',
-      ].some((api_name) => kgEdge.apis.has(api_name))
+      direct_info_providers.some((api_name) => kgEdge.apis.has(api_name))
     ) {
       attributes = [...attributes];
       //primary knowledge source
-      if (Array.from(kgEdge.sources).length) {
+      if (Array.from(kgEdge.sources).length || Array.from(kgEdge.inforesCuries).length) {
         attributes = [
           ...attributes,
           {
             attribute_type_id: 'biolink:primary_knowledge_source',
-            value: Array.from(kgEdge.sources),
+            value: [...Array.from(kgEdge.inforesCuries), ...Array.from(kgEdge.sources)],
             value_type_id: 'biolink:InformationResource',
           },
         ];
@@ -116,7 +112,7 @@ module.exports = class KnowledgeGraph {
           ...attributes.filter(attr => attr.attribute_type_id !== 'biolink:aggregator_knowledge_source'),
           {
             attribute_type_id: 'biolink:aggregator_knowledge_source',
-            value: ['infores:biothings-explorer', ...Array.from(kgEdge.inforesCuries)],
+            value: ['infores:biothings-explorer'],
             value_type_id: 'biolink:InformationResource',
           },
         ];
