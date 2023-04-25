@@ -2,7 +2,7 @@ const debug = require('debug')('bte:biothings-explorer-trapi:Score');
 const axios = require('axios');
 
 const _ = require('lodash');
-const tuning_param = 3;
+const tuning_param = 1.1;
 
 async function query(queryPairs) {
   const url = 'https://biothings.ncats.io/semmeddb/query/ngd';
@@ -101,10 +101,10 @@ function reverse_scaled_sigmoid (score) {
 
 //addition of scores
 function calculateScore(comboInfo, scoreCombos) {
-  let score = 0;
+  let score = 0.1;
   let scoredByNGD = false;
   Object.keys(comboInfo).forEach((edgeKey) => {
-    score += 0.1 * comboInfo[edgeKey].recordHashes.size;
+    score += 0.05 * comboInfo[edgeKey].recordHashes.size;
     for (const combo of scoreCombos) {
       if (comboInfo[edgeKey].inputUMLS?.includes(combo.umls[0]) && comboInfo[edgeKey].outputUMLS?.includes(combo.umls[1])) {
         score += 1/combo.ngd;
@@ -116,11 +116,5 @@ function calculateScore(comboInfo, scoreCombos) {
   return { score: scaled_sigmoid(score), scoredByNGD };
 }
 
-//adds two normalized scores
-function addNormalizedScores(score1, score2) {
-  return scaled_sigmoid(reverse_scaled_sigmoid(score1) + reverse_scaled_sigmoid(score2));
-}
-
 module.exports.getScores = getScores;
 module.exports.calculateScore = calculateScore;
-module.exports.addNormalizedScores = addNormalizedScores;
