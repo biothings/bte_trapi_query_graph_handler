@@ -273,7 +273,7 @@ module.exports = class InferredQueryHandler {
         const resScore = translatedResult.score;
         if (typeof combinedResponse.message.results[resultID].score !== 'undefined') {
           combinedResponse.message.results[resultID].score = resScore
-            ? addNormalizedScores(combinedResponse.message.results[resultID].score, resScore)
+            ? Math.max(combinedResponse.message.results[resultID].score, resScore)
             : combinedResponse.message.results[resultID].score;
         } else {
           combinedResponse.message.results[resultID].score = resScore;
