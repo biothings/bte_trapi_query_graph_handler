@@ -15,7 +15,7 @@ module.exports = class InferredQueryHandler {
     this.path = path;
     this.predicatePath = predicatePath;
     this.includeReasoner = includeReasoner;
-    this.CREATIVE_LIMIT = 500;
+    this.CREATIVE_LIMIT = process.env.CREATIVE_LIMIT ? parseInt(process.env.CREATIVE_LIMIT) : 500;
   }
 
   get queryIsValid() {
@@ -152,7 +152,7 @@ module.exports = class InferredQueryHandler {
   async createQueries(qEdge, qSubject, qObject) {
     const templates = await this.findTemplates(qEdge, qSubject, qObject);
     // combine creative query with templates
-    const subQueries = templates.map(({template, queryGraph}) => {
+    const subQueries = templates.map(({ template, queryGraph }) => {
       queryGraph.nodes.creativeQuerySubject.categories = [
         ...new Set([...queryGraph.nodes.creativeQuerySubject.categories, ...qSubject.categories]),
       ];
@@ -182,7 +182,7 @@ module.exports = class InferredQueryHandler {
         delete queryGraph.nodes.creativeQueryObject.ids;
       }
 
-      return {template, queryGraph};
+      return { template, queryGraph };
     });
 
     return subQueries;
@@ -283,7 +283,7 @@ module.exports = class InferredQueryHandler {
     });
     const mergedWithinTemplate = Object.entries(report.mergedResults).reduce((count, [resultID, merged]) => {
       return !resultIDsFromPrevious.has(resultID) ? count + merged : count;
-    }, 0)
+    }, 0);
 
     // fix/combine logs
     handler.logs.forEach((log) => {
@@ -304,7 +304,7 @@ module.exports = class InferredQueryHandler {
       `(${mergedThisTemplate - mergedWithinTemplate}) results `,
       `were merged with existing results from previous templates. `,
       `Current result count is ${Object.keys(combinedResponse.message.results).length} `,
-      `(+${newResponse.message.results.length - mergedThisTemplate})`
+      `(+${newResponse.message.results.length - mergedThisTemplate})`,
     ].join('');
     debug(mergeMessage);
     combinedResponse.logs.push(new LogEntry('INFO', null, mergeMessage).getLog());
@@ -382,7 +382,7 @@ module.exports = class InferredQueryHandler {
     let stop = false;
     let mergedResultsCount = {};
 
-    await async.eachOfSeries(subQueries, async ({template, queryGraph}, i) => {
+    await async.eachOfSeries(subQueries, async ({ template, queryGraph }, i) => {
       if (stop) {
         return;
       }
@@ -439,18 +439,14 @@ module.exports = class InferredQueryHandler {
     // log about merged Results
     if (Object.keys(mergedResultsCount).length) {
       // Add 1 for first instance of result (not counted during merging)
-      const total = Object.values(mergedResultsCount).reduce((sum, count) => sum + count, 0) + Object.keys(mergedResultsCount).length;
+      const total =
+        Object.values(mergedResultsCount).reduce((sum, count) => sum + count, 0) +
+        Object.keys(mergedResultsCount).length;
       const message = `Merging Summary: (${total}) inferred-template results were merged into (${
         Object.keys(mergedResultsCount).length
       }) final results, reducing result count by (${total - Object.keys(mergedResultsCount).length})`;
       debug(message);
-      combinedResponse.logs.push(
-        new LogEntry(
-          'INFO',
-          null,
-          message,
-        ).getLog(),
-      );
+      combinedResponse.logs.push(new LogEntry('INFO', null, message).getLog());
     }
     if (Object.keys(combinedResponse.message.results).length) {
       combinedResponse.logs.push(
@@ -459,12 +455,11 @@ module.exports = class InferredQueryHandler {
           null,
           [
             `Final result count`,
-            Object.keys(combinedResponse.message.results).length > this.CREATIVE_LIMIT
-              ? " (before truncation):" : ":",
-            ` ${Object.keys(combinedResponse.message.results).length}`
-          ].join('')
-        ).getLog()
-      )
+            Object.keys(combinedResponse.message.results).length > this.CREATIVE_LIMIT ? ' (before truncation):' : ':',
+            ` ${Object.keys(combinedResponse.message.results).length}`,
+          ].join(''),
+        ).getLog(),
+      );
     }
     // sort records by score
     combinedResponse.message.results = Object.values(combinedResponse.message.results).sort((a, b) => {
@@ -475,7 +470,6 @@ module.exports = class InferredQueryHandler {
     this.pruneKnowledgeGraph(combinedResponse);
     // get the final summary log
     if (successfulQueries) {
-
       this.parent
         .getSummaryLog(combinedResponse, combinedResponse.logs, resultQueries)
         .forEach((log) => combinedResponse.logs.push(log));
