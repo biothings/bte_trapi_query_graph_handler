@@ -77,112 +77,42 @@ module.exports = class KnowledgeGraph {
   }
 
   _createAttributes(kgEdge) {
-    let attributes = [
-      {
-        attribute_type_id: 'biolink:aggregator_knowledge_source',
-        value: ['infores:biothings-explorer'],
-        value_type_id: 'biolink:InformationResource',
-      },
-    ];
+    const attributes = [];
 
-    const direct_info_providers = this.apiList?.filter(e => e.primarySource)?.map(e => e.name) ?? []
-
-    if (kgEdge.attributes['edge-attributes']) {
-      //handle TRAPI APIs (Situation A of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208) and APIs that define 'edge-atributes' in x-bte
-      attributes = [...attributes, ...kgEdge.attributes['edge-attributes']];
-    } else if (
-      //handle direct info providers (Situation C of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208)
-      direct_info_providers.some((api_name) => kgEdge.apis.has(api_name))
-    ) {
-      attributes = [...attributes];
-      //primary knowledge source
-      if (Array.from(kgEdge.sources).length || Array.from(kgEdge.inforesCuries).length) {
-        attributes = [
-          ...attributes,
-          {
-            attribute_type_id: 'biolink:primary_knowledge_source',
-            value: [...Array.from(kgEdge.inforesCuries), ...Array.from(kgEdge.sources)],
-            value_type_id: 'biolink:InformationResource',
-          },
-        ];
-      }
-      //aggregator knowledge source
-      if (Array.from(kgEdge.inforesCuries).length) {
-        attributes = [
-          ...attributes.filter(attr => attr.attribute_type_id !== 'biolink:aggregator_knowledge_source'),
-          {
-            attribute_type_id: 'biolink:aggregator_knowledge_source',
-            value: ['infores:biothings-explorer'],
-            value_type_id: 'biolink:InformationResource',
-          },
-        ];
-      }
-      //publications
-      if (Array.from(kgEdge.publications).length) {
-        attributes = [
-          ...attributes,
-          {
-            attribute_type_id: 'biolink:publications',
-            value: Array.from(kgEdge.publications),
-            // value_type_id: 'biolink:publications',
-          },
-        ];
-      }
-
-      for (const key in kgEdge.attributes) {
-        attributes.push({
-          attribute_type_id: key,
-          value: Array.from(kgEdge.attributes[key]),
-          //value_type_id: 'bts:' + key,
-        });
-      }
-    } else {
-      //handle non-trapi APIs (Situation B of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208)
-      attributes = [...attributes];
-      //primary knowledge source
-      if (Array.from(kgEdge.sources).length) {
-        attributes = [
-          ...attributes,
-          {
-            attribute_type_id: 'biolink:primary_knowledge_source',
-            value: Array.from(kgEdge.sources),
-            value_type_id: 'biolink:InformationResource',
-          },
-        ];
-      }
-      //aggregator knowledge source
-      if (Array.from(kgEdge.inforesCuries).length) {
-        attributes = [
-          ...attributes.filter(attr => attr.attribute_type_id !== 'biolink:aggregator_knowledge_source'),
-          {
-            attribute_type_id: 'biolink:aggregator_knowledge_source',
-            value: ['infores:biothings-explorer', ...Array.from(kgEdge.inforesCuries)],
-            value_type_id: 'biolink:InformationResource',
-          },
-        ];
-      }
-      //publications
-      if (Array.from(kgEdge.publications).length) {
-        attributes = [
-          ...attributes,
-          {
-            attribute_type_id: 'biolink:publications',
-            value: Array.from(kgEdge.publications),
-            // value_type_id: 'biolink:publications',
-          },
-        ];
-      }
-
-      for (const key in kgEdge.attributes) {
-        attributes.push({
-          attribute_type_id: key,
-          value: Array.from(kgEdge.attributes[key]),
-          //value_type_id: 'bts:' + key,
-        });
-      }
+    // publications
+    if (Array.from(kgEdge.publications).length) {
+      attributes.push({
+        attribute_type_id: 'biolink:publications',
+        value: Array.from(kgEdge.publications),
+        // value_type_id: 'biolink:publications',
+      });
     }
 
+    Object.entries(kgEdge.attributes).forEach(([key, value]) => {
+      if (key == 'edge-attributes') return;
+      attributes.push({
+        attribute_type_id: key,
+        value: Array.from(value),
+        //value_type_id: 'bts:' + key,
+      });
+    });
+
+    //handle TRAPI APIs (Situation A of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208) and APIs that define 'edge-atributes' in x-bte
+    kgEdge.attributes['edge-attributes']?.forEach((attribute) => {
+      attributes.push(attribute);
+    });
     return attributes;
+  }
+
+  _createSources(kgEdge) {
+    const sources = [];
+    Object.entries(kgEdge.sources).forEach(([resource_id, roles]) => {
+      Object.entries(roles).forEach(([resource_role, sourceObj]) => {
+        if (sourceObj.upstream_resource_ids) sourceObj.upstream_resource_ids = [...sourceObj.upstream_resource_ids];
+        sources.push(sourceObj);
+      });
+    });
+    return sources;
   }
 
   _createEdge(kgEdge) {
@@ -192,6 +122,7 @@ module.exports = class KnowledgeGraph {
       object: kgEdge.object,
       qualifiers: this._createQualifiers(kgEdge),
       attributes: this._createAttributes(kgEdge),
+      sources: this._createSources(kgEdge),
     };
   }
 
