@@ -566,7 +566,7 @@ describe('Test InferredQueryHandler', () => {
     expect(Object.values(mergedResults)[0]).toEqual(1);
     expect(creativeLimitHit).toBeTruthy();
     expect(Object.keys(combinedResponse.message.results)).toHaveLength(3);
-    expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].score).toEqual(1);
+    expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].score).toEqual(0.75);
     expect(combinedResponse.message.results['fakeCompound3-fakeDisease1'].score).toEqual(0.2);
     expect(combinedResponse.logs).toHaveLength(3);
     expect(combinedResponse.logs[1].message).toMatch('Template-2');
@@ -718,7 +718,7 @@ describe('Test InferredQueryHandler', () => {
     expect(queryHadResults1).toBeTruthy();
     expect(Object.keys(mergedResults1)).toHaveLength(1);
     expect(creativeLimitHit1).toBeTruthy();
-    expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].score).toEqual(1);
+    expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].score).toEqual(0.75);
     expect(reservedIDs.nodes).toContain('n02');
     expect(reservedIDs.nodes).toContain('n03');
   });

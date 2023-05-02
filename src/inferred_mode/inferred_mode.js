@@ -4,6 +4,7 @@ const utils = require('../utils');
 const async = require('async');
 const biolink = require('../biolink');
 const { getTemplates } = require('./template_lookup');
+const { addNormalizedScores } = require('../results_assembly/score');
 
 module.exports = class InferredQueryHandler {
   constructor(parent, TRAPIQueryHandler, queryGraph, logs, options, path, predicatePath, includeReasoner) {
@@ -272,7 +273,7 @@ module.exports = class InferredQueryHandler {
         const resScore = translatedResult.score;
         if (typeof combinedResponse.message.results[resultID].score !== 'undefined') {
           combinedResponse.message.results[resultID].score = resScore
-            ? combinedResponse.message.results[resultID].score + resScore
+            ? Math.max(combinedResponse.message.results[resultID].score, resScore)
             : combinedResponse.message.results[resultID].score;
         } else {
           combinedResponse.message.results[resultID].score = resScore;
