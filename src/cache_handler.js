@@ -149,6 +149,7 @@ module.exports = class {
             {
               type: 'cacheHit',
               qEdgeID: qEdge.getID(),
+              api_names: unpackedRecords.map(record => record.association?.api_name)
             }
           ).getLog()
         );
