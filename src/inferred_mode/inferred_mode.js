@@ -249,9 +249,9 @@ module.exports = class InferredQueryHandler {
         },
         analyses: [
           {
-            reasoner_id: result.reasoner_id,
+            reasoner_id: result.analyses[0].reasoner_id,
             edge_bindings: {},
-            score: result.score,
+            score: result.analyses[0].score,
           },
         ],
       };
@@ -269,51 +269,62 @@ module.exports = class InferredQueryHandler {
         .join(',');
       const resultID = `${resultCreativeSubjectID}-${resultCreativeObjectID}`;
 
-      // Create an aux graph using the result and associate it with an inferred Edge
-      const inferredEdgeID = `inferred-${resultCreativeSubjectID}-${qEdge.predicates[0]}-${resultCreativeObjectID}`;
-      translatedResult.analyses[0].edge_bindings = { [qEdgeID]: [{ id: inferredEdgeID }] };
-      if (!combinedResponse.message.knowledge_graph.edges[inferredEdgeID]) {
-        combinedResponse.message.knowledge_graph.edges[inferredEdgeID] = {
-          subject: resultCreativeSubjectID,
-          object: resultCreativeObjectID,
-          predicate: qEdge.predicates[0],
-          sources: [{ resource_id: 'infores:biothings-explorer', resource_role: 'primary_knowledge_source' }],
-          attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [] }],
-        };
+      // Direct edge answers stand on their own, not as an inferred edge.
+      if (Object.keys(result.node_bindings).length == 2) {
+        const boundEdgeID = Object.values(result.analyses[0].edge_bindings)[0][0].id;
+        translatedResult.analyses[0].edge_bindings = { [qEdgeID]: [{ id: boundEdgeID }] };
+      } else {
+        // Create an aux graph using the result and associate it with an inferred Edge
+        const inferredEdgeID = `inferred-${resultCreativeSubjectID}-${qEdge.predicates[0].replace('biolink:', '')}-${resultCreativeObjectID}`;
+        translatedResult.analyses[0].edge_bindings = { [qEdgeID]: [{ id: inferredEdgeID }] };
+        if (!combinedResponse.message.knowledge_graph.edges[inferredEdgeID]) {
+          combinedResponse.message.knowledge_graph.edges[inferredEdgeID] = {
+            subject: resultCreativeSubjectID,
+            object: resultCreativeObjectID,
+            predicate: qEdge.predicates[0],
+            sources: [{ resource_id: 'infores:biothings-explorer', resource_role: 'primary_knowledge_source' }],
+            attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [] }],
+          };
+        }
+        let auxGraphSuffix = 0;
+        while (
+          Object.keys(combinedResponse.message.auxiliary_graphs).includes(`${inferredEdgeID}-support${auxGraphSuffix}`)
+        ) {
+          auxGraphSuffix += 1;
+        }
+        const auxGraphID = `${inferredEdgeID}-support${auxGraphSuffix}`;
+        combinedResponse.message.knowledge_graph.edges[inferredEdgeID].attributes[0].value.push(auxGraphID);
+        combinedResponse.message.auxiliary_graphs[auxGraphID] = Object.values(result.analyses[0].edge_bindings).reduce(
+          (arr, bindings) => {
+            bindings.forEach((binding) => arr.push(binding.id));
+            return arr;
+          },
+          [],
+        );
       }
-      let auxGraphSuffix = 0;
-      while (
-        Object.keys(combinedResponse.message.auxiliary_graphs).includes(`${inferredEdgeID}-support${auxGraphSuffix}`)
-      ) {
-        auxGraphSuffix += 1;
-      }
-      const auxGraphID = `${inferredEdgeID}-support${auxGraphSuffix}`;
-      combinedResponse.message.auxiliary_graphs[auxGraphID] = Object.values(result.analyses[0].edge_bindings).reduce(
-        (arr, bindings) => {
-          bindings.forEach((binding) => arr.push(binding.id));
-          return arr;
-        },
-        [],
-      );
-      combinedResponse.message.knowledge_graph.edges[inferredEdgeID].attributes[0].value.push(auxGraphID);
 
       if (resultID in combinedResponse.message.results) {
         report.mergedResults[resultID] = report.mergedResults[resultID] ? report.mergedResults[resultID] + 1 : 1;
         mergedThisTemplate += 1;
-        Object.entries(translatedResult.node_bindings).forEach(([nodeID, bindings]) => {
-          combinedResponse.message.results[resultID].node_bindings[nodeID] = bindings;
-        });
+        // Object.entries(translatedResult.node_bindings).forEach(([nodeID, bindings]) => {
+        //   combinedResponse.message.results[resultID].node_bindings[nodeID] = bindings;
+        // });
         Object.entries(translatedResult.analyses[0].edge_bindings).forEach(([edgeID, bindings]) => {
-          combinedResponse.message.results[resultID].analyses[0].edge_bindings[edgeID] = bindings;
+          const combinedBindings = combinedResponse.message.results[resultID].analyses[0].edge_bindings[edgeID];
+          bindings.forEach((binding) => {
+            if (combinedBindings.some((combinedBinding) => combinedBinding.id === binding.id)) return
+            combinedResponse.message.results[resultID].analyses[0].edge_bindings[edgeID].push(binding);
+
+          })
         });
 
-        const resScore = translatedResult.score;
-        if (typeof combinedResponse.message.results[resultID].score !== 'undefined') {
-          combinedResponse.message.results[resultID].score = resScore
-            ? Math.max(combinedResponse.message.results[resultID].score, resScore)
-            : combinedResponse.message.results[resultID].score;
+        const resScore = translatedResult.analyses[0].score;
+        if (typeof combinedResponse.message.results[resultID].analyses[0].score !== 'undefined') {
+          combinedResponse.message.results[resultID].analyses[0].score = resScore
+            ? Math.max(combinedResponse.message.results[resultID].analyses[0].score, resScore)
+            : combinedResponse.message.results[resultID].analyses[0].score;
         } else {
-          combinedResponse.message.results[resultID].score = resScore;
+          combinedResponse.message.results[resultID].analyses[0].score = resScore;
         }
       } else {
         combinedResponse.message.results[resultID] = translatedResult;
@@ -479,9 +490,11 @@ module.exports = class InferredQueryHandler {
           const message = [
             `Addition of ${creativeLimitHit} results from Template ${i + 1}`,
             Object.keys(combinedResponse.message.results).length === this.CREATIVE_LIMIT ? ' meets ' : ' exceeds ',
-            `creative result maximum of ${this.CREATIVE_LIMIT} (reaching ${Object.keys(combinedResponse.message.results).length
+            `creative result maximum of ${this.CREATIVE_LIMIT} (reaching ${
+              Object.keys(combinedResponse.message.results).length
             } merged). `,
-            `Response will be truncated to top-scoring ${this.CREATIVE_LIMIT} results. Skipping remaining ${subQueries.length - (i + 1)
+            `Response will be truncated to top-scoring ${this.CREATIVE_LIMIT} results. Skipping remaining ${
+              subQueries.length - (i + 1)
             } `,
             subQueries.length - (i + 1) === 1 ? `template.` : `templates.`,
           ].join('');
@@ -504,8 +517,9 @@ module.exports = class InferredQueryHandler {
       const total =
         Object.values(mergedResultsCount).reduce((sum, count) => sum + count, 0) +
         Object.keys(mergedResultsCount).length;
-      const message = `Merging Summary: (${total}) inferred-template results were merged into (${Object.keys(mergedResultsCount).length
-        }) final results, reducing result count by (${total - Object.keys(mergedResultsCount).length})`;
+      const message = `Merging Summary: (${total}) inferred-template results were merged into (${
+        Object.keys(mergedResultsCount).length
+      }) final results, reducing result count by (${total - Object.keys(mergedResultsCount).length})`;
       debug(message);
       combinedResponse.logs.push(new LogEntry('INFO', null, message).getLog());
     }
@@ -524,7 +538,7 @@ module.exports = class InferredQueryHandler {
     }
     // sort records by score
     combinedResponse.message.results = Object.values(combinedResponse.message.results).sort((a, b) => {
-      return b.score - a.score ? b.score - a.score : 0;
+      return b.analyses[0].score - a.analyses[0].score ? b.analyses[0].score - a.analyses[0].score : 0;
     });
     // trim extra results and prune kg
     combinedResponse.message.results = combinedResponse.message.results.slice(0, this.CREATIVE_LIMIT);
@@ -540,7 +554,7 @@ module.exports = class InferredQueryHandler {
         const scoreFromEdges = Object.values(result.analyses[0].edge_bindings).reduce((count, qEdge_bindings) => {
           return count + qEdge_bindings.length;
         }, 0);
-        if (result.score > scoreFromEdges) {
+        if (result.analyses[0].score > scoreFromEdges) {
           scoredResults += 1;
         } else {
           unscoredResults += 1;
