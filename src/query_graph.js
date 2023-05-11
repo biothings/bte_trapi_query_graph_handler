@@ -186,7 +186,7 @@ module.exports = class QueryGraphHandler {
       debug(`Query node missing categories...Looking for match...`);
       if (category[curies[0]] && category[curies[0]].primaryTypes) {
         category = category[curies[0]].primaryTypes;
-        return category.map(c => `biolink:${c}`);
+        return category.filter(c => c).map(c => `biolink:${c}`);
       } else {
         debug(noMatchMessage);
         this.logs.push(new LogEntry('ERROR', null, noMatchMessage).getLog());
