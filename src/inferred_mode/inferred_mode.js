@@ -275,7 +275,10 @@ module.exports = class InferredQueryHandler {
         translatedResult.analyses[0].edge_bindings = { [qEdgeID]: [{ id: boundEdgeID }] };
       } else {
         // Create an aux graph using the result and associate it with an inferred Edge
-        const inferredEdgeID = `inferred-${resultCreativeSubjectID}-${qEdge.predicates[0].replace('biolink:', '')}-${resultCreativeObjectID}`;
+        const inferredEdgeID = `inferred-${resultCreativeSubjectID}-${qEdge.predicates[0].replace(
+          'biolink:',
+          '',
+        )}-${resultCreativeObjectID}`;
         translatedResult.analyses[0].edge_bindings = { [qEdgeID]: [{ id: inferredEdgeID }] };
         if (!combinedResponse.message.knowledge_graph.edges[inferredEdgeID]) {
           combinedResponse.message.knowledge_graph.edges[inferredEdgeID] = {
@@ -294,13 +297,12 @@ module.exports = class InferredQueryHandler {
         }
         const auxGraphID = `${inferredEdgeID}-support${auxGraphSuffix}`;
         combinedResponse.message.knowledge_graph.edges[inferredEdgeID].attributes[0].value.push(auxGraphID);
-        combinedResponse.message.auxiliary_graphs[auxGraphID] = Object.values(result.analyses[0].edge_bindings).reduce(
-          (arr, bindings) => {
+        combinedResponse.message.auxiliary_graphs[auxGraphID] = {
+          edges: Object.values(result.analyses[0].edge_bindings).reduce((arr, bindings) => {
             bindings.forEach((binding) => arr.push(binding.id));
             return arr;
-          },
-          [],
-        );
+          }, []),
+        };
       }
 
       if (resultID in combinedResponse.message.results) {
@@ -312,10 +314,9 @@ module.exports = class InferredQueryHandler {
         Object.entries(translatedResult.analyses[0].edge_bindings).forEach(([edgeID, bindings]) => {
           const combinedBindings = combinedResponse.message.results[resultID].analyses[0].edge_bindings[edgeID];
           bindings.forEach((binding) => {
-            if (combinedBindings.some((combinedBinding) => combinedBinding.id === binding.id)) return
+            if (combinedBindings.some((combinedBinding) => combinedBinding.id === binding.id)) return;
             combinedResponse.message.results[resultID].analyses[0].edge_bindings[edgeID].push(binding);
-
-          })
+          });
         });
 
         const resScore = translatedResult.analyses[0].score;
@@ -390,7 +391,7 @@ module.exports = class InferredQueryHandler {
       combinedResponse.message.knowledge_graph.edges[edgeID].attributes.forEach(({ attribute_type_id, value }) => {
         if (attribute_type_id === 'biolink:support_graphs') {
           value.forEach((auxGraphID) => {
-            combinedResponse.message.auxiliary_graphs[auxGraphID].forEach((edgeID) => {
+            combinedResponse.message.auxiliary_graphs[auxGraphID].edges.forEach((edgeID) => {
               resultsBoundEdges.add(edgeID);
             });
           });
