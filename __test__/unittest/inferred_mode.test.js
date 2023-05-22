@@ -947,8 +947,8 @@ describe('Test InferredQueryHandler', () => {
   test('supportedLookups', async () => {
     const { supportedLookups } = require('../../src/inferred_mode/template_lookup');
     const supported = await supportedLookups();
-    expect(supported).toContain('biolink:Drug-biolink:treats-biolink:Disease');
-    expect(supported).toContain('biolink:SmallMolecule-biolink:treats-biolink:PhenotypicFeature');
+    expect(supported).toContainEqual({ subject: 'biolink:Drug', predicate: 'biolink:treats', object: 'biolink:Disease', qualifiers: undefined});
+    expect(supported).toContainEqual({ subject: 'biolink:SmallMolecule', predicate: 'biolink:treats', object: 'biolink:PhenotypicFeature', qualifiers: undefined});
     expect(supported.length).toBeGreaterThanOrEqual(5 * 2 * 3);
   });
 });

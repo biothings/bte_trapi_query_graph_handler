@@ -58,7 +58,12 @@ exports.supportedLookups = async () => {
     group.subject.forEach((subject) => {
       group.predicate.forEach((predicate) => {
         group.object.forEach((object) => {
-          edges.add(`biolink:${subject}-biolink:${predicate}-biolink:${object}`);
+          edges.add({
+            subject: `biolink:${subject}`,
+            predicate: `biolink:${predicate}`,
+            object: `biolink:${object}`,
+            qualifiers: group.qualifiers
+          });
         });
       });
     });
