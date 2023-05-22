@@ -81,7 +81,7 @@ module.exports = class BTEGraph {
       Object.entries(result.node_bindings).forEach(([node, bindings]) => {
         bindings.forEach((binding) => resultsBoundNodes.add(`${binding.id}-${node}`));
       });
-      Object.entries(result.edge_bindings).forEach(([edge, bindings]) => {
+      Object.entries(result.analyses[0].edge_bindings).forEach(([edge, bindings]) => {
         bindings.forEach((binding) => resultsBoundEdges.add(binding.id));
       });
     });
