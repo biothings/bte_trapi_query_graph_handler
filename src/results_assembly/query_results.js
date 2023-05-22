@@ -407,7 +407,7 @@ module.exports = class TrapiResultsAssembler {
           resultsWithoutScore++;
         }
 
-        if (!shouldScore) delete result.score;
+        if (!shouldScore) delete result.analyses[0].score;
 
         consolidatedSolution.forEach(
           ({ inputQNodeID, outputQNodeID, inputPrimaryCuries, outputPrimaryCuries, qEdgeID, recordHashes }) => {
@@ -433,7 +433,7 @@ module.exports = class TrapiResultsAssembler {
 
         return result;
       })
-      .sort((result1, result2) => (result2.score ?? 0) - (result1.score ?? 0)); //sort by decreasing score
+      .sort((result1, result2) => (result2.analyses[0].score ?? 0) - (result1.analyses[0].score ?? 0)); //sort by decreasing score
 
     if (shouldScore) {
       try {
