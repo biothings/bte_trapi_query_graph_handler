@@ -57,6 +57,16 @@ class BioLinkModel {
     }
     return [predicate];
   }
+
+  getDescendantQualifiers(qualifier) {
+    try {
+        const descendants = this.biolink.enumTree.getDescendants(qualifier).map((entity) => entity.name);
+        return [...descendants, qualifier]
+    } catch (e) {
+        console.log("qual error", e)
+        return [qualifier]
+    }
+  }
 }
 
 const BioLinkModelInstance = new BioLinkModel();
