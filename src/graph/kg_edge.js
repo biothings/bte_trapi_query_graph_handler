@@ -1,3 +1,4 @@
+const _ = require('lodash');
 module.exports = class KGEdge {
   constructor(id, info) {
     this.id = id;
@@ -6,7 +7,7 @@ module.exports = class KGEdge {
     this.object = info.object;
     this.apis = new Set();
     this.inforesCuries = new Set();
-    this.sources = new Set();
+    this.sources = {};
     this.publications = new Set();
     this.qualifiers = {};
     this.attributes = {};
@@ -43,8 +44,15 @@ module.exports = class KGEdge {
     if (!Array.isArray(source)) {
       source = [source];
     }
-    source.map((item) => {
-      this.sources.add(item);
+    source.forEach((item) => {
+      if (!this.sources[item.resource_id]) this.sources[item.resource_id] = {};
+      if (!this.sources[item.resource_id][item.resource_role]) {
+        if (item.upstream_resource_ids) item.upstream_resource_ids = new Set(item.upstream_resource_ids);
+        this.sources[item.resource_id][item.resource_role] = item;
+      }
+      item.upstream_resource_ids?.forEach((upstream) =>
+        this.sources[item.resource_id][item.resource_role].upstream_resource_ids.add(upstream),
+      );
     });
   }
 
@@ -78,7 +86,7 @@ module.exports = class KGEdge {
       value = [value];
     }
     value.map((item) => {
-      this.attributes[name].add(item)
-    })
+      this.attributes[name].add(item);
+    });
   }
 };

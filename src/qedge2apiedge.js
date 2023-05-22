@@ -42,7 +42,7 @@ module.exports = class QEdge2APIEdgeHandler {
       input_type: qEdge.getInputNode().getCategories(),
       output_type: qEdge.getOutputNode().getCategories(),
       predicate: qEdge.getPredicate(),
-      qualifiers: qEdge.getSimpleQualifierConstraints(),
+      qualifiers: qEdge.getSimpleExpandedQualifierConstraints(),
     };
     debug(`KG Filters: ${JSON.stringify(filterCriteria, null, 2)}`);
     let metaXEdges = metaKG.filter(filterCriteria).map((metaEdge) => {

@@ -102,6 +102,23 @@ module.exports = class QEdge {
       .filter((item) => !(typeof item === 'undefined'));
   }
 
+  expandQualifierConstraints(constraints) {
+    return constraints.map((qualifierSetObj) => {
+      return {
+        qualifier_set: qualifierSetObj.qualifier_set.map(({ qualifier_type_id, qualifier_value }) => {
+          const new_qualifier_values = qualifier_type_id.includes('predicate') ?
+            Array.from(new Set(biolink.getDescendantPredicates(utils.removeBioLinkPrefix(qualifier_value)).map(item => `biolink:${utils.removeBioLinkPrefix(item)}`))) :
+            Array.from(new Set(biolink.getDescendantQualifiers(utils.removeBioLinkPrefix(qualifier_value))));
+
+          return {
+            qualifier_type_id,
+            qualifier_value: new_qualifier_values
+          }
+        })
+      }
+    })
+  }
+
   getQualifierConstraints() {
     if (!this.qualifier_constraints) {
       return [];
@@ -138,6 +155,18 @@ module.exports = class QEdge {
         qualifierSetObj.qualifier_set.map(({ qualifier_type_id, qualifier_value }) => [
           qualifier_type_id.replace('biolink:', ''),
           qualifier_value.replace('biolink:', ''),
+        ]),
+      );
+    });
+    return constraints.length > 0 ? constraints : undefined;
+  }
+
+  getSimpleExpandedQualifierConstraints() {
+    const constraints = this.expandQualifierConstraints(this.getQualifierConstraints()).map((qualifierSetObj) => {
+      return Object.fromEntries(
+        qualifierSetObj.qualifier_set.map(({ qualifier_type_id, qualifier_value }) => [
+          utils.removeBioLinkPrefix(qualifier_type_id),
+          utils.toArray(qualifier_value).map(e => utils.removeBioLinkPrefix(e)),
         ]),
       );
     });
