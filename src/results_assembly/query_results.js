@@ -395,7 +395,7 @@ module.exports = class TrapiResultsAssembler {
           node_bindings: {},
           analyses: [
             {
-              reasoner_id: `infores:biothings-explorer`,
+              resource_id: `infores:biothings-explorer`,
               edge_bindings: {},
               score: score,
             },

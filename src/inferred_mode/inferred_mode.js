@@ -249,7 +249,7 @@ module.exports = class InferredQueryHandler {
         },
         analyses: [
           {
-            reasoner_id: result.analyses[0].reasoner_id,
+            resource_id: result.analyses[0].resource_id,
             edge_bindings: {},
             score: result.analyses[0].score,
           },
