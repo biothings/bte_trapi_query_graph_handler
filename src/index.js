@@ -10,7 +10,7 @@ const EdgeManager = require('./edge_manager');
 const _ = require('lodash');
 const QEdge2APIEdgeHandler = require('./qedge2apiedge');
 const LogEntry = require('./log_entry');
-const { redisClient, getNewRedisClient} = require('./redis-client');
+const { redisClient, getNewRedisClient } = require('./redis-client');
 const config = require('./config');
 const fs = require('fs').promises;
 const { getDescendants } = require('@biothings-explorer/node-expansion');
@@ -18,6 +18,7 @@ const { getTemplates, supportedLookups } = require('./inferred_mode/template_loo
 const handleInferredMode = require('./inferred_mode/inferred_mode');
 const id_resolver = require('biomedical_id_resolver');
 const InferredQueryHandler = require('./inferred_mode/inferred_mode');
+const { biolink } = require('./biolink');
 
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 exports.redisClient = redisClient;
@@ -76,12 +77,16 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   }
 
   getResponse() {
+    const results = this.trapiResultsAssembler.getResults();
     return {
+      description: `Query processed successfully, retrieved ${results.length} results.`,
+      schema_version: '1.4.0',
+      biolink_version: biolink.biolinkJSON.version,
       workflow: [{ id: 'lookup' }],
       message: {
         query_graph: this.queryGraph,
         knowledge_graph: this.knowledgeGraph.kg,
-        results: this.trapiResultsAssembler.getResults(),
+        results: results,
       },
       logs: this.logs.map((log) => log.toJSON()),
     };
@@ -434,7 +439,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     this.bteGraph.prune(this.trapiResultsAssembler.getResults());
     this.bteGraph.notify();
     // check primary knowledge sources
-    this.logs = [...this.logs, ...this.bteGraph.checkPrimaryKnowledgeSources(this.knowledgeGraph)]
+    this.logs = [...this.logs, ...this.bteGraph.checkPrimaryKnowledgeSources(this.knowledgeGraph)];
     // finishing logs
     this.getSummaryLog(this.getResponse(), this.logs).forEach((log) => this.logs.push(log));
     debug(`(14) TRAPI query finished.`);
