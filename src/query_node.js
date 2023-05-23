@@ -146,7 +146,7 @@ module.exports = class QNode {
     // If a new entity has any alias intersection with an existing entity, keep it
     Object.entries(newCuries).forEach(([newMainID, currentAliases]) => {
       const someIntersection = Object.entries(this.expanded_curie).some(([existingMainID, existingAliases]) => {
-        return currentAliases.some((currentAlias) => existingAliases.includes(currentAlias));
+        return currentAliases.some((currentAlias) => existingAliases.some(existingAlias => currentAlias.toLowerCase() === existingAlias.toLowerCase()));
       });
       if (someIntersection) {
         if (!keep[newMainID]) keep[newMainID] = currentAliases;
