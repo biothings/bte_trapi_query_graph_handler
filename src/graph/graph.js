@@ -18,10 +18,12 @@ module.exports = class BTEGraph {
       if (record) {
         const inputPrimaryCurie = record.subject.curie;
         const inputQNodeID = record.subject.qNodeID;
-        const inputBTENodeID = inputPrimaryCurie + '-' + inputQNodeID;
+        const inputBTENodeID = inputPrimaryCurie;
+        // const inputBTENodeID = inputPrimaryCurie + '-' + inputQNodeID;
         const outputPrimaryCurie = record.object.curie;
         const outputQNodeID = record.object.qNodeID;
-        const outputBTENodeID = outputPrimaryCurie + '-' + outputQNodeID;
+        // const outputBTENodeID = outputPrimaryCurie + '-' + outputQNodeID;
+        const outputBTENodeID = outputPrimaryCurie;
         const recordHash = record.recordHash;
         if (!(outputBTENodeID in this.nodes)) {
           this.nodes[outputBTENodeID] = new kg_node(outputBTENodeID, {
@@ -72,21 +74,34 @@ module.exports = class BTEGraph {
     });
   }
 
-  prune(results) {
+  prune(results, auxGraphs) {
     debug('pruning BTEGraph nodes/edges...');
-    const resultsBoundNodes = new Set();
+    const edgeBoundNodes = new Set();
     const resultsBoundEdges = new Set();
 
+    // Handle nodes and edges bound to results directly
     results.forEach((result) => {
-      Object.entries(result.node_bindings).forEach(([node, bindings]) => {
-        bindings.forEach((binding) => resultsBoundNodes.add(`${binding.id}-${node}`));
-      });
       Object.entries(result.analyses[0].edge_bindings).forEach(([edge, bindings]) => {
         bindings.forEach((binding) => resultsBoundEdges.add(binding.id));
       });
     });
 
-    const nodesToDelete = Object.keys(this.nodes).filter((bteNodeID) => !resultsBoundNodes.has(bteNodeID));
+    // Handle edges bound via auxiliary graphs
+    // This will iterate over new edges as they're added
+    resultsBoundEdges.forEach((edgeID) => {
+      edgeBoundNodes.add(this.edges[edgeID].subject);
+      edgeBoundNodes.add(this.edges[edgeID].object);
+      const supportGraphs = [...(this.edges[edgeID].attributes['biolink:support_graphs'] ?? [])];
+      supportGraphs.forEach((auxGraphID) => {
+        auxGraphs[auxGraphID].edges.forEach((auxGraphEdgeID) => {
+          edgeBoundNodes.add(this.edges[auxGraphEdgeID].subject);
+          edgeBoundNodes.add(this.edges[auxGraphEdgeID].object);
+          resultsBoundEdges.add(auxGraphEdgeID);
+        });
+      });
+    });
+
+    const nodesToDelete = Object.keys(this.nodes).filter((bteNodeID) => !edgeBoundNodes.has(bteNodeID));
     nodesToDelete.forEach((unusedBTENodeID) => delete this.nodes[unusedBTENodeID]);
     const edgesToDelete = Object.keys(this.edges).filter((recordHash) => !resultsBoundEdges.has(recordHash));
     edgesToDelete.forEach((unusedRecordHash) => delete this.edges[unusedRecordHash]);
