@@ -16,7 +16,7 @@ module.exports = class InferredQueryHandler {
     this.path = path;
     this.predicatePath = predicatePath;
     this.includeReasoner = includeReasoner;
-    this.CREATIVE_LIMIT = process.env.CREATIVE_LIMIT ? parseInt(process.env.CREATIVE_LIMIT) : 500;
+    this.CREATIVE_LIMIT = options.creativeLimit ? options.creativeLimit : (process.env.CREATIVE_LIMIT ? parseInt(process.env.CREATIVE_LIMIT) : 500);
   }
 
   get queryIsValid() {
