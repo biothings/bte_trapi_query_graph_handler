@@ -211,35 +211,11 @@ module.exports = class InferredQueryHandler {
         combinedResponse.message.knowledge_graph.edges[recordHash] = edge;
       }
     });
-    // make unique node/edge ids for this sub-query's graph
-    // const nodeMapping = Object.fromEntries(
-    //   Object.keys(newResponse.message.query_graph.nodes).map((nodeID) => {
-    //     let newID = nodeID;
-    //     if (['creativeQuerySubject', 'creativeQueryObject'].includes(nodeID)) {
-    //       newID = nodeID === 'creativeQuerySubject' ? qEdge.subject : qEdge.object;
-    //     } else {
-    //       while (reservedIDs.nodes.includes(newID)) {
-    //         let number = newID.match(/[0-9]+$/);
-    //         let newNumber = number ? `0${parseInt(number[0]) + 1}` : '01';
-    //         newID = number ? newID.replace(number, newNumber) : `${newID}${newNumber}`;
-    //       }
-    //       reservedIDs.nodes.push(newID);
-    //     }
-    //     return [nodeID, newID];
-    //   }),
-    // );
-    // const edgeMapping = Object.fromEntries(
-    //   Object.keys(newResponse.message.query_graph.edges).map((edgeID) => {
-    //     let newID = edgeID;
-    //     while (reservedIDs.edges.includes(newID)) {
-    //       let number = newID.match(/[0-9]+$/);
-    //       let newNumber = number ? `0${parseInt(number[0]) + 1}` : '01';
-    //       newID = number ? newID.replace(number, newNumber) : `${newID}${newNumber}`;
-    //     }
-    //     reservedIDs.edges.push(newID);
-    //     return [edgeID, newID];
-    //   }),
-    // );
+    Object.entries(newResponse.message.auxiliary_graphs).forEach(([auxGraphID, auxGraph]) => {
+      if (!(auxGraphID in combinedResponse.message.auxiliary_graphs)) {
+        combinedResponse.message.auxiliary_graphs[auxGraphID] = auxGraph;
+      }
+    });
     // add results
     newResponse.message.results.forEach((result) => {
       const translatedResult = {
@@ -247,6 +223,7 @@ module.exports = class InferredQueryHandler {
           [qEdge.subject]: [{ id: result.node_bindings.creativeQuerySubject[0].id }],
           [qEdge.object]: [{ id: result.node_bindings.creativeQueryObject[0].id }],
         },
+        pfocr: result.pfocr?.length ? result.pfocr : undefined,
         analyses: [
           {
             resource_id: result.analyses[0].resource_id,
@@ -255,12 +232,6 @@ module.exports = class InferredQueryHandler {
           },
         ],
       };
-      // Object.entries(result.node_bindings).forEach(([nodeID, bindings]) => {
-      //   translatedResult.node_bindings[nodeMapping[nodeID]] = bindings;
-      // });
-      // Object.entries(result.analyses[0].edge_bindings).forEach(([edgeID, bindings]) => {
-      //   translatedResult.analyses[0].edge_bindings[edgeMapping[edgeID]] = bindings;
-      // });
       const resultCreativeSubjectID = translatedResult.node_bindings[qEdge.subject]
         .map((binding) => binding.id)
         .join(',');
@@ -308,9 +279,6 @@ module.exports = class InferredQueryHandler {
       if (resultID in combinedResponse.message.results) {
         report.mergedResults[resultID] = report.mergedResults[resultID] ? report.mergedResults[resultID] + 1 : 1;
         mergedThisTemplate += 1;
-        // Object.entries(translatedResult.node_bindings).forEach(([nodeID, bindings]) => {
-        //   combinedResponse.message.results[resultID].node_bindings[nodeID] = bindings;
-        // });
         Object.entries(translatedResult.analyses[0].edge_bindings).forEach(([edgeID, bindings]) => {
           const combinedBindings = combinedResponse.message.results[resultID].analyses[0].edge_bindings[edgeID];
           bindings.forEach((binding) => {
@@ -318,6 +286,13 @@ module.exports = class InferredQueryHandler {
             combinedResponse.message.results[resultID].analyses[0].edge_bindings[edgeID].push(binding);
           });
         });
+
+        if (combinedResponse.message.results[resultID].pfocr || translatedResult.pfocr) {
+          combinedResponse.message.results[resultID].pfocr = [
+            ...(combinedResponse.message.results[resultID].pfocr ?? []),
+            ...(translatedResult.pfocr ?? []),
+          ];
+        }
 
         const resScore = translatedResult.analyses[0].score;
         if (typeof combinedResponse.message.results[resultID].analyses[0].score !== 'undefined') {
@@ -337,12 +312,6 @@ module.exports = class InferredQueryHandler {
 
     // fix/combine logs
     handler.logs.forEach((log) => {
-      // Object.entries(nodeMapping).forEach(([oldID, newID]) => {
-      //   log.message = log.message.replace(oldID, newID);
-      // });
-      // Object.entries(edgeMapping).forEach(([oldID, newID]) => {
-      //   log.message = log.message.replace(oldID, newID);
-      // });
       log.message = `[Template-${queryNum + 1}]: ${log.message}`;
 
       combinedResponse.logs.push(log);
@@ -372,47 +341,37 @@ module.exports = class InferredQueryHandler {
 
   pruneKnowledgeGraph(combinedResponse) {
     debug('pruning creative combinedResponse nodes/edges...');
-    const resultsBoundNodes = new Set();
+    const edgeBoundNodes = new Set();
     const resultsBoundEdges = new Set();
-    // const resultBoundAuxGraphs = new Set();
 
     // Handle nodes and edges bound to results directly
     combinedResponse.message.results.forEach((result) => {
-      Object.entries(result.node_bindings).forEach(([node, bindings]) => {
-        bindings.forEach((binding) => resultsBoundNodes.add(binding.id));
-      });
       Object.entries(result.analyses[0].edge_bindings).forEach(([edge, bindings]) => {
         bindings.forEach((binding) => resultsBoundEdges.add(binding.id));
       });
     });
 
     // Handle edges bound via auxiliary graphs
+    // This will iterate over new edges as they're added
     resultsBoundEdges.forEach((edgeID) => {
-      combinedResponse.message.knowledge_graph.edges[edgeID].attributes.forEach(({ attribute_type_id, value }) => {
+      edgeBoundNodes.add(combinedResponse.message.knowledge_graph.edges[edgeID].subject);
+      edgeBoundNodes.add(combinedResponse.message.knowledge_graph.edges[edgeID].object);
+      combinedResponse.message.knowledge_graph.edges[edgeID].attributes.find(({ attribute_type_id, value }) => {
         if (attribute_type_id === 'biolink:support_graphs') {
           value.forEach((auxGraphID) => {
-            combinedResponse.message.auxiliary_graphs[auxGraphID].edges.forEach((edgeID) => {
-              resultsBoundEdges.add(edgeID);
+            combinedResponse.message.auxiliary_graphs[auxGraphID].edges.forEach((auxGraphEdgeID) => {
+              edgeBoundNodes.add(combinedResponse.message.knowledge_graph.edges[auxGraphEdgeID].subject);
+              edgeBoundNodes.add(combinedResponse.message.knowledge_graph.edges[auxGraphEdgeID].object);
+              resultsBoundEdges.add(auxGraphEdgeID);
             });
           });
+          return true;
         }
       });
     });
-    // Object.entries(combinedResponse.message.knowledge_graph.edges).forEach(([edgeID, edge]) => {
-    //   if (!resultsBoundEdges.has(edgeID)) return;
-    //   edge.attributes.forEach(({ attribute_type_id, value }) => {
-    //     if (attribute_type_id === 'biolink:support_graphs') {
-    //       value.forEach((auxGraphID) => resultBoundAuxGraphs.add(auxGraphID));
-    //     }
-    //   });
-    // });
-    // Object.values(combinedResponse.message.auxiliary_graphs).forEach(([auxGraphID, edges]) => {
-    //   if (!resultBoundAuxGraphs.has(auxGraphID)) return;
-    //   edges.forEach((edge) => resultsBoundEdges.add(edge));
-    // });
 
     const nodesToDelete = Object.keys(combinedResponse.message.knowledge_graph.nodes).filter(
-      (bteNodeID) => !resultsBoundNodes.has(bteNodeID),
+      (nodeID) => !edgeBoundNodes.has(nodeID),
     );
     nodesToDelete.forEach((unusedBTENodeID) => delete combinedResponse.message.knowledge_graph.nodes[unusedBTENodeID]);
     const edgesToDelete = Object.keys(combinedResponse.message.knowledge_graph.edges).filter(
@@ -448,10 +407,6 @@ module.exports = class InferredQueryHandler {
       },
       logs: this.logs,
     };
-    // const reservedIDs = {
-    //   nodes: [qEdge.subject, qEdge.object],
-    //   edges: [qEdgeID],
-    // };
     // add/combine nodes
     let resultQueries = [];
     let successfulQueries = 0;
