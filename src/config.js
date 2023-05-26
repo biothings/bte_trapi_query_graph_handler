@@ -28,4 +28,11 @@ exports.ENTITY_MAX = 1000
 exports.EDGE_ATTRIBUTES_USED_IN_RECORD_HASH = [
   "biolink:has_disease_context",
   "biolink:GeneToDrugAssociation",
+  // for multiomics wellness: subject to change
+  "NCIT:C61594",          // bonferroni p-value: should be enough but not sure
+  "UMLS CUI:C5418925",    // age range between 35 and 55
+  "MeSH:D008297",         // gender male
+  "UMLS CUI:C0043157",    // population white
+  "MeSH:D005260",         // gender female
+  "UMLS CUI:C2229974",    // children?
 ];
