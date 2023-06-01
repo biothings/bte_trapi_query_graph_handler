@@ -26,6 +26,26 @@ exports.API_BATCH_SIZE = [
 exports.ENTITY_MAX = 1000
 
 exports.EDGE_ATTRIBUTES_USED_IN_RECORD_HASH = [
+  // not sure which APIs these are from: 
+  // perhaps Multiomics and the attribute-type-ids have changed
   "biolink:has_disease_context",
   "biolink:GeneToDrugAssociation",
+  // for multiomics wellness 2023-05-25: may later change?
+  "NCIT:C61594",          // bonferroni p-value: should be enough but not sure
+  "UMLS CUI:C5418925",    // age range between 35 and 55
+  "MeSH:D008297",         // gender male
+  "UMLS CUI:C0043157",    // population white
+  "MeSH:D005260",         // gender female
+  "UMLS CUI:C2229974",    // children?
+  // Multiomics BigGIM Drug-Response 2023-05-31: may later change?
+  "biolink:context_qualifier",
+  // commenting it out since I haven't tested if it works for this KP or
+  //   if it'll cause bugs when processing other KPs. 
+  //   It is only needed to differentiate records from some operations
+  // "biolink:publications",  
+  // for multiomics ehr risk 2023-06-01: may later change?
+  "biolink:p_value",
+  "STATO:0000209",       // auroc
+  "biolink:log_odds_ratio",
+  "biolink:total_sample_size",
 ];
