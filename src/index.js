@@ -121,131 +121,134 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       });
     });
 
-    const auxGraphs = {};
-    const fixedResults = this.trapiResultsAssembler.getResults().map((result) => {
-      const fixedResult = {
-        ...result,
-        node_bindings: {},
-        analyses: [
-          {
-            ...result.analyses[0],
-            resource_id: result.analyses[0].resource_id,
-            edge_bindings: {},
-            score: result.analyses[0].score,
-          },
-        ],
-      };
-      let fixedNodeBindings = {};
-      Object.entries(result.analyses[0].edge_bindings).forEach(([qEdgeID, bindings]) => {
-        const newBindings = new Set(
-          bindings.map((originalBinding) => {
-            const kgEdge = this.bteGraph.edges[originalBinding.id];
-            const supportGraph = [originalBinding.id];
-            [kgEdge.subject, kgEdge.object].forEach((edgeNode) => {
-              const subclassCuries = [...(expandedIDsbyPrimaryID[edgeNode] ?? [])]?.map((expandedID) => [
-                this.subclassEdges[expandedID],
-                expandedID,
-              ]);
-              if (!subclassCuries.length) {
-                const qNodeID = Object.entries(result.node_bindings).find(([qNodeID, bindings]) => {
-                  return bindings.some((binding) => binding.id === edgeNode);
-                })[0];
-                if (!fixedNodeBindings[qNodeID]) fixedNodeBindings[qNodeID] = new Set();
-                fixedNodeBindings[qNodeID].add(edgeNode);
-                return;
-              }
-              subclassCuries.forEach(([original, expanded]) => {
-                const subject = edgeNode;
-                const object = primaryIDsByOriginalID[original];
-                const subclassEdgeID = `expanded-${subject}-subclass_of-${object}`;
-                const subclassEdge = new KGEdge(subclassEdgeID, {
-                  predicate: 'biolink:subclass_of',
-                  subject,
-                  object,
-                });
-                const source = Object.entries(ontologyKnowledgeSourceMapping).find(([prefix, infores]) => {
-                  if (expanded.includes(prefix)) return true;
-                })[1];
-                subclassEdge.addSource([
-                  { resource_id: source, resource_role: 'primary_knowledge_source' },
-                  { resource_id: 'infores:biothings-explorer', resource_role: 'aggregator_knowledge_source' },
-                ]);
-                this.bteGraph.edges[subclassEdgeID] = subclassEdge;
-                supportGraph.push(subclassEdgeID);
-                const qNodeID = Object.entries(result.node_bindings).find(([qNodeID, bindings]) => {
-                  return bindings.some((binding) => binding.id === edgeNode);
-                })[0];
-                if (!fixedNodeBindings[qNodeID]) fixedNodeBindings[qNodeID] = new Set();
-                fixedNodeBindings[qNodeID].add(primaryIDsByOriginalID[original]);
-              });
-            });
-
-            if (supportGraph.length === 1) {
-              return originalBinding.id;
-            }
-
-            // Get non-expanded primaryID from subclassEdge(s)
-            let subject, object;
-            supportGraph.forEach((subclassEdgeID) => {
-              if (!subclassEdgeID.includes('expanded')) return;
-              if (this.bteGraph.edges[subclassEdgeID].subject === kgEdge.subject) {
-                subject = this.bteGraph.edges[subclassEdgeID].object;
-              }
-              if (this.bteGraph.edges[subclassEdgeID].subject === kgEdge.object) {
-                object = this.bteGraph.edges[subclassEdgeID].object;
-              }
-            });
-            // If node doesn't use subclass, just use the primaryID from the edge
-            if (!subject) subject = kgEdge.subject;
-            if (!object) object = kgEdge.object;
-
-            const boundEdgeID = `${subject}-${kgEdge.predicate.replace('biolink:', '')}-${object}-via_subclass`;
-            let suffix = 0;
-            while (Object.keys(auxGraphs).includes(`support${suffix}-${boundEdgeID}`)) {
-              suffix += 1;
-            }
-            const supportGraphID = `support${suffix}-${boundEdgeID}`;
-            auxGraphs[supportGraphID] = { edges: supportGraph };
-            if (this.bteGraph.edges[boundEdgeID]) {
-              this.bteGraph.edges[boundEdgeID].attributes['biolink:support_graphs'].add(supportGraphID);
-            } else {
-              const boundEdge = new KGEdge(boundEdgeID, {
-                predicate: kgEdge.predicate,
-                subject: subject,
-                object: object,
-              });
-              boundEdge.addAdditionalAttributes('biolink:support_graphs', [supportGraphID]);
-              boundEdge.addSource([
-                { resource_id: 'infores:biothings-explorer', resource_role: 'primary_knowledge_source' },
-              ]);
-              this.bteGraph.edges[boundEdgeID] = boundEdge;
-            }
-            return boundEdgeID;
-          }),
-        );
-        fixedResult.analyses[0].edge_bindings[qEdgeID] = [...newBindings].map((kgEdgeID) => {
-          return { id: kgEdgeID };
+    // Create subclass edges for nodes that were expanded
+    const nodesToRebind = {};
+    Object.entries(this.bteGraph.nodes).forEach(([nodeID, bteNode]) => {
+      const subclassCuries = [...(expandedIDsbyPrimaryID[nodeID] ?? [])]?.map((expandedID) => [
+        this.subclassEdges[expandedID],
+        expandedID,
+      ]);
+      if (!subclassCuries.length) return; // Nothing to rebind
+      subclassCuries.forEach(([original, expanded]) => {
+        const subject = nodeID;
+        const object = primaryIDsByOriginalID[original];
+        const subclassEdgeID = `expanded-${subject}-subclass_of-${object}`;
+        if (subclassEdgeID in this.bteGraph.edges) return;
+        const subclassEdge = new KGEdge(subclassEdgeID, {
+          predicate: 'biolink:subclass_of',
+          subject,
+          object,
         });
+        const source = Object.entries(ontologyKnowledgeSourceMapping).find(([prefix, infores]) => {
+          if (expanded.includes(prefix)) return true;
+        })[1];
+        subclassEdge.addSource([
+          { resource_id: source, resource_role: 'primary_knowledge_source' },
+          { resource_id: 'infores:biothings-explorer', resource_role: 'aggregator_knowledge_source' },
+        ]);
+        this.bteGraph.edges[subclassEdgeID] = subclassEdge;
+        nodesToRebind[subject] = { newNode: object, subclassEdgeID };
       });
-
-      Object.entries(fixedNodeBindings).forEach(([qNodeID, boundNodeSet]) => {
-        if (!fixedResult.node_bindings[qNodeID]) {
-          fixedResult.node_bindings[qNodeID] = [];
-        }
-        [...boundNodeSet].forEach((kgNodeID) => {
-          fixedResult.node_bindings[qNodeID].push({ id: kgNodeID });
-        });
-      });
-
-      return fixedResult;
     });
+
+    // Create new constructed edges and aux graphs for edges that used subclass edges
+    let auxGraphs = {};
+    const edgesToRebind = {};
+    const edgesIDsByAuxGraphID = {};
+    Object.entries(this.bteGraph.edges).forEach(([edgeID, bteEdge]) => {
+      if (edgeID.includes('expanded')) return;
+      const supportGraph = [edgeID];
+      let [subject, object] = [bteEdge.subject, bteEdge.object].map((edgeNodeID) => {
+        if (!nodesToRebind[edgeNodeID]) {
+          return edgeNodeID; // nothing to rebind
+        }
+        supportGraph.push(nodesToRebind[edgeNodeID].subclassEdgeID);
+        return nodesToRebind[edgeNodeID].newNode;
+      });
+
+      if (supportGraph.length === 1) return; // no subclasses
+      const boundEdgeID = `${subject}-${bteEdge.predicate.replace('biolink:', '')}-${object}-via_subclass`;
+      let suffix = 0;
+      while (Object.keys(auxGraphs).includes(`support${suffix}-${boundEdgeID}`)) {
+        suffix += 1;
+      }
+      const supportGraphID = `support${suffix}-${boundEdgeID}`;
+      auxGraphs[supportGraphID] = { edges: supportGraph };
+      if (!edgesIDsByAuxGraphID[supportGraphID]) {
+        edgesIDsByAuxGraphID[supportGraphID] = new Set();
+      }
+      edgesIDsByAuxGraphID[supportGraphID].add(boundEdgeID);
+      if (!this.bteGraph.edges[boundEdgeID]) {
+        const boundEdge = new KGEdge(boundEdgeID, {
+          predicate: bteEdge.predicate,
+          subject: subject,
+          object: object,
+        });
+        boundEdge.addAdditionalAttributes('biolink:support_graphs', [supportGraphID]);
+        boundEdge.addSource([{ resource_id: 'infores:biothings-explorer', resource_role: 'primary_knowledge_source' }]);
+        this.bteGraph.edges[boundEdgeID] = boundEdge;
+      } else {
+        this.bteGraph.edges[boundEdgeID].attributes['biolink:support_graphs'].add(supportGraphID);
+      }
+      edgesToRebind[edgeID] = boundEdgeID;
+    });
+
+    const resultBoundEdgesWithAuxGraphs = new Set();
+    const fixedResults = this.trapiResultsAssembler.getResults().map((result) => {
+      result.node_bindings = Object.fromEntries(
+        Object.entries(result.node_bindings).map(([qNodeID, bindings]) => {
+          return [
+            qNodeID,
+            bindings.reduce(
+              ({ boundIDs, newBindings }, binding) => {
+                if (!nodesToRebind[binding.id] && !boundIDs.has(binding.id)) {
+                  newBindings.push(binding);
+                  boundIDs.add(binding.id);
+                } else if (!boundIDs.has(nodesToRebind[binding.id].newNode)) {
+                  newBindings.push({ id: nodesToRebind[binding.id].newNode });
+                  boundIDs.add(nodesToRebind[binding.id].newNode);
+                }
+                return { boundIDs, newBindings };
+              },
+              { boundIDs: new Set(), newBindings: [] },
+            ).newBindings,
+          ];
+        }),
+      );
+      result.analyses[0].edge_bindings = Object.fromEntries(
+        Object.entries(result.analyses[0].edge_bindings).map(([qEdgeID, bindings]) => {
+          return [
+            qEdgeID,
+            bindings.reduce(
+              ({ boundIDs, newBindings }, binding) => {
+                if (!edgesToRebind[binding.id] && !boundIDs.has(binding.id)) {
+                  newBindings.push(binding);
+                  boundIDs.add(binding.id);
+                } else if (!boundIDs.has(edgesToRebind[binding.id])) {
+                  newBindings.push({ id: edgesToRebind[binding.id] });
+                  boundIDs.add(edgesToRebind[binding.id]);
+                  resultBoundEdgesWithAuxGraphs.add(edgesToRebind[binding.id]);
+                }
+                return { boundIDs, newBindings };
+              },
+              { boundIDs: new Set(), newBindings: [] },
+            ).newBindings,
+          ];
+        }),
+      );
+      return result;
+    });
+
+    // Prune unused auxGraphs
+    auxGraphs = Object.fromEntries(Object.entries(auxGraphs).filter(([auxGraphID]) => {
+      return [...edgesIDsByAuxGraphID[auxGraphID]].some((edgeID => resultBoundEdgesWithAuxGraphs.has(edgeID)))
+    }))
 
     this.auxGraphs = auxGraphs;
     this.finalizedResults = fixedResults;
   }
 
   async addQueryNodes() {
-    // TODO iterate through query graph, creating full nodes for each ID, then add to bteGraph
     const qNodeIDsByOriginalID = new Map();
     const curiesToResolve = [
       ...Object.values(this.queryGraph.nodes).reduce((set, qNode) => {
