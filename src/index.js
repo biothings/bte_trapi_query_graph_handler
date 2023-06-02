@@ -201,9 +201,11 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
             qNodeID,
             bindings.reduce(
               ({ boundIDs, newBindings }, binding) => {
-                if (!nodesToRebind[binding.id] && !boundIDs.has(binding.id)) {
-                  newBindings.push(binding);
-                  boundIDs.add(binding.id);
+                if (!nodesToRebind[binding.id]) {
+                  if (!boundIDs.has(binding.id)) {
+                    newBindings.push(binding);
+                    boundIDs.add(binding.id);
+                  };
                 } else if (!boundIDs.has(nodesToRebind[binding.id].newNode)) {
                   newBindings.push({ id: nodesToRebind[binding.id].newNode });
                   boundIDs.add(nodesToRebind[binding.id].newNode);
@@ -221,9 +223,11 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
             qEdgeID,
             bindings.reduce(
               ({ boundIDs, newBindings }, binding) => {
-                if (!edgesToRebind[binding.id] && !boundIDs.has(binding.id)) {
-                  newBindings.push(binding);
-                  boundIDs.add(binding.id);
+                if (!edgesToRebind[binding.id]) {
+                  if (!boundIDs.has(binding.id)) {
+                    newBindings.push(binding);
+                    boundIDs.add(binding.id);
+                  }
                 } else if (!boundIDs.has(edgesToRebind[binding.id])) {
                   newBindings.push({ id: edgesToRebind[binding.id] });
                   boundIDs.add(edgesToRebind[binding.id]);
