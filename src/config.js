@@ -31,12 +31,23 @@ exports.EDGE_ATTRIBUTES_USED_IN_RECORD_HASH = [
   "biolink:has_disease_context",
   "biolink:GeneToDrugAssociation",
   // for multiomics wellness 2023-05-25: may later change?
-  "NCIT:C61594",          // bonferroni p-value: should be enough but not sure
-  "UMLS CUI:C5418925",    // age range between 35 and 55
-  "MeSH:D008297",         // gender male
-  "UMLS CUI:C0043157",    // population white
   "MeSH:D005260",         // gender female
-  "UMLS CUI:C2229974",    // children?
+  "MeSH:D008297",         // gender male
+  "UMLS CUI:C0001948",    // alcohol consumption?
+  "UMLS CUI:C0005680",    // black population?
+  "UMLS CUI:C0043157",    // population white
+  "UMLS CUI:C0086409",    // hispanic population?
+  "UMLS CUI:C0425379",    // other race?
+  "UMLS CUI:C0453995",    // tobacco use and exposure?
+  "UMLS CUI:C1515945",    // American Indian or Alaska Native?
+  "UMLS CUI:C1519427",    // south asian people?
+  "UMLS CUI:C2229974",    // children
+  "UMLS CUI:C2698217",    // middle eastern?
+  "UMLS CUI:C4316909",    // Marijuana Use?
+  "UMLS CUI:C5205795",    // east asian people
+  "UMLS CUI:C5418925",    // study age range
+  // bonferroni p-value: would maybe work? but gustavo said not needed
+  //"NCIT:C61594",
   // Multiomics BigGIM Drug-Response 2023-05-31: may later change?
   "biolink:context_qualifier",
   // commenting it out since I haven't tested if it works for this KP or
