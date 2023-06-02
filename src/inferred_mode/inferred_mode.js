@@ -343,6 +343,7 @@ module.exports = class InferredQueryHandler {
     debug('pruning creative combinedResponse nodes/edges...');
     const edgeBoundNodes = new Set();
     const resultsBoundEdges = new Set();
+    const resultBoundAuxGraphs = new Set();
 
     // Handle nodes and edges bound to results directly
     combinedResponse.message.results.forEach((result) => {
@@ -359,6 +360,7 @@ module.exports = class InferredQueryHandler {
       combinedResponse.message.knowledge_graph.edges[edgeID].attributes.find(({ attribute_type_id, value }) => {
         if (attribute_type_id === 'biolink:support_graphs') {
           value.forEach((auxGraphID) => {
+            resultBoundAuxGraphs.add(auxGraphID);
             combinedResponse.message.auxiliary_graphs[auxGraphID].edges.forEach((auxGraphEdgeID) => {
               edgeBoundNodes.add(combinedResponse.message.knowledge_graph.edges[auxGraphEdgeID].subject);
               edgeBoundNodes.add(combinedResponse.message.knowledge_graph.edges[auxGraphEdgeID].object);
@@ -378,7 +380,11 @@ module.exports = class InferredQueryHandler {
       (edgeID) => !resultsBoundEdges.has(edgeID),
     );
     edgesToDelete.forEach((unusedEdgeID) => delete combinedResponse.message.knowledge_graph.edges[unusedEdgeID]);
-    debug(`pruned ${nodesToDelete.length} nodes and ${edgesToDelete.length} edges from combinedResponse.`);
+    const auxGraphsToDelete = Object.keys(combinedResponse.message.auxiliary_graphs).filter(
+      (auxGraphID) => !resultBoundAuxGraphs.has(auxGraphID),
+    );
+    auxGraphsToDelete.forEach((unusedAuxGraphID) => delete combinedResponse.message.auxiliary_graphs[unusedAuxGraphID]);
+    debug(`pruned ${nodesToDelete.length} nodes, ${edgesToDelete.length} edges, ${auxGraphsToDelete.length} auxGraphs from combinedResponse.`);
   }
 
   async query() {
