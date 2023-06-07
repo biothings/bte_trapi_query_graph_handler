@@ -283,7 +283,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   }
 
   getResponse() {
-    const results = this.finalizedResults;
+    const results = this.finalizedResults ?? [];
     return {
       description: `Query processed successfully, retrieved ${results.length} results.`,
       schema_version: '1.4.0',
