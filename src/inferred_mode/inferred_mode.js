@@ -211,7 +211,7 @@ module.exports = class InferredQueryHandler {
         combinedResponse.message.knowledge_graph.edges[recordHash] = edge;
       }
     });
-    Object.entries(newResponse.message.auxiliary_graphs).forEach(([auxGraphID, auxGraph]) => {
+    Object.entries(newResponse.message.auxiliary_graphs ?? {}).forEach(([auxGraphID, auxGraph]) => {
       if (!(auxGraphID in combinedResponse.message.auxiliary_graphs)) {
         combinedResponse.message.auxiliary_graphs[auxGraphID] = auxGraph;
       }
