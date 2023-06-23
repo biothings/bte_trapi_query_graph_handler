@@ -287,11 +287,18 @@ module.exports = class InferredQueryHandler {
           });
         });
 
+        // Combine, re-sort, and truncate to 20 any pfocr figures
         if (combinedResponse.message.results[resultID].pfocr || translatedResult.pfocr) {
-          combinedResponse.message.results[resultID].pfocr = [
+          let reSort = false;
+          if (combinedResponse.message.results[resultID].pfocr && translatedResult.pfocr) reSort = true;
+          let newFigures = [
             ...(combinedResponse.message.results[resultID].pfocr ?? []),
             ...(translatedResult.pfocr ?? []),
           ];
+          if (reSort) {
+            newFigures = newFigures.sort((figA, figB) => figB.score - figA.score).slice(0, 20);
+          }
+          combinedResponse.message.results[resultID].pfocr = newFigures;
         }
 
         const resScore = translatedResult.analyses[0].score;
@@ -384,7 +391,9 @@ module.exports = class InferredQueryHandler {
       (auxGraphID) => !resultBoundAuxGraphs.has(auxGraphID),
     );
     auxGraphsToDelete.forEach((unusedAuxGraphID) => delete combinedResponse.message.auxiliary_graphs[unusedAuxGraphID]);
-    debug(`pruned ${nodesToDelete.length} nodes, ${edgesToDelete.length} edges, ${auxGraphsToDelete.length} auxGraphs from combinedResponse.`);
+    debug(
+      `pruned ${nodesToDelete.length} nodes, ${edgesToDelete.length} edges, ${auxGraphsToDelete.length} auxGraphs from combinedResponse.`,
+    );
   }
 
   async query() {

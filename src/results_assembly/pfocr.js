@@ -257,7 +257,7 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
 
     if (sortedFigures.length > FIGURE_COUNT_MAX) {
       resultsWithTruncatedFigures += 1;
-      sortedFigures.slice(20).forEach((figure) => truncatedFigures.add(figure.figureUrl));
+      sortedFigures.slice(0, 20).forEach((figure) => truncatedFigures.add(figure.figureUrl));
       // debug(`Truncating ${sortedFigures.length} PFOCR figures to ${FIGURE_COUNT_MAX} for TRAPI result w/ curies ${trapiResultToCurieSet.get(trapiResult).split(' ').map((ID) => `NCBIGene:${ID}`).join(', ')}`)
     }
 
