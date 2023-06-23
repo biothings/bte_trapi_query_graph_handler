@@ -237,7 +237,6 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
         pmc: figure.associatedWith.pmc,
         // TODO: do we want to include figure title? Note: this would need to be added to queryBody.
         //title: figure.associatedWith.title,
-        nodes: matchedQNodes,
         matchedCuries: [...resultGenesInFigure].map((geneID) => `NCBIGene:${geneID}`),
         score: 2 * ((precision * recall) / (precision + recall))
           // 1 -
