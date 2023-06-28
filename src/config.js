@@ -46,7 +46,7 @@ exports.EDGE_ATTRIBUTES_USED_IN_RECORD_HASH = [
   "UMLS CUI:C4316909",    // Marijuana Use?
   "UMLS CUI:C5205795",    // east asian people
   "UMLS CUI:C5418925",    // study age range
-  // bonferroni p-value: would maybe work? but gustavo said not needed
+  // bonferroni p-value: would maybe work? but Gwênlyn said not needed
   //"NCIT:C61594",
   // Multiomics BigGIM Drug-Response 2023-05-31: may later change?
   "biolink:context_qualifier",
