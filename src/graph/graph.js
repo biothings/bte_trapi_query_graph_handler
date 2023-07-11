@@ -25,6 +25,7 @@ module.exports = class BTEGraph {
         // const outputBTENodeID = outputPrimaryCurie + '-' + outputQNodeID;
         const outputBTENodeID = outputPrimaryCurie;
         const recordHash = record.recordHash;
+        
         if (!(outputBTENodeID in this.nodes)) {
           this.nodes[outputBTENodeID] = new kg_node(outputBTENodeID, {
             primaryCurie: outputPrimaryCurie,
@@ -36,6 +37,10 @@ module.exports = class BTEGraph {
             nodeAttributes: record.object.attributes,
           });
         }
+        else if (this.nodes[outputBTENodeID]._label === undefined || this.nodes[outputBTENodeID]._label === this.nodes[outputBTENodeID]._primaryCurie) {
+            this.nodes[outputBTENodeID]._label = record.object.label;
+        }
+
         if (!(inputBTENodeID in this.nodes)) {
           this.nodes[inputBTENodeID] = new kg_node(inputBTENodeID, {
             primaryCurie: inputPrimaryCurie,
@@ -47,6 +52,10 @@ module.exports = class BTEGraph {
             nodeAttributes: record.subject.attributes,
           });
         }
+        else if (this.nodes[inputBTENodeID]._label === undefined || this.nodes[inputBTENodeID]._label === this.nodes[inputBTENodeID]._primaryCurie) {
+            this.nodes[inputBTENodeID]._label = record.subject.label;
+        }
+
         this.nodes[outputBTENodeID].addSourceNode(inputBTENodeID);
         this.nodes[outputBTENodeID].addSourceQNodeID(inputQNodeID);
         this.nodes[inputBTENodeID].addTargetNode(outputBTENodeID);
