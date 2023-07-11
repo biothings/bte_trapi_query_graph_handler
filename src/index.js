@@ -275,7 +275,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
             qNodeID: qNodeIDsByOriginalID[originalCurie],
             equivalentCuries: resolvedEntity.equivalentIDs,
             names: resolvedEntity.labelAliases,
-            category: category ? [category] : [],
+            category: category ? [category] : ["biolink:NamedThing"],
             attributes: resolvedEntity.attributes,
             label: resolvedEntity.label,
           },
