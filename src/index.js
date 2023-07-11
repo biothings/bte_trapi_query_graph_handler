@@ -267,7 +267,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     Object.entries(resolvedCuries).forEach(([originalCurie, resolvedEntity]) => {
       if (!this.bteGraph.nodes[resolvedEntity.primaryID]) {
         this.bteGraph.nodes[resolvedEntity.primaryID] = new KGNode(
-          `${resolvedEntity.primaryID}-${qNodeIDsByOriginalID[originalCurie]}`,
+          resolvedEntity.primaryID,
           {
             primaryCurie: resolvedEntity.primaryID,
             qNodeID: qNodeIDsByOriginalID[originalCurie],
