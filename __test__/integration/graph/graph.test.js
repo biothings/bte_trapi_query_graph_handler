@@ -91,16 +91,16 @@ describe('Test graph class', () => {
   test('A single query result is correctly updated.', () => {
     const g = new graph();
     g.update([record1]);
-    expect(g.nodes).toHaveProperty('outputPrimaryCurie-qg2');
-    expect(g.nodes).toHaveProperty('inputPrimaryCurie-qg1');
-    expect(g.nodes['outputPrimaryCurie-qg2']._primaryCurie).toEqual('outputPrimaryCurie');
-    expect(g.nodes['outputPrimaryCurie-qg2']._qNodeID).toEqual('qg2');
-    expect(Array.from(g.nodes['outputPrimaryCurie-qg2']._sourceNodes)).toEqual(['inputPrimaryCurie-qg1']);
-    expect(Array.from(g.nodes['outputPrimaryCurie-qg2']._sourceQNodeIDs)).toEqual(['qg1']);
-    expect(g.nodes['inputPrimaryCurie-qg1']._primaryCurie).toEqual('inputPrimaryCurie');
-    expect(g.nodes['inputPrimaryCurie-qg1']._qNodeID).toEqual('qg1');
-    expect(Array.from(g.nodes['inputPrimaryCurie-qg1']._targetNodes)).toEqual(['outputPrimaryCurie-qg2']);
-    expect(Array.from(g.nodes['inputPrimaryCurie-qg1']._targetQNodeIDs)).toEqual(['qg2']);
+    expect(g.nodes).toHaveProperty('outputPrimaryCurie');
+    expect(g.nodes).toHaveProperty('inputPrimaryCurie');
+    expect(g.nodes['outputPrimaryCurie']._primaryCurie).toEqual('outputPrimaryCurie');
+    expect(g.nodes['outputPrimaryCurie']._qNodeID).toEqual('qg2');
+    expect(Array.from(g.nodes['outputPrimaryCurie']._sourceNodes)).toEqual(['inputPrimaryCurie']);
+    expect(Array.from(g.nodes['outputPrimaryCurie']._sourceQNodeIDs)).toEqual(['qg1']);
+    expect(g.nodes['inputPrimaryCurie']._primaryCurie).toEqual('inputPrimaryCurie');
+    expect(g.nodes['inputPrimaryCurie']._qNodeID).toEqual('qg1');
+    expect(Array.from(g.nodes['inputPrimaryCurie']._targetNodes)).toEqual(['outputPrimaryCurie']);
+    expect(Array.from(g.nodes['inputPrimaryCurie']._targetQNodeIDs)).toEqual(['qg2']);
     expect(g.edges).toHaveProperty('95fe2a8089c0d79ea093b97c5991f7ba');
     expect(Array.from(g.edges['95fe2a8089c0d79ea093b97c5991f7ba'].apis)).toEqual(['API1']);
     expect(g.edges['95fe2a8089c0d79ea093b97c5991f7ba'].sources).toHaveProperty('source1')
@@ -111,16 +111,16 @@ describe('Test graph class', () => {
   test('Multiple query results are correctly updated for two edges having same input, predicate and output', () => {
     const g = new graph();
     g.update([record1, record2]);
-    expect(g.nodes).toHaveProperty('outputPrimaryCurie-qg2');
-    expect(g.nodes).toHaveProperty('inputPrimaryCurie-qg1');
-    expect(g.nodes['outputPrimaryCurie-qg2']._primaryCurie).toEqual('outputPrimaryCurie');
-    expect(g.nodes['outputPrimaryCurie-qg2']._qNodeID).toEqual('qg2');
-    expect(Array.from(g.nodes['outputPrimaryCurie-qg2']._sourceNodes)).toEqual(['inputPrimaryCurie-qg1']);
-    expect(Array.from(g.nodes['outputPrimaryCurie-qg2']._sourceQNodeIDs)).toEqual(['qg1']);
-    expect(g.nodes['inputPrimaryCurie-qg1']._primaryCurie).toEqual('inputPrimaryCurie');
-    expect(g.nodes['inputPrimaryCurie-qg1']._qNodeID).toEqual('qg1');
-    expect(Array.from(g.nodes['inputPrimaryCurie-qg1']._targetNodes)).toEqual(['outputPrimaryCurie-qg2']);
-    expect(Array.from(g.nodes['inputPrimaryCurie-qg1']._targetQNodeIDs)).toEqual(['qg2']);
+    expect(g.nodes).toHaveProperty('outputPrimaryCurie');
+    expect(g.nodes).toHaveProperty('inputPrimaryCurie');
+    expect(g.nodes['outputPrimaryCurie']._primaryCurie).toEqual('outputPrimaryCurie');
+    expect(g.nodes['outputPrimaryCurie']._qNodeID).toEqual('qg2');
+    expect(Array.from(g.nodes['outputPrimaryCurie']._sourceNodes)).toEqual(['inputPrimaryCurie']);
+    expect(Array.from(g.nodes['outputPrimaryCurie']._sourceQNodeIDs)).toEqual(['qg1']);
+    expect(g.nodes['inputPrimaryCurie']._primaryCurie).toEqual('inputPrimaryCurie');
+    expect(g.nodes['inputPrimaryCurie']._qNodeID).toEqual('qg1');
+    expect(Array.from(g.nodes['inputPrimaryCurie']._targetNodes)).toEqual(['outputPrimaryCurie']);
+    expect(Array.from(g.nodes['inputPrimaryCurie']._targetQNodeIDs)).toEqual(['qg2']);
 
     expect(g.edges).toHaveProperty('95fe2a8089c0d79ea093b97c5991f7ba');
     expect(Array.from(g.edges['95fe2a8089c0d79ea093b97c5991f7ba'].apis)).toEqual(['API1']);
@@ -138,16 +138,16 @@ describe('Test graph class', () => {
   test('Multiple query results for different edges are correctly updated', () => {
     const g = new graph();
     g.update([record1, record2, record3]);
-    expect(g.nodes).toHaveProperty('outputPrimaryCurie-qg2');
-    expect(g.nodes).toHaveProperty('inputPrimaryCurie-qg1');
-    expect(g.nodes['outputPrimaryCurie-qg2']._primaryCurie).toEqual('outputPrimaryCurie');
-    expect(g.nodes['outputPrimaryCurie-qg2']._qNodeID).toEqual('qg2');
-    expect(Array.from(g.nodes['outputPrimaryCurie-qg2']._sourceNodes)).toEqual(['inputPrimaryCurie-qg1']);
-    expect(Array.from(g.nodes['outputPrimaryCurie-qg2']._sourceQNodeIDs)).toEqual(['qg1']);
-    expect(g.nodes['inputPrimaryCurie-qg1']._primaryCurie).toEqual('inputPrimaryCurie');
-    expect(g.nodes['inputPrimaryCurie-qg1']._qNodeID).toEqual('qg1');
-    expect(Array.from(g.nodes['inputPrimaryCurie-qg1']._targetNodes)).toEqual(['outputPrimaryCurie-qg2']);
-    expect(Array.from(g.nodes['inputPrimaryCurie-qg1']._targetQNodeIDs)).toEqual(['qg2']);
+    expect(g.nodes).toHaveProperty('outputPrimaryCurie');
+    expect(g.nodes).toHaveProperty('inputPrimaryCurie');
+    expect(g.nodes['outputPrimaryCurie']._primaryCurie).toEqual('outputPrimaryCurie');
+    expect(g.nodes['outputPrimaryCurie']._qNodeID).toEqual('qg2');
+    expect(Array.from(g.nodes['outputPrimaryCurie']._sourceNodes)).toEqual(['inputPrimaryCurie']);
+    expect(Array.from(g.nodes['outputPrimaryCurie']._sourceQNodeIDs)).toEqual(['qg1']);
+    expect(g.nodes['inputPrimaryCurie']._primaryCurie).toEqual('inputPrimaryCurie');
+    expect(g.nodes['inputPrimaryCurie']._qNodeID).toEqual('qg1');
+    expect(Array.from(g.nodes['inputPrimaryCurie']._targetNodes)).toEqual(['outputPrimaryCurie']);
+    expect(Array.from(g.nodes['inputPrimaryCurie']._targetQNodeIDs)).toEqual(['qg2']);
 
     expect(g.edges).toHaveProperty('95fe2a8089c0d79ea093b97c5991f7ba');
     expect(Array.from(g.edges['95fe2a8089c0d79ea093b97c5991f7ba'].apis)).toEqual(['API1']);

@@ -266,14 +266,16 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     const resolvedCuries = await id_resolver.resolveSRI({ unknown: curiesToResolve });
     Object.entries(resolvedCuries).forEach(([originalCurie, resolvedEntity]) => {
       if (!this.bteGraph.nodes[resolvedEntity.primaryID]) {
+        const category = resolvedEntity.primaryTypes?.[0] ? `biolink:${resolvedEntity.primaryTypes[0]}` : qNodeIDsByOriginalID.get(originalCurie).categories?.[0];
+
         this.bteGraph.nodes[resolvedEntity.primaryID] = new KGNode(
-          `${resolvedEntity.primaryID}-${qNodeIDsByOriginalID[originalCurie]}`,
+          resolvedEntity.primaryID,
           {
             primaryCurie: resolvedEntity.primaryID,
             qNodeID: qNodeIDsByOriginalID[originalCurie],
             equivalentCuries: resolvedEntity.equivalentIDs,
             names: resolvedEntity.labelAliases,
-            category: [`biolink:${resolvedEntity.primaryTypes[0]}`],
+            category: category ? [category] : ["biolink:NamedThing"],
             attributes: resolvedEntity.attributes,
             label: resolvedEntity.label,
           },
