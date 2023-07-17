@@ -684,5 +684,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     // finishing logs
     this.getSummaryLog(this.getResponse(), this.logs).forEach((log) => this.logs.push(log));
     debug(`(14) TRAPI query finished.`);
+
+    Sentry.getCurrentHub().getScope().getTransaction().setData('logs', {items: this.logs});
   }
 };
