@@ -642,10 +642,6 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       return;
     }
 
-    const span2 = Sentry.getCurrentHub().getScope().getTransaction().startChild({
-        description: "edgeExecution"
-    });
-
     if (!(await this._edgesSupported(queryEdges, metaKG))) {
       return;
     }
@@ -656,8 +652,6 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     if (!executionSuccess) {
       return;
     }
-
-    span2.finish();
 
     const span3 = Sentry.getCurrentHub().getScope().getTransaction().startChild({
         description: "resultsAssembly"
