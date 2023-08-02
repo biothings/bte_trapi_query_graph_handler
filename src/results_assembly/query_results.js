@@ -452,12 +452,12 @@ module.exports = class TrapiResultsAssembler {
         debug('Error enriching with PFOCR figures: ', err);
         this.logs.push(new LogEntry('DEBUG', null, 'Error enriching with PFOCR figures: ', err).getLog());
       }
-      debug(`Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`);
+      debug(`Scored ${resultsWithScore} results with NGD score, scored ${resultsWithoutScore} results without NGD.`);
       this.logs.push(
         new LogEntry(
           'DEBUG',
           null,
-          `Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`,
+          `Scored ${resultsWithScore} results with NGD score, scored ${resultsWithoutScore} results without NGD.`,
           {
             type: 'scoring',
             scored: resultsWithScore,

@@ -519,25 +519,6 @@ module.exports = class InferredQueryHandler {
       this.parent
         .getSummaryLog(combinedResponse, combinedResponse.logs, resultQueries)
         .forEach((log) => combinedResponse.logs.push(log));
-      let scoredResults = 0;
-      let unscoredResults = 0;
-      combinedResponse.message.results.forEach((result) => {
-        const scoreFromEdges = Object.values(result.analyses[0].edge_bindings).reduce((count, qEdge_bindings) => {
-          return count + qEdge_bindings.length;
-        }, 0);
-        if (result.analyses[0].score > scoreFromEdges) {
-          scoredResults += 1;
-        } else {
-          unscoredResults += 1;
-        }
-      });
-      combinedResponse.logs.push(
-        new LogEntry(
-          'INFO',
-          null,
-          `Scoring Summary: (${scoredResults}) scored / (${unscoredResults}) unscored`,
-        ).getLog(),
-      );
     }
     combinedResponse.logs = combinedResponse.logs.map((log) => log.toJSON());
 
