@@ -60,3 +60,12 @@ exports.EDGE_ATTRIBUTES_USED_IN_RECORD_HASH = [
   "biolink:log_odds_ratio",
   "biolink:total_sample_size",
 ];
+
+// based on https://github.com/biolink/biolink-model/blob/master/infores_catalog.yaml
+exports.text_mining_api_infores = [
+  'infores:biothings-semmeddb',
+  'infores:scibite',
+  'infores:semmeddb',
+  'infores:text-mining-provider-cooccurrence',
+  'infores:text-mining-provider-targeted'
+];
