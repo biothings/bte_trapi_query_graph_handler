@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const Sentry = require('@sentry/node');
 
 module.exports = class LogEntry {
   constructor(level = 'DEBUG', code = null, message = null, data = null) {
@@ -18,6 +19,11 @@ module.exports = class LogEntry {
     if (global.job) {
       global.job.log(JSON.stringify(log, undefined, 2));
     }
+    Sentry.addBreadcrumb({
+        category: "log",
+        message: this.message,
+        level: this.level,
+    });
     return {
       ...log,
       data: this.data,

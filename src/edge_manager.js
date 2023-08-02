@@ -4,7 +4,7 @@ const BTEError = require('./exceptions/bte_error');
 const debug = require('debug')('bte:biothings-explorer-trapi:edge-manager');
 const config = require('./config');
 const BatchEdgeQueryHandler = require('./batch_edge_query');
-
+const Sentry = require('@sentry/node')
 
 module.exports = class QueryEdgeManager {
   constructor(edges, metaKG, options) {
@@ -411,10 +411,22 @@ module.exports = class QueryEdgeManager {
       }
       // storing records will trigger a node entity count update
       currentQEdge.storeRecords(queryRecords);
+
+      const span1 = Sentry.getCurrentHub().getScope().getTransaction().startChild({
+        description: "filteringRecords"
+      });
       // filter records
       this.updateEdgeRecords(currentQEdge);
+      span1.finish();
+
+      const span2 = Sentry.getCurrentHub().getScope().getTransaction().startChild({
+        description: "updatingRecordEdges"
+      });
+
       // update and filter neighbors
       this.updateAllOtherEdges(currentQEdge);
+      span2.finish();
+
       // check that any records are kept
       if (!currentQEdge.records.length) {
         this._logSkippedQueries(unavailableAPIs);

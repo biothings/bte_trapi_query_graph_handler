@@ -21,6 +21,7 @@ const InferredQueryHandler = require('./inferred_mode/inferred_mode');
 const { biolink } = require('./biolink');
 const KGNode = require('./graph/kg_node');
 const KGEdge = require('./graph/kg_edge');
+const Sentry = require('@sentry/node');
 
 exports.InvalidQueryGraphError = InvalidQueryGraphError;
 exports.redisClient = redisClient;
@@ -587,6 +588,10 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     this._initializeResponse();
     await this.addQueryNodes();
 
+    const span1 = Sentry.getCurrentHub().getScope().getTransaction().startChild({
+        description: "loadMetaKG"
+    });
+
     debug('Start to load metakg.');
     const metaKG = this._loadMetaKG();
     if (!metaKG.ops.length) {
@@ -602,6 +607,8 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       return;
     }
     debug('MetaKG successfully loaded!');
+
+    span1.finish();
 
     if (global.missingAPIs) {
       this.logs.push(
@@ -629,9 +636,14 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     debug(`(3) All edges created ${JSON.stringify(queryEdges)}`);
 
     if (this._queryUsesInferredMode()) {
+      const span2 = Sentry.getCurrentHub().getScope().getTransaction().startChild({
+          description: "creativeExecution"
+      });
       await this._handleInferredEdges();
+      span2.finish();
       return;
     }
+
     if (!(await this._edgesSupported(queryEdges, metaKG))) {
       return;
     }
@@ -642,6 +654,11 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     if (!executionSuccess) {
       return;
     }
+
+    const span3 = Sentry.getCurrentHub().getScope().getTransaction().startChild({
+        description: "resultsAssembly"
+    });
+
     // update query graph
     this.bteGraph.update(manager.getRecords());
     //update query results
@@ -655,6 +672,9 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     // prune bteGraph
     this.bteGraph.prune(this.finalizedResults, this.auxGraphs);
     this.bteGraph.notify();
+
+    span3.finish();
+
     // check primary knowledge sources
     this.logs = [...this.logs, ...this.bteGraph.checkPrimaryKnowledgeSources(this.knowledgeGraph)];
     // finishing logs
