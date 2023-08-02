@@ -588,7 +588,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     this._initializeResponse();
     await this.addQueryNodes();
 
-    const span1 = Sentry.getCurrentHub().getScope().getTransaction().startChild({
+    const span1 = Sentry?.getCurrentHub()?.getScope()?.getTransaction()?.startChild({
         description: "loadMetaKG"
     });
 
@@ -608,7 +608,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     }
     debug('MetaKG successfully loaded!');
 
-    span1.finish();
+    span1?.finish();
 
     if (global.missingAPIs) {
       this.logs.push(
@@ -636,11 +636,11 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     debug(`(3) All edges created ${JSON.stringify(queryEdges)}`);
 
     if (this._queryUsesInferredMode()) {
-      const span2 = Sentry.getCurrentHub().getScope().getTransaction().startChild({
+      const span2 = Sentry?.getCurrentHub()?.getScope()?.getTransaction()?.startChild({
           description: "creativeExecution"
       });
       await this._handleInferredEdges();
-      span2.finish();
+      span2?.finish();
       return;
     }
 
@@ -655,7 +655,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
       return;
     }
 
-    const span3 = Sentry.getCurrentHub().getScope().getTransaction().startChild({
+    const span3 = Sentry?.getCurrentHub()?.getScope()?.getTransaction()?.startChild({
         description: "resultsAssembly"
     });
 
@@ -673,7 +673,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     this.bteGraph.prune(this.finalizedResults, this.auxGraphs);
     this.bteGraph.notify();
 
-    span3.finish();
+    span3?.finish();
 
     // check primary knowledge sources
     this.logs = [...this.logs, ...this.bteGraph.checkPrimaryKnowledgeSources(this.knowledgeGraph)];
