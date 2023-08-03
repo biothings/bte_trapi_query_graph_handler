@@ -4,7 +4,7 @@ const utils = require('../utils');
 const async = require('async');
 const biolink = require('../biolink');
 const { getTemplates } = require('./template_lookup');
-const { addNormalizedScores } = require('../results_assembly/score');
+const { scaled_sigmoid, inverse_scaled_sigmoid } = require('../results_assembly/score');
 
 module.exports = class InferredQueryHandler {
   constructor(parent, TRAPIQueryHandler, queryGraph, logs, options, path, predicatePath, includeReasoner) {
@@ -304,7 +304,7 @@ module.exports = class InferredQueryHandler {
         const resScore = translatedResult.analyses[0].score;
         if (typeof combinedResponse.message.results[resultID].analyses[0].score !== 'undefined') {
           combinedResponse.message.results[resultID].analyses[0].score = resScore
-            ? Math.max(combinedResponse.message.results[resultID].analyses[0].score, resScore)
+            ? scaled_sigmoid(inverse_scaled_sigmoid(combinedResponse.message.results[resultID].analyses[0].score) + inverse_scaled_sigmoid(resScore))
             : combinedResponse.message.results[resultID].analyses[0].score;
         } else {
           combinedResponse.message.results[resultID].analyses[0].score = resScore;

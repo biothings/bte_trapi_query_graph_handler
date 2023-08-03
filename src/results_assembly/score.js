@@ -80,6 +80,10 @@ function scaled_sigmoid(input) {
   return sigmoid * 2 - 1;
 }
 
+function inverse_scaled_sigmoid(input) {
+  return -tuning_param * Math.log(2 / (input + 1) - 1);
+}
+
 function calculateScore(comboInfo, scoreCombos) {
   const sum = array => array.reduce((a, b) => a + b, 0);
   const average = array => array.length ? sum(array) / array.length : 0;
@@ -155,6 +159,8 @@ function calculateScore(comboInfo, scoreCombos) {
 
 module.exports.getScores = getScores;
 module.exports.calculateScore = calculateScore;
+module.exports.scaled_sigmoid = scaled_sigmoid;
+module.exports.inverse_scaled_sigmoid = inverse_scaled_sigmoid;
 module.exports.exportForTesting = {
   record_weight, text_mined_record_weight, ngd_weight, LENGTH_PENALTY, scaled_sigmoid
 };
