@@ -176,8 +176,8 @@ module.exports = class QueryEdgeManager {
   _filterEdgeRecords(qEdge) {
     let keep = [];
     let records = qEdge.records;
-    let subjectCuries = qEdge.subject.curie;
-    let objectCuries = qEdge.object.curie;
+    let subjectCuries = Array.isArray(qEdge.subject.curie) ? qEdge.subject.curie.map(s => s.toLowerCase()) : qEdge.subject.curie.toLowerCase();
+    let objectCuries =  Array.isArray(qEdge.object.curie) ? qEdge.object.curie.map(s => s.toLowerCase()) : qEdge.object.curie.toLowerCase();
     debug(
       `'${qEdge.getID()}' Reversed[${qEdge.reverse}] (${JSON.stringify(subjectCuries.length || 0)})` +
         `--(${JSON.stringify(objectCuries.length || 0)}) entities / (${records.length}) records.`,
@@ -197,17 +197,17 @@ module.exports = class QueryEdgeManager {
       //compare record I/O ids against edge node ids
       // #1 check equivalent ids
       record.subject.equivalentCuries.forEach((curie) => {
-        subjectIDs.add(curie);
+        subjectIDs.add(curie?.toLowerCase());
       });
       record.object.equivalentCuries.forEach((curie) => {
-        objectIDs.add(curie);
+        objectIDs.add(curie?.toLowerCase());
       });
       // #2 ensure we have the primaryID
-      subjectIDs.add(record.subject.curie);
-      objectIDs.add(record.object.curie);
+      subjectIDs.add(record.subject.curie?.toLowerCase());
+      objectIDs.add(record.object.curie?.toLowerCase());
       // #3 make sure we at least have the original
-      subjectIDs.add(record.subject.original);
-      objectIDs.add(record.object.original);
+      subjectIDs.add(record.subject.original?.toLowerCase());
+      objectIDs.add(record.object.original?.toLowerCase());
       // check ids
       subjectMatch = _.intersection([...subjectIDs], execSubjectCuries).length;
       objectMatch = _.intersection([...objectIDs], execObjectCuries).length;

@@ -84,6 +84,9 @@ module.exports = class QEdge2APIEdgeHandler {
       if (entity.primaryTypes.includes(inputType.replace('biolink:', ''))) {
         entity.equivalentIDs.forEach((equivalentCurie) => {
           if (equivalentCurie.toUpperCase().includes(inputPrefix.toUpperCase())) {
+            // make sure the case of prefix matches the inputPrefix
+            equivalentCurie = equivalentCurie.replace(new RegExp(inputPrefix, "i"), inputPrefix);
+
             const id = CURIE_WITH_PREFIXES.includes(equivalentCurie.split(':')[0].toUpperCase())
               ? [equivalentCurie.split(':')[0].toUpperCase(), ...equivalentCurie.split(':').slice(1)].join(':')
               : equivalentCurie.split(':').slice(1).join(':');
@@ -130,6 +133,9 @@ module.exports = class QEdge2APIEdgeHandler {
       } else if (entity.primaryTypes.includes(inputType.replace('biolink:', ''))) {
         entity.equivalentIDs.forEach((equivalentCurie) => {
           if (equivalentCurie.toUpperCase().includes(inputPrefix.toUpperCase())) {
+            // make sure the case of prefix matches the inputPrefix
+            equivalentCurie = equivalentCurie.replace(new RegExp(inputPrefix, "i"), inputPrefix);
+
               const id = CURIE_WITH_PREFIXES.includes(equivalentCurie.split(':')[0].toUpperCase())
                   ? [equivalentCurie.split(':')[0].toUpperCase(), ...equivalentCurie.split(':').slice(1)].join(':')
                   : equivalentCurie.split(':').slice(1).join(':');
@@ -185,6 +191,9 @@ module.exports = class QEdge2APIEdgeHandler {
       if (entity.primaryTypes.includes(inputType.replace('biolink:', ''))) {
         entity.equivalentIDs.forEach((equivalentCurie) => {
           if (equivalentCurie.toUpperCase().includes(inputPrefix.toUpperCase())) {
+            // make sure the case of prefix matches the inputPrefix
+            equivalentCurie = equivalentCurie.replace(new RegExp(inputPrefix, "i"), inputPrefix);
+
             const id = CURIE_WITH_PREFIXES.includes(equivalentCurie.split(':')[0].toUpperCase())
               ? [equivalentCurie.split(':')[0].toUpperCase(), ...equivalentCurie.split(':').slice(1)].join(':')
               : equivalentCurie.split(':').slice(1).join(':');
@@ -231,6 +240,9 @@ module.exports = class QEdge2APIEdgeHandler {
       } else if (entity.primaryTypes.includes(inputType.replace('biolink:', ''))) {
         entity.equivalentIDs.forEach((equivalentCurie) => {
           if (equivalentCurie.toUpperCase().includes(inputPrefix.toUpperCase())) {
+            // make sure the case of prefix matches the inputPrefix
+            equivalentCurie = equivalentCurie.replace(new RegExp(inputPrefix, "i"), inputPrefix);
+
             const id = CURIE_WITH_PREFIXES.includes(equivalentCurie.split(':')[0].toUpperCase())
               ? [equivalentCurie.split(':')[0].toUpperCase(), ...equivalentCurie.split(':').slice(1)].join(':')
               : equivalentCurie.split(':').slice(1).join(':');
