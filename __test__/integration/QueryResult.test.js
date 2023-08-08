@@ -42,7 +42,7 @@ describe('Testing QueryResults Module', () => {
           source: 'DGIdb',
           api_name: 'BioThings DGIDB API',
         },
-        edge1,
+        edge1
       );
 
       test('should get n1, n2 and e01', async () => {
@@ -56,8 +56,8 @@ describe('Testing QueryResults Module', () => {
         expect(queryResult.getResults().length).toEqual(1);
         expect(queryResult.getResults()[0].node_bindings).toHaveProperty('n1');
         expect(queryResult.getResults()[0].node_bindings).toHaveProperty('n2');
-        expect(queryResult.getResults()[0].edge_bindings).toHaveProperty('e01');
-        expect(queryResult.getResults()[0]).toHaveProperty('score');
+        expect(queryResult.getResults()[0].analyses[0].edge_bindings).toHaveProperty('e01');
+        expect(queryResult.getResults()[0].analyses[0]).toHaveProperty('score');
       });
     });
 
@@ -149,11 +149,11 @@ describe('Testing QueryResults Module', () => {
           expect(results[0].node_bindings).toHaveProperty('n2');
           expect(results[0].node_bindings).toHaveProperty('n3');
 
-          expect(Object.keys(results[0].edge_bindings).length).toEqual(2);
-          expect(results[0].edge_bindings).toHaveProperty('e01');
-          expect(results[0].edge_bindings).toHaveProperty('e02');
+          expect(Object.keys(results[0].analyses[0].edge_bindings).length).toEqual(2);
+          expect(results[0].analyses[0].edge_bindings).toHaveProperty('e01');
+          expect(results[0].analyses[0].edge_bindings).toHaveProperty('e02');
 
-          expect(results[0]).toHaveProperty('score');
+          expect(results[0].analyses[0]).toHaveProperty('score');
         });
       });
 
@@ -243,11 +243,11 @@ describe('Testing QueryResults Module', () => {
           expect(results[0].node_bindings).toHaveProperty('n2');
           expect(results[0].node_bindings).toHaveProperty('n3');
 
-          expect(Object.keys(results[0].edge_bindings).length).toEqual(2);
-          expect(results[0].edge_bindings).toHaveProperty('e01');
-          expect(results[0].edge_bindings).toHaveProperty('e02');
+          expect(Object.keys(results[0].analyses[0].edge_bindings).length).toEqual(2);
+          expect(results[0].analyses[0].edge_bindings).toHaveProperty('e01');
+          expect(results[0].analyses[0].edge_bindings).toHaveProperty('e02');
 
-          expect(results[0]).toHaveProperty('score');
+          expect(results[0].analyses[0]).toHaveProperty('score');
         });
       });
 
@@ -337,11 +337,11 @@ describe('Testing QueryResults Module', () => {
           expect(results[0].node_bindings).toHaveProperty('n2');
           expect(results[0].node_bindings).toHaveProperty('n3');
 
-          expect(Object.keys(results[0].edge_bindings).length).toEqual(2);
-          expect(results[0].edge_bindings).toHaveProperty('e01');
-          expect(results[0].edge_bindings).toHaveProperty('e02');
+          expect(Object.keys(results[0].analyses[0].edge_bindings).length).toEqual(2);
+          expect(results[0].analyses[0].edge_bindings).toHaveProperty('e01');
+          expect(results[0].analyses[0].edge_bindings).toHaveProperty('e02');
 
-          expect(results[0]).toHaveProperty('score');
+          expect(results[0].analyses[0]).toHaveProperty('score');
         });
       });
 
@@ -433,11 +433,11 @@ describe('Testing QueryResults Module', () => {
           expect(results[0].node_bindings).toHaveProperty('n2');
           expect(results[0].node_bindings).toHaveProperty('n3');
 
-          expect(Object.keys(results[0].edge_bindings).length).toEqual(2);
-          expect(results[0].edge_bindings).toHaveProperty('e01');
-          expect(results[0].edge_bindings).toHaveProperty('e02');
+          expect(Object.keys(results[0].analyses[0].edge_bindings).length).toEqual(2);
+          expect(results[0].analyses[0].edge_bindings).toHaveProperty('e01');
+          expect(results[0].analyses[0].edge_bindings).toHaveProperty('e02');
 
-          expect(results[0]).toHaveProperty('score');
+          expect(results[0].analyses[0]).toHaveProperty('score');
         });
       });
 
@@ -529,11 +529,11 @@ describe('Testing QueryResults Module', () => {
           expect(results[0].node_bindings).toHaveProperty('n2');
           expect(results[0].node_bindings).toHaveProperty('n3');
 
-          expect(Object.keys(results[0].edge_bindings).length).toEqual(2);
-          expect(results[0].edge_bindings).toHaveProperty('e01');
-          expect(results[0].edge_bindings).toHaveProperty('e02');
+          expect(Object.keys(results[0].analyses[0].edge_bindings).length).toEqual(2);
+          expect(results[0].analyses[0].edge_bindings).toHaveProperty('e01');
+          expect(results[0].analyses[0].edge_bindings).toHaveProperty('e02');
 
-          expect(results[0]).toHaveProperty('score');
+          expect(results[0].analyses[0]).toHaveProperty('score');
         });
       });
     });
@@ -653,22 +653,22 @@ describe('Testing QueryResults Module', () => {
         expect(results[0].node_bindings).toHaveProperty('n2');
         expect(results[0].node_bindings).toHaveProperty('n3');
 
-        expect(Object.keys(results[0].edge_bindings).length).toEqual(2);
-        expect(results[0].edge_bindings).toHaveProperty('e01');
-        expect(results[0].edge_bindings).toHaveProperty('e02');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).length).toEqual(2);
+        expect(results[0].analyses[0].edge_bindings).toHaveProperty('e01');
+        expect(results[0].analyses[0].edge_bindings).toHaveProperty('e02');
 
-        expect(results[0]).toHaveProperty('score');
+        expect(results[0].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[1].node_bindings).length).toEqual(3);
         expect(results[1].node_bindings).toHaveProperty('n1');
         expect(results[1].node_bindings).toHaveProperty('n2');
         expect(results[1].node_bindings).toHaveProperty('n3');
 
-        expect(Object.keys(results[1].edge_bindings).length).toEqual(2);
-        expect(results[1].edge_bindings).toHaveProperty('e01');
-        expect(results[1].edge_bindings).toHaveProperty('e02');
+        expect(Object.keys(results[1].analyses[0].edge_bindings).length).toEqual(2);
+        expect(results[1].analyses[0].edge_bindings).toHaveProperty('e01');
+        expect(results[1].analyses[0].edge_bindings).toHaveProperty('e02');
 
-        expect(results[1]).toHaveProperty('score');
+        expect(results[1].analyses[0]).toHaveProperty('score');
       });
     });
   });
@@ -1085,8 +1085,8 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       test('should get 4 results for 4 different records per edge: 𝍬', async () => {
@@ -1107,20 +1107,20 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(4);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0', 'n1']);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0']);
-        expect(results[1]).toHaveProperty('score');
+        expect(Object.keys(results[1].analyses[0].edge_bindings).sort()).toEqual(['e0']);
+        expect(results[1].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[2].node_bindings).sort()).toEqual(['n0', 'n1']);
-        expect(Object.keys(results[2].edge_bindings).sort()).toEqual(['e0']);
-        expect(results[2]).toHaveProperty('score');
+        expect(Object.keys(results[2].analyses[0].edge_bindings).sort()).toEqual(['e0']);
+        expect(results[2].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[3].node_bindings).sort()).toEqual(['n0', 'n1']);
-        expect(Object.keys(results[3].edge_bindings).sort()).toEqual(['e0']);
-        expect(results[3]).toHaveProperty('score');
+        expect(Object.keys(results[3].analyses[0].edge_bindings).sort()).toEqual(['e0']);
+        expect(results[3].analyses[0]).toHaveProperty('score');
       });
 
       // TODO: Do we want to test for removing duplicates?
@@ -1142,8 +1142,8 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       //      // TODO: this test fails. Do we need to handle this case?
@@ -1215,11 +1215,11 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0']);
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0']);
 
-        expect(results[0].edge_bindings['e0'].length).toEqual(2);
+        expect(results[0].analyses[0].edge_bindings['e0'].length).toEqual(2);
 
-        expect(results[0]).toHaveProperty('score');
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       // These two tests won't work until the KG edge ID assignment system is updated,
@@ -1298,8 +1298,8 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
       test('should get 2 results with records: >-', async () => {
         const queryResult = new QueryResult();
@@ -1318,12 +1318,12 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(2);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[1]).toHaveProperty('score');
+        expect(Object.keys(results[1].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[1].analyses[0]).toHaveProperty('score');
       });
       test('should get 4 results with records: ><', async () => {
         const queryResult = new QueryResult();
@@ -1342,20 +1342,20 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(4);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[1]).toHaveProperty('score');
+        expect(Object.keys(results[1].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[1].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[2].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[2].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[2]).toHaveProperty('score');
+        expect(Object.keys(results[2].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[2].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[3].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[3].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[3]).toHaveProperty('score');
+        expect(Object.keys(results[3].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[3].analyses[0]).toHaveProperty('score');
       });
       test('should get 2 results with records: >< (is_set for n0)', async () => {
         const queryResult = new QueryResult();
@@ -1374,12 +1374,12 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(2);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0_with_is_set', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0_left_is_set', 'e1']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0_left_is_set', 'e1']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0_with_is_set', 'n1', 'n2']);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0_left_is_set', 'e1']);
-        expect(results[1]).toHaveProperty('score');
+        expect(Object.keys(results[1].analyses[0].edge_bindings).sort()).toEqual(['e0_left_is_set', 'e1']);
+        expect(results[1].analyses[0]).toHaveProperty('score');
       });
       test('should get 4 results with records: >< (is_set for n1)', async () => {
         const queryResult = new QueryResult();
@@ -1401,12 +1401,12 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(4);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1_with_is_set', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0_right_is_set', 'e1_left_is_set']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0_right_is_set', 'e1_left_is_set']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0', 'n1_with_is_set', 'n2']);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0_right_is_set', 'e1_left_is_set']);
-        expect(results[1]).toHaveProperty('score');
+        expect(Object.keys(results[1].analyses[0].edge_bindings).sort()).toEqual(['e0_right_is_set', 'e1_left_is_set']);
+        expect(results[1].analyses[0]).toHaveProperty('score');
       });
 
       test('should get 1 result with records: >< (is_set for n0 and n2)', async () => {
@@ -1426,8 +1426,8 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0_with_is_set', 'n1', 'n2_with_is_set']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0_left_is_set', 'e1_reversed_left_is_set']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0_left_is_set', 'e1_reversed_left_is_set']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       test('should get 1 result with records: >< (is_set for n0, n1 and n2)', async () => {
@@ -1451,8 +1451,8 @@ describe('Testing QueryResults Module', () => {
           'n1_with_is_set',
           'n2_with_is_set',
         ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0_both_is_set', 'e1_both_is_set']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0_both_is_set', 'e1_both_is_set']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       test('should get 2 results with records: ⇉⇉', async () => {
@@ -1472,12 +1472,12 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(2);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[1]).toHaveProperty('score');
+        expect(Object.keys(results[1].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[1].analyses[0]).toHaveProperty('score');
       });
 
       // TODO: Do we want to test for removing duplicates?
@@ -1498,8 +1498,8 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
       test('should get 2 results with records: -<', async () => {
         const queryResult = new QueryResult();
@@ -1518,12 +1518,12 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(2);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[1]).toHaveProperty('score');
+        expect(Object.keys(results[1].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[1].analyses[0]).toHaveProperty('score');
       });
       test('should get 1 result with records: →← (directionality does not match query graph)', async () => {
         const queryResult = new QueryResult();
@@ -1542,8 +1542,8 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1_reversed']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1_reversed']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       test('should get 5k results when e0 has 100 records (50 connected, 50 not), and e1 has 10k (5k connected, 5k not)', async () => {
@@ -1658,12 +1658,12 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(5000);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[1]).toHaveProperty('score');
+        expect(Object.keys(results[1].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[1].analyses[0]).toHaveProperty('score');
       });
 
       test('should get 1 result when e0 has 1 record, and e1 has 50k + 1 (1 connected, 50k not)', async () => {
@@ -1748,8 +1748,8 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       /*
@@ -2156,8 +2156,8 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1_reversed']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1_reversed']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       test('should get 1 result with records: →→ (directionality does not match query graph)', async () => {
@@ -2177,8 +2177,8 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
     });
 
@@ -2200,8 +2200,8 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n1', 'n2', 'n5']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e1_reversed', 'e4']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e1_reversed', 'e4']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       test('should get 0 results due to unconnected record: ←̽→', async () => {
@@ -2253,9 +2253,9 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2', 'n3']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1', 'e2']);
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1', 'e2']);
 
-        expect(results[0]).toHaveProperty('score');
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       //      // TODO: this test fails
@@ -2324,9 +2324,9 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2', 'n3']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1_reversed', 'e2']);
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1_reversed', 'e2']);
 
-        expect(results[0]).toHaveProperty('score');
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       /*
@@ -2357,9 +2357,9 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2', 'n3']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1_reversed', 'e2_reversed']);
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1_reversed', 'e2_reversed']);
 
-        expect(results[0]).toHaveProperty('score');
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       /*
@@ -2935,7 +2935,7 @@ describe('Testing QueryResults Module', () => {
           records: [record1, record2],
         },
       });
-      expect(queryResult.getResults()[0].edge_bindings.e01.length).toEqual(2);
+      expect(queryResult.getResults()[0].analyses[0].edge_bindings.e01.length).toEqual(2);
     });
   });
 
