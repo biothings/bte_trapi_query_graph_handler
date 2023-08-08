@@ -4,7 +4,7 @@ const utils = require('../utils');
 const async = require('async');
 const biolink = require('../biolink');
 const { getTemplates } = require('./template_lookup');
-const { addNormalizedScores } = require('../results_assembly/score');
+const { scaled_sigmoid, inverse_scaled_sigmoid } = require('../results_assembly/score');
 
 module.exports = class InferredQueryHandler {
   constructor(parent, TRAPIQueryHandler, queryGraph, logs, options, path, predicatePath, includeReasoner) {
@@ -304,7 +304,7 @@ module.exports = class InferredQueryHandler {
         const resScore = translatedResult.analyses[0].score;
         if (typeof combinedResponse.message.results[resultID].analyses[0].score !== 'undefined') {
           combinedResponse.message.results[resultID].analyses[0].score = resScore
-            ? Math.max(combinedResponse.message.results[resultID].analyses[0].score, resScore)
+            ? scaled_sigmoid(inverse_scaled_sigmoid(combinedResponse.message.results[resultID].analyses[0].score) + inverse_scaled_sigmoid(resScore))
             : combinedResponse.message.results[resultID].analyses[0].score;
         } else {
           combinedResponse.message.results[resultID].analyses[0].score = resScore;
@@ -519,25 +519,6 @@ module.exports = class InferredQueryHandler {
       this.parent
         .getSummaryLog(combinedResponse, combinedResponse.logs, resultQueries)
         .forEach((log) => combinedResponse.logs.push(log));
-      let scoredResults = 0;
-      let unscoredResults = 0;
-      combinedResponse.message.results.forEach((result) => {
-        const scoreFromEdges = Object.values(result.analyses[0].edge_bindings).reduce((count, qEdge_bindings) => {
-          return count + qEdge_bindings.length;
-        }, 0);
-        if (result.analyses[0].score > scoreFromEdges) {
-          scoredResults += 1;
-        } else {
-          unscoredResults += 1;
-        }
-      });
-      combinedResponse.logs.push(
-        new LogEntry(
-          'INFO',
-          null,
-          `Scoring Summary: (${scoredResults}) scored / (${unscoredResults}) unscored`,
-        ).getLog(),
-      );
     }
     combinedResponse.logs = combinedResponse.logs.map((log) => log.toJSON());
 

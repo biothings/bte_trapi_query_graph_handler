@@ -4,6 +4,7 @@ const LogEntry = require('../log_entry');
 const { getScores, calculateScore } = require('./score');
 const { Record } = require('@biothings-explorer/api-response-transform');
 const { enrichTrapiResultsWithPfocrFigures } = require('./pfocr');
+const config = require('../config');
 
 /**
  * @type { Record }
@@ -171,8 +172,11 @@ module.exports = class TrapiResultsAssembler {
           outputQNodeID: record.object.qNodeID,
           inputPrimaryCurie: record.subject.curie,
           outputPrimaryCurie: record.object.curie,
-          inputUMLS: record.subject.UMLS, //add umls for scoring
-          outputUMLS: record.object.UMLS, //add umls for scoring
+          // info for scoring
+          inputUMLS: record.subject.UMLS,
+          outputUMLS: record.object.UMLS,
+          isTextMined: config.text_mining_api_infores.includes(record.apiInforesCurie),
+          // end info for scoring
           qEdgeID: qEdgeID,
           recordHash: record.recordHash,
         });
@@ -361,18 +365,23 @@ module.exports = class TrapiResultsAssembler {
           const consolidatedSolutionRecord = {
             inputQNodeID: solutionRecord_0.inputQNodeID,
             outputQNodeID: solutionRecord_0.outputQNodeID,
-            inputUMLS: solutionRecord_0.inputUMLS,
-            outputUMLS: solutionRecord_0.outputUMLS,
             inputPrimaryCuries: new Set(),
             outputPrimaryCuries: new Set(),
+            inputUMLS: new Set(),
+            outputUMLS: new Set(),
+            isTextMined: [],
             qEdgeID: solutionRecord_0.qEdgeID,
             recordHashes: new Set(),
           };
           solutionRecords.forEach(
-            ({ inputQNodeID, outputQNodeID, inputPrimaryCurie, outputPrimaryCurie, qEdgeID, recordHash }) => {
-              //debug(`  inputQNodeID: ${inputQNodeID}, inputPrimaryCurie: ${inputPrimaryCurie}, outputQNodeID ${outputQNodeID}, outputPrimaryCurie: ${outputPrimaryCurie}`)
+            ({ inputQNodeID, outputQNodeID, inputPrimaryCurie, outputPrimaryCurie, inputUMLS, outputUMLS, isTextMined, qEdgeID, recordHash }) => {
               consolidatedSolutionRecord.inputPrimaryCuries.add(inputPrimaryCurie);
               consolidatedSolutionRecord.outputPrimaryCuries.add(outputPrimaryCurie);
+              consolidatedSolutionRecord.inputUMLS.add(...inputUMLS);
+              consolidatedSolutionRecord.outputUMLS.add(...outputUMLS);
+              if (!consolidatedSolutionRecord.recordHashes.has(recordHash)) {
+                consolidatedSolutionRecord.isTextMined.push(isTextMined);
+              }
               consolidatedSolutionRecord.recordHashes.add(recordHash);
             },
           );
@@ -443,12 +452,12 @@ module.exports = class TrapiResultsAssembler {
         debug('Error enriching with PFOCR figures: ', err);
         this.logs.push(new LogEntry('DEBUG', null, 'Error enriching with PFOCR figures: ', err).getLog());
       }
-      debug(`Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`);
+      debug(`Scored ${resultsWithScore} results with NGD score, scored ${resultsWithoutScore} results without NGD.`);
       this.logs.push(
         new LogEntry(
           'DEBUG',
           null,
-          `Successfully scored ${resultsWithScore} results, couldn't score ${resultsWithoutScore} results.`,
+          `Scored ${resultsWithScore} results with NGD score, scored ${resultsWithoutScore} results without NGD.`,
           {
             type: 'scoring',
             scored: resultsWithScore,

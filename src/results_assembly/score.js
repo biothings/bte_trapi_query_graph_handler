@@ -2,8 +2,15 @@ const debug = require('debug')('bte:biothings-explorer-trapi:Score');
 const axios = require('axios');
 
 const _ = require('lodash');
-const tuning_param = 1.1;
 
+const tuning_param = 2.0;
+
+const record_weight = 1.0;
+const text_mined_record_weight = 0.5;
+const ngd_weight = 0.25;
+const LENGTH_PENALTY = 2.0;
+
+// create lookup table for ngd scores in the format: {inputUMLS-outputUMLS: ngd}
 async function query(queryPairs) {
   const url = 'https://biothings.ncats.io/semmeddb/query/ngd';
   const batchSize = 1000;
@@ -21,12 +28,13 @@ async function query(queryPairs) {
     //convert res array into single object with all curies
     let res = await Promise.all(axios_queries);
     res = res.map((r) => r.data.filter((combo) => Number.isFinite(combo.ngd))).flat(); // get numerical scores and flatten array
-    return res;
+    return res.reduce((acc, cur) => ({...acc, [`${cur.umls[0]}-${cur.umls[1]}`]: cur.ngd}), {});
   } catch (err) {
     debug('Failed to query for scores: ', err);
   }
 }
 
+// retrieve all ngd scores at once
 async function getScores(recordsByQEdgeID) {
   let pairs = {};
 
@@ -62,27 +70,8 @@ async function getScores(recordsByQEdgeID) {
   let results = await query(queries);
 
   debug('Combos no UMLS ID: ', combosWithoutIDs);
-  return results || []; // in case results is undefined, avoid TypeErrors
+  return results || {}; // in case results is undefined, avoid TypeErrors
 }
-
-// //multiply the inverses of the ngds together to get the total score for a combo
-// function calculateScore(comboInfo, scoreCombos) {
-//   let score = 1;
-
-//   Object.keys(comboInfo).forEach((edgeKey) => {
-//     let multiplier = 0;
-
-//     for (const combo of scoreCombos) {
-//       if (comboInfo[edgeKey].inputUMLS?.includes(combo.umls[0]) && comboInfo[edgeKey].outputUMLS?.includes(combo.umls[1])) {
-//         multiplier = Math.max(1/combo.ngd, multiplier);
-//       }
-//     }
-
-//     score *= multiplier;
-//   })
-
-//   return score;
-// }
 
 // sigmoid function scaled from 0 to 1
 function scaled_sigmoid(input) {
@@ -91,31 +80,87 @@ function scaled_sigmoid(input) {
   return sigmoid * 2 - 1;
 }
 
-function reverse_scaled_sigmoid(score) {
-  const unscaled_sigmoid = (score + 1) / 2;
-  const tuned_input = -Math.log(1 / unscaled_sigmoid - 1);
-  return tuned_input * tuning_param;
+function inverse_scaled_sigmoid(input) {
+  return -tuning_param * Math.log(2 / (input + 1) - 1);
 }
 
-//addition of scores
 function calculateScore(comboInfo, scoreCombos) {
-  let score = 0.1;
+  const sum = array => array.reduce((a, b) => a + b, 0);
+  const average = array => array.length ? sum(array) / array.length : 0;
+
+  let score = 0;
   let scoredByNGD = false;
-  Object.keys(comboInfo).forEach((edgeKey) => {
-    score += 0.05 * comboInfo[edgeKey].recordHashes.size;
-    for (const combo of scoreCombos) {
-      if (
-        comboInfo[edgeKey].inputUMLS?.includes(combo.umls[0]) &&
-        comboInfo[edgeKey].outputUMLS?.includes(combo.umls[1])
-      ) {
-        score += 1 / combo.ngd;
+  let edgeScores = {};
+  let nodeDegrees = {};
+  let edgesStartingFromNode = {};
+  for (const [idx, edge] of comboInfo.entries()) {
+    // keep track of indegrees and outdegrees to find start and end nodes later
+    if (nodeDegrees.hasOwnProperty(edge.inputQNodeID)) {
+      nodeDegrees[edge.inputQNodeID].out += 1;
+    } else {
+      nodeDegrees[edge.inputQNodeID] = { in: 0, out: 1 };
+    }
+
+    if (nodeDegrees.hasOwnProperty(edge.outputQNodeID)) {
+      nodeDegrees[edge.outputQNodeID].in += 1;
+    } else {
+      nodeDegrees[edge.outputQNodeID] = { in: 1, out: 0 };
+    }
+
+    // track edge connections to find paths
+    if (edgesStartingFromNode.hasOwnProperty(edge.inputQNodeID)) {
+      edgesStartingFromNode[edge.inputQNodeID].push(idx);
+    } else {
+      edgesStartingFromNode[edge.inputQNodeID] = [idx];
+    }
+
+    let record_scores = edge.isTextMined.reduce((acc, val) => (
+      acc + (val ? text_mined_record_weight : record_weight)
+    ), 0);
+
+    // compute ngd score for node pair
+    pairs = [];
+    edge.inputUMLS.forEach((inputUMLS) => {
+      edge.outputUMLS.forEach((outputUMLS) => {
+        pairs.push(`${inputUMLS}-${outputUMLS}`);
+      });
+    });
+    ngd_scores = [];
+    pairs.forEach((pair) => {
+      if (scoreCombos.hasOwnProperty(pair)) {
+        ngd = scoreCombos[pair];
+        ngd_scores.push(1 / ngd);
         scoredByNGD = true;
       }
-    }
-  });
+    });
 
+    edgeScores[idx] = ngd_weight * average(ngd_scores) + record_scores;
+  }
+
+  //bfs to find paths
+  let startNode = Object.keys(nodeDegrees).find(node => nodeDegrees[node].in === 0);
+  let endNode = Object.keys(nodeDegrees).find(node => nodeDegrees[node].out === 0);
+
+  let queue = [[startNode, 0, 0]];
+  
+  while (queue.length > 0) {
+    let node, path_score, path_length;
+    [node, path_score, path_length] = queue.shift();
+    if (node === endNode) {
+      score += path_score / Math.pow(path_length, LENGTH_PENALTY);
+    } else if (edgesStartingFromNode.hasOwnProperty(node)) {
+      for (let edgeIdx of edgesStartingFromNode[node]) {
+        queue.push([comboInfo[edgeIdx].outputQNodeID, path_score + edgeScores[edgeIdx], path_length + 1]);
+      }
+    }
+  }
   return { score: scaled_sigmoid(score), scoredByNGD };
 }
 
 module.exports.getScores = getScores;
 module.exports.calculateScore = calculateScore;
+module.exports.scaled_sigmoid = scaled_sigmoid;
+module.exports.inverse_scaled_sigmoid = inverse_scaled_sigmoid;
+module.exports.exportForTesting = {
+  record_weight, text_mined_record_weight, ngd_weight, LENGTH_PENALTY, scaled_sigmoid
+};
