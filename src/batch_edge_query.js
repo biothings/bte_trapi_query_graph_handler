@@ -11,11 +11,10 @@ module.exports = class BatchEdgeQueryHandler {
     this.subscribers = [];
     this.logs = [];
     this.caching = options && options.caching;
-    this.recordConfig = {};
+    this.options = options;
     if (options && options.recordHashEdgeAttributes) {
-      this.recordConfig.EDGE_ATTRIBUTES_USED_IN_RECORD_HASH = options.recordHashEdgeAttributes;
+      this.options.EDGE_ATTRIBUTES_USED_IN_RECORD_HASH = options.recordHashEdgeAttributes;
     }
-    if (options && options.submitter) this.recordConfig.submitter = options.submitter;
     this.resolveOutputIDs = resolveOutputIDs;
   }
 
@@ -45,7 +44,7 @@ module.exports = class BatchEdgeQueryHandler {
    * @private
    */
   async _queryAPIEdges(APIEdges, unavailableAPIs = {}) {
-    let executor = new call_api(APIEdges, this.recordConfig);
+    let executor = new call_api(APIEdges, this.options);
     const records = await executor.query(this.resolveOutputIDs, unavailableAPIs);
     this.logs = [...this.logs, ...executor.logs];
     return records;
@@ -117,7 +116,7 @@ module.exports = class BatchEdgeQueryHandler {
     await this._rmEquivalentDuplicates(qEdges);
     debug('Node Update Success');
 
-    const cacheHandler = new CacheHandler(this.caching, this.metaKG, this.recordConfig);
+    const cacheHandler = new CacheHandler(this.caching, this.metaKG, this.options);
     const { cachedRecords, nonCachedQEdges } = await cacheHandler.categorizeEdges(qEdges);
     this.logs = [...this.logs, ...cacheHandler.logs];
     let queryRecords;
