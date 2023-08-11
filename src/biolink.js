@@ -72,4 +72,6 @@ class BioLinkModel {
 const BioLinkModelInstance = new BioLinkModel();
 Object.freeze(BioLinkModelInstance);
 
+global.BIOLINK_VERSION = BioLinkModelInstance.biolink.biolinkJSON.version
+
 module.exports = BioLinkModelInstance;

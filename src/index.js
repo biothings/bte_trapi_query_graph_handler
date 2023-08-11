@@ -303,8 +303,8 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     const results = this.finalizedResults ?? [];
     return {
       description: `Query processed successfully, retrieved ${results.length} results.`,
-      schema_version: '1.4.0',
-      biolink_version: biolink.biolinkJSON.version,
+      schema_version: global.SCHEMA_VERSION,
+      biolink_version: global.BIOLINK_VERSION,
       workflow: [{ id: 'lookup' }],
       message: {
         query_graph: this.originalQueryGraph,
