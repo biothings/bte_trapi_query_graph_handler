@@ -42,11 +42,11 @@ describe('Testing QueryResults Module', () => {
           source: 'DGIdb',
           api_name: 'BioThings DGIDB API',
         },
-        edge1,
+        edge1
       );
 
       test('should get n1, n2 and e01', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResult.update({
           e01: {
             connected_to: [],
@@ -56,8 +56,8 @@ describe('Testing QueryResults Module', () => {
         expect(queryResult.getResults().length).toEqual(1);
         expect(queryResult.getResults()[0].node_bindings).toHaveProperty('n1');
         expect(queryResult.getResults()[0].node_bindings).toHaveProperty('n2');
-        expect(queryResult.getResults()[0].edge_bindings).toHaveProperty('e01');
-        expect(queryResult.getResults()[0]).toHaveProperty('score');
+        expect(queryResult.getResults()[0].analyses[0].edge_bindings).toHaveProperty('e01');
+        expect(queryResult.getResults()[0].analyses[0]).toHaveProperty('score');
       });
     });
 
@@ -127,7 +127,7 @@ describe('Testing QueryResults Module', () => {
         );
 
         test('should get n1, n2, n3 and e01, e02', async () => {
-          const queryResult = new QueryResult();
+          const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
 
           await queryResult.update({
             e01: {
@@ -149,11 +149,11 @@ describe('Testing QueryResults Module', () => {
           expect(results[0].node_bindings).toHaveProperty('n2');
           expect(results[0].node_bindings).toHaveProperty('n3');
 
-          expect(Object.keys(results[0].edge_bindings).length).toEqual(2);
-          expect(results[0].edge_bindings).toHaveProperty('e01');
-          expect(results[0].edge_bindings).toHaveProperty('e02');
+          expect(Object.keys(results[0].analyses[0].edge_bindings).length).toEqual(2);
+          expect(results[0].analyses[0].edge_bindings).toHaveProperty('e01');
+          expect(results[0].analyses[0].edge_bindings).toHaveProperty('e02');
 
-          expect(results[0]).toHaveProperty('score');
+          expect(results[0].analyses[0]).toHaveProperty('score');
         });
       });
 
@@ -222,7 +222,7 @@ describe('Testing QueryResults Module', () => {
         );
 
         test('should get n1, n2, n3 and e01, e02', async () => {
-          const queryResult = new QueryResult();
+          const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
           await queryResult.update({
             e01: {
               connected_to: ['e02'],
@@ -243,11 +243,11 @@ describe('Testing QueryResults Module', () => {
           expect(results[0].node_bindings).toHaveProperty('n2');
           expect(results[0].node_bindings).toHaveProperty('n3');
 
-          expect(Object.keys(results[0].edge_bindings).length).toEqual(2);
-          expect(results[0].edge_bindings).toHaveProperty('e01');
-          expect(results[0].edge_bindings).toHaveProperty('e02');
+          expect(Object.keys(results[0].analyses[0].edge_bindings).length).toEqual(2);
+          expect(results[0].analyses[0].edge_bindings).toHaveProperty('e01');
+          expect(results[0].analyses[0].edge_bindings).toHaveProperty('e02');
 
-          expect(results[0]).toHaveProperty('score');
+          expect(results[0].analyses[0]).toHaveProperty('score');
         });
       });
 
@@ -316,7 +316,7 @@ describe('Testing QueryResults Module', () => {
         );
 
         test('should get n1, n2, n3 and e01, e02', async () => {
-          const queryResult = new QueryResult();
+          const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
           await queryResult.update({
             e01: {
               connected_to: ['e02'],
@@ -337,11 +337,11 @@ describe('Testing QueryResults Module', () => {
           expect(results[0].node_bindings).toHaveProperty('n2');
           expect(results[0].node_bindings).toHaveProperty('n3');
 
-          expect(Object.keys(results[0].edge_bindings).length).toEqual(2);
-          expect(results[0].edge_bindings).toHaveProperty('e01');
-          expect(results[0].edge_bindings).toHaveProperty('e02');
+          expect(Object.keys(results[0].analyses[0].edge_bindings).length).toEqual(2);
+          expect(results[0].analyses[0].edge_bindings).toHaveProperty('e01');
+          expect(results[0].analyses[0].edge_bindings).toHaveProperty('e02');
 
-          expect(results[0]).toHaveProperty('score');
+          expect(results[0].analyses[0]).toHaveProperty('score');
         });
       });
 
@@ -412,7 +412,7 @@ describe('Testing QueryResults Module', () => {
         );
 
         test('should get n1, n2, n3 and e01, e02', async () => {
-          const queryResult = new QueryResult();
+          const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
           await queryResult.update({
             e01: {
               connected_to: ['e02'],
@@ -433,11 +433,11 @@ describe('Testing QueryResults Module', () => {
           expect(results[0].node_bindings).toHaveProperty('n2');
           expect(results[0].node_bindings).toHaveProperty('n3');
 
-          expect(Object.keys(results[0].edge_bindings).length).toEqual(2);
-          expect(results[0].edge_bindings).toHaveProperty('e01');
-          expect(results[0].edge_bindings).toHaveProperty('e02');
+          expect(Object.keys(results[0].analyses[0].edge_bindings).length).toEqual(2);
+          expect(results[0].analyses[0].edge_bindings).toHaveProperty('e01');
+          expect(results[0].analyses[0].edge_bindings).toHaveProperty('e02');
 
-          expect(results[0]).toHaveProperty('score');
+          expect(results[0].analyses[0]).toHaveProperty('score');
         });
       });
 
@@ -508,7 +508,7 @@ describe('Testing QueryResults Module', () => {
         );
 
         test('should get n1, n2, n3 and e01, e02', async () => {
-          const queryResult = new QueryResult();
+          const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
           await queryResult.update({
             e01: {
               connected_to: ['e02'],
@@ -529,11 +529,11 @@ describe('Testing QueryResults Module', () => {
           expect(results[0].node_bindings).toHaveProperty('n2');
           expect(results[0].node_bindings).toHaveProperty('n3');
 
-          expect(Object.keys(results[0].edge_bindings).length).toEqual(2);
-          expect(results[0].edge_bindings).toHaveProperty('e01');
-          expect(results[0].edge_bindings).toHaveProperty('e02');
+          expect(Object.keys(results[0].analyses[0].edge_bindings).length).toEqual(2);
+          expect(results[0].analyses[0].edge_bindings).toHaveProperty('e01');
+          expect(results[0].analyses[0].edge_bindings).toHaveProperty('e02');
 
-          expect(results[0]).toHaveProperty('score');
+          expect(results[0].analyses[0]).toHaveProperty('score');
         });
       });
     });
@@ -631,7 +631,7 @@ describe('Testing QueryResults Module', () => {
       );
 
       test('should get 2 results when query graph is -- and records are -<', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
 
         await queryResult.update({
           e01: {
@@ -653,22 +653,22 @@ describe('Testing QueryResults Module', () => {
         expect(results[0].node_bindings).toHaveProperty('n2');
         expect(results[0].node_bindings).toHaveProperty('n3');
 
-        expect(Object.keys(results[0].edge_bindings).length).toEqual(2);
-        expect(results[0].edge_bindings).toHaveProperty('e01');
-        expect(results[0].edge_bindings).toHaveProperty('e02');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).length).toEqual(2);
+        expect(results[0].analyses[0].edge_bindings).toHaveProperty('e01');
+        expect(results[0].analyses[0].edge_bindings).toHaveProperty('e02');
 
-        expect(results[0]).toHaveProperty('score');
+        expect(results[0].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[1].node_bindings).length).toEqual(3);
         expect(results[1].node_bindings).toHaveProperty('n1');
         expect(results[1].node_bindings).toHaveProperty('n2');
         expect(results[1].node_bindings).toHaveProperty('n3');
 
-        expect(Object.keys(results[1].edge_bindings).length).toEqual(2);
-        expect(results[1].edge_bindings).toHaveProperty('e01');
-        expect(results[1].edge_bindings).toHaveProperty('e02');
+        expect(Object.keys(results[1].analyses[0].edge_bindings).length).toEqual(2);
+        expect(results[1].analyses[0].edge_bindings).toHaveProperty('e01');
+        expect(results[1].analyses[0].edge_bindings).toHaveProperty('e02');
 
-        expect(results[1]).toHaveProperty('score');
+        expect(results[1].analyses[0]).toHaveProperty('score');
       });
     });
   });
@@ -977,14 +977,14 @@ describe('Testing QueryResults Module', () => {
 
     describe('repeat calls', () => {
       test('should get 0 results for update (0) & getResults (1)', async () => {
-        const queryResultInner = new QueryResult();
+        const queryResultInner = new QueryResult(provenanceUsesServiceProvider = false);
         const resultsInner = queryResultInner.getResults();
         expect(JSON.stringify(resultsInner)).toEqual(JSON.stringify([]));
       });
 
       // inputs all the same below here
 
-      const queryResultOuter = new QueryResult();
+      const queryResultOuter = new QueryResult(provenanceUsesServiceProvider = false);
       let resultsOuter;
       test('just wrapping for async', async () => {
         await queryResultOuter.update({
@@ -1001,7 +1001,7 @@ describe('Testing QueryResults Module', () => {
       });
 
       test('should get same results: update (1) & getResults (1) vs. update (2) & getResults (1)', async () => {
-        const queryResultInner = new QueryResult();
+        const queryResultInner = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResultInner.update({
           e0: {
             connected_to: ['e1'],
@@ -1027,7 +1027,7 @@ describe('Testing QueryResults Module', () => {
       });
 
       test('should get same results: update (1) & getResults (1) vs. update (2) & getResults (2)', async () => {
-        const queryResultInner = new QueryResult();
+        const queryResultInner = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResultInner.update({
           e0: {
             connected_to: ['e1'],
@@ -1054,7 +1054,7 @@ describe('Testing QueryResults Module', () => {
       });
 
       test('should get same results: update (1) & getResults (1) vs. update (1) & getResults (2)', async () => {
-        const queryResultInner = new QueryResult();
+        const queryResultInner = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResultInner.update({
           e0: {
             connected_to: ['e1'],
@@ -1073,7 +1073,7 @@ describe('Testing QueryResults Module', () => {
 
     describe('query graph: →', () => {
       test('should get 1 result with record: →', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResult.update({
           e0: {
             connected_to: [],
@@ -1085,12 +1085,12 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       test('should get 4 results for 4 different records per edge: 𝍬', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResult.update({
           e0: {
             connected_to: [],
@@ -1107,25 +1107,25 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(4);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0', 'n1']);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0']);
-        expect(results[1]).toHaveProperty('score');
+        expect(Object.keys(results[1].analyses[0].edge_bindings).sort()).toEqual(['e0']);
+        expect(results[1].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[2].node_bindings).sort()).toEqual(['n0', 'n1']);
-        expect(Object.keys(results[2].edge_bindings).sort()).toEqual(['e0']);
-        expect(results[2]).toHaveProperty('score');
+        expect(Object.keys(results[2].analyses[0].edge_bindings).sort()).toEqual(['e0']);
+        expect(results[2].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[3].node_bindings).sort()).toEqual(['n0', 'n1']);
-        expect(Object.keys(results[3].edge_bindings).sort()).toEqual(['e0']);
-        expect(results[3]).toHaveProperty('score');
+        expect(Object.keys(results[3].analyses[0].edge_bindings).sort()).toEqual(['e0']);
+        expect(results[3].analyses[0]).toHaveProperty('score');
       });
 
       // TODO: Do we want to test for removing duplicates?
       test('should get 1 result for the same record repeated 4 times: 𝍬', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResult.update({
           e0: {
             connected_to: [],
@@ -1142,13 +1142,13 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       //      // TODO: this test fails. Do we need to handle this case?
       //      test('should get 1 result for the same record repeated twice and reversed twice: 𝍬', async () => {
-      //        const queryResult = new QueryResult();
+      //        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
       //        await queryResult.update({
       //          "e1": {
       //            "connected_to": [],
@@ -1170,7 +1170,7 @@ describe('Testing QueryResults Module', () => {
       //
       //      // TODO: this one fails. Do we need to worry about this case?
       //      test('should get 2 results for the same record repeated twice and reversed twice: ⇉⇇', async () => {
-      //        const queryResult = new QueryResult();
+      //        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
       //        await queryResult.update({
       //          "e1": {
       //            "connected_to": ["e1_reversed"],
@@ -1203,7 +1203,7 @@ describe('Testing QueryResults Module', () => {
       //      });
 
       test('should get 1 result with 2 edge mappings when predicates differ: ⇉', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResult.update({
           e0: {
             connected_to: [],
@@ -1215,18 +1215,18 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0']);
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0']);
 
-        expect(results[0].edge_bindings['e0'].length).toEqual(2);
+        expect(results[0].analyses[0].edge_bindings['e0'].length).toEqual(2);
 
-        expect(results[0]).toHaveProperty('score');
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       // These two tests won't work until the KG edge ID assignment system is updated,
       // b/c we need it to take into account the API source.
       /*
       test('should get 1 result with 2 edge mappings when API sources differ: ⇉', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResult.update({
           "e0": {
             "connected_to": [],
@@ -1250,7 +1250,7 @@ describe('Testing QueryResults Module', () => {
       });
 
       test('should get 1 result with 4 edge mappings when predicates & API sources differ: 𝍬', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResult.update({
           "e0": {
             "connected_to": [],
@@ -1282,7 +1282,7 @@ describe('Testing QueryResults Module', () => {
 
     describe('query graph: →→', () => {
       test('should get 1 result with records: →→', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResult.update({
           e0: {
             connected_to: ['e1'],
@@ -1298,11 +1298,11 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
       test('should get 2 results with records: >-', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResult.update({
           e0: {
             connected_to: ['e1'],
@@ -1318,15 +1318,15 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(2);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[1]).toHaveProperty('score');
+        expect(Object.keys(results[1].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[1].analyses[0]).toHaveProperty('score');
       });
       test('should get 4 results with records: ><', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResult.update({
           e0: {
             connected_to: ['e1'],
@@ -1342,23 +1342,23 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(4);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[1]).toHaveProperty('score');
+        expect(Object.keys(results[1].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[1].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[2].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[2].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[2]).toHaveProperty('score');
+        expect(Object.keys(results[2].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[2].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[3].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[3].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[3]).toHaveProperty('score');
+        expect(Object.keys(results[3].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[3].analyses[0]).toHaveProperty('score');
       });
       test('should get 2 results with records: >< (is_set for n0)', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResult.update({
           e0_left_is_set: {
             connected_to: ['e1'],
@@ -1374,15 +1374,15 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(2);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0_with_is_set', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0_left_is_set', 'e1']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0_left_is_set', 'e1']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0_with_is_set', 'n1', 'n2']);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0_left_is_set', 'e1']);
-        expect(results[1]).toHaveProperty('score');
+        expect(Object.keys(results[1].analyses[0].edge_bindings).sort()).toEqual(['e0_left_is_set', 'e1']);
+        expect(results[1].analyses[0]).toHaveProperty('score');
       });
       test('should get 4 results with records: >< (is_set for n1)', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResult.update({
           e0_right_is_set: {
             connected_to: ['e1_left_is_set'],
@@ -1401,16 +1401,16 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(4);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1_with_is_set', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0_right_is_set', 'e1_left_is_set']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0_right_is_set', 'e1_left_is_set']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0', 'n1_with_is_set', 'n2']);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0_right_is_set', 'e1_left_is_set']);
-        expect(results[1]).toHaveProperty('score');
+        expect(Object.keys(results[1].analyses[0].edge_bindings).sort()).toEqual(['e0_right_is_set', 'e1_left_is_set']);
+        expect(results[1].analyses[0]).toHaveProperty('score');
       });
 
       test('should get 1 result with records: >< (is_set for n0 and n2)', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResult.update({
           e0_left_is_set: {
             connected_to: ['e1_reversed_left_is_set'],
@@ -1426,12 +1426,12 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0_with_is_set', 'n1', 'n2_with_is_set']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0_left_is_set', 'e1_reversed_left_is_set']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0_left_is_set', 'e1_reversed_left_is_set']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       test('should get 1 result with records: >< (is_set for n0, n1 and n2)', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResult.update({
           e0_both_is_set: {
             connected_to: ['e1_both_is_set'],
@@ -1451,12 +1451,12 @@ describe('Testing QueryResults Module', () => {
           'n1_with_is_set',
           'n2_with_is_set',
         ]);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0_both_is_set', 'e1_both_is_set']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0_both_is_set', 'e1_both_is_set']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       test('should get 2 results with records: ⇉⇉', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResult.update({
           e0: {
             connected_to: ['e1'],
@@ -1472,17 +1472,17 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(2);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[1]).toHaveProperty('score');
+        expect(Object.keys(results[1].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[1].analyses[0]).toHaveProperty('score');
       });
 
       // TODO: Do we want to test for removing duplicates?
       test('should get 1 result with records: ⇉⇉ (duplicates)', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResult.update({
           e0: {
             connected_to: ['e1'],
@@ -1498,11 +1498,11 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
       test('should get 2 results with records: -<', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResult.update({
           e0: {
             connected_to: ['e1'],
@@ -1518,15 +1518,15 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(2);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[1]).toHaveProperty('score');
+        expect(Object.keys(results[1].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[1].analyses[0]).toHaveProperty('score');
       });
       test('should get 1 result with records: →← (directionality does not match query graph)', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResult.update({
           e0: {
             connected_to: ['e1_reversed'],
@@ -1542,8 +1542,8 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1_reversed']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1_reversed']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       test('should get 5k results when e0 has 100 records (50 connected, 50 not), and e1 has 10k (5k connected, 5k not)', async () => {
@@ -1642,7 +1642,7 @@ describe('Testing QueryResults Module', () => {
           });
         });
 
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResult.update({
           e0: {
             connected_to: ['e1'],
@@ -1658,12 +1658,12 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(5000);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
 
         expect(Object.keys(results[1].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[1].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[1]).toHaveProperty('score');
+        expect(Object.keys(results[1].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[1].analyses[0]).toHaveProperty('score');
       });
 
       test('should get 1 result when e0 has 1 record, and e1 has 50k + 1 (1 connected, 50k not)', async () => {
@@ -1732,7 +1732,7 @@ describe('Testing QueryResults Module', () => {
           );
         });
 
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResult.update({
           e0: {
             connected_to: ['e1'],
@@ -1748,8 +1748,8 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       /*
@@ -1833,7 +1833,7 @@ describe('Testing QueryResults Module', () => {
             });
           });
 
-          const queryResult = new QueryResult();
+          const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
           await queryResult.update({
             "e0": {
               "connected_to": ["e1"],
@@ -1996,7 +1996,7 @@ describe('Testing QueryResults Module', () => {
             });
           });
 
-          const queryResult = new QueryResult();
+          const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
           await queryResult.update({
             "e0": {
               "connected_to": ["e1"],
@@ -2103,7 +2103,7 @@ describe('Testing QueryResults Module', () => {
             });
           });
 
-          const queryResult = new QueryResult();
+          const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
           await queryResult.update({
             "e0": {
               "connected_to": ["e1"],
@@ -2140,7 +2140,7 @@ describe('Testing QueryResults Module', () => {
 
     describe('query graph: →←', () => {
       test('should get 1 result with records: →←', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResult.update({
           e0: {
             connected_to: ['e1_reversed'],
@@ -2156,12 +2156,12 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1_reversed']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1_reversed']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       test('should get 1 result with records: →→ (directionality does not match query graph)', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResult.update({
           e0: {
             connected_to: ['e1'],
@@ -2177,14 +2177,14 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
     });
 
     describe('query graph: ←→', () => {
       test('should get 1 result for 1 record per edge: ←→', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         await queryResult.update({
           e1_reversed: {
             connected_to: ['e4'],
@@ -2200,12 +2200,12 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n1', 'n2', 'n5']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e1_reversed', 'e4']);
-        expect(results[0]).toHaveProperty('score');
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e1_reversed', 'e4']);
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       test('should get 0 results due to unconnected record: ←̽→', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
 
         await queryResult.update({
           e1_reversed: {
@@ -2231,7 +2231,7 @@ describe('Testing QueryResults Module', () => {
        *               -e2-> n3
        */
       test('should get 1 result for 1 record per edge: →⇉⮆', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
 
         await queryResult.update({
           e0: {
@@ -2253,9 +2253,9 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2', 'n3']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1', 'e2']);
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1', 'e2']);
 
-        expect(results[0]).toHaveProperty('score');
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       //      // TODO: this test fails
@@ -2265,7 +2265,7 @@ describe('Testing QueryResults Module', () => {
       //       *               -e2-> n3
       //       */
       //      test('should get 1 result for 1 record per edge: ←⇉⮆', async () => {
-      //        const queryResult = new QueryResult();
+      //        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
       //
       //        await queryResult.update({
       //          "e0_reversed": {
@@ -2302,7 +2302,7 @@ describe('Testing QueryResults Module', () => {
        *               -e2-> n3
        */
       test('should get 1 result for 1 record per edge: →⇆⮆', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
 
         await queryResult.update({
           e0: {
@@ -2324,9 +2324,9 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2', 'n3']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1_reversed', 'e2']);
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1_reversed', 'e2']);
 
-        expect(results[0]).toHaveProperty('score');
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       /*
@@ -2335,7 +2335,7 @@ describe('Testing QueryResults Module', () => {
        *               <-e2- n3
        */
       test('should get 1 result for 1 record per edge: →⇇⮆', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
 
         await queryResult.update({
           e0: {
@@ -2357,9 +2357,9 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0', 'n1', 'n2', 'n3']);
-        expect(Object.keys(results[0].edge_bindings).sort()).toEqual(['e0', 'e1_reversed', 'e2_reversed']);
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0', 'e1_reversed', 'e2_reversed']);
 
-        expect(results[0]).toHaveProperty('score');
+        expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       /*
@@ -2368,7 +2368,7 @@ describe('Testing QueryResults Module', () => {
        *               ---> n2
        */
       test('should get 0 results due to unconnected record: -<̽', async () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
 
         await queryResult.update({
           e0: {
@@ -2401,7 +2401,7 @@ describe('Testing QueryResults Module', () => {
     //       */
     //
     ////      test('should get 1 result for 1 record per edge', async () => {
-    ////        const queryResult = new QueryResult();
+    ////        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
     ////
     ////        await queryResult.update({
     ////          "e0": {
@@ -2448,7 +2448,7 @@ describe('Testing QueryResults Module', () => {
     ////      });
     //
     ////      test('should get 2 results for 2 records per edge at n0', async () => {
-    ////        const queryResult = new QueryResult();
+    ////        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
     ////
     ////        await queryResult.update({
     ////          "e0": {
@@ -2503,7 +2503,7 @@ describe('Testing QueryResults Module', () => {
     ////      });
     ////
     ////      test('should get 2 results for 2 records per edge at n1', async () => {
-    ////        const queryResult = new QueryResult();
+    ////        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
     ////
     ////        await queryResult.update({
     ////          "e0": {
@@ -2573,7 +2573,7 @@ describe('Testing QueryResults Module', () => {
     ////       *                 -e3-> n4a -e6->
     ////       */
     ////      test('should get 3 results for n0a→n1a, n0a→n1b, n0b→n1a', async () => {
-    ////        const queryResult = new QueryResult();
+    ////        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
     ////
     ////        await queryResult.update({
     ////          "e0": {
@@ -2656,7 +2656,7 @@ describe('Testing QueryResults Module', () => {
     ////       *                 -e3-> n4a -e6->
     ////       */
     ////      test('should get 4 results for n0a→n1a, n0a→n1b, n0b→n1a, n0b→n1b', async () => {
-    ////        const queryResult = new QueryResult();
+    ////        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
     ////
     ////        await queryResult.update({
     ////          "e0": {
@@ -2727,7 +2727,7 @@ describe('Testing QueryResults Module', () => {
     ////      });
     //
     //      test('should get 0 results due to unconnected record at n1 (n1a vs. n1b)', async () => {
-    //        const queryResult = new QueryResult();
+    //        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
     //
     //        await queryResult.update({
     //          "e0": {
@@ -2766,7 +2766,7 @@ describe('Testing QueryResults Module', () => {
     //      });
     //
     ////      test('should get 1 result & ignore unconnected record', async () => {
-    ////        const queryResult = new QueryResult();
+    ////        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
     ////
     ////        await queryResult.update({
     ////          "e0": {
@@ -2813,7 +2813,7 @@ describe('Testing QueryResults Module', () => {
     ////      });
     ////
     ////      test('should get 1 result & ignore 4 unconnected records', async () => {
-    ////        const queryResult = new QueryResult();
+    ////        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
     ////
     ////        await queryResult.update({
     ////          "e0": {
@@ -2928,14 +2928,14 @@ describe('Testing QueryResults Module', () => {
           gene_symbol: 'HRAS',
         },
       });
-      const queryResult = new QueryResult();
+      const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
       await queryResult.update({
         e01: {
           connected_to: [],
           records: [record1, record2],
         },
       });
-      expect(queryResult.getResults()[0].edge_bindings.e01.length).toEqual(2);
+      expect(queryResult.getResults()[0].analyses[0].edge_bindings.e01.length).toEqual(2);
     });
   });
 
@@ -2984,13 +2984,13 @@ describe('Testing QueryResults Module', () => {
       };
 
       test('Should select leaf node', () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         const [[initialNode, initialEdge]] = queryResult._getValidInitialPairs(exampleRecordsByQEdgeID);
         expect(initialNode).toEqual('n3');
         expect(initialEdge).toEqual('e1');
       });
       test('Should select leaf node with fewest records on associated edge', () => {
-        const queryResult = new QueryResult();
+        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
         const example = cloneDeep(exampleRecordsByQEdgeID);
         example.e1.records.push({ fake: true });
         const [[initialNode, initialEdge]] = queryResult._getValidInitialPairs(example);

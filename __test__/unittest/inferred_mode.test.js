@@ -312,7 +312,11 @@ describe('Test InferredQueryHandler', () => {
   test('combineResponse', () => {
     const InferredQueryHandler = require('../../src/inferred_mode/inferred_mode');
     const inferredQueryHandler = new InferredQueryHandler(
-      {},
+      {
+        options: {
+          provenanceUsesServiceProvider: false
+        }
+      },
       TRAPIQueryHandler,
       queryGraph1,
       [],
@@ -398,14 +402,17 @@ describe('Test InferredQueryHandler', () => {
                 },
               ],
             },
-            edge_bindings: {
-              e0: [
-                {
-                  id: 'edgeHash1',
-                },
-              ],
-            },
-            score: 0.5,
+            analyses: [{
+              resource_id: 'infores:biothings_explorer',
+              edge_bindings: {
+                e0: [
+                  {
+                    id: 'edgeHash1',
+                  },
+                ],
+              },
+              score: 0.5,
+            }],
           },
           {
             node_bindings: {
@@ -420,14 +427,17 @@ describe('Test InferredQueryHandler', () => {
                 },
               ],
             },
-            edge_bindings: {
-              e0: [
-                {
-                  id: 'edgeHash2',
-                },
-              ],
-            },
-            score: 0.25,
+            analyses: [{
+              resource_id: 'infores:biothings_explorer',
+              edge_bindings: {
+                e0: [
+                  {
+                    id: 'edgeHash2',
+                  },
+                ],
+              },
+              score: 0.25,
+            }],
           },
           {
             node_bindings: {
@@ -442,14 +452,17 @@ describe('Test InferredQueryHandler', () => {
                 },
               ],
             },
-            edge_bindings: {
-              e0: [
-                {
-                  id: 'edgeHash3',
-                },
-              ],
-            },
-            score: 0.2,
+            analyses: [{
+              resource_id: 'infores:biothings_explorer',
+              edge_bindings: {
+                e0: [
+                  {
+                    id: 'edgeHash3',
+                  },
+                ],
+              },
+              score: 0.2,
+            }],
           },
         ],
       },
@@ -463,6 +476,7 @@ describe('Test InferredQueryHandler', () => {
     const combinedResponse = {
       workflow: [{ id: 'lookup' }],
       message: {
+        auxiliary_graphs: {},
         query_graph: queryGraph1,
         knowledge_graph: {
           nodes: {
@@ -506,14 +520,17 @@ describe('Test InferredQueryHandler', () => {
                 },
               ],
             },
-            edge_bindings: {
-              e01: [
-                {
-                  id: 'edgeHash1',
-                },
-              ],
-            },
-            score: 0.75,
+            analyses: [{
+              resource_id: 'infores:biothings_explorer',
+              edge_bindings: {
+                e01: [
+                  {
+                    id: 'edgeHash1',
+                  },
+                ],
+              },
+              score: 0.75,
+            }],
           },
           'fakeCompound3-fakeDisease1': {
             node_bindings: {
@@ -528,14 +545,16 @@ describe('Test InferredQueryHandler', () => {
                 },
               ],
             },
-            edge_bindings: {
-              e01: [
-                {
-                  id: 'edgeHash2',
-                },
-              ],
-            },
-            score: undefined,
+            analyses: [{
+              edge_bindings: {
+                e01: [
+                  {
+                    id: 'edgeHash2',
+                  },
+                ],
+              },
+              score: undefined,
+            }],
           },
         },
       },
@@ -548,16 +567,12 @@ describe('Test InferredQueryHandler', () => {
 
     const { qEdgeID, qEdge, qSubject, qObject } = inferredQueryHandler.getQueryParts();
 
-    let reservedIDs = { nodes: ['n01', 'n02'], edges: ['e01'] };
-
-    const report = inferredQueryHandler.combineResponse(1, trapiQueryHandler0, qEdge, combinedResponse, reservedIDs);
+    const report = inferredQueryHandler.combineResponse(1, trapiQueryHandler0, qEdgeID, qEdge, combinedResponse);
 
     expect(report).toHaveProperty('querySuccess');
     expect(report).toHaveProperty('queryHadResults');
     expect(report).toHaveProperty('mergedResults');
     expect(report).toHaveProperty('creativeLimitHit');
-
-    expect(reservedIDs.edges).toContain('e02');
 
     const { querySuccess, queryHadResults, mergedResults, creativeLimitHit } = report;
     expect(querySuccess).toBeTruthy();
@@ -566,10 +581,10 @@ describe('Test InferredQueryHandler', () => {
     expect(Object.values(mergedResults)[0]).toEqual(1);
     expect(creativeLimitHit).toBeTruthy();
     expect(Object.keys(combinedResponse.message.results)).toHaveLength(3);
-    expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].score).toEqual(0.75);
-    expect(combinedResponse.message.results['fakeCompound3-fakeDisease1'].score).toEqual(0.2);
+    expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].analyses[0].score).toEqual(0.8421052631578949);
+    expect(combinedResponse.message.results['fakeCompound3-fakeDisease1'].analyses[0].score).toEqual(0.2);
     expect(combinedResponse.logs).toHaveLength(3);
-    expect(combinedResponse.logs[1].message).toMatch('Template-2');
+    expect(combinedResponse.logs[1].message).toMatch('[Template-2]: new fake log');
 
     const trapiQueryHandler1 = new TRAPIQueryHandler();
     trapiQueryHandler1.getResponse = () => ({
@@ -658,19 +673,22 @@ describe('Test InferredQueryHandler', () => {
                 },
               ],
             },
-            edge_bindings: {
-              e0: [
-                {
-                  id: 'edgeHash1',
-                },
-              ],
-              e01: [
-                {
-                  id: 'edgeHash2',
-                },
-              ],
-            },
-            score: 0.99,
+            analyses: [{
+              resource_id: 'infores:biothings_explorer',
+              edge_bindings: {
+                e0: [
+                  {
+                    id: 'edgeHash1',
+                  },
+                ],
+                e01: [
+                  {
+                    id: 'edgeHash2',
+                  },
+                ],
+              },
+              score: 0.99,
+            }],
           },
           {
             node_bindings: {
@@ -685,14 +703,17 @@ describe('Test InferredQueryHandler', () => {
                 },
               ],
             },
-            edge_bindings: {
-              e0: [
-                {
-                  id: 'edgeHash3',
-                },
-              ],
-            },
-            score: undefined,
+            analyses: [{
+              resource_id: 'infores:biothings_explorer',
+              edge_bindings: {
+                e0: [
+                  {
+                    id: 'edgeHash3',
+                  },
+                ],
+              },
+              score: undefined,
+            }],
           },
         ],
       },
@@ -703,24 +724,18 @@ describe('Test InferredQueryHandler', () => {
       ],
     });
 
-    reservedIDs = { nodes: ['n01', 'n02'], edges: ['e01'] };
-
     const {
       querySuccess: querySuccess1,
       queryHadResults: queryHadResults1,
       mergedResults: mergedResults1,
       creativeLimitHit: creativeLimitHit1,
-    } = inferredQueryHandler.combineResponse(2, trapiQueryHandler1, qEdge, combinedResponse, reservedIDs);
-
-    expect(reservedIDs.nodes).toContain('n03');
+    } = inferredQueryHandler.combineResponse(2, trapiQueryHandler1, qEdgeID, qEdge, combinedResponse);
 
     expect(querySuccess1).toBeTruthy();
     expect(queryHadResults1).toBeTruthy();
     expect(Object.keys(mergedResults1)).toHaveLength(1);
     expect(creativeLimitHit1).toBeTruthy();
-    expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].score).toEqual(0.75);
-    expect(reservedIDs.nodes).toContain('n02');
-    expect(reservedIDs.nodes).toContain('n03');
+    expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].analyses[0].score).toEqual(0.8421052631578949);
   });
 
   test('pruneKnowledgeGraph', () => {
@@ -738,6 +753,7 @@ describe('Test InferredQueryHandler', () => {
     const combinedResponse = {
       workflow: [{ id: 'lookup' }],
       message: {
+        auxiliary_graphs: {},
         query_graph: queryGraph1,
         knowledge_graph: {
           nodes: {
@@ -759,11 +775,19 @@ describe('Test InferredQueryHandler', () => {
               predicate: 'biolink:treats',
               subject: 'fakeCompound1',
               object: 'fakeDisease1',
+              attributes: [{
+                attribute_type_id: 'biolink:support_graphs',
+                value: []
+              }],
             },
             edgeHash2: {
               predicate: 'biolink:treats',
               subject: 'fakeCompound3',
               object: 'fakeDisease1',
+              attributes: [{
+                attribute_type_id: 'biolink:support_graphs',
+                value: []
+              }],
             },
           },
         },
@@ -781,14 +805,17 @@ describe('Test InferredQueryHandler', () => {
                 },
               ],
             },
-            edge_bindings: {
-              e01: [
-                {
-                  id: 'edgeHash1',
-                },
-              ],
-            },
-            score: 0.75,
+            analyses: [{
+              resource_id: 'infores:biothings_explorer',
+              edge_bindings: {
+                e01: [
+                  {
+                    id: 'edgeHash1',
+                  },
+                ],
+              },
+              score: 0.75,
+            }],
           },
         ],
       },
@@ -806,7 +833,7 @@ describe('Test InferredQueryHandler', () => {
 
   test('query', async () => {
     const querySpy = jest.spyOn(TRAPIQueryHandler.prototype, 'query');
-    querySpy.mockImplementation(async () => {});
+    querySpy.mockImplementation(async () => { });
     const responseSpy = jest.spyOn(TRAPIQueryHandler.prototype, 'getResponse');
     responseSpy.mockImplementation(() => {
       return {
@@ -847,6 +874,10 @@ describe('Test InferredQueryHandler', () => {
                 subject: 'creativeQuerySubject',
                 object: 'creativeQueryObject',
                 knowledge_type: 'inferred',
+                attributes: [{
+                  attribute_type_id: 'biolink:support_graphs',
+                  value: []
+                }],
               },
             },
           },
@@ -864,14 +895,16 @@ describe('Test InferredQueryHandler', () => {
                   },
                 ],
               },
-              edge_bindings: {
-                e01: [
-                  {
-                    id: 'edgeHash1',
-                  },
-                ],
-              },
-              score: 0.75,
+              analyses: [{
+                edge_bindings: {
+                  e01: [
+                    {
+                      id: 'edgeHash1',
+                    },
+                  ],
+                },
+                score: 0.75,
+              }],
             },
           ],
         },
@@ -947,8 +980,8 @@ describe('Test InferredQueryHandler', () => {
   test('supportedLookups', async () => {
     const { supportedLookups } = require('../../src/inferred_mode/template_lookup');
     const supported = await supportedLookups();
-    expect(supported).toContainEqual({ subject: 'biolink:Drug', predicate: 'biolink:treats', object: 'biolink:Disease', qualifiers: undefined});
-    expect(supported).toContainEqual({ subject: 'biolink:SmallMolecule', predicate: 'biolink:treats', object: 'biolink:PhenotypicFeature', qualifiers: undefined});
+    expect(supported).toContainEqual({ subject: 'biolink:Drug', predicate: 'biolink:treats', object: 'biolink:Disease', qualifiers: undefined });
+    expect(supported).toContainEqual({ subject: 'biolink:SmallMolecule', predicate: 'biolink:treats', object: 'biolink:PhenotypicFeature', qualifiers: undefined });
     expect(supported.length).toBeGreaterThanOrEqual(5 * 2 * 3);
   });
 });
