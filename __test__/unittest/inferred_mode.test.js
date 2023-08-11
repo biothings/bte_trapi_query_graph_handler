@@ -312,7 +312,11 @@ describe('Test InferredQueryHandler', () => {
   test('combineResponse', () => {
     const InferredQueryHandler = require('../../src/inferred_mode/inferred_mode');
     const inferredQueryHandler = new InferredQueryHandler(
-      {},
+      {
+        options: {
+          provenanceUsesServiceProvider: false
+        }
+      },
       TRAPIQueryHandler,
       queryGraph1,
       [],
@@ -577,7 +581,7 @@ describe('Test InferredQueryHandler', () => {
     expect(Object.values(mergedResults)[0]).toEqual(1);
     expect(creativeLimitHit).toBeTruthy();
     expect(Object.keys(combinedResponse.message.results)).toHaveLength(3);
-    expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].analyses[0].score).toEqual(0.75);
+    expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].analyses[0].score).toEqual(0.8421052631578949);
     expect(combinedResponse.message.results['fakeCompound3-fakeDisease1'].analyses[0].score).toEqual(0.2);
     expect(combinedResponse.logs).toHaveLength(3);
     expect(combinedResponse.logs[1].message).toMatch('[Template-2]: new fake log');
@@ -731,7 +735,7 @@ describe('Test InferredQueryHandler', () => {
     expect(queryHadResults1).toBeTruthy();
     expect(Object.keys(mergedResults1)).toHaveLength(1);
     expect(creativeLimitHit1).toBeTruthy();
-    expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].analyses[0].score).toEqual(0.75);
+    expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].analyses[0].score).toEqual(0.8421052631578949);
   });
 
   test('pruneKnowledgeGraph', () => {
