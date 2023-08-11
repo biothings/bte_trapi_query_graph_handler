@@ -350,6 +350,7 @@ module.exports = class QueryEdgeManager {
         caching: this.options.caching,
         submitter: this.options.submitter,
         recordHashEdgeAttributes: config.EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,
+        provenanceUsesServiceProvider: this.options.provenanceUsesServiceProvider,
       });
       handler.setEdges(qEdge);
       return handler;

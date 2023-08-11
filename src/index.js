@@ -34,6 +34,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
   constructor(options = {}, smartAPIPath = undefined, predicatesPath = undefined, includeReasoner = true) {
     this.logs = [];
     this.options = options;
+    this.options.provenanceUsesServiceProvider = this.options.smartAPIID || this.options.teamName ? true : false;
     this.includeReasoner = includeReasoner;
     this.resolveOutputIDs =
       typeof this.options.enableIDResolution === 'undefined' ? true : this.options.enableIDResolution;
@@ -145,7 +146,12 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
         })[1];
         subclassEdge.addSource([
           { resource_id: source, resource_role: 'primary_knowledge_source' },
-          { resource_id: 'infores:biothings-explorer', resource_role: 'aggregator_knowledge_source' },
+          {
+            resource_id: this.options.provenanceUsesServiceProvider
+              ? 'infores:service-provider-trapi'
+              : 'infores:biothings-explorer',
+            resource_role: 'aggregator_knowledge_source',
+          },
         ]);
         this.bteGraph.edges[subclassEdgeID] = subclassEdge;
         nodesToRebind[subject] = { newNode: object, subclassEdgeID };
@@ -186,7 +192,14 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
           object: object,
         });
         boundEdge.addAdditionalAttributes('biolink:support_graphs', [supportGraphID]);
-        boundEdge.addSource([{ resource_id: 'infores:biothings-explorer', resource_role: 'primary_knowledge_source' }]);
+        boundEdge.addSource([
+          {
+            resource_id: this.options.provenanceUsesServiceProvider
+              ? 'infores:service-provider-trapi'
+              : 'infores:biothings-explorer',
+            resource_role: 'primary_knowledge_source',
+          },
+        ]);
         this.bteGraph.edges[boundEdgeID] = boundEdge;
       } else {
         this.bteGraph.edges[boundEdgeID].attributes['biolink:support_graphs'].add(supportGraphID);
@@ -206,7 +219,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
                   if (!boundIDs.has(binding.id)) {
                     newBindings.push(binding);
                     boundIDs.add(binding.id);
-                  };
+                  }
                 } else if (!boundIDs.has(nodesToRebind[binding.id].newNode)) {
                   newBindings.push({ id: nodesToRebind[binding.id].newNode });
                   boundIDs.add(nodesToRebind[binding.id].newNode);
@@ -245,9 +258,11 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     });
 
     // Prune unused auxGraphs
-    auxGraphs = Object.fromEntries(Object.entries(auxGraphs).filter(([auxGraphID]) => {
-      return [...edgesIDsByAuxGraphID[auxGraphID]].some((edgeID => resultBoundEdgesWithAuxGraphs.has(edgeID)))
-    }))
+    auxGraphs = Object.fromEntries(
+      Object.entries(auxGraphs).filter(([auxGraphID]) => {
+        return [...edgesIDsByAuxGraphID[auxGraphID]].some((edgeID) => resultBoundEdgesWithAuxGraphs.has(edgeID));
+      }),
+    );
 
     this.auxGraphs = auxGraphs;
     this.finalizedResults = fixedResults;
@@ -267,20 +282,19 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     const resolvedCuries = await id_resolver.resolveSRI({ unknown: curiesToResolve });
     Object.entries(resolvedCuries).forEach(([originalCurie, resolvedEntity]) => {
       if (!this.bteGraph.nodes[resolvedEntity.primaryID]) {
-        const category = resolvedEntity.primaryTypes?.[0] ? `biolink:${resolvedEntity.primaryTypes[0]}` : qNodeIDsByOriginalID.get(originalCurie).categories?.[0];
+        const category = resolvedEntity.primaryTypes?.[0]
+          ? `biolink:${resolvedEntity.primaryTypes[0]}`
+          : qNodeIDsByOriginalID.get(originalCurie).categories?.[0];
 
-        this.bteGraph.nodes[resolvedEntity.primaryID] = new KGNode(
-          resolvedEntity.primaryID,
-          {
-            primaryCurie: resolvedEntity.primaryID,
-            qNodeID: qNodeIDsByOriginalID[originalCurie],
-            equivalentCuries: resolvedEntity.equivalentIDs,
-            names: resolvedEntity.labelAliases,
-            category: category ? [category] : ["biolink:NamedThing"],
-            attributes: resolvedEntity.attributes,
-            label: resolvedEntity.label,
-          },
-        );
+        this.bteGraph.nodes[resolvedEntity.primaryID] = new KGNode(resolvedEntity.primaryID, {
+          primaryCurie: resolvedEntity.primaryID,
+          qNodeID: qNodeIDsByOriginalID[originalCurie],
+          equivalentCuries: resolvedEntity.equivalentIDs,
+          names: resolvedEntity.labelAliases,
+          category: category ? [category] : ['biolink:NamedThing'],
+          attributes: resolvedEntity.attributes,
+          label: resolvedEntity.label,
+        });
       }
     });
   }
@@ -289,8 +303,8 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     const results = this.finalizedResults ?? [];
     return {
       description: `Query processed successfully, retrieved ${results.length} results.`,
-      schema_version: '1.4.0',
-      biolink_version: biolink.biolinkJSON.version,
+      schema_version: global.SCHEMA_VERSION,
+      biolink_version: global.BIOLINK_VERSION,
       workflow: [{ id: 'lookup' }],
       message: {
         query_graph: this.originalQueryGraph,
@@ -349,7 +363,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
 
   _initializeResponse() {
     this.knowledgeGraph = new KnowledgeGraph(this.options?.apiList?.include);
-    this.trapiResultsAssembler = new TrapiResultsAssembler();
+    this.trapiResultsAssembler = new TrapiResultsAssembler(this.options);
     this.bteGraph = new Graph();
     this.bteGraph.subscribe(this.knowledgeGraph);
   }
@@ -589,7 +603,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     await this.addQueryNodes();
 
     const span1 = Sentry?.getCurrentHub()?.getScope()?.getTransaction()?.startChild({
-        description: "loadMetaKG"
+      description: 'loadMetaKG',
     });
 
     debug('Start to load metakg.');
@@ -637,7 +651,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
 
     if (this._queryUsesInferredMode()) {
       const span2 = Sentry?.getCurrentHub()?.getScope()?.getTransaction()?.startChild({
-          description: "creativeExecution"
+        description: 'creativeExecution',
       });
       await this._handleInferredEdges();
       span2?.finish();
@@ -656,7 +670,7 @@ exports.TRAPIQueryHandler = class TRAPIQueryHandler {
     }
 
     const span3 = Sentry?.getCurrentHub()?.getScope()?.getTransaction()?.startChild({
-        description: "resultsAssembly"
+      description: 'resultsAssembly',
     });
 
     // update query graph

@@ -43,13 +43,14 @@ module.exports = class TrapiResultsAssembler {
   /**
    * Create a QueryResult i9nstance.
    */
-  constructor() {
+  constructor(options) {
     /**
      * @property {Result[]} _results - list of query results
      * @private
      */
     this._results = [];
     this.logs = [];
+    this.options = options;
   }
 
   getResults() {
@@ -374,7 +375,17 @@ module.exports = class TrapiResultsAssembler {
             recordHashes: new Set(),
           };
           solutionRecords.forEach(
-            ({ inputQNodeID, outputQNodeID, inputPrimaryCurie, outputPrimaryCurie, inputUMLS, outputUMLS, isTextMined, qEdgeID, recordHash }) => {
+            ({
+              inputQNodeID,
+              outputQNodeID,
+              inputPrimaryCurie,
+              outputPrimaryCurie,
+              inputUMLS,
+              outputUMLS,
+              isTextMined,
+              qEdgeID,
+              recordHash,
+            }) => {
               consolidatedSolutionRecord.inputPrimaryCuries.add(inputPrimaryCurie);
               consolidatedSolutionRecord.outputPrimaryCuries.add(outputPrimaryCurie);
               consolidatedSolutionRecord.inputUMLS.add(...inputUMLS);
@@ -404,7 +415,9 @@ module.exports = class TrapiResultsAssembler {
           node_bindings: {},
           analyses: [
             {
-              resource_id: `infores:biothings-explorer`,
+              resource_id: this.options.provenanceUsesServiceProvider
+                ? `infores:service-provider-trapi`
+                : `infores:biothings-explorer`,
               edge_bindings: {},
               score: score,
             },
