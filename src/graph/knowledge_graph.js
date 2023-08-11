@@ -84,7 +84,7 @@ module.exports = class KnowledgeGraph {
       attributes.push({
         attribute_type_id: 'biolink:publications',
         value: Array.from(kgEdge.publications),
-        // value_type_id: 'biolink:publications',
+        value_type_id: 'linkml:Uriorcurie'
       });
     }
 
