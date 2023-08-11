@@ -256,7 +256,7 @@ module.exports = class InferredQueryHandler {
             subject: resultCreativeSubjectID,
             object: resultCreativeObjectID,
             predicate: qEdge.predicates[0],
-            sources: [{ resource_id: 'infores:biothings-explorer', resource_role: 'primary_knowledge_source' }],
+            sources: [{ resource_id: this.parent.options.provenanceUsesServiceProvider ? 'infores:service-provider-trapi' : 'infores:biothings-explorer', resource_role: 'primary_knowledge_source' }],
             attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [] }],
           };
         }
