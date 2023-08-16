@@ -22,7 +22,11 @@
                 "eB": {
                     "subject": "nA",
                     "object": "creativeQueryObject",
-                    "predicates": ["biolink:causes"]
+                    "predicates": [
+                        "biolink:affects",
+                        "biolink:causes",
+                        "biolink:contributes_to"
+                    ]
                 }
             }
         }
