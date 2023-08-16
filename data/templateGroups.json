@@ -10,8 +10,10 @@
               ],
     "templates": [
       "Chem-treats-DoP.json",
-      "Chem-regulates,affects-Gene-cause,contribute,affects-DoP.json",
-      "Chem-treats-PhenoOfDisease.json"
+      "Chem-decreaseGeneWithFunctionGainIn-Disease.json",
+      "Chem-increaseGeneWithFunctionLossIn-Disease.json",
+      "Chem-treats-PhenoOfDisease.json",
+      "Chem-regulates,affects-Gene-biomarker,associated_condition-DoP.json"
     ]
   },
   {
