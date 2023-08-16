@@ -9,9 +9,9 @@
                "DiseaseOrPhenotypicFeature"
               ],
     "templates": [
-      "Chem-DoP.json",
-      "m4-Chem-Gene-DoP.json",
-      "m1-Chem-Pheno-DoP.json"
+      "Chem-treats-DoP.json",
+      "Chem-regulates,affects-Gene-cause,contribute,affects-DoP.json",
+      "Chem-treats-PhenoOfDisease.json"
     ]
   },
   {
@@ -26,11 +26,11 @@
     }, 
     "object": ["Gene", "Protein"],
     "templates": [
-      "direct-increase.json",
-      "increase-another-gene-that-upregs.json",
-      "decrease-another-gene-that-downregs.json",
-      "interacts-with-another-gene-that-upregs.json",
-      "Chem-interacts-with-Gene.json"
+      "Chem-increasesGene.json",
+      "Chem-IncreaseAnotherGeneThatUpregs-Gene.json",
+      "Chem-DecreaseAnotherGeneThatDownregs-Gene.json",
+      "Chem-interacts_with-GeneThatUpregs-Gene.json",
+      "Chem-interacts_with-Gene.json"
     ]
   },
   {
@@ -45,11 +45,11 @@
     }, 
     "object": ["Gene", "Protein"],
     "templates": [
-      "direct-decrease.json",
-      "increase-another-gene-that-downregs.json",
-      "decrease-another-gene-that-upregs.json",
-      "interacts-with-another-gene-that-downregs.json",
-      "Chem-interacts-with-Gene.json"
+      "Chem-decreasesGene.json",
+      "Chem-IncreaseAnotherGeneThatDownregs-Gene.json",
+      "Chem-DecreaseAnotherGeneThatUpregs-Gene.json",
+      "Chem-interacts_with-GeneThatDownregs-Gene.json",
+      "Chem-interacts_with-Gene.json"
     ]
   }
 ]
