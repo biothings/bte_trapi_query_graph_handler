@@ -1,3 +1,5 @@
+const { toArray } = require('../utils');
+
 const debug = require('debug')('bte:biothings-explorer-trapi:KnowledgeGraph');
 
 module.exports = class KnowledgeGraph {
@@ -30,7 +32,7 @@ module.exports = class KnowledgeGraph {
         },
         {
           attribute_type_id: 'biolink:synonym',
-          value: kgNode._names,
+          value: kgNode._names.length ? kgNode._names : toArray(kgNode._label),
         },
         // Currently unused
         // {
