@@ -3,32 +3,27 @@
         "query_graph": {
             "nodes": {
                 "creativeQuerySubject": {
-                    "categories":["biolink:ChemicalEntity"]
+                    "categories":
+                    ["ChemicalEntity"]
                 },
-                "nA": {
-                    "categories":["biolink:Gene", "biolink:Protein"],
-                    "is_set": true
-               },
                 "creativeQueryObject": {
-                    "categories":["biolink:Gene", "biolink:Protein"]
+                    "categories":["biolink:DiseaseOrPhenotypicFeature"]
                }
             },
             "edges": {
                 "eA": {
                     "subject": "creativeQuerySubject",
-                    "object": "nA",
-                    "predicates": ["biolink:interacts_with"]
-                },
-                "eB": {
-                    "subject": "nA",
                     "object": "creativeQueryObject",
-                    "predicates": ["biolink:regulates"],
                     "qualifier_constraints": [
                         {
                             "qualifier_set": [
                                 {
                                     "qualifier_type_id": "biolink:object_direction_qualifier",
-                                    "qualifier_value": "upregulated"
+                                    "qualifier_value": "decreased"
+                                },
+                                {
+                                    "qualifier_type_id": "biolink:object_aspect_qualifier",
+                                    "qualifier_value": "likelihood"
                                 }
                             ]
                         }
