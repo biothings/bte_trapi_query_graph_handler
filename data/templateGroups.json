@@ -29,8 +29,8 @@
       "Chem-increasesGene.json",
       "Chem-IncreaseAnotherGeneThatUpregs-Gene.json",
       "Chem-DecreaseAnotherGeneThatDownregs-Gene.json",
-      "Chem-interacts_with-GeneThatUpregs-Gene.json",
-      "Chem-interacts_with-Gene.json"
+      "Chem-physically_interacts-GeneThatUpregs-Gene.json",
+      "Chem-physically_interacts-Gene.json"
     ]
   },
   {
@@ -48,8 +48,8 @@
       "Chem-decreasesGene.json",
       "Chem-IncreaseAnotherGeneThatDownregs-Gene.json",
       "Chem-DecreaseAnotherGeneThatUpregs-Gene.json",
-      "Chem-interacts_with-GeneThatDownregs-Gene.json",
-      "Chem-interacts_with-Gene.json"
+      "Chem-physically_interacts-GeneThatDownregs-Gene.json",
+      "Chem-physically_interacts-Gene.json"
     ]
   }
 ]
