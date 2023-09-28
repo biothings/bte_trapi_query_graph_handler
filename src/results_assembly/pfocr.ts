@@ -1,15 +1,49 @@
-const { all } = require('async');
-const axios = require('axios');
-const debug = require('debug')('bte:biothings-explorer-trapi:pfocr');
-const { intersection } = require('../utils');
-const { _, merge } = require('lodash');
-const { default: Analyze } = require('chi-square-p-value');
-const LogEntry = require('../log_entry');
+import axios from 'axios';
+import Debug from 'debug';
+const debug = Debug('bte:biothings-explorer-trapi:pfocr');
+import { intersection } from '../utils';
+import _ from 'lodash';
+import LogEntry, { StampedLog } from '../log_entry';
+import { TrapiResult } from '../types';
 
 // the minimum acceptable intersection size between the CURIEs
 // in a TRAPI result and in a PFOCR figure.
 const MATCH_COUNT_MIN = 2;
 const FIGURE_COUNT_MAX = 20;
+
+interface pfocrQueryBody {
+  q: string[];
+  scopes: string;
+  fields: string[];
+  operator: string;
+  analyzer: string;
+  minimum_should_match: number;
+  size: number;
+  with_total: boolean;
+  from?: number;
+}
+
+interface FigureResult {
+  _id: string;
+  notfound?: boolean;
+  associatedWith: {
+    figureUrl: string;
+    pmc: string;
+    mentions: {
+      genes: {
+        ncbigene: string[];
+      };
+    };
+  };
+}
+
+interface RawFigureResult extends FigureResult {
+  query: string;
+}
+
+interface DeDupedFigureResult extends FigureResult {
+  query: Set<string>;
+}
 
 /* Get all results by using a scrolling query
  * https://docs.mygene.info/en/latest/doc/query_service.html#scrolling-queries
@@ -18,7 +52,12 @@ const FIGURE_COUNT_MAX = 20;
  * All queries must include size: 1000, with_total: true
  * Subsequent queries must use `from` to designate a starting point
  */
-async function getAllByScrolling(baseUrl, queryBody, batchIndex, hits = []) {
+async function getAllByScrolling(
+  baseUrl: string,
+  queryBody: pfocrQueryBody,
+  batchIndex: number,
+  hits: RawFigureResult[] = [],
+): Promise<RawFigureResult[]> {
   queryBody.from = batchIndex;
   const { data } = await axios.post(baseUrl, queryBody).catch((err) => {
     debug('Error in scrolling request', err);
@@ -36,7 +75,7 @@ async function getAllByScrolling(baseUrl, queryBody, batchIndex, hits = []) {
 
 /* qTerms are the CURIEs that go with the 'q' query parameter.
  */
-async function getPfocrFigures(qTerms) {
+async function getPfocrFigures(qTerms: Set<string>): Promise<DeDupedFigureResult[]> {
   debug(`Getting PFOCR figure data`);
   const url = 'https://biothings.ncats.io/pfocr/query';
   /*
@@ -44,7 +83,7 @@ async function getPfocrFigures(qTerms) {
    * detailed here: https://github.com/biothings/pending.api/issues/88
    */
 
-  const figureResults = [];
+  const figureResults: RawFigureResult[] = [];
   await Promise.all(
     _.chunk([...qTerms], 1000).map(async (qTermBatch) => {
       const queryBody = {
@@ -69,7 +108,7 @@ async function getPfocrFigures(qTerms) {
    * When we make separate queries for different CURIEs, we can get
    * duplicate figures, so we need to de-duplicate.
    */
-  const mergedFigureResults = {};
+  const mergedFigureResults: { [figureID: string]: DeDupedFigureResult } = {};
   const figuresAdded = new Set();
   figureResults.map((figure) => {
     const figureId = figure._id;
@@ -85,8 +124,8 @@ async function getPfocrFigures(qTerms) {
   return Object.values(mergedFigureResults);
 }
 
-function getMatchableQNodeIDs(allTrapiResults) {
-  const matchableQNodeIDs = new Set();
+function getMatchableQNodeIDs(allTrapiResults: TrapiResult[]): Set<string> {
+  const matchableQNodeIDs: Set<string> = new Set();
 
   if (allTrapiResults.length === 0) {
     return matchableQNodeIDs;
@@ -117,11 +156,11 @@ function getMatchableQNodeIDs(allTrapiResults) {
  * t: trapiResults.length
  * f: figures.length
  */
-async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
+export async function enrichTrapiResultsWithPfocrFigures(allTrapiResults: TrapiResult[]): Promise<StampedLog[]> {
   const matchableQNodeIDs = getMatchableQNodeIDs(allTrapiResults);
-  const logs = [];
+  const logs: StampedLog[] = [];
   let resultsWithTruncatedFigures = 0;
-  const truncatedFigures = new Set();
+  const truncatedFigures: Set<string> = new Set();
 
   if (matchableQNodeIDs.size < MATCH_COUNT_MIN) {
     // No TRAPI result can satisfy MATCH_COUNT_MIN
@@ -131,12 +170,12 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
 
   // TODO: currently just NCBIGene CURIEs. Expand to handle any CURIE in PFOCR.
 
-  const trapiResultToCurieSet = new Map();
+  const trapiResultToCurieSet: Map<TrapiResult, string> = new Map();
 
-  const curieCombinations = new Set(
-    allTrapiResults.reduce((arr, res) => {
-      const resultCuries = new Set();
-      const matchedQNodes = new Set();
+  const curieCombinations: Set<string> = new Set(
+    allTrapiResults.reduce((arr: string[], res) => {
+      const resultCuries: Set<string> = new Set();
+      const matchedQNodes: Set<string> = new Set();
       [...matchableQNodeIDs].forEach((qNodeID) => {
         res.node_bindings[qNodeID]
           .map((node_binding) => node_binding.id)
@@ -165,7 +204,7 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
 
   debug(`${figures.length} PFOCR figures match at least ${MATCH_COUNT_MIN} genes from any TRAPI result`);
 
-  const figuresByCuries = {};
+  const figuresByCuries: { [queryCuries: string]: DeDupedFigureResult[] } = {};
   figures.forEach((figure) => {
     [...figure.query].forEach((queryCuries) => {
       figuresByCuries[queryCuries] =
@@ -173,20 +212,20 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
     });
   });
 
-  const matchedFigures = new Set();
-  const matchedTrapiResults = new Set();
+  const matchedFigures: Set<string> = new Set();
+  const matchedTrapiResults: Set<TrapiResult> = new Set();
 
-  const allGenesInAllFigures = figures.reduce((set, fig) => {
-    fig.associatedWith.mentions.genes.ncbigene.forEach((gene) => set.add(gene));
-    return set;
-  }, new Set());
+  // const allGenesInAllFigures = figures.reduce((set, fig) => {
+  //   fig.associatedWith.mentions.genes.ncbigene.forEach((gene) => set.add(gene));
+  //   return set;
+  // }, new Set() as Set<string>);
 
   for (const trapiResult of allTrapiResults) {
     // No figures match this result
     if (!figuresByCuries[trapiResultToCurieSet.get(trapiResult)]) continue;
 
-    const resultCuries = new Set();
-    const resultMatchableQNodeIDs = new Set();
+    const resultCuries: Set<string> = new Set();
+    const resultMatchableQNodeIDs: Set<string> = new Set();
     [...matchableQNodeIDs].forEach((qNodeID) => {
       trapiResult.node_bindings[qNodeID]
         .map((node_binding) => node_binding.id)
@@ -198,8 +237,8 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
     });
     if (resultMatchableQNodeIDs.size < 2) continue;
 
-    (figuresByCuries[trapiResultToCurieSet.get(trapiResult)] ?? []).forEach((figure, i) => {
-      if (!trapiResult.hasOwnProperty('pfocr')) {
+    (figuresByCuries[trapiResultToCurieSet.get(trapiResult)] ?? []).forEach((figure) => {
+      if (!('pfocr' in trapiResult)) {
         trapiResult.pfocr = [];
       }
 
@@ -222,15 +261,15 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
 
       const otherGenesInFigure = figureCurieSet.size - resultGenesInFigure.size;
 
-      let resultGenesInOtherFigures = [...resultCuries].filter((gene) => {
+      const resultGenesInOtherFigures = [...resultCuries].filter((gene) => {
         return figures.some((fig) => fig.associatedWith.mentions.genes.ncbigene.includes(gene));
       }).length;
       // let otherGenesInOtherFigures = [...allGenesInAllFigures].filter((gene) => {
       //   return !resultCuries.has(gene) && !figureCurieSet.has(gene);
       // }).length;
 
-      const precision = resultGenesInFigure.size / (resultGenesInFigure.size + otherGenesInFigure)
-      const recall = resultGenesInFigure.size / (resultGenesInFigure.size + resultGenesInOtherFigures)
+      const precision = resultGenesInFigure.size / (resultGenesInFigure.size + otherGenesInFigure);
+      const recall = resultGenesInFigure.size / (resultGenesInFigure.size + resultGenesInOtherFigures);
 
       trapiResult.pfocr.push({
         figureUrl: figure.associatedWith.figureUrl,
@@ -238,14 +277,14 @@ async function enrichTrapiResultsWithPfocrFigures(allTrapiResults) {
         // TODO: do we want to include figure title? Note: this would need to be added to queryBody.
         //title: figure.associatedWith.title,
         matchedCuries: [...resultGenesInFigure].map((geneID) => `NCBIGene:${geneID}`),
-        score: 2 * ((precision * recall) / (precision + recall))
-          // 1 -
-          // parseFloat(
-          //   Analyze([
-          //     [resultGenesInFigure.size, resultGenesInOtherFigures],
-          //     [otherGenesInFigure, otherGenesInOtherFigures],
-          //   ]).pValue,
-          // ),
+        score: 2 * ((precision * recall) / (precision + recall)),
+        // 1 -
+        // parseFloat(
+        //   Analyze([
+        //     [resultGenesInFigure.size, resultGenesInOtherFigures],
+        //     [otherGenesInFigure, otherGenesInOtherFigures],
+        //   ]).pValue,
+        // ),
       });
       matchedTrapiResults.add(trapiResult);
     });

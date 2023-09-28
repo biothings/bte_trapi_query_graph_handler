@@ -1,41 +1,42 @@
-exports.toArray = (input) => {
+export function toArray<Type>(input: Type | Type[]): Type[] {
   if (Array.isArray(input)) {
     return input;
   }
   return [input];
-};
+}
 
-exports.getUnique = (input) => {
+export function getUnique<Type>(input: Type[]): Type[] {
   return Array.from(new Set(input));
-};
+}
 
-exports.removeBioLinkPrefix = (input) => {
+export function removeBioLinkPrefix(input: string): string {
   if (input && input.startsWith('biolink:')) {
     return input.slice(8);
   }
   return input;
-};
+}
 
 // This gets the intersection of two sets.
 // Lodash _.intersection gets the intersection of two arrays.
 // see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set
-const intersection = (setA, setB) => {
-  let resultSet = new Set()
-  for (let elem of setB) {
+export function intersection<Type>(setA: Set<Type>, setB: Set<Type>): Set<Type> {
+  const resultSet: Set<Type> = new Set();
+  for (const elem of setB) {
     if (setA.has(elem)) {
-      resultSet.add(elem)
+      resultSet.add(elem);
     }
   }
-  return resultSet
+  return resultSet;
 }
-exports.intersection = intersection;
 
 // see https://stackoverflow.com/a/29585704
-const cartesian = (a) => { // a = array of arrays
-  var i, j, l, m, a1, o = [];
+export function cartesian(a: number[][]): number[][] {
+  // a = array of arrays
+  let i: number, j: number, l: number, m: number;
+  const o = [];
   if (!a || a.length == 0) return a;
 
-  a1 = a.splice(0, 1)[0]; // the first array of a
+  const a1 = a.splice(0, 1)[0]; // the first array of a
   a = cartesian(a);
   for (i = 0, l = a1.length; i < l; i++) {
     if (a && a.length) {
@@ -48,4 +49,3 @@ const cartesian = (a) => { // a = array of arrays
   }
   return o;
 }
-exports.cartesian = cartesian;

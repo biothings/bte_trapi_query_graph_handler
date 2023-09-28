@@ -1,6 +1,37 @@
-const _ = require('lodash');
-module.exports = class KGEdge {
-  constructor(id, info) {
+import { ProvenanceChainItem } from '@biothings-explorer/api-response-transform';
+import { TrapiAttribute } from '../types';
+
+export interface KGEdgeInfo {
+  object: string;
+  subject: string;
+  predicate: string;
+}
+
+export default class KGEdge {
+  id: string;
+  predicate: string;
+  subject: string;
+  object: string;
+  apis: Set<string>;
+  inforesCuries: Set<string>;
+  sources: {
+    [resource_id: string]: {
+      [resource_role: string]: {
+        resource_id: string;
+        resource_role: string;
+        upstream_resource_ids?: Set<string>;
+      };
+    };
+  };
+  publications: Set<string>;
+  qualifiers: {
+    [qualifier_type_id: string]: string;
+  };
+  attributes: {
+    [attribute_type_id: string]: Set<string> | TrapiAttribute[];
+    'edge-attributes'?: TrapiAttribute[];
+  };
+  constructor(id: string, info: KGEdgeInfo) {
     this.id = id;
     this.predicate = info.predicate;
     this.subject = info.subject;
@@ -13,7 +44,7 @@ module.exports = class KGEdge {
     this.attributes = {};
   }
 
-  addAPI(api) {
+  addAPI(api: string | string[]): void {
     if (typeof api === 'undefined') {
       return;
     }
@@ -25,7 +56,7 @@ module.exports = class KGEdge {
     });
   }
 
-  addInforesCurie(inforesCurie) {
+  addInforesCurie(inforesCurie: string | string[]): void {
     if (typeof inforesCurie === 'undefined') {
       return;
     }
@@ -37,7 +68,7 @@ module.exports = class KGEdge {
     });
   }
 
-  addSource(source) {
+  addSource(source: ProvenanceChainItem | ProvenanceChainItem[]): void {
     if (typeof source === 'undefined') {
       return;
     }
@@ -47,8 +78,14 @@ module.exports = class KGEdge {
     source.forEach((item) => {
       if (!this.sources[item.resource_id]) this.sources[item.resource_id] = {};
       if (!this.sources[item.resource_id][item.resource_role]) {
-        if (item.upstream_resource_ids) item.upstream_resource_ids = new Set(item.upstream_resource_ids);
-        this.sources[item.resource_id][item.resource_role] = item;
+        this.sources[item.resource_id][item.resource_role] = {
+          resource_id: item.resource_id,
+          resource_role: item.resource_role,
+          upstream_resource_ids: item.upstream_resource_ids ? new Set(item.upstream_resource_ids) : undefined,
+        };
+      }
+      if (item.upstream_resource_ids && !Array.isArray(item.upstream_resource_ids)) {
+        item.upstream_resource_ids = [item.upstream_resource_ids];
       }
       item.upstream_resource_ids?.forEach((upstream) =>
         this.sources[item.resource_id][item.resource_role].upstream_resource_ids.add(upstream),
@@ -56,7 +93,7 @@ module.exports = class KGEdge {
     });
   }
 
-  addPublication(publication) {
+  addPublication(publication: string | string[]): void {
     if (typeof publication === 'undefined') {
       return;
     }
@@ -68,14 +105,14 @@ module.exports = class KGEdge {
     });
   }
 
-  addQualifier(name, value) {
+  addQualifier(name: string, value: string): void {
     this.qualifiers[name] = value;
   }
 
-  addAdditionalAttributes(name, value) {
+  addAdditionalAttributes(name: string, value: string | string[] | TrapiAttribute[]): void {
     // special handling for full edge attributes
     if (name === 'edge-attributes') {
-      this.attributes[name] = value;
+      this.attributes[name] = value as TrapiAttribute[];
       return;
     }
 
@@ -85,8 +122,8 @@ module.exports = class KGEdge {
     if (!Array.isArray(value)) {
       value = [value];
     }
-    value.map((item) => {
-      this.attributes[name].add(item);
+    (value as string[]).map((item) => {
+      (this.attributes[name] as Set<string>).add(item);
     });
   }
-};
+}

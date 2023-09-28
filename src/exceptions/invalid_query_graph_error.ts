@@ -1,9 +1,10 @@
-class InvalidQueryGraphError extends Error {
-  constructor(message = 'Your Input Query Graph is invalid.', ...params) {
+export default class InvalidQueryGraphError extends Error {
+  statusCode: number;
+  constructor(message = 'Your Input Query Graph is invalid.', ...params: string[]) {
     super(...params);
-    
+
     Object.setPrototypeOf(this, InvalidQueryGraphError.prototype);
-    
+
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, InvalidQueryGraphError);
     }
@@ -13,5 +14,3 @@ class InvalidQueryGraphError extends Error {
     this.statusCode = 400;
   }
 }
-
-module.exports = InvalidQueryGraphError;

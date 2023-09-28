@@ -1,32 +1,56 @@
-module.exports = class KGNode {
-  constructor(id, info) {
+import { TrapiAttribute } from '../types';
+
+export interface KGNodeInfo {
+  label: string;
+  nodeAttributes?: TrapiAttribute;
+  semanticType: string[];
+  names: string[];
+  curies: string[];
+  primaryCurie: string;
+  qNodeID: string;
+}
+
+export default class KGNode {
+  id: string;
+  primaryCurie: string;
+  qNodeID: string;
+  curies: string[];
+  names: string[];
+  semanticType: string[];
+  nodeAttributes: TrapiAttribute;
+  label: string;
+  sourceNodes: Set<string>;
+  targetNodes: Set<string>;
+  sourceQNodeIDs: Set<string>;
+  targetQNodeIDs: Set<string>;
+  constructor(id: string, info: KGNodeInfo) {
     this.id = id;
-    this._primaryCurie = info.primaryCurie;
-    this._qNodeID = info.qNodeID;
-    this._curies = info.equivalentCuries;
-    this._names = info.names;
-    this._semanticType = info.category;
-    this._nodeAttributes = info.nodeAttributes;
-    this._label = info.label;
-    this._sourceNodes = new Set();
-    this._targetNodes = new Set();
-    this._sourceQNodeIDs = new Set();
-    this._targetQNodeIDs = new Set();
+    this.primaryCurie = info.primaryCurie;
+    this.qNodeID = info.qNodeID;
+    this.curies = info.curies;
+    this.names = info.names;
+    this.semanticType = info.semanticType;
+    this.nodeAttributes = info.nodeAttributes;
+    this.label = info.label;
+    this.sourceNodes = new Set();
+    this.targetNodes = new Set();
+    this.sourceQNodeIDs = new Set();
+    this.targetQNodeIDs = new Set();
   }
 
-  addSourceNode(kgNode) {
-    this._sourceNodes.add(kgNode);
+  addSourceNode(kgNodeID: string): void {
+    this.sourceNodes.add(kgNodeID);
   }
 
-  addTargetNode(kgNode) {
-    this._targetNodes.add(kgNode);
+  addTargetNode(kgNodeID: string): void {
+    this.targetNodes.add(kgNodeID);
   }
 
-  addSourceQNodeID(qNodeID) {
-    this._sourceQNodeIDs.add(qNodeID);
+  addSourceQNodeID(qNodeID: string): void {
+    this.sourceQNodeIDs.add(qNodeID);
   }
 
-  addTargetQNodeID(qNodeID) {
-    this._targetQNodeIDs.add(qNodeID);
+  addTargetQNodeID(qNodeID: string): void {
+    this.targetQNodeIDs.add(qNodeID);
   }
-};
+}

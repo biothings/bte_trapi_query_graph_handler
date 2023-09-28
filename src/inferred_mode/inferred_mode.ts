@@ -1,15 +1,66 @@
-const debug = require('debug')('bte:biothings-explorer-trapi:inferred-mode');
-const LogEntry = require('../log_entry');
-const utils = require('../utils');
-const async = require('async');
-const biolink = require('../biolink');
-const { getTemplates } = require('./template_lookup');
-const { scaled_sigmoid, inverse_scaled_sigmoid } = require('../results_assembly/score');
+import Debug from 'debug';
+import LogEntry, { StampedLog } from '../log_entry';
+import * as utils from '../utils';
+import async from 'async';
+import biolink from '../biolink';
+import { getTemplates, MatchedTemplate, TemplateLookup } from './template_lookup';
+import { scaled_sigmoid, inverse_scaled_sigmoid } from '../results_assembly/score';
+import { QueryHandlerOptions, TRAPIQueryHandler } from '..';
+import {
+  CompactQualifiers,
+  TrapiAuxGraphCollection,
+  TrapiEdgeBinding,
+  TrapiKnowledgeGraph,
+  TrapiQEdge,
+  TrapiQNode,
+  TrapiQueryGraph,
+  TrapiResponse,
+  TrapiResult,
+} from '../types';
+const debug = Debug('bte:biothings-explorer-trapi:inferred-mode');
 
-module.exports = class InferredQueryHandler {
-  constructor(parent, TRAPIQueryHandler, queryGraph, logs, options, path, predicatePath, includeReasoner) {
+export interface CombinedResponse {
+  workflow: { id: string }[];
+  message: {
+    query_graph: TrapiQueryGraph;
+    knowledge_graph: TrapiKnowledgeGraph;
+    auxiliary_graphs: TrapiAuxGraphCollection;
+    results: {
+      [resultID: string]: TrapiResult;
+    };
+  };
+  logs: StampedLog[];
+}
+
+export interface CombinedResponseReport {
+  querySuccess: number;
+  queryHadResults: boolean;
+  mergedResults: { [resultID: string]: number };
+  creativeLimitHit: boolean | number;
+}
+
+// MatchedTemplate, but with IDs, etc. filled in
+export type FilledTemplate = MatchedTemplate;
+
+export default class InferredQueryHandler {
+  parent: TRAPIQueryHandler;
+  queryGraph: TrapiQueryGraph;
+  logs: StampedLog[];
+  options: QueryHandlerOptions;
+  path: string;
+  predicatePath: string;
+  includeReasoner: boolean;
+  CREATIVE_LIMIT: number;
+  constructor(
+    parent: TRAPIQueryHandler,
+    queryGraph: TrapiQueryGraph,
+    logs: StampedLog[],
+    options: QueryHandlerOptions,
+    path: string,
+    predicatePath: string,
+    includeReasoner: boolean,
+  ) {
     this.parent = parent;
-    this.TRAPIQueryHandler = TRAPIQueryHandler;
     this.queryGraph = queryGraph;
     this.logs = logs;
     this.options = options;
@@ -19,7 +70,7 @@ module.exports = class InferredQueryHandler {
     this.CREATIVE_LIMIT = process.env.CREATIVE_LIMIT ? parseInt(process.env.CREATIVE_LIMIT) : 500;
   }
 
-  get queryIsValid() {
+  get queryIsValid(): boolean {
     const nodeMissingCategory = Object.values(this.queryGraph.nodes).some((node) => {
       return !node.categories || node.categories.length === 0;
     });
@@ -83,7 +134,12 @@ module.exports = class InferredQueryHandler {
     return true;
   }
 
-  getQueryParts() {
+  getQueryParts(): {
+    qEdgeID: string;
+    qEdge: TrapiQEdge;
+    qSubject: TrapiQNode;
+    qObject: TrapiQNode;
+  } {
     const qEdgeID = Object.keys(this.queryGraph.edges)[0];
     const qEdge = this.queryGraph.edges[qEdgeID];
     const qSubject = this.queryGraph.nodes[qEdge.subject];
@@ -96,30 +152,30 @@ module.exports = class InferredQueryHandler {
     };
   }
 
-  async findTemplates(qEdge, qSubject, qObject) {
+  async findTemplates(qEdge: TrapiQEdge, qSubject: TrapiQNode, qObject: TrapiQNode): Promise<MatchedTemplate[]> {
     debug('Looking up query Templates');
-    const expandedSubject = qSubject.categories.reduce((arr, subjectCategory) => {
+    const expandedSubject = qSubject.categories.reduce((arr: string[], subjectCategory: string) => {
       return utils.getUnique([...arr, ...biolink.getDescendantClasses(utils.removeBioLinkPrefix(subjectCategory))]);
-    }, []);
-    const expandedPredicates = qEdge.predicates.reduce((arr, predicate) => {
+    }, [] as string[]);
+    const expandedPredicates = qEdge.predicates.reduce((arr: string[], predicate: string) => {
       return utils.getUnique([...arr, ...biolink.getDescendantPredicates(utils.removeBioLinkPrefix(predicate))]);
-    }, []);
-    const expandedObject = qObject.categories.reduce((arr, objectCategory) => {
+    }, [] as string[]);
+    const expandedObject = qObject.categories.reduce((arr: string[], objectCategory: string) => {
       return utils.getUnique([...arr, ...biolink.getDescendantClasses(utils.removeBioLinkPrefix(objectCategory))]);
-    }, []);
+    }, [] as string[]);
     const qualifierConstraints = (qEdge.qualifier_constraints || []).map((qualifierSetObj) => {
       return Object.fromEntries(
         qualifierSetObj.qualifier_set.map(({ qualifier_type_id, qualifier_value }) => [
           qualifier_type_id.replace('biolink:', ''),
           qualifier_value.replace('biolink:', ''),
         ]),
-      );
+      ) as CompactQualifiers;
     });
     if (qualifierConstraints.length === 0) qualifierConstraints.push({});
-    const lookupObjects = expandedSubject.reduce((arr, subjectCategory) => {
-      let templates = expandedObject.reduce((arr2, objectCategory) => {
-        let templates2 = qualifierConstraints.reduce((arr3, qualifierSet) => {
-          return [
+    const lookupObjects = expandedSubject.reduce((arr: TemplateLookup[], subjectCategory) => {
+      const objectCombos = expandedObject.reduce((arr2: TemplateLookup[], objectCategory) => {
+        const qualifierCombos = qualifierConstraints.reduce(
+          (arr3: TemplateLookup[], qualifierSet: CompactQualifiers) => [
             ...arr3,
             ...expandedPredicates.map((predicate) => {
               return {
@@ -129,11 +185,12 @@ module.exports = class InferredQueryHandler {
                 qualifiers: qualifierSet,
               };
             }),
-          ];
-        }, []);
-        return [...arr2, ...templates2];
+          ],
+          [],
+        );
+        return [...arr2, ...qualifierCombos];
       }, []);
-      return [...arr, ...templates];
+      return [...arr, ...objectCombos];
     }, []);
     const templates = await getTemplates(lookupObjects);
 
@@ -150,7 +207,7 @@ module.exports = class InferredQueryHandler {
     return templates;
   }
 
-  async createQueries(qEdge, qSubject, qObject) {
+  async createQueries(qEdge: TrapiQEdge, qSubject: TrapiQNode, qObject: TrapiQNode): Promise<FilledTemplate[]> {
     const templates = await this.findTemplates(qEdge, qSubject, qObject);
     // combine creative query with templates
     const subQueries = templates.map(({ template, queryGraph }) => {
@@ -189,9 +246,15 @@ module.exports = class InferredQueryHandler {
     return subQueries;
   }
 
-  combineResponse(queryNum, handler, qEdgeID, qEdge, combinedResponse) {
+  combineResponse(
+    queryNum: number,
+    handler: TRAPIQueryHandler,
+    qEdgeID: string,
+    qEdge: TrapiQEdge,
+    combinedResponse: CombinedResponse,
+  ): CombinedResponseReport {
     const newResponse = handler.getResponse();
-    const report = {
+    const report: CombinedResponseReport = {
       querySuccess: 0,
       queryHadResults: false,
       mergedResults: {},
@@ -218,7 +281,7 @@ module.exports = class InferredQueryHandler {
     });
     // add results
     newResponse.message.results.forEach((result) => {
-      const translatedResult = {
+      const translatedResult: TrapiResult = {
         node_bindings: {
           [qEdge.subject]: [{ id: result.node_bindings.creativeQuerySubject[0].id }],
           [qEdge.object]: [{ id: result.node_bindings.creativeQueryObject[0].id }],
@@ -256,7 +319,14 @@ module.exports = class InferredQueryHandler {
             subject: resultCreativeSubjectID,
             object: resultCreativeObjectID,
             predicate: qEdge.predicates[0],
-            sources: [{ resource_id: this.parent.options.provenanceUsesServiceProvider ? 'infores:service-provider-trapi' : 'infores:biothings-explorer', resource_role: 'primary_knowledge_source' }],
+            sources: [
+              {
+                resource_id: this.parent.options.provenanceUsesServiceProvider
+                  ? 'infores:service-provider-trapi'
+                  : 'infores:biothings-explorer',
+                resource_role: 'primary_knowledge_source',
+              },
+            ],
             attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [] }],
           };
         }
@@ -267,12 +337,17 @@ module.exports = class InferredQueryHandler {
           auxGraphSuffix += 1;
         }
         const auxGraphID = `${inferredEdgeID}-support${auxGraphSuffix}`;
-        combinedResponse.message.knowledge_graph.edges[inferredEdgeID].attributes[0].value.push(auxGraphID);
+        (combinedResponse.message.knowledge_graph.edges[inferredEdgeID].attributes[0].value as string[]).push(
+          auxGraphID,
+        );
         combinedResponse.message.auxiliary_graphs[auxGraphID] = {
-          edges: Object.values(result.analyses[0].edge_bindings).reduce((arr, bindings) => {
-            bindings.forEach((binding) => arr.push(binding.id));
-            return arr;
-          }, []),
+          edges: Object.values(result.analyses[0].edge_bindings).reduce(
+            (arr: string[], bindings: TrapiEdgeBinding[]) => {
+              bindings.forEach((binding) => arr.push(binding.id));
+              return arr;
+            },
+            [] as string[],
+          ),
         };
       }
 
@@ -304,7 +379,10 @@ module.exports = class InferredQueryHandler {
         const resScore = translatedResult.analyses[0].score;
         if (typeof combinedResponse.message.results[resultID].analyses[0].score !== 'undefined') {
           combinedResponse.message.results[resultID].analyses[0].score = resScore
-            ? scaled_sigmoid(inverse_scaled_sigmoid(combinedResponse.message.results[resultID].analyses[0].score) + inverse_scaled_sigmoid(resScore))
+            ? scaled_sigmoid(
+                inverse_scaled_sigmoid(combinedResponse.message.results[resultID].analyses[0].score) +
+                  inverse_scaled_sigmoid(resScore),
+              )
             : combinedResponse.message.results[resultID].analyses[0].score;
         } else {
           combinedResponse.message.results[resultID].analyses[0].score = resScore;
@@ -346,15 +424,15 @@ module.exports = class InferredQueryHandler {
     return report;
   }
 
-  pruneKnowledgeGraph(combinedResponse) {
+  pruneKnowledgeGraph(combinedResponse: TrapiResponse): void {
     debug('pruning creative combinedResponse nodes/edges...');
-    const edgeBoundNodes = new Set();
-    const resultsBoundEdges = new Set();
-    const resultBoundAuxGraphs = new Set();
+    const edgeBoundNodes: Set<string> = new Set();
+    const resultsBoundEdges: Set<string> = new Set();
+    const resultBoundAuxGraphs: Set<string> = new Set();
 
     // Handle nodes and edges bound to results directly
     combinedResponse.message.results.forEach((result) => {
-      Object.entries(result.analyses[0].edge_bindings).forEach(([edge, bindings]) => {
+      Object.entries(result.analyses[0].edge_bindings).forEach(([, bindings]) => {
         bindings.forEach((binding) => resultsBoundEdges.add(binding.id));
       });
     });
@@ -366,7 +444,7 @@ module.exports = class InferredQueryHandler {
       edgeBoundNodes.add(combinedResponse.message.knowledge_graph.edges[edgeID].object);
       combinedResponse.message.knowledge_graph.edges[edgeID].attributes.find(({ attribute_type_id, value }) => {
         if (attribute_type_id === 'biolink:support_graphs') {
-          value.forEach((auxGraphID) => {
+          (value as string[]).forEach((auxGraphID) => {
             resultBoundAuxGraphs.add(auxGraphID);
             combinedResponse.message.auxiliary_graphs[auxGraphID].edges.forEach((auxGraphEdgeID) => {
               edgeBoundNodes.add(combinedResponse.message.knowledge_graph.edges[auxGraphEdgeID].subject);
@@ -396,10 +474,10 @@ module.exports = class InferredQueryHandler {
     );
   }
 
-  async query() {
-    // TODO [POST-MVP] check for flipped predicate cases
+  async query(): Promise<TrapiResponse> {
+    // TODO (eventually) check for flipped predicate cases
     // e.g. Drug -treats-> Disease OR Disease -treated_by-> Drug
-    let logMessage = 'Query proceeding in Inferred Mode.';
+    const logMessage = 'Query proceeding in Inferred Mode.';
     debug(logMessage);
     this.logs.push(new LogEntry('INFO', null, logMessage).getLog());
 
@@ -410,6 +488,8 @@ module.exports = class InferredQueryHandler {
     const { qEdgeID, qEdge, qSubject, qObject } = this.getQueryParts();
     const subQueries = await this.createQueries(qEdge, qSubject, qObject);
     const combinedResponse = {
+      schema_version: global.SCHEMA_VERSION,
+      biolink_version: global.BIOLINK_VERSION,
       workflow: [{ id: 'lookup' }],
       message: {
         query_graph: this.queryGraph,
@@ -421,14 +501,17 @@ module.exports = class InferredQueryHandler {
         results: {},
       },
       logs: this.logs,
-    };
+    } as CombinedResponse;
     // add/combine nodes
-    let resultQueries = [];
+    const resultQueries = [];
     let successfulQueries = 0;
     let stop = false;
-    let mergedResultsCount = {};
+    const mergedResultsCount: {
+      [resultID: string]: number;
+    } = {};
 
     await async.eachOfSeries(subQueries, async ({ template, queryGraph }, i) => {
+      i = i as number;
       if (stop) {
         return;
       }
@@ -436,7 +519,7 @@ module.exports = class InferredQueryHandler {
         global.queryInformation.isCreativeMode = true;
         global.queryInformation.creativeTemplate = template;
       }
-      const handler = new this.TRAPIQueryHandler(this.options, this.path, this.predicatePath, this.includeReasoner);
+      const handler = new TRAPIQueryHandler(this.options, this.path, this.predicatePath, this.includeReasoner);
       try {
         // make query and combine results/kg/logs/etc
         handler.setQueryGraph(queryGraph);
@@ -507,21 +590,23 @@ module.exports = class InferredQueryHandler {
         ).getLog(),
       );
     }
+    const response = combinedResponse as unknown as TrapiResponse;
+    response.description = `Query processed successfully, retrieved ${response.message.results.length} results.`;
     // sort records by score
-    combinedResponse.message.results = Object.values(combinedResponse.message.results).sort((a, b) => {
+    response.message.results = Object.values(combinedResponse.message.results).sort((a, b) => {
       return b.analyses[0].score - a.analyses[0].score ? b.analyses[0].score - a.analyses[0].score : 0;
     });
     // trim extra results and prune kg
-    combinedResponse.message.results = combinedResponse.message.results.slice(0, this.CREATIVE_LIMIT);
-    this.pruneKnowledgeGraph(combinedResponse);
+    response.message.results = response.message.results.slice(0, this.CREATIVE_LIMIT);
+    this.pruneKnowledgeGraph(response);
     // get the final summary log
     if (successfulQueries) {
       this.parent
-        .getSummaryLog(combinedResponse, combinedResponse.logs, resultQueries)
-        .forEach((log) => combinedResponse.logs.push(log));
+        .getSummaryLog(response, response.logs as StampedLog[], resultQueries)
+        .forEach((log) => response.logs.push(log));
     }
-    combinedResponse.logs = combinedResponse.logs.map((log) => log.toJSON());
+    response.logs = (response.logs as StampedLog[]).map((log) => log.toJSON());
 
-    return combinedResponse;
+    return response;
   }
-};
+}

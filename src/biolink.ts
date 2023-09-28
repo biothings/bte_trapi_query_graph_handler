@@ -1,19 +1,15 @@
-const bl = require('biolink-model');
-var path = require('path');
-const debug = require('debug')('bte:biothings-explorer-trapi:EdgeReverse');
+import { BioLink } from 'biolink-model';
+import Debug from 'debug';
+const debug = Debug('bte:biothings-explorer-trapi:EdgeReverse');
 
 class BioLinkModel {
+  biolink: BioLink;
   constructor() {
-    if (!BioLinkModel.instance) {
-      // debug('BioLink-model class is initiated.');
-      this.biolink = new bl.BioLink();
-      this.biolink.loadSync();
-    }
-
-    return BioLinkModel.instance;
+    this.biolink = new BioLink();
+    this.biolink.loadSync();
   }
 
-  reverse(predicate) {
+  reverse(predicate: string) {
     if (typeof predicate === 'string') {
       if (predicate in this.biolink.slotTree.objects) {
         if (this.biolink.slotTree.objects[predicate].symmetric === true) {
@@ -26,7 +22,7 @@ class BioLinkModel {
     return undefined;
   }
 
-  getAncestorClasses(className) {
+  getAncestorClasses(className: string): string | string[] {
     if (className in this.biolink.classTree.objects) {
       const ancestors = this.biolink.classTree.getAncestors(className).map((entity) => entity.name);
       return [...ancestors, ...[className]];
@@ -34,7 +30,7 @@ class BioLinkModel {
     return className;
   }
 
-  getAncestorPredicates(predicate) {
+  getAncestorPredicates(predicate: string): string | string[] {
     if (predicate in this.biolink.slotTree.objects) {
       const ancestors = this.biolink.slotTree.getAncestors(predicate).map((entity) => entity.name);
       return [...ancestors, ...[predicate]];
@@ -42,7 +38,7 @@ class BioLinkModel {
     return predicate;
   }
 
-  getDescendantClasses(className) {
+  getDescendantClasses(className: string): string | string[] {
     if (className in this.biolink.classTree.objects) {
       const descendants = this.biolink.classTree.getDescendants(className).map((entity) => entity.name);
       return [...descendants, ...[className]];
@@ -50,7 +46,7 @@ class BioLinkModel {
     return className;
   }
 
-  getDescendantPredicates(predicate) {
+  getDescendantPredicates(predicate: string): string[] {
     if (predicate in this.biolink.slotTree.objects) {
       const descendants = this.biolink.slotTree.getDescendants(predicate).map((entity) => entity.name);
       return [...descendants, ...[predicate]];
@@ -58,20 +54,21 @@ class BioLinkModel {
     return [predicate];
   }
 
-  getDescendantQualifiers(qualifier) {
+  getDescendantQualifiers(qualifier: string): string[] {
     try {
-        const descendants = this.biolink.enumTree.getDescendants(qualifier).map((entity) => entity.name);
-        return [...descendants, qualifier]
+      const descendants = this.biolink.enumTree.getDescendants(qualifier).map((entity) => entity.name);
+      return [...descendants, qualifier];
     } catch (e) {
-        console.log("qual error", e)
-        return [qualifier]
+      console.log('qual error', e);
+      return [qualifier];
     }
   }
 }
 
-const BioLinkModelInstance = new BioLinkModel();
-Object.freeze(BioLinkModelInstance);
+// Freeze an instance to avoid multiple reloads
+const biolink = new BioLinkModel();
+Object.freeze(biolink);
 
-global.BIOLINK_VERSION = BioLinkModelInstance.biolink.biolinkJSON.version
+global.BIOLINK_VERSION = biolink.biolink.biolinkJSON.version;
 
-module.exports = BioLinkModelInstance;
+export default biolink;

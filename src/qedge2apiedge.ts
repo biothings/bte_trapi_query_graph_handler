@@ -1,32 +1,70 @@
-const _ = require('lodash');
-const LogEntry = require('./log_entry');
-const config = require('./config');
+import _ from 'lodash';
+import LogEntry, { StampedLog } from './log_entry';
+import * as config from './config';
 const CURIE_WITH_PREFIXES = ['MONDO', 'DOID', 'UBERON', 'EFO', 'HP', 'CHEBI', 'CL', 'MGI', 'NCIT'];
-const debug = require('debug')('bte:biothings-explorer-trapi:qedge2btedge');
-const async = require('async');
+import Debug from 'debug';
+import QEdge from './query_edge';
+import MetaKG from '@biothings-explorer/smartapi-kg';
+import { SmartAPIKGOperationObject } from '../../smartapi-kg/built/parser/types';
+import { SRIBioEntity } from '../../../biomedical_id_resolver/built/common/types';
+const debug = Debug('bte:biothings-explorer-trapi:qedge2btedge');
 
-module.exports = class QEdge2APIEdgeHandler {
-  constructor(qEdges, metaKG) {
+export interface MetaXEdge extends SmartAPIKGOperationObject {
+  reasoner_edge: QEdge;
+}
+
+export interface APIEdge extends MetaXEdge {
+  input: unknown;
+  input_resolved_identifiers: {
+    [curie: string]: SRIBioEntity;
+  };
+  original_input: {
+    [equivalentCurie: string]: string;
+  };
+}
+
+export interface NonBatchAPIEdge extends APIEdge {
+  input: string;
+}
+
+export interface BatchAPIEdge extends APIEdge {
+  input: string[];
+}
+
+export interface TemplateNonBatchAPIEdge extends APIEdge {
+  input: {
+    queryInputs: string;
+  };
+}
+
+export interface TemplateBatchAPIEdge extends APIEdge {
+  input: {
+    queryInputs: string[];
+  };
+}
+
+export default class QEdge2APIEdgeHandler {
+  qEdges: QEdge[];
+  metaKG: MetaKG;
+  logs: StampedLog[];
+  constructor(qEdges: QEdge[], metaKG: MetaKG) {
     this.qEdges = qEdges;
     this.metaKG = metaKG;
     this.logs = [];
   }
 
-  setQEdges(qEdges) {
+  setQEdges(qEdges: QEdge[]): void {
     this.qEdges = qEdges;
   }
 
-  _findAPIsFromMetaEdges(metaEdges) {
+  _findAPIsFromMetaEdges(metaEdges: SmartAPIKGOperationObject[]): string[] {
     return metaEdges.map((edge) => edge.association.api_name);
   }
 
   /**
    * Get SmartAPI Edges based on TRAPI Query Edge.
-   * @private
-   * @param {object} metaKG - SmartAPI Knowledge Graph Object
-   * @param {object} qEdge - TRAPI Query Edge Object
    */
-  getMetaXEdges(qEdge, metaKG = this.metaKG) {
+  async getMetaXEdges(qEdge: QEdge, metaKG: MetaKG = this.metaKG): Promise<MetaXEdge[]> {
     debug(`Input node is ${qEdge.getInputNode().id}`);
     debug(`Output node is ${qEdge.getOutputNode().id}`);
     this.logs.push(
@@ -38,16 +76,16 @@ module.exports = class QEdge2APIEdgeHandler {
           .getCategories()} to ${qEdge.getOutputNode().getCategories()} with predicate ${qEdge.getPredicate()}`,
       ).getLog(),
     );
-    let filterCriteria = {
+    const filterCriteria = {
       input_type: qEdge.getInputNode().getCategories(),
       output_type: qEdge.getOutputNode().getCategories(),
       predicate: qEdge.getPredicate(),
       qualifiers: qEdge.getSimpleExpandedQualifierConstraints(),
     };
     debug(`KG Filters: ${JSON.stringify(filterCriteria, null, 2)}`);
-    let metaXEdges = metaKG.filter(filterCriteria).map((metaEdge) => {
-      metaEdge.reasoner_edge = qEdge;
-      return metaEdge;
+    const metaXEdges = metaKG.filter(filterCriteria).map((metaEdge) => {
+      (metaEdge as MetaXEdge).reasoner_edge = qEdge;
+      return metaEdge as MetaXEdge;
     });
     if (metaXEdges.length === 0) {
       debug(`No smartapi edge found for ${qEdge.getID()}`);
@@ -59,41 +97,40 @@ module.exports = class QEdge2APIEdgeHandler {
         new LogEntry(
           'DEBUG',
           null,
-          `BTE found ${
-            metaXEdges.length
-          } metaKG edges corresponding to ${qEdge.getID()}. These metaKG edges comes from ${
-            new Set(this._findAPIsFromMetaEdges(metaXEdges)).size
-          } unique APIs. They are ${Array.from(new Set(this._findAPIsFromMetaEdges(metaXEdges))).join(',')}`,
+          [
+            `BTE found ${metaXEdges.length} metaKG edges corresponding to`,
+            `${qEdge.getID()}. These metaKG edges comes from`,
+            `${new Set(this._findAPIsFromMetaEdges(metaXEdges)).size} unique APIs.`,
+            `They are ${Array.from(new Set(this._findAPIsFromMetaEdges(metaXEdges))).join(',')}`,
+          ].join(' '),
         ).getLog(),
       );
     }
     return metaXEdges;
   }
 
-  /**
-   * @private
-   * @param {object} resolvedIDs
-   * @param {object} metaXEdge
-   */
-  async _createNonBatchSupportAPIEdges(metaXEdge) {
-    const APIEdges = [];
+  async _createNonBatchSupportAPIEdges(metaXEdge: MetaXEdge): Promise<NonBatchAPIEdge[]> {
+    const APIEdges: NonBatchAPIEdge[] = [];
     const inputPrefix = metaXEdge.association.input_id;
     const inputType = metaXEdge.association.input_type;
     const resolvedCuries = metaXEdge.reasoner_edge.getInputNode().getEquivalentIDs();
     Object.entries(resolvedCuries).forEach(([curie, entity]) => {
       if (entity.primaryTypes.includes(inputType.replace('biolink:', ''))) {
         entity.equivalentIDs.forEach((equivalentCurie) => {
-          if (equivalentCurie.includes(inputPrefix)) {
+          // inputPrefix is only string[] when MetaXEdge is TRAPI
+          if (equivalentCurie.includes(inputPrefix as string)) {
             const id = CURIE_WITH_PREFIXES.includes(equivalentCurie.split(':')[0])
               ? equivalentCurie
               : equivalentCurie.split(':').slice(1).join(':');
-            const APIEdge = { ...metaXEdge };
-            APIEdge.input = id;
-            APIEdge.input_resolved_identifiers = {
-              [curie]: entity,
-            };
-            APIEdge.original_input = {
-              [equivalentCurie]: curie,
+            const APIEdge: NonBatchAPIEdge = {
+              ...metaXEdge,
+              input: id,
+              input_resolved_identifiers: {
+                [curie]: entity,
+              },
+              original_input: {
+                [equivalentCurie]: curie,
+              },
             };
             const edgeToBePushed = APIEdge;
             edgeToBePushed.reasoner_edge = metaXEdge.reasoner_edge;
@@ -105,19 +142,18 @@ module.exports = class QEdge2APIEdgeHandler {
     return APIEdges;
   }
 
-  /**
-   * @private
-   * @param {object} resolvedIDs
-   * @param {object} metaXEdge
-   */
-  async _createBatchSupportAPIEdges(metaXEdge) {
-    const id_mapping = {};
-    const inputs = [];
-    const APIEdges = [];
-    const input_resolved_identifiers = {};
+  async _createBatchSupportAPIEdges(metaXEdge: MetaXEdge): Promise<BatchAPIEdge[]> {
+    const id_mapping: {
+      [equivalentCurie: string]: string;
+    } = {};
+    const inputs: string[] = [];
+    const APIEdges: BatchAPIEdge[] = [];
+    const input_resolved_identifiers: {
+      [curie: string]: SRIBioEntity;
+    } = {};
     const inputPrefix = metaXEdge.association.input_id;
     const inputType = metaXEdge.association.input_type;
-    let resolvedCuries = metaXEdge.reasoner_edge.getInputNode().getEquivalentIDs();
+    const resolvedCuries = metaXEdge.reasoner_edge.getInputNode().getEquivalentIDs();
     // debug(`Resolved ids: ${JSON.stringify(resolvedIDs)}`);
     debug(`Input prefix: ${inputPrefix}`);
     Object.entries(resolvedCuries).forEach(([curie, entity]) => {
@@ -129,7 +165,8 @@ module.exports = class QEdge2APIEdgeHandler {
         }
       } else if (entity.primaryTypes.includes(inputType.replace('biolink:', ''))) {
         entity.equivalentIDs.forEach((equivalentCurie) => {
-          if (equivalentCurie.includes(inputPrefix)) {
+          // inputPrefix is only string[] when MetaXEdge is TRAPI
+          if (equivalentCurie.includes(inputPrefix as string)) {
             const id = CURIE_WITH_PREFIXES.includes(equivalentCurie.split(':')[0])
               ? equivalentCurie
               : equivalentCurie.split(':').slice(1).join(':');
@@ -152,17 +189,19 @@ module.exports = class QEdge2APIEdgeHandler {
           ? metaXEdge.association['x-trapi'].batch_size_limit
           : configuredLimit;
     }
-    let hardLimit = config.API_BATCH_SIZE.find((api) => {
+    const hardLimit = config.API_BATCH_SIZE.find((api) => {
       return api.id === metaXEdge.association.smartapi.id || api.name === metaXEdge.association.api_name;
     });
     // BTE internal configured limit takes precedence over annotated limit
     batchSize = hardLimit ? hardLimit.max : configuredLimit ? configuredLimit : batchSize;
     if (Object.keys(id_mapping).length > 0) {
       _.chunk(inputs, batchSize).forEach((chunk) => {
-        const APIEdge = { ...metaXEdge };
-        APIEdge.input = chunk;
-        APIEdge.input_resolved_identifiers = input_resolved_identifiers;
-        APIEdge.original_input = id_mapping;
+        const APIEdge: BatchAPIEdge = {
+          ...metaXEdge,
+          input: chunk,
+          input_resolved_identifiers: input_resolved_identifiers,
+          original_input: id_mapping,
+        };
         const edgeToBePushed = APIEdge;
         edgeToBePushed.reasoner_edge = metaXEdge.reasoner_edge;
         APIEdges.push(edgeToBePushed);
@@ -176,25 +215,28 @@ module.exports = class QEdge2APIEdgeHandler {
    * @param {object} resolvedIDs
    * @param {object} metaXEdge
    */
-  async _createTemplatedNonBatchSupportAPIEdges(metaXEdge) {
-    const APIEdges = [];
+  async _createTemplatedNonBatchSupportAPIEdges(metaXEdge: MetaXEdge): Promise<TemplateNonBatchAPIEdge[]> {
+    const APIEdges: TemplateNonBatchAPIEdge[] = [];
     const inputPrefix = metaXEdge.association.input_id;
     const inputType = metaXEdge.association.input_type;
     const resolvedCuries = metaXEdge.reasoner_edge.getInputNode().getEquivalentIDs();
     Object.entries(resolvedCuries).forEach(([curie, entity]) => {
       if (entity.primaryTypes.includes(inputType.replace('biolink:', ''))) {
         entity.equivalentIDs.forEach((equivalentCurie) => {
-          if (equivalentCurie.includes(inputPrefix)) {
+          // inputPrefix is only string[] for TRAPI; templates are never used for TRAPI
+          if (equivalentCurie.includes(inputPrefix as string)) {
             const id = CURIE_WITH_PREFIXES.includes(equivalentCurie.split(':')[0])
               ? equivalentCurie
               : equivalentCurie.split(':').slice(1).join(':');
-            const APIEdge = { ...metaXEdge };
-            APIEdge.input = { queryInputs: id, ...APIEdge.query_operation.templateInputs };
-            APIEdge.input_resolved_identifiers = {
-              [curie]: entity,
-            };
-            APIEdge.original_input = {
-              [equivalentCurie]: curie,
+            const APIEdge: TemplateNonBatchAPIEdge = {
+              ...metaXEdge,
+              input: { queryInputs: id, ...metaXEdge.query_operation.templateInputs },
+              input_resolved_identifiers: {
+                [curie]: entity,
+              },
+              original_input: {
+                [equivalentCurie]: curie,
+              },
             };
             const edgeToBePushed = APIEdge;
             edgeToBePushed.reasoner_edge = metaXEdge.reasoner_edge;
@@ -211,14 +253,14 @@ module.exports = class QEdge2APIEdgeHandler {
    * @param {object} resolvedIDs
    * @param {object} metaXEdge
    */
-  async _createTemplatedBatchSupportAPIEdges(metaXEdge) {
-    const id_mapping = {};
-    const inputs = [];
-    const APIEdges = [];
-    const input_resolved_identifiers = {};
+  async _createTemplatedBatchSupportAPIEdges(metaXEdge: MetaXEdge): Promise<TemplateBatchAPIEdge[]> {
+    const id_mapping: { [equivalentCurie: string]: string } = {};
+    const inputs: string[] = [];
+    const APIEdges: TemplateBatchAPIEdge[] = [];
+    const input_resolved_identifiers: { [curie: string]: SRIBioEntity } = {};
     const inputPrefix = metaXEdge.association.input_id;
     const inputType = metaXEdge.association.input_type;
-    let resolvedCuries = metaXEdge.reasoner_edge.getInputNode().getEquivalentIDs();
+    const resolvedCuries = metaXEdge.reasoner_edge.getInputNode().getEquivalentIDs();
     // debug(`Resolved ids: ${JSON.stringify(resolvedIDs)}`);
     debug(`Input prefix: ${inputPrefix}`);
     Object.entries(resolvedCuries).forEach(([curie, entity]) => {
@@ -230,7 +272,8 @@ module.exports = class QEdge2APIEdgeHandler {
         }
       } else if (entity.primaryTypes.includes(inputType.replace('biolink:', ''))) {
         entity.equivalentIDs.forEach((equivalentCurie) => {
-          if (equivalentCurie.includes(inputPrefix)) {
+          // inputPrefix is only string[] for TRAPI; templates are never used for TRAPI
+          if (equivalentCurie.includes(inputPrefix as string)) {
             const id = CURIE_WITH_PREFIXES.includes(equivalentCurie.split(':')[0])
               ? equivalentCurie
               : equivalentCurie.split(':').slice(1).join(':');
@@ -245,18 +288,20 @@ module.exports = class QEdge2APIEdgeHandler {
     if (metaXEdge.tags.includes('biothings')) {
       batchSize = 1000;
     }
-    let configuredLimit = metaXEdge.query_operation.batchSize;
-    let hardLimit = config.API_BATCH_SIZE.find((api) => {
+    const configuredLimit = metaXEdge.query_operation.batchSize;
+    const hardLimit = config.API_BATCH_SIZE.find((api) => {
       return api.id === metaXEdge.association.smartapi.id || api.name === metaXEdge.association.api_name;
     });
     // BTE internal configured limit takes precedence over annotated limit
     batchSize = hardLimit ? hardLimit.max : configuredLimit ? configuredLimit : batchSize;
     if (Object.keys(id_mapping).length > 0) {
       _.chunk(inputs, batchSize).forEach((chunk) => {
-        const APIEdge = { ...metaXEdge };
-        APIEdge.input = { queryInputs: chunk, ...APIEdge.query_operation.templateInputs };
-        APIEdge.input_resolved_identifiers = input_resolved_identifiers;
-        APIEdge.original_input = id_mapping;
+        const APIEdge = {
+          ...metaXEdge,
+          input: { queryInputs: chunk, ...metaXEdge.query_operation.templateInputs },
+          input_resolved_identifiers: input_resolved_identifiers,
+          original_input: id_mapping,
+        };
         const edgeToBePushed = APIEdge;
         edgeToBePushed.reasoner_edge = metaXEdge.reasoner_edge;
         APIEdges.push(edgeToBePushed);
@@ -268,10 +313,10 @@ module.exports = class QEdge2APIEdgeHandler {
   /**
    * Add inputs to smartapi edges
    */
-  async _createAPIEdges(metaXEdge) {
+  async _createAPIEdges(metaXEdge: MetaXEdge): Promise<APIEdge[]> {
     const supportBatch = metaXEdge.query_operation.supportBatch;
     const useTemplating = metaXEdge.query_operation.useTemplating;
-    let APIEdges;
+    let APIEdges: APIEdge[];
     if (supportBatch === false) {
       APIEdges = useTemplating
         ? await this._createTemplatedNonBatchSupportAPIEdges(metaXEdge)
@@ -284,7 +329,7 @@ module.exports = class QEdge2APIEdgeHandler {
     return APIEdges;
   }
 
-  async convert(qEdges) {
+  async convert(qEdges: QEdge[]): Promise<APIEdge[]> {
     let APIEdges = [];
     await Promise.all(
       qEdges.map(async (qEdge) => {
@@ -294,12 +339,13 @@ module.exports = class QEdge2APIEdgeHandler {
         debug(`${metaXedges.length} SmartAPI edges are retrieved....`);
         await Promise.all(
           metaXedges.map(async (metaXEdge) => {
-            let newEdges = await this._createAPIEdges(metaXEdge);
+            const newEdges = await this._createAPIEdges(metaXEdge);
             debug(`${newEdges.length} metaKG are created....`);
-            newEdges = newEdges.map((e) => {
-              e.filter = qEdge.filter;
-              return e;
-            });
+            // Not sure what this was meant to do?
+            // newEdges = newEdges.map((e) => {
+            //   e.filter = qEdge.filter;
+            //   return e;
+            // });
             APIEdges = [...APIEdges, ...newEdges];
           }),
         );
@@ -316,4 +362,4 @@ module.exports = class QEdge2APIEdgeHandler {
     }
     return APIEdges;
   }
-};
+}

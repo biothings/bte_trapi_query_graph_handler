@@ -1,9 +1,33 @@
-const { toArray } = require('../utils');
+import { toArray } from '../utils';
+import Debug from 'debug';
+import {
+  APIList,
+  TrapiAttribute,
+  TrapiKnowledgeGraph,
+  TrapiKGEdge,
+  TrapiKGEdges,
+  TrapiKGNode,
+  TrapiKGNodes,
+  TrapiQualifier,
+  TrapiSource,
+  APIDefinition,
+} from '../types';
+import KGNode from './kg_node';
+import KGEdge from './kg_edge';
+import { BTEGraphUpdate } from './graph';
 
-const debug = require('debug')('bte:biothings-explorer-trapi:KnowledgeGraph');
+const debug = Debug('bte:biothings-explorer-trapi:KnowledgeGraph');
 
-module.exports = class KnowledgeGraph {
-  constructor(apiList) {
+export default class KnowledgeGraph {
+  nodes: {
+    [nodePrimaryID: string]: TrapiKGNode;
+  };
+  edges: {
+    [edgeID: string]: TrapiKGEdge;
+  };
+  kg: TrapiKnowledgeGraph;
+  apiList: APIDefinition[];
+  constructor(apiList: APIDefinition[]) {
     this.nodes = {};
     this.edges = {};
     this.kg = {
@@ -13,26 +37,26 @@ module.exports = class KnowledgeGraph {
     this.apiList = apiList;
   }
 
-  getNodes() {
+  getNodes(): TrapiKGNodes {
     return this.nodes;
   }
 
-  getEdges() {
+  getEdges(): TrapiKGEdges {
     return this.edges;
   }
 
-  _createNode(kgNode) {
-    const res = {
-      categories: kgNode._semanticType,
-      name: Array.isArray(kgNode._label) ? kgNode._label[0] : kgNode._label,
+  _createNode(kgNode: KGNode): TrapiKGNode {
+    const node = {
+      categories: kgNode.semanticType,
+      name: Array.isArray(kgNode.label) ? kgNode.label[0] : kgNode.label,
       attributes: [
         {
           attribute_type_id: 'biolink:xref',
-          value: kgNode._curies,
+          value: kgNode.curies,
         },
         {
           attribute_type_id: 'biolink:synonym',
-          value: kgNode._names.length ? kgNode._names : toArray(kgNode._label),
+          value: kgNode.names.length ? kgNode.names : toArray(kgNode.label),
         },
         // Currently unused
         // {
@@ -57,17 +81,17 @@ module.exports = class KnowledgeGraph {
         // },
       ],
     };
-    for (const key in kgNode._nodeAttributes) {
-      res.attributes.push({
+    for (const key in kgNode.nodeAttributes) {
+      node.attributes.push({
         attribute_type_id: key,
-        value: kgNode._nodeAttributes[key],
+        value: kgNode.nodeAttributes[key],
         //value_type_id: 'bts:' + key,
       });
     }
-    return res;
+    return node;
   }
 
-  _createQualifiers(kgEdge) {
+  _createQualifiers(kgEdge: KGEdge): TrapiQualifier[] {
     const qualifiers = Object.entries(kgEdge.qualifiers || {}).map(([qualifierType, qualifier]) => {
       return {
         qualifier_type_id: qualifierType,
@@ -78,23 +102,24 @@ module.exports = class KnowledgeGraph {
     return qualifiers.length ? qualifiers : undefined;
   }
 
-  _createAttributes(kgEdge) {
-    const attributes = [];
+  _createAttributes(kgEdge: KGEdge): TrapiAttribute[] {
+    const attributes: TrapiAttribute[] = [];
 
     // publications
     if (Array.from(kgEdge.publications).length) {
       attributes.push({
         attribute_type_id: 'biolink:publications',
         value: Array.from(kgEdge.publications),
-        value_type_id: 'linkml:Uriorcurie'
+        value_type_id: 'linkml:Uriorcurie',
       });
     }
 
     Object.entries(kgEdge.attributes).forEach(([key, value]) => {
       if (key == 'edge-attributes') return;
+      // if (key == 'edge-attributes') return;
       attributes.push({
         attribute_type_id: key,
-        value: Array.from(value),
+        value: Array.from(value as Set<string>),
         //value_type_id: 'bts:' + key,
       });
     });
@@ -106,18 +131,21 @@ module.exports = class KnowledgeGraph {
     return attributes;
   }
 
-  _createSources(kgEdge) {
-    const sources = [];
-    Object.entries(kgEdge.sources).forEach(([resource_id, roles]) => {
-      Object.entries(roles).forEach(([resource_role, sourceObj]) => {
-        if (sourceObj.upstream_resource_ids) sourceObj.upstream_resource_ids = [...sourceObj.upstream_resource_ids];
-        sources.push(sourceObj);
+  _createSources(kgEdge: KGEdge): TrapiSource[] {
+    const sources: TrapiSource[] = [];
+    Object.entries(kgEdge.sources).forEach(([, roles]) => {
+      Object.entries(roles).forEach(([, sourceObj]) => {
+        const trapiSource: TrapiSource = {
+          ...sourceObj,
+          upstream_resource_ids: sourceObj.upstream_resource_ids ? [...sourceObj.upstream_resource_ids] : undefined,
+        };
+        sources.push(trapiSource);
       });
     });
     return sources;
   }
 
-  _createEdge(kgEdge) {
+  _createEdge(kgEdge: KGEdge): TrapiKGEdge {
     return {
       predicate: kgEdge.predicate,
       subject: kgEdge.subject,
@@ -128,9 +156,9 @@ module.exports = class KnowledgeGraph {
     };
   }
 
-  update(bteGraph) {
+  update(bteGraph: BTEGraphUpdate): void {
     Object.keys(bteGraph.nodes).map((node) => {
-      this.nodes[bteGraph.nodes[node]._primaryCurie] = this._createNode(bteGraph.nodes[node]);
+      this.nodes[bteGraph.nodes[node].primaryCurie] = this._createNode(bteGraph.nodes[node]);
     });
     Object.keys(bteGraph.edges).map((edge) => {
       this.edges[edge] = this._createEdge(bteGraph.edges[edge]);
@@ -140,4 +168,4 @@ module.exports = class KnowledgeGraph {
       edges: this.edges,
     };
   }
-};
+}

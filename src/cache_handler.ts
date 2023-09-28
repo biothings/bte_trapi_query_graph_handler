@@ -1,26 +1,34 @@
-const { redisClient } = require('./redis-client');
-const debug = require('debug')('bte:biothings-explorer-trapi:cache_handler');
-const LogEntry = require('./log_entry');
-const _ = require('lodash');
-const async = require('async');
-const helper = require('./helper');
-const lz4 = require('lz4');
-const chunker = require('stream-chunker');
-const { Readable, Transform } = require('stream');
-const { Record } = require('@biothings-explorer/api-response-transform');
-const { threadId } = require('worker_threads');
+import { redisClient } from './redis-client';
+import Debug from 'debug';
+const debug = Debug('bte:biothings-explorer-trapi:cache_handler');
+import LogEntry, { StampedLog } from './log_entry';
+import async from 'async';
+import helper from './helper';
+import lz4 from 'lz4';
+import chunker from 'stream-chunker';
+import { Readable, Transform } from 'stream';
+import { Record, RecordPackage } from '@biothings-explorer/api-response-transform';
+import { threadId } from 'worker_threads';
+import MetaKG from '../../smartapi-kg/built';
+import { QueryHandlerOptions } from '.';
+import QEdge from './query_edge';
+
+export interface RecordPacksByQedgeMetaKGHash {
+  [QEdgeHash: string]: RecordPackage;
+}
 
 class DelimitedChunksDecoder extends Transform {
+  private _buffer: string;
   constructor() {
     super({
       readableObjectMode: true,
       readableHighWaterMark: 32, // limited output reduces RAM usage slightly
-      writeableHighWaterMark: 100000,
+      writableHighWaterMark: 100000,
     });
     this._buffer = '';
   }
 
-  _transform(chunk, encoding, callback) {
+  _transform(chunk: string, encoding: string, callback: () => void): void {
     this._buffer += chunk;
     if (this._buffer.includes(',')) {
       const parts = this._buffer.split(',');
@@ -28,8 +36,9 @@ class DelimitedChunksDecoder extends Transform {
       parts.forEach((part) => {
         const parsedPart = JSON.parse(lz4.decode(Buffer.from(part, 'base64url')).toString());
         if (Array.isArray(parsedPart)) {
-          parsedPart.forEach(obj => this.push(obj));
-        } else { // backwards compatibility with previous implementation
+          parsedPart.forEach((obj) => this.push(obj));
+        } else {
+          // backwards compatibility with previous implementation
           this.push(parsedPart);
         }
       });
@@ -37,7 +46,7 @@ class DelimitedChunksDecoder extends Transform {
     callback(); // callback *no matter what*
   }
 
-  _flush(callback) {
+  _flush(callback: (error?: Error | null | undefined, data?: unknown) => void): void {
     try {
       if (this._buffer.length) {
         const final = JSON.parse(lz4.decode(Buffer.from(this._buffer, 'base64url')).toString());
@@ -51,15 +60,16 @@ class DelimitedChunksDecoder extends Transform {
 }
 
 class DelimitedChunksEncoder extends Transform {
+  private _buffer: unknown[];
   constructor() {
     super({
       writableObjectMode: true,
-      writeableHighWaterMark: 128
+      writableHighWaterMark: 128,
     });
     this._buffer = [];
   }
 
-  _transform(obj, encoding, callback) {
+  _transform(obj: unknown, encoding: unknown, callback: () => void) {
     this._buffer.push(obj); // stringify/compress 64 objects at a time limits compress calls
     if (this._buffer.length === 64) {
       const compressedPart = lz4.encode(JSON.stringify(this._buffer)).toString('base64url') + ',';
@@ -69,7 +79,7 @@ class DelimitedChunksEncoder extends Transform {
     callback();
   }
 
-  _flush(callback) {
+  _flush(callback: (error?: Error | null | undefined, data?: unknown) => void) {
     try {
       if (this._buffer.length) {
         callback(null, lz4.encode(JSON.stringify(this._buffer)).toString('base64url') + ',');
@@ -82,8 +92,12 @@ class DelimitedChunksEncoder extends Transform {
   }
 }
 
-module.exports = class {
-  constructor(caching, metaKG = undefined, recordConfig = {}, logs = []) {
+export default class CacheHandler {
+  metaKG: MetaKG;
+  logs: StampedLog[];
+  cacheEnabled: boolean;
+  recordConfig: QueryHandlerOptions;
+  constructor(caching: boolean, metaKG = undefined, recordConfig = {}, logs = []) {
     this.metaKG = metaKG;
     this.logs = logs;
     this.cacheEnabled =
@@ -98,21 +112,21 @@ module.exports = class {
     );
   }
 
-  async categorizeEdges(qEdges) {
+  async categorizeEdges(qEdges: QEdge[]): Promise<{ cachedRecords: Record[]; nonCachedQEdges: QEdge[] }> {
     if (this.cacheEnabled === false || process.env.INTERNAL_DISABLE_REDIS) {
       return {
         cachedRecords: [],
         nonCachedQEdges: qEdges,
       };
     }
-    let nonCachedQEdges = [];
-    let cachedRecords = [];
+    const nonCachedQEdges: QEdge[] = [];
+    let cachedRecords: Record[] = [];
     debug('Begin edge cache lookup...');
     await async.eachSeries(qEdges, async (qEdge) => {
       const qEdgeMetaKGHash = this._hashEdgeByMetaKG(qEdge.getHashedEdgeRepresentation());
-      const unpackedRecords = await new Promise(async (resolve) => {
+      const unpackedRecords: Record[] = await new Promise((resolve) => {
         const redisID = 'bte:edgeCache:' + qEdgeMetaKGHash;
-        await redisClient.client.usingLock([`redisLock:${redisID}`], 600000, async (signal) => {
+        redisClient.client.usingLock([`redisLock:${redisID}`], 600000, async () => {
           try {
             const compressedRecordPack = await redisClient.client.hgetallTimeout(redisID);
 
@@ -121,7 +135,7 @@ module.exports = class {
 
               const sortedPackParts = Object.entries(compressedRecordPack)
                 .sort(([key1], [key2]) => parseInt(key1) - parseInt(key2))
-                .map(([_key, val]) => {
+                .map(([, val]) => {
                   return val;
                 });
 
@@ -129,7 +143,7 @@ module.exports = class {
               recordStream
                 .pipe(this.createDecodeStream())
                 .on('data', (obj) => recordPack.push(obj))
-                .on('end', () => resolve(Record.unpackRecords(recordPack, qEdge, this.recordConfig)));
+                .on('end', () => resolve(Record.unpackRecords(recordPack as RecordPackage, qEdge, this.recordConfig)));
             } else {
               resolve(null);
             }
@@ -142,16 +156,11 @@ module.exports = class {
 
       if (unpackedRecords) {
         this.logs.push(
-          new LogEntry(
-            'DEBUG',
-            null,
-            `BTE finds cached records for ${qEdge.getID()}`,
-            {
-              type: 'cacheHit',
-              qEdgeID: qEdge.getID(),
-              api_names: unpackedRecords.map(record => record.association?.api_name)
-            }
-          ).getLog()
+          new LogEntry('DEBUG', null, `BTE finds cached records for ${qEdge.getID()}`, {
+            type: 'cacheHit',
+            qEdgeID: qEdge.getID(),
+            api_names: unpackedRecords.map((record) => record.association?.api_name),
+          }).getLog(),
         );
         cachedRecords = [...cachedRecords, ...unpackedRecords];
       } else {
@@ -163,7 +172,7 @@ module.exports = class {
     return { cachedRecords, nonCachedQEdges };
   }
 
-  _hashEdgeByMetaKG(qEdgeHash) {
+  _hashEdgeByMetaKG(qEdgeHash: string): string {
     if (!this.metaKG) {
       return qEdgeHash;
     }
@@ -172,8 +181,8 @@ module.exports = class {
     return helper._generateHash(qEdgeHash + len + allIDs);
   }
 
-  _groupQueryRecordsByQEdgeHash(queryRecords) {
-    let groupedRecords = {};
+  _groupQueryRecordsByQEdgeHash(queryRecords: Record[]): RecordPacksByQedgeMetaKGHash {
+    const groupedRecords: { [qEdgeMetaKGHash: string]: Record[] } = {};
     queryRecords.map((record) => {
       try {
         const qEdgeMetaKGHash = this._hashEdgeByMetaKG(record.qEdge.getHashedEdgeRepresentation());
@@ -185,21 +194,22 @@ module.exports = class {
         debug('skipping malformed record');
       }
     });
-    Object.entries(groupedRecords).forEach(([qEdgeMetaKGHash, records]) => {
-      groupedRecords[qEdgeMetaKGHash] = Record.packRecords(records);
-    });
-    return groupedRecords;
+    return Object.fromEntries(
+      Object.entries(groupedRecords).map(([qEdgeMetaKGHash, records]) => {
+        return [qEdgeMetaKGHash, Record.packRecords(records)];
+      }),
+    );
   }
 
-  createEncodeStream() {
+  createEncodeStream(): DelimitedChunksEncoder {
     return new DelimitedChunksEncoder();
   }
 
-  createDecodeStream() {
+  createDecodeStream(): DelimitedChunksDecoder {
     return new DelimitedChunksDecoder();
   }
 
-  async cacheEdges(queryRecords) {
+  async cacheEdges(queryRecords: Record[]): Promise<void> {
     if (this.cacheEnabled === false || process.env.INTERNAL_DISABLE_REDIS) {
       if (global.parentPort) {
         global.parentPort.postMessage({ threadId, cacheDone: true });
@@ -221,15 +231,15 @@ module.exports = class {
         if (global.parentPort) {
           global.parentPort.postMessage({ threadId, addCacheKey: redisID });
         }
-        await redisClient.client.usingLock([`redisLock:${redisID}`], 600000, async (signal) => {
+        await redisClient.client.usingLock([`redisLock:${redisID}`], 600000, async () => {
           try {
             await redisClient.client.delTimeout(redisID); // prevents weird overwrite edge cases
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
               let i = 0;
               Readable.from(groupedRecords[hash])
                 .pipe(this.createEncodeStream())
                 .pipe(chunker(100000, { flush: true }))
-                .on('data', async (chunk) => {
+                .on('data', async (chunk: string) => {
                   try {
                     await redisClient.client.hsetTimeout(redisID, String(i++), chunk);
                   } catch (error) {
@@ -237,7 +247,9 @@ module.exports = class {
                     try {
                       await redisClient.client.delTimeout(redisID);
                     } catch (e) {
-                      debug(`Unable to remove partial cache ${redisID} from redis during cache failure due to error ${error}. This may result in failed or improper cache retrieval of this qEdge.`)
+                      debug(
+                        `Unable to remove partial cache ${redisID} from redis during cache failure due to error ${error}. This may result in failed or improper cache retrieval of this qEdge.`,
+                      );
                     }
                   }
                 })
@@ -248,7 +260,9 @@ module.exports = class {
             await redisClient.client.expireTimeout(redisID, process.env.REDIS_KEY_EXPIRE_TIME || 1800);
           } catch (error) {
             failedHashes.push(hash);
-            debug(`Failed to cache qEdge ${hash} records due to error ${error}. This does not stop other edges from caching nor terminate the query.`)
+            debug(
+              `Failed to cache qEdge ${hash} records due to error ${error}. This does not stop other edges from caching nor terminate the query.`,
+            );
           } finally {
             if (global.parentPort) {
               global.parentPort.postMessage({ threadId, completeCacheKey: redisID });
@@ -272,4 +286,4 @@ module.exports = class {
       }
     }
   }
-};
+}

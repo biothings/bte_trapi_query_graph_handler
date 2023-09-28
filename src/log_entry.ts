@@ -1,7 +1,30 @@
-const _ = require('lodash');
-const Sentry = require('@sentry/node');
+import _ from 'lodash';
+import * as Sentry from '@sentry/node';
 
-module.exports = class LogEntry {
+export interface TrapiLog {
+  timestamp: string;
+  level: string;
+  message: string;
+  code: string;
+}
+
+export interface StampedLog extends TrapiLog {
+  data: any;
+  toJSON(): TrapiLog;
+}
+
+export enum SentryLogSeverity {
+  ERROR = 'error',
+  WARNING = 'warning',
+  INFO = 'info',
+  DEBUG = 'debug',
+}
+
+export default class LogEntry {
+  level: string;
+  message: string;
+  code: string;
+  data: any;
   constructor(level = 'DEBUG', code = null, message = null, data = null) {
     this.level = level;
     this.message = message;
@@ -9,27 +32,27 @@ module.exports = class LogEntry {
     this.data = data;
   }
 
-  getLog() {
+  getLog(): StampedLog {
     const log = {
       timestamp: new Date().toISOString(),
       level: this.level,
       message: this.message,
       code: this.code,
-    }
+    };
     if (global.job) {
       global.job.log(JSON.stringify(log, undefined, 2));
     }
     Sentry.addBreadcrumb({
-        category: "log",
-        message: this.message,
-        level: this.level,
+      category: 'log',
+      message: this.message,
+      level: SentryLogSeverity[this.level.toLowerCase()],
     });
     return {
       ...log,
       data: this.data,
       toJSON() {
-        return _.omit(this, ["data", "toJSON"]);
+        return _.omit(this, ['data', 'toJSON']) as StampedLog;
       },
     };
   }
-};
+}

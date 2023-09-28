@@ -1,17 +1,25 @@
-const id_resolver = require('biomedical_id_resolver');
-const debug = require('debug')('bte:biothings-explorer-trapi:nodeUpdateHandler');
+import { resolveSRI } from 'biomedical_id_resolver';
+import Debug from 'debug';
+import { ResolverInput, SRIResolverOutput } from '../../../biomedical_id_resolver/built/common/types';
+import { Record } from '@biothings-explorer/api-response-transform';
+import QEdge from './query_edge';
+const debug = Debug('bte:biothings-explorer-trapi:nodeUpdateHandler');
 
-module.exports = class NodesUpdateHandler {
-  constructor(qEdges) {
+export interface CuriesByCategory {
+  [category: string]: string[];
+}
+
+export default class NodesUpdateHandler {
+  qEdges: QEdge[];
+  constructor(qEdges: QEdge[]) {
     this.qEdges = qEdges;
   }
 
   /**
    * @private
-   * s
    */
-  _getCuries(qEdges) {
-    let curies = {};
+  _getCuries(qEdges: QEdge[]): CuriesByCategory {
+    const curies: CuriesByCategory = {};
     qEdges.map((qEdge) => {
       if (qEdge.hasInput()) {
         const inputCategories = qEdge.getInputNode().getCategories();
@@ -30,13 +38,13 @@ module.exports = class NodesUpdateHandler {
    * Resolve input ids
    * @param {object} curies - each key represents the category, e.g. gene, value is an array of curies.
    */
-  async _getEquivalentIDs(curies) {
+  async _getEquivalentIDs(curies: ResolverInput): Promise<SRIResolverOutput> {
     // const resolver = new id_resolver.Resolver('biolink');
     // const equivalentIDs = await resolver.resolve(curies);
-    return await id_resolver.resolveSRI(curies);
+    return await resolveSRI(curies);
   }
 
-  async setEquivalentIDs(qEdges) {
+  async setEquivalentIDs(qEdges: QEdge[]): Promise<void> {
     debug(`Getting equivalent IDs...`);
     const curies = this._getCuries(this.qEdges);
     debug(`curies: ${JSON.stringify(curies)}`);
@@ -55,7 +63,7 @@ module.exports = class NodesUpdateHandler {
     return;
   }
 
-  _createEquivalentIDsObject(record) {
+  _createEquivalentIDsObject(record: Record) {
     if (record.object.normalizedInfo !== undefined) {
       return {
         [record.object.curie]: record.object.normalizedInfo,
@@ -69,7 +77,7 @@ module.exports = class NodesUpdateHandler {
    * Update nodes with equivalent ids based on query response.
    * @param {object} queryRecords - query response
    */
-  update(queryRecords) {
+  update(queryRecords: Record[]): void {
     // queryRecords.map(record => {
     //     record.$edge_metadata.trapi_qEdge_obj.getOutputNode().updateEquivalentIDs(
     //         this._createEquivalentIDsObject(record)
@@ -81,4 +89,4 @@ module.exports = class NodesUpdateHandler {
       }
     });
   }
-};
+}

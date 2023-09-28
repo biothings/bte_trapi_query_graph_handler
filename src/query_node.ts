@@ -1,18 +1,52 @@
-const _ = require('lodash');
-const utils = require('./utils');
-const biolink = require('./biolink');
-const debug = require('debug')('bte:biothings-explorer-trapi:QNode');
-const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error');
+/* eslint-disable @typescript-eslint/no-var-requires */
+import _ from 'lodash';
+import * as utils from './utils';
+import biolink from './biolink';
+import Debug from 'debug';
+import InvalidQueryGraphError from './exceptions/invalid_query_graph_error';
+import { SRIBioEntity } from '../../../biomedical_id_resolver/built/common/types';
+const debug = Debug('bte:biothings-explorer-trapi:QNode');
 
-module.exports = class QNode {
-  /**
-   *
-   * @param {object} info - Qnode info, e.g. ID, curie, category
-   */
-  constructor(info) {
+export interface QNodeInfo {
+  id: string;
+  categories?: string[];
+  ids: string[];
+  is_set?: boolean;
+  expanded_curie?: ExpandedCuries;
+  held_curie?: string[];
+  held_expanded?: ExpandedCuries;
+  constraints?: any;
+  connected_to?: string[];
+  equivalentIDs?: SRIResolvedSet;
+}
+
+export interface SRIResolvedSet {
+  [originalCurie: string]: SRIBioEntity;
+}
+
+export interface ExpandedCuries {
+  [originalCurie: string]: string[];
+}
+
+export default class QNode {
+  id: string;
+  categories: string[];
+  equivalentIDs: SRIResolvedSet;
+  expandedCategories: string[];
+  equivalentIDsUpdated: boolean;
+  curie: string[];
+  is_set: boolean;
+  expanded_curie: ExpandedCuries;
+  entity_count: number;
+  held_curie: string[];
+  held_expanded: ExpandedCuries;
+  constraints: any; // TODO type
+  connected_to: Set<string>;
+
+  constructor(info: QNodeInfo) {
     this.id = info.id;
-    this.category = info.categories || 'NamedThing';
-    this.expandedCategories = this.category;
+    this.categories = info.categories || ['NamedThing'];
+    this.expandedCategories = this.categories;
     this.equivalentIDsUpdated = false;
     // mainIDs
     this.curie = info.ids;
@@ -36,13 +70,12 @@ module.exports = class QNode {
     this.expandCategories();
   }
 
-  freeze() {
+  freeze(): QNodeInfo {
     return {
-      category: this.category,
+      categories: this.categories,
       connected_to: Array.from(this.connected_to),
       constraints: this.constraints,
-      curie: this.curie,
-      entity_count: this.entity_count,
+      ids: this.curie,
       equivalentIDs: this.equivalentIDs,
       expanded_curie: this.expanded_curie,
       held_curie: this.held_curie,
@@ -52,16 +85,16 @@ module.exports = class QNode {
     };
   }
 
-  isSet() {
+  isSet(): boolean {
     //query node specified as set
     return this.is_set ? true : false;
   }
 
-  validateConstraints() {
+  validateConstraints(): void {
     const required = ['id', 'operator', 'value'];
     if (this.constraints && this.constraints.length) {
-      this.constraints.forEach((constraint) => {
-        let constraint_keys = Object.keys(constraint);
+      this.constraints.forEach((constraint: unknown) => {
+        const constraint_keys = Object.keys(constraint);
         if (_.intersection(constraint_keys, required).length < 3) {
           throw new InvalidQueryGraphError(`Invalid constraint specification must include (${required})`);
         }
@@ -69,7 +102,7 @@ module.exports = class QNode {
     }
   }
 
-  expandCurie() {
+  expandCurie(): void {
     if (this.curie && this.curie.length) {
       this.curie.forEach((id) => {
         if (!Object.hasOwnProperty.call(id, this.expanded_curie)) {
@@ -80,16 +113,16 @@ module.exports = class QNode {
     }
   }
 
-  updateConnection(qEdgeID) {
+  updateConnection(qEdgeID: string): void {
     this.connected_to.add(qEdgeID);
     debug(`"${this.id}" connected to "${[...this.connected_to]}"`);
   }
 
-  getConnections() {
+  getConnections(): string[] {
     return [...this.connected_to];
   }
 
-  holdCurie() {
+  holdCurie(): void {
     //hold curie aside temp
     debug(`(8) Node "${this.id}" holding ${JSON.stringify(this.curie)} aside.`);
     this.held_curie = this.curie;
@@ -98,7 +131,7 @@ module.exports = class QNode {
     this.expanded_curie = {};
   }
 
-  updateCuries(curies) {
+  updateCuries(curies: ExpandedCuries): void {
     // {originalID : [aliases]}
     if (!this.curie) {
       this.curie = [];
@@ -127,26 +160,30 @@ module.exports = class QNode {
     this.entity_count = this.curie.length;
   }
 
-  _combineCuriesIntoList(curies) {
+  _combineCuriesIntoList(curies: ExpandedCuries): string[] {
     // curies {originalID : ['aliasID']}
     //combine all curies into single list for easy intersection
-    let combined = new Set();
-    for (const original in curies) {
-      !Array.isArray(curies[original])
-        ? combined.add(curies[original])
-        : curies[original].forEach((curie) => {
-            combined.add(curie);
-          });
-    }
+    const combined: Set<string> = new Set();
+    Object.values(curies).forEach((expanded) => {
+      if (!Array.isArray(expanded)) {
+        combined.add(expanded);
+      } else {
+        expanded.forEach((curie) => {
+          combined.add(curie);
+        });
+      }
+    });
     return [...combined];
   }
 
-  intersectWithExpandedCuries(newCuries) {
-    let keep = {};
+  intersectWithExpandedCuries(newCuries: ExpandedCuries): void {
+    const keep: { [mainID: string]: string[] } = {};
     // If a new entity has any alias intersection with an existing entity, keep it
     Object.entries(newCuries).forEach(([newMainID, currentAliases]) => {
-      const someIntersection = Object.entries(this.expanded_curie).some(([existingMainID, existingAliases]) => {
-        return currentAliases.some((currentAlias) => existingAliases.some(existingAlias => currentAlias.toLowerCase() === existingAlias.toLowerCase()));
+      const someIntersection = Object.entries(this.expanded_curie).some(([, existingAliases]) => {
+        return currentAliases.some((currentAlias) =>
+          existingAliases.some((existingAlias) => currentAlias.toLowerCase() === existingAlias.toLowerCase()),
+        );
       });
       if (someIntersection) {
         if (!keep[newMainID]) keep[newMainID] = currentAliases;
@@ -160,38 +197,38 @@ module.exports = class QNode {
     debug(`Node "${this.id}" kept (${Object.keys(keep).length}) curies...`);
   }
 
-  intersectCuries(curies, newCuries) {
+  intersectCuries(curies: string[], newCuries: ExpandedCuries): string[] {
     //curies is a list ['ID']
     // new curies {originalID : ['aliasID']}
-    let all_new_curies = this._combineCuriesIntoList(newCuries);
+    const all_new_curies = this._combineCuriesIntoList(newCuries);
     return _.intersection(curies, all_new_curies);
   }
 
-  getID() {
+  getID(): string {
     return this.id;
   }
 
-  getCurie() {
+  getCurie(): string[] {
     return this.curie;
   }
 
-  getEquivalentIDs() {
+  getEquivalentIDs(): SRIResolvedSet {
     return this.equivalentIDs ?? {};
   }
 
-  removeEquivalentID(id) {
+  removeEquivalentID(id: string): void {
     delete this.equivalentIDs[id];
   }
 
-  getCategories() {
+  getCategories(): string[] {
     if (this.equivalentIDsUpdated) this.expandCategories();
     return this.expandedCategories;
   }
 
-  expandCategories() {
+  expandCategories(): void {
     this.equivalentIDsUpdated = false;
     if (this.hasEquivalentIDs() === false) {
-      const categories = utils.toArray(this.category);
+      const categories = utils.toArray(this.categories);
       let expanded_categories = [];
       categories.map((category) => {
         expanded_categories = [
@@ -209,32 +246,32 @@ module.exports = class QNode {
     //     .reduce((arr, category) => [...arr, ...biolink.getAncestorClasses(category)], [])
     //     .filter((category) => !utils.toArray(this.category).includes(`biolink:${category}`)),
     // );
-    let categories = utils.toArray(this.category).map((category) => utils.removeBioLinkPrefix(category));
+    let categories = utils.toArray(this.categories).map((category) => utils.removeBioLinkPrefix(category));
     Object.values(this.equivalentIDs).map((entity) => {
       categories = [...categories, ...entity.primaryTypes];
     });
     this.expandedCategories = utils.getUnique(
-      utils.getUnique(categories).reduce((arr, category) => [...arr, ...(biolink.getDescendantClasses(category) || [])], []),
+      utils
+        .getUnique(categories)
+        .reduce((arr, category) => [...arr, ...(biolink.getDescendantClasses(category) || [])], []),
     );
     // .filter(category => !ancestors.has(category));
   }
 
-  getEntities() {
-    return Object.values(this.equivalentIDs).reduce((res, entity) => {
-      return [...res, entity];
-    }, []);
+  getEntities(): SRIBioEntity[] {
+    return Object.values(this.equivalentIDs);
   }
 
-  getPrimaryIDs() {
+  getPrimaryIDs(): string[] {
     return this.getEntities().map((entity) => entity.primaryID);
   }
 
-  setEquivalentIDs(equivalentIDs) {
+  setEquivalentIDs(equivalentIDs: SRIResolvedSet): void {
     this.equivalentIDs = equivalentIDs;
     this.equivalentIDsUpdated = true;
   }
 
-  updateEquivalentIDs(equivalentIDs) {
+  updateEquivalentIDs(equivalentIDs: SRIResolvedSet): void {
     if (this.equivalentIDs === undefined) {
       this.equivalentIDs = equivalentIDs;
     } else {
@@ -243,15 +280,15 @@ module.exports = class QNode {
     this.equivalentIDsUpdated = true;
   }
 
-  hasInput() {
+  hasInput(): boolean {
     return !(this.curie === undefined || this.curie === null);
   }
 
-  hasEquivalentIDs() {
+  hasEquivalentIDs(): boolean {
     return !(typeof this.equivalentIDs === 'undefined' || this.equivalentIDs === {});
   }
 
-  getEntityCount() {
+  getEntityCount(): number {
     return this.curie ? this.curie.length : 0;
   }
-};
+}

@@ -1,13 +1,28 @@
-const _ = require('lodash');
-const LogEntry = require('./log_entry');
-const BTEError = require('./exceptions/bte_error');
-const debug = require('debug')('bte:biothings-explorer-trapi:edge-manager');
-const config = require('./config');
-const BatchEdgeQueryHandler = require('./batch_edge_query');
-const Sentry = require('@sentry/node')
+import _ from 'lodash';
+import LogEntry, { StampedLog } from './log_entry';
+import BTEError from './exceptions/bte_error';
+import Debug from 'debug';
+const debug = Debug('bte:biothings-explorer-trapi:edge-manager');
+import * as config from './config';
+import BatchEdgeQueryHandler, { BatchEdgeQueryOptions } from './batch_edge_query';
+import * as Sentry from '@sentry/node';
+import QEdge from './query_edge';
+import MetaKG from '@biothings-explorer/smartapi-kg';
+import { QueryHandlerOptions } from '.';
+import { Record } from '@biothings-explorer/api-response-transform';
+import { UnavailableAPITracker } from './types';
+import { RecordsByQEdgeID } from './results_assembly/query_results';
+import path from 'path';
+import { promises as fs } from 'fs';
 
-module.exports = class QueryEdgeManager {
-  constructor(edges, metaKG, options) {
+export default class QueryEdgeManager {
+  private _qEdges: QEdge[];
+  private _metaKG: MetaKG;
+  logs: StampedLog[];
+  private _records: Record[];
+  options: QueryHandlerOptions;
+  private _organizedRecords: RecordsByQEdgeID;
+  constructor(edges: QEdge[], metaKG: MetaKG, options: QueryHandlerOptions) {
     // flatten list of all edges available
     this._qEdges = _.flatten(edges);
     this._metaKG = metaKG;
@@ -19,26 +34,26 @@ module.exports = class QueryEdgeManager {
     this.init();
   }
 
-  getRecords() {
+  getRecords(): Record[] {
     debug(`(13) Edge Manager reporting combined records...`);
     return this._records;
   }
 
-  getOrganizedRecords() {
+  getOrganizedRecords(): RecordsByQEdgeID {
     debug(`(13) Edge Manager reporting organized records...`);
     return this._organizedRecords;
   }
 
-  init() {
+  init(): void {
     debug(`(3) Edge manager is managing ${this._qEdges.length} qEdges.`);
     this.logs.push(new LogEntry('DEBUG', null, `Edge manager is managing ${this._qEdges.length} qEdges.`).getLog());
   }
 
-  getNext() {
+  getNext(): QEdge {
     //returns next edge with lowest entity count on
     //either object or subject OR no count last
     // available not yet executed
-    let available_edges = this._qEdges.filter((qEdge) => !qEdge.executed);
+    const available_edges = this._qEdges.filter((qEdge) => !qEdge.executed);
     //safeguard for making sure there's available
     //edges when calling getNext
     if (available_edges.length == 0) {
@@ -52,8 +67,8 @@ module.exports = class QueryEdgeManager {
       );
     }
     //begin search
-    let nextQEdge;
-    let lowest_entity_count;
+    let nextQEdge: QEdge;
+    let lowest_entity_count: number;
     let current_obj_lowest = 0;
     let current_sub_lowest = 0;
     available_edges.forEach((qEdge) => {
@@ -83,7 +98,7 @@ module.exports = class QueryEdgeManager {
     if (!nextQEdge) {
       //if no edge with count found pick the first empty
       //edge available
-      let all_empty = available_edges.filter((edge) => !edge.object.entity_count && !edge.subject.entity_count);
+      const all_empty = available_edges.filter((edge) => !edge.object.entity_count && !edge.subject.entity_count);
       if (all_empty.length == 0) {
         debug(`(5) Error: No available qEdges found.`);
         this.logs.push(new LogEntry('DEBUG', null, `Cannot get next edge, No available qEdges found.`).getLog());
@@ -98,7 +113,7 @@ module.exports = class QueryEdgeManager {
     return this.preSendOffCheck(nextQEdge);
   }
 
-  logEntityCounts() {
+  logEntityCounts(): void {
     this._qEdges.forEach((qEdge) => {
       debug(
         `'${qEdge.getID()}'` +
@@ -109,7 +124,7 @@ module.exports = class QueryEdgeManager {
     });
   }
 
-  _logSkippedQueries(unavailableAPIs) {
+  _logSkippedQueries(unavailableAPIs: UnavailableAPITracker): void {
     Object.entries(unavailableAPIs).forEach(([api, { skippedQueries }]) => {
       if (skippedQueries > 0) {
         const skipMessage = `${skippedQueries} additional quer${skippedQueries > 1 ? 'ies' : 'y'} to ${api} ${
@@ -121,13 +136,13 @@ module.exports = class QueryEdgeManager {
     });
   }
 
-  checkEntityMax(nextQEdge) {
+  checkEntityMax(nextQEdge: QEdge): void {
     const max = config.ENTITY_MAX;
     //(MAX) --- (0) not allowed
     //(MAX) --- (MAX) not allowed
     //(MAX) --- (2) allowed, (2 will be used)
-    let sub_count = nextQEdge.object.getEntityCount();
-    let obj_count = nextQEdge.subject.getEntityCount();
+    const sub_count = nextQEdge.object.getEntityCount();
+    const obj_count = nextQEdge.subject.getEntityCount();
     debug(`Checking entity max : (${sub_count})--(${obj_count})`);
     if (
       (obj_count == 0 && sub_count > max) ||
@@ -138,7 +153,7 @@ module.exports = class QueryEdgeManager {
     }
   }
 
-  preSendOffCheck(nextQEdge) {
+  preSendOffCheck(nextQEdge: QEdge): QEdge {
     // next: qEdge
     //check that edge entities are or have potential to stay
     //under max limit
@@ -165,34 +180,34 @@ module.exports = class QueryEdgeManager {
     return nextQEdge;
   }
 
-  getEdgesNotExecuted() {
+  getEdgesNotExecuted(): number {
     //simply returns a number of edges not marked as executed
-    let found = this._qEdges.filter((edge) => !edge.executed);
-    let not_executed = found.length;
+    const found = this._qEdges.filter((edge) => !edge.executed);
+    const not_executed = found.length;
     if (not_executed) debug(`(4) Edges not yet executed = ${not_executed}`);
     return not_executed;
   }
 
-  _filterEdgeRecords(qEdge) {
-    let keep = [];
-    let records = qEdge.records;
-    let subjectCuries = qEdge.subject.curie;
-    let objectCuries = qEdge.object.curie;
+  _filterEdgeRecords(qEdge: QEdge): Record[] {
+    const keep: Record[] = [];
+    const records = qEdge.records;
+    const subjectCuries = qEdge.subject.curie;
+    const objectCuries = qEdge.object.curie;
     debug(
       `'${qEdge.getID()}' Reversed[${qEdge.reverse}] (${JSON.stringify(subjectCuries.length || 0)})` +
         `--(${JSON.stringify(objectCuries.length || 0)}) entities / (${records.length}) records.`,
     );
     // debug(`IDS SUB ${JSON.stringify(sub_count)}`)
     // debug(`IDS OBJ ${JSON.stringify(obj_count)}`)
-    let execSubjectCuries = qEdge.reverse ? objectCuries : subjectCuries;
-    let execObjectCuries = qEdge.reverse ? subjectCuries : objectCuries;
+    const execSubjectCuries = qEdge.reverse ? objectCuries : subjectCuries;
+    const execObjectCuries = qEdge.reverse ? subjectCuries : objectCuries;
 
     records.forEach((record) => {
       //check sub curies against $input ids
-      let subjectIDs = new Set();
-      let objectIDs = new Set();
-      let objectMatch = false;
-      let subjectMatch = false;
+      const subjectIDs: Set<string> = new Set();
+      const objectIDs: Set<string> = new Set();
+      let objectMatch = 0;
+      let subjectMatch = 0;
 
       //compare record I/O ids against edge node ids
       // #1 check equivalent ids
@@ -227,18 +242,18 @@ module.exports = class QueryEdgeManager {
     return keep;
   }
 
-  collectRecords() {
+  collectRecords(): void {
     //go through edges and collect records organized by edge
-    let recordsByQEdgeID = {};
+    let recordsByQEdgeID: RecordsByQEdgeID = {};
     //all res merged
     let combinedRecords = [];
     let brokenChain = false;
-    let brokenEdges = [];
+    const brokenEdges = [];
     debug(`(11) Collecting records...`);
     //First: go through edges and filter that each edge is holding
     this._qEdges.forEach((qEdge) => {
-      let qEdgeID = qEdge.getID();
-      let filteredRecords = qEdge.records.map((record) => record.queryDirection());
+      const qEdgeID = qEdge.getID();
+      const filteredRecords = qEdge.records.map((record) => record.queryDirection());
       if (filteredRecords.length == 0) {
         this.logs.push(new LogEntry('WARNING', null, `Warning: qEdge '${qEdgeID}' resulted in (0) records.`).getLog());
         brokenChain = true;
@@ -249,10 +264,10 @@ module.exports = class QueryEdgeManager {
       combinedRecords = combinedRecords.concat(filteredRecords);
       let connections = qEdge.subject.getConnections().concat(qEdge.object.getConnections());
       connections = connections.filter((id) => id !== qEdgeID);
-      connections = new Set(connections);
+      connections = [...new Set(connections)];
       recordsByQEdgeID[qEdgeID] = {
         records: filteredRecords,
-        connected_to: [...connections],
+        connected_to: connections,
       };
       debug(`(11) '${qEdgeID}' keeps (${filteredRecords.length}) records!`);
       this.logs.push(new LogEntry('INFO', null, `'${qEdgeID}' keeps (${filteredRecords.length}) records!`).getLog());
@@ -289,53 +304,56 @@ module.exports = class QueryEdgeManager {
     this.logs.push(new LogEntry('DEBUG', null, `Edge manager collected (${this._records.length}) records!`).getLog());
   }
 
-  updateEdgeRecords(currentQEdge) {
+  updateEdgeRecords(currentQEdge: QEdge): void {
     //1. filter edge records based on current status
-    let filteredRecords = this._filterEdgeRecords(currentQEdge);
+    const filteredRecords = this._filterEdgeRecords(currentQEdge);
     //2.trigger node update / entity update based on new status
     currentQEdge.storeRecords(filteredRecords);
   }
 
-  updateNeighborsEdgeRecords(currentQEdge) {
-    //update and filter only immediate neighbors
-    debug(`Updating neighbors...`);
-    let currentQEdgeID = currentQEdge.getID();
-    //get neighbors of this edges subject that are not this edge
-    let left_connections = currentQEdge.subject.getConnections();
-    left_connections = left_connections.filter((qEdgeID) => qEdgeID !== currentQEdgeID);
-    //get neighbors of this edges object that are not this edge
-    let right_connections = currentQEdge.object.getConnections();
-    right_connections = right_connections.filter((qEdgeID) => qEdgeID !== currentQEdgeID);
-    debug(`(${left_connections})<--edge neighbors-->(${right_connections})`);
-    if (left_connections.length) {
-      //find edge by id
-      left_connections.forEach((qEdgeID) => {
-        let edge = this._qEdges.find((edge) => edge.getID() == qEdgeID);
-        if (edge && edge.records.length) {
-          debug(`Updating "${edge.getID()}" neighbor edge of ${currentQEdgeID}`);
-          debug(`Updating neighbor (X)<----()`);
-          this.updateEdgeRecords(edge);
-        }
-      });
-    }
+  /**
+   * Unused
+   */
+  // updateNeighborsEdgeRecords(currentQEdge) {
+  //   //update and filter only immediate neighbors
+  //   debug(`Updating neighbors...`);
+  //   const currentQEdgeID = currentQEdge.getID();
+  //   //get neighbors of this edges subject that are not this edge
+  //   let left_connections = currentQEdge.subject.getConnections();
+  //   left_connections = left_connections.filter((qEdgeID) => qEdgeID !== currentQEdgeID);
+  //   //get neighbors of this edges object that are not this edge
+  //   let right_connections = currentQEdge.object.getConnections();
+  //   right_connections = right_connections.filter((qEdgeID) => qEdgeID !== currentQEdgeID);
+  //   debug(`(${left_connections})<--edge neighbors-->(${right_connections})`);
+  //   if (left_connections.length) {
+  //     //find edge by id
+  //     left_connections.forEach((qEdgeID) => {
+  //       const edge = this._qEdges.find((edge) => edge.getID() == qEdgeID);
+  //       if (edge && edge.records.length) {
+  //         debug(`Updating "${edge.getID()}" neighbor edge of ${currentQEdgeID}`);
+  //         debug(`Updating neighbor (X)<----()`);
+  //         this.updateEdgeRecords(edge);
+  //       }
+  //     });
+  //   }
+  //
+  //   if (right_connections.length) {
+  //     //find edge by id
+  //     right_connections.forEach((neighbor_id) => {
+  //       const edge = this._qEdges.find((edge) => edge.getID() == neighbor_id);
+  //       if (edge && edge.records.length) {
+  //         debug(`Updating "${edge.getID()}" neighbor edge of ${currentQEdgeID}`);
+  //         debug(`Updating neighbor ()---->(X)`);
+  //         this.updateEdgeRecords(edge);
+  //       }
+  //     });
+  //   }
+  // }
 
-    if (right_connections.length) {
-      //find edge by id
-      right_connections.forEach((neighbor_id) => {
-        let edge = this._qEdges.find((edge) => edge.getID() == neighbor_id);
-        if (edge && edge.records.length) {
-          debug(`Updating "${edge.getID()}" neighbor edge of ${currentQEdgeID}`);
-          debug(`Updating neighbor ()---->(X)`);
-          this.updateEdgeRecords(edge);
-        }
-      });
-    }
-  }
-
-  updateAllOtherEdges(currentQEdge) {
+  updateAllOtherEdges(currentQEdge: QEdge): void {
     //update and filter all other edges
     debug(`Updating all other edges...`);
-    let currentQEdgeID = currentQEdge.getID();
+    const currentQEdgeID = currentQEdge.getID();
     this._qEdges.forEach((qEdge) => {
       if (qEdge.getID() !== currentQEdgeID && qEdge.records.length) {
         debug(`Updating "${qEdge.getID()}"...`);
@@ -345,24 +363,44 @@ module.exports = class QueryEdgeManager {
     });
   }
 
-  _createBatchQueryHandler(qEdge, metaKG) {
-    let handler = new BatchEdgeQueryHandler(metaKG, this.resolveOutputIDs, {
-        caching: this.options.caching,
-        submitter: this.options.submitter,
-        recordHashEdgeAttributes: config.EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,
-        provenanceUsesServiceProvider: this.options.provenanceUsesServiceProvider,
-      });
-      handler.setEdges(qEdge);
-      return handler;
+  _createBatchQueryHandler(qEdge: QEdge, metaKG: MetaKG): BatchEdgeQueryHandler {
+    const handler = new BatchEdgeQueryHandler(metaKG, this.options.resolveOutputIDs, {
+      caching: this.options.caching,
+      submitter: this.options.submitter,
+      recordHashEdgeAttributes: config.EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,
+      provenanceUsesServiceProvider: this.options.provenanceUsesServiceProvider,
+    } as BatchEdgeQueryOptions);
+    handler.setEdges(qEdge);
+    return handler;
   }
 
-  async executeEdges() {
-    const unavailableAPIs = {};
+  async dumpRecords(records: Record[]): Promise<void> {
+    let filePath = path.resolve('../../..', process.env.DUMP_RECORDS);
+    // create new (unique) file if arg is directory
+    try {
+      if ((await fs.lstat(filePath)).isDirectory()) {
+        filePath = path.resolve(filePath, `recordDump-${new Date().toISOString()}.json`);
+      }
+    } catch (e) {
+      null; // specified a file, which doesn't exist (which is fine)
+    }
+    let direction = false;
+    if (process.env.DUMP_RECORDS_DIRECTION?.includes('exec')) {
+      direction = true;
+      records = [...records].map((record) => record.queryDirection());
+    }
+    await fs.writeFile(filePath, JSON.stringify(records.map((record) => record.freeze())));
+    const logMessage = `Dumping Records ${direction ? `(in execution direction)` : ''} to ${filePath}`;
+    debug(logMessage);
+  }
+
+  async executeEdges(): Promise<boolean> {
+    const unavailableAPIs: UnavailableAPITracker = {};
     while (this.getEdgesNotExecuted()) {
       //next available/most efficient edge
-      let currentQEdge = this.getNext();
+      const currentQEdge = this.getNext();
       //crate queries from edge
-      let queryBatchHandler = this._createBatchQueryHandler(currentQEdge, this._metaKG);
+      const queryBatchHandler = this._createBatchQueryHandler(currentQEdge, this._metaKG);
       this.logs.push(
         new LogEntry(
           'INFO',
@@ -374,14 +412,14 @@ module.exports = class QueryEdgeManager {
       );
       debug(`(5) Executing current edge >> "${currentQEdge.getID()}"`);
       //execute current edge query
-      let queryRecords = await queryBatchHandler.query(queryBatchHandler.qEdges, unavailableAPIs);
+      const queryRecords = await queryBatchHandler.query(queryBatchHandler.qEdges, unavailableAPIs);
       this.logs = [...this.logs, ...queryBatchHandler.logs];
       if (queryRecords === undefined) return;
       // create an edge execution summary
       let success = 0,
         fail = 0,
         total = 0;
-      let cached = this.logs.filter(
+      const cached = this.logs.filter(
         ({ data }) => data?.qEdgeID === currentQEdge.id && data?.type === 'cacheHit',
       ).length;
       this.logs
@@ -414,14 +452,14 @@ module.exports = class QueryEdgeManager {
       currentQEdge.storeRecords(queryRecords);
 
       const span1 = Sentry?.getCurrentHub()?.getScope()?.getTransaction()?.startChild({
-        description: "filteringRecords"
+        description: 'filteringRecords',
       });
       // filter records
       this.updateEdgeRecords(currentQEdge);
       span1?.finish();
 
       const span2 = Sentry?.getCurrentHub()?.getScope()?.getTransaction()?.startChild({
-        description: "updatingRecordEdges"
+        description: 'updatingRecordEdges',
       });
 
       // update and filter neighbors
@@ -454,4 +492,4 @@ module.exports = class QueryEdgeManager {
     }
     return true;
   }
-};
+}

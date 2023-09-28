@@ -1,10 +1,45 @@
-const { zip } = require('lodash');
-const debug = require('debug')('bte:biothings-explorer-trapi:QueryResult');
-const LogEntry = require('../log_entry');
-const { getScores, calculateScore } = require('./score');
-const { Record } = require('@biothings-explorer/api-response-transform');
-const { enrichTrapiResultsWithPfocrFigures } = require('./pfocr');
-const config = require('../config');
+import LogEntry, { StampedLog } from '../log_entry';
+import { TrapiResult } from '../types';
+import Debug from 'debug';
+import { zip } from 'lodash';
+const debug = Debug('bte:biothings-explorer-trapi:QueryResult');
+import { getScores, calculateScore, ScoreCombos } from './score';
+import { Record } from '@biothings-explorer/api-response-transform';
+import { enrichTrapiResultsWithPfocrFigures } from './pfocr';
+import * as config from '../config';
+
+export interface RecordsByQEdgeID {
+  [qEdgeID: string]: {
+    connected_to: string[];
+    records: Record[];
+  };
+}
+
+export interface QueryGraphSolutionEdge {
+  inputQNodeID: string;
+  outputQNodeID: string;
+  inputPrimaryCurie: string;
+  outputPrimaryCurie: string;
+  // info for scoring
+  inputUMLS: string[];
+  outputUMLS: string[];
+  isTextMined: boolean;
+  // end info for scoring
+  qEdgeID: string;
+  recordHash: string;
+}
+
+export interface ConsolidatedSolutionRecord {
+  inputQNodeID: string;
+  outputQNodeID: string;
+  inputPrimaryCuries: Set<string>;
+  outputPrimaryCuries: Set<string>;
+  inputUMLS: Set<string>;
+  outputUMLS: Set<string>;
+  isTextMined: boolean[];
+  qEdgeID: string;
+  recordHashes: Set<string>;
+}
 
 /**
  * @type { Record }
@@ -39,7 +74,10 @@ const config = require('../config');
  * When we query a bte-trapi server, we see this list
  * in the response as message.results.
  */
-module.exports = class TrapiResultsAssembler {
+export default class TrapiResultsAssembler {
+  private _results: TrapiResult[];
+  logs: StampedLog[];
+  options: any;
   /**
    * Create a QueryResult i9nstance.
    */
@@ -53,18 +91,17 @@ module.exports = class TrapiResultsAssembler {
     this.options = options;
   }
 
-  getResults() {
+  getResults(): TrapiResult[] {
     return this._results;
   }
 
   /**
    * Find all QNodes having only one QEdge, sorted by least records first
-   * @return {string[][]}
    */
-  _getValidInitialPairs(recordsByQEdgeID) {
+  _getValidInitialPairs(recordsByQEdgeID: RecordsByQEdgeID): string[][] {
     // qNodeID: set{qEdgeID} for node: edges using node
-    const qNodeEdgeCounts = Object.entries(recordsByQEdgeID).reduce(
-      (qNodeCounts, [queryEdgeID, { connected_to, records }]) => {
+    const qNodeEdgeCounts: { [qNodeID: string]: Set<string> } = Object.entries(recordsByQEdgeID).reduce(
+      (qNodeCounts, [queryEdgeID, { records }]) => {
         [records[0].subject.qNodeID, records[0].object.qNodeID].forEach((qNodeID) => {
           if (!qNodeCounts[qNodeID]) {
             qNodeCounts[qNodeID] = new Set();
@@ -75,11 +112,11 @@ module.exports = class TrapiResultsAssembler {
       },
       {},
     );
-    // qNodeID: qEdgeID for valid 'leaf' nodes, sorted by # records ascending
+    /** qNodeID: qEdgeID for valid 'leaf' nodes, sorted by # records ascending */
     const validNodes = Object.entries(qNodeEdgeCounts)
-      .filter(([qNodeID, qEdgeIDs]) => qEdgeIDs.size < 2)
+      .filter(([, qEdgeIDs]) => qEdgeIDs.size < 2)
       .map(([qNodeID, qEdgeIDs]) => [qNodeID, [...qEdgeIDs][0]])
-      .sort(([qNodeID_0, qEdgeID_0], [qNodeID_1, qEdgeID_1]) => {
+      .sort(([, qEdgeID_0], [, qEdgeID_1]) => {
         return recordsByQEdgeID[qEdgeID_0].records.length - recordsByQEdgeID[qEdgeID_1].records.length;
       });
 
@@ -109,36 +146,31 @@ module.exports = class TrapiResultsAssembler {
    * NOTE: this currently only works for trees (no cycles). If we want to handle cycles,
    * we'll probably need to keep track of what's been visited.
    * But A.S. said we don't have to worry about cycles for now.
-   *
-   * @return {
-   *   inputQNodeID: string,
-   *   outputQNodeID: string,
-   *   inputPrimaryCurie: string,
-   *   outputPrimaryCurie: string,
-   *   qEdgeID: string,
-   *   recordHash: string,
-   * }
    */
   _getQueryGraphSolutions(
-    recordsByQEdgeID,
-    qEdgeID,
-    edgeCount,
-    queryGraphSolutions,
-    queryGraphSolution,
-    qNodeIDToMatch,
-    primaryCurieToMatch,
-  ) {
+    recordsByQEdgeID: RecordsByQEdgeID,
+    qEdgeID: string,
+    edgeCount: number,
+    queryGraphSolutions: QueryGraphSolutionEdge[][],
+    queryGraphSolution: QueryGraphSolutionEdge[],
+    qNodeIDToMatch: string,
+    primaryCurieToMatch?: string,
+  ): void {
     //connected_to and records of starting edge of tree
     const { connected_to, records } = recordsByQEdgeID[qEdgeID];
 
     //get a valid record from records to continue
-    let record = records.find((rec) => rec !== undefined);
+    const record = records.find((rec) => rec !== undefined);
 
     // queryNodeID example: 'n0'
     const inputQNodeID = record.subject.qNodeID;
     const outputQNodeID = record.object.qNodeID;
 
-    let otherQNodeID, getMatchingPrimaryCurie, getOtherPrimaryCurie;
+    interface returnsPrimaryCurie {
+      (record: Record): string;
+    }
+
+    let otherQNodeID: string, getMatchingPrimaryCurie: returnsPrimaryCurie, getOtherPrimaryCurie: returnsPrimaryCurie;
 
     if ([inputQNodeID, undefined].indexOf(qNodeIDToMatch) > -1) {
       qNodeIDToMatch = inputQNodeID;
@@ -161,7 +193,7 @@ module.exports = class TrapiResultsAssembler {
       })
       .forEach((record, i) => {
         // primaryCurie example: 'NCBIGene:1234'
-        const matchingPrimaryCurie = getMatchingPrimaryCurie(record); //not used?
+        // const matchingPrimaryCurie = getMatchingPrimaryCurie(record); //not used?
         const otherPrimaryCurie = getOtherPrimaryCurie(record);
 
         if (i !== 0) {
@@ -213,13 +245,8 @@ module.exports = class TrapiResultsAssembler {
    * We will later use these uniqueNodeIDs to generate unique result IDs.
    * The unique result IDs will be unique per result and be made up of only
    * the minimum information required to make them unique.
-   *
-   * @param {Set<string>} qNodeIDsWithIsSet
-   * @param {string} qNodeID
-   * @param {string} primaryCurie
-   * @return {string} uniqueNodeID
    */
-  _getUniqueNodeID(qNodeIDsWithIsSet, qNodeID, primaryCurie) {
+  _getUniqueNodeID(qNodeIDsWithIsSet: Set<string>, qNodeID: string, primaryCurie: string): string {
     if (qNodeIDsWithIsSet.has(qNodeID)) {
       return qNodeID;
     } else {
@@ -244,18 +271,16 @@ module.exports = class TrapiResultsAssembler {
    * Note: with the updated code for generalized query handling, we
    * can safely assume every call to update contains all the records.
    *
-   * @param {RecordsByQEdgeID} recordsByQEdgeID
-   * @return {undefined} nothing returned; just cache this._results
    */
-  async update(recordsByQEdgeID, shouldScore = true) {
+  async update(recordsByQEdgeID: RecordsByQEdgeID, shouldScore = true): Promise<void> {
     debug(`Updating query results now!`);
 
-    let scoreCombos = [];
+    let scoreCombos: ScoreCombos;
 
     if (shouldScore) {
       try {
         scoreCombos = await getScores(recordsByQEdgeID);
-        debug(`Successfully got ${scoreCombos.length} score combos.`);
+        debug(`Successfully got ${Object.values(scoreCombos).length} score combos.`);
       } catch (err) {
         debug('Error getting scores: ', err);
       }
@@ -268,8 +293,8 @@ module.exports = class TrapiResultsAssembler {
 
     // find all QNodes having is_set params
     // NOTE: is_set in the query graph and the JavaScript Set object below refer to different sets.
-    const qNodeIDsWithIsSet = new Set();
-    Object.entries(recordsByQEdgeID).forEach(([qEdgeID, { connected_to, records }]) => {
+    const qNodeIDsWithIsSet: Set<string> = new Set();
+    Object.values(recordsByQEdgeID).forEach(({ records }) => {
       const inputQNodeID = records[0].subject.qNodeID;
       const outputQNodeID = records[0].object.qNodeID;
 
@@ -284,11 +309,11 @@ module.exports = class TrapiResultsAssembler {
     debug(`Nodes with "is_set": ${JSON.stringify([...qNodeIDsWithIsSet])}`);
 
     // find a QNode having only one QEdge to use as the root node for tree traversal
-    let [initialQNodeIDToMatch, initialQEdgeID] = this._getValidInitialPairs(recordsByQEdgeID)[0];
+    const [initialQNodeIDToMatch, initialQEdgeID] = this._getValidInitialPairs(recordsByQEdgeID)[0];
 
     debug(`initialQEdgeID: ${initialQEdgeID}, initialQNodeIDToMatch: ${initialQNodeIDToMatch}`);
 
-    const queryGraphSolutions = [];
+    const queryGraphSolutions: QueryGraphSolutionEdge[][] = [];
     this._getQueryGraphSolutions(
       recordsByQEdgeID,
       initialQEdgeID,
@@ -316,7 +341,9 @@ module.exports = class TrapiResultsAssembler {
      * then merging each of those groups into a single consolidatedSolution.
      */
 
-    const solutionsByTrapiResultID = {};
+    const solutionsByTrapiResultID: {
+      [trapiResultID: string]: QueryGraphSolutionEdge[][];
+    } = {};
     queryGraphSolutions.forEach((queryGraphSolution) => {
       // example inputPrimaryCurie and outputPrimaryCurie in a queryGraphSolution:
       // [
@@ -330,12 +357,10 @@ module.exports = class TrapiResultsAssembler {
       // using a set so we don't repeat a previously entered input as an output or vice versa.
       const uniqueNodeIDs = new Set();
 
-      queryGraphSolution.forEach(
-        ({ inputQNodeID, outputQNodeID, inputPrimaryCurie, outputPrimaryCurie, qEdgeID, recordHash }) => {
-          uniqueNodeIDs.add(this._getUniqueNodeID(qNodeIDsWithIsSet, inputQNodeID, inputPrimaryCurie));
-          uniqueNodeIDs.add(this._getUniqueNodeID(qNodeIDsWithIsSet, outputQNodeID, outputPrimaryCurie));
-        },
-      );
+      queryGraphSolution.forEach(({ inputQNodeID, outputQNodeID, inputPrimaryCurie, outputPrimaryCurie }) => {
+        uniqueNodeIDs.add(this._getUniqueNodeID(qNodeIDsWithIsSet, inputQNodeID, inputPrimaryCurie));
+        uniqueNodeIDs.add(this._getUniqueNodeID(qNodeIDsWithIsSet, outputQNodeID, outputPrimaryCurie));
+      });
 
       // The separator can be anything that won't appear in the actual QNodeIDs or primaryCuries
       // Using .sort() because a JS Set is iterated in insertion order, and I haven't
@@ -352,7 +377,7 @@ module.exports = class TrapiResultsAssembler {
       //     "n0-NCBIGene:3630_&_n1-MONDO:0005068_&_n2-PUBCHEM.COMPOUND:43815"
       //     "n0-NCBIGene:3630_&_n1-MONDO:0005010_&_n2-PUBCHEM.COMPOUND:43815"
 
-      if (!solutionsByTrapiResultID.hasOwnProperty(trapiResultID)) {
+      if (!(trapiResultID in solutionsByTrapiResultID)) {
         solutionsByTrapiResultID[trapiResultID] = [];
       }
       solutionsByTrapiResultID[trapiResultID].push(queryGraphSolution);
@@ -363,7 +388,7 @@ module.exports = class TrapiResultsAssembler {
         debug(`result ID: ${trapiResultID} has ${queryGraphSolutions.length}`);
         return zip(...queryGraphSolutions).map((solutionRecords) => {
           const solutionRecord_0 = solutionRecords[0];
-          const consolidatedSolutionRecord = {
+          const consolidatedSolutionRecord: ConsolidatedSolutionRecord = {
             inputQNodeID: solutionRecord_0.inputQNodeID,
             outputQNodeID: solutionRecord_0.outputQNodeID,
             inputPrimaryCuries: new Set(),
@@ -375,21 +400,11 @@ module.exports = class TrapiResultsAssembler {
             recordHashes: new Set(),
           };
           solutionRecords.forEach(
-            ({
-              inputQNodeID,
-              outputQNodeID,
-              inputPrimaryCurie,
-              outputPrimaryCurie,
-              inputUMLS,
-              outputUMLS,
-              isTextMined,
-              qEdgeID,
-              recordHash,
-            }) => {
+            ({ inputPrimaryCurie, outputPrimaryCurie, inputUMLS, outputUMLS, isTextMined, recordHash }) => {
               consolidatedSolutionRecord.inputPrimaryCuries.add(inputPrimaryCurie);
               consolidatedSolutionRecord.outputPrimaryCuries.add(outputPrimaryCurie);
-              consolidatedSolutionRecord.inputUMLS.add(...inputUMLS);
-              consolidatedSolutionRecord.outputUMLS.add(...outputUMLS);
+              inputUMLS.forEach((umls) => consolidatedSolutionRecord.inputUMLS.add(umls));
+              outputUMLS.forEach((umls) => consolidatedSolutionRecord.outputUMLS.add(umls));
               if (!consolidatedSolutionRecord.recordHashes.has(recordHash)) {
                 consolidatedSolutionRecord.isTextMined.push(isTextMined);
               }
@@ -409,8 +424,9 @@ module.exports = class TrapiResultsAssembler {
      */
     this._results = consolidatedSolutions
       .map((consolidatedSolution) => {
-        // TODO: replace with better score implementation later
-        const { score, scoredByNGD } = calculateScore(consolidatedSolution, scoreCombos);
+        const { score, scoredByNGD } = shouldScore
+          ? calculateScore(consolidatedSolution, scoreCombos)
+          : { score: undefined, scoredByNGD: false };
         const result = {
           node_bindings: {},
           analyses: [
@@ -494,4 +510,4 @@ module.exports = class TrapiResultsAssembler {
       );
     }
   }
-};
+}

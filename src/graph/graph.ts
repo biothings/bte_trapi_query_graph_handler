@@ -1,17 +1,42 @@
-const kg_edge = require('./kg_edge');
-const kg_node = require('./kg_node');
-const debug = require('debug')('bte:biothings-explorer-trapi:Graph');
-const LogEntry = require('../log_entry');
+import kg_edge from './kg_edge';
+import kg_node from './kg_node';
+import Debug from 'debug';
+import LogEntry, { StampedLog } from '../log_entry';
+import KGNode from './kg_node';
+import KGEdge from './kg_edge';
+import { Record } from '../../../api-response-transform/built';
+import { TrapiAuxiliaryGraph, TrapiResult } from '../types';
+import KnowledgeGraph from './knowledge_graph';
+const debug = Debug('bte:biothings-explorer-trapi:Graph');
 
-module.exports = class BTEGraph {
+export interface BTEGraphUpdate {
+  nodes: {
+    [nodeID: string]: KGNode;
+  };
+  edges: {
+    [edgeID: string]: KGEdge;
+  };
+}
+
+export interface BTEGraphSubscriber {
+  update: (kg: BTEGraphUpdate) => void;
+}
+
+export default class BTEGraph {
+  nodes: {
+    [nodeID: string]: KGNode;
+  };
+  edges: {
+    [edgeID: string]: KGEdge;
+  };
+  subscribers: BTEGraphSubscriber[];
   constructor() {
     this.nodes = {};
     this.edges = {};
-    this.paths = {};
     this.subscribers = [];
   }
 
-  update(queryRecords) {
+  update(queryRecords: Record[]): void {
     debug(`Updating BTE Graph now.`);
     const bteAttributes = ['name', 'label', 'id', 'api', 'provided_by', 'publications', 'trapi_sources'];
     queryRecords.map((record) => {
@@ -25,35 +50,39 @@ module.exports = class BTEGraph {
         // const outputBTENodeID = outputPrimaryCurie + '-' + outputQNodeID;
         const outputBTENodeID = outputPrimaryCurie;
         const recordHash = record.recordHash;
-        
+
         if (!(outputBTENodeID in this.nodes)) {
           this.nodes[outputBTENodeID] = new kg_node(outputBTENodeID, {
             primaryCurie: outputPrimaryCurie,
             qNodeID: outputQNodeID,
-            equivalentCuries: record.object.equivalentCuries,
+            curies: record.object.equivalentCuries,
             names: record.object.names,
             label: record.object.label,
-            category: [record.object.semanticType[0]],
+            semanticType: [record.object.semanticType[0]],
             nodeAttributes: record.object.attributes,
           });
-        }
-        else if (this.nodes[outputBTENodeID]._label === undefined || this.nodes[outputBTENodeID]._label === this.nodes[outputBTENodeID]._primaryCurie) {
-            this.nodes[outputBTENodeID]._label = record.object.label;
+        } else if (
+          this.nodes[outputBTENodeID].label === undefined ||
+          this.nodes[outputBTENodeID].label === this.nodes[outputBTENodeID].primaryCurie
+        ) {
+          this.nodes[outputBTENodeID].label = record.object.label;
         }
 
         if (!(inputBTENodeID in this.nodes)) {
           this.nodes[inputBTENodeID] = new kg_node(inputBTENodeID, {
             primaryCurie: inputPrimaryCurie,
             qNodeID: inputQNodeID,
-            equivalentCuries: record.subject.equivalentCuries,
+            curies: record.subject.equivalentCuries,
             names: record.subject.names,
             label: record.subject.label,
-            category: [record.subject.semanticType[0]],
+            semanticType: [record.subject.semanticType[0]],
             nodeAttributes: record.subject.attributes,
           });
-        }
-        else if (this.nodes[inputBTENodeID]._label === undefined || this.nodes[inputBTENodeID]._label === this.nodes[inputBTENodeID]._primaryCurie) {
-            this.nodes[inputBTENodeID]._label = record.subject.label;
+        } else if (
+          this.nodes[inputBTENodeID].label === undefined ||
+          this.nodes[inputBTENodeID].label === this.nodes[inputBTENodeID].primaryCurie
+        ) {
+          this.nodes[inputBTENodeID].label = record.subject.label;
         }
 
         this.nodes[outputBTENodeID].addSourceNode(inputBTENodeID);
@@ -83,14 +112,14 @@ module.exports = class BTEGraph {
     });
   }
 
-  prune(results, auxGraphs) {
+  prune(results: TrapiResult[], auxGraphs: { [auxGraphID: string]: TrapiAuxiliaryGraph }): void {
     debug('pruning BTEGraph nodes/edges...');
-    const edgeBoundNodes = new Set();
-    const resultsBoundEdges = new Set();
+    const edgeBoundNodes: Set<string> = new Set();
+    const resultsBoundEdges: Set<string> = new Set();
 
     // Handle nodes and edges bound to results directly
     results.forEach((result) => {
-      Object.entries(result.analyses[0].edge_bindings).forEach(([edge, bindings]) => {
+      Object.entries(result.analyses[0].edge_bindings).forEach(([, bindings]) => {
         bindings.forEach((binding) => resultsBoundEdges.add(binding.id));
       });
     });
@@ -101,7 +130,7 @@ module.exports = class BTEGraph {
       edgeBoundNodes.add(this.edges[edgeID].subject);
       edgeBoundNodes.add(this.edges[edgeID].object);
       const supportGraphs = [...(this.edges[edgeID].attributes['biolink:support_graphs'] ?? [])];
-      supportGraphs.forEach((auxGraphID) => {
+      supportGraphs.forEach((auxGraphID: string) => {
         auxGraphs[auxGraphID].edges.forEach((auxGraphEdgeID) => {
           edgeBoundNodes.add(this.edges[auxGraphEdgeID].subject);
           edgeBoundNodes.add(this.edges[auxGraphEdgeID].object);
@@ -117,8 +146,8 @@ module.exports = class BTEGraph {
     debug(`pruned ${nodesToDelete.length} nodes and ${edgesToDelete.length} edges from BTEGraph.`);
   }
 
-  checkPrimaryKnowledgeSources(knowledgeGraph) {
-    let logs = [];
+  checkPrimaryKnowledgeSources(knowledgeGraph: KnowledgeGraph): StampedLog[] {
+    const logs = [];
     Object.entries(knowledgeGraph.edges).map(([edgeID, edge]) => {
       const has_primary_knowledge_source = edge.sources.some(
         (source) => source.resource_role === 'primary_knowledge_source' && source.resource_id,
@@ -136,17 +165,15 @@ module.exports = class BTEGraph {
 
   /**
    * Register subscribers
-   * @param {object} subscriber
    */
-  subscribe(subscriber) {
+  subscribe(subscriber: BTEGraphSubscriber): void {
     this.subscribers.push(subscriber);
   }
 
   /**
    * Unsubscribe a listener
-   * @param {object} subscriber
    */
-  unsubscribe(subscriber) {
+  unsubscribe(subscriber: BTEGraphSubscriber): void {
     this.subscribers = this.subscribers.filter((fn) => {
       if (fn != subscriber) return fn;
     });
@@ -155,7 +182,7 @@ module.exports = class BTEGraph {
   /**
    * Nofity all listeners
    */
-  notify() {
+  notify(): void {
     this.subscribers.map((subscriber) => {
       subscriber.update({
         nodes: this.nodes,

@@ -1,28 +1,36 @@
-const QEdge = require('./query_edge');
-const InvalidQueryGraphError = require('./exceptions/invalid_query_graph_error');
-const LogEntry = require('./log_entry');
-const debug = require('debug')('bte:biothings-explorer-trapi:query_graph');
-const QNode = require('./query_node');
-const biolink = require('./biolink');
-const id_resolver = require('biomedical_id_resolver');
-const _ = require('lodash');
-const utils = require('./utils');
+import QEdge from './query_edge';
+import InvalidQueryGraphError from './exceptions/invalid_query_graph_error';
+import LogEntry, { StampedLog } from './log_entry';
+import Debug from 'debug';
+import QNode from './query_node';
+import biolink from './biolink';
+import { resolveSRI } from 'biomedical_id_resolver';
+import _ from 'lodash';
+import * as utils from './utils';
+import { TrapiQueryGraph } from './types';
 
-module.exports = class QueryGraphHandler {
-  constructor(queryGraph, schema) {
+const debug = Debug('bte:biothings-explorer-trapi:query_graph');
+
+export default class QueryGraph {
+  queryGraph: TrapiQueryGraph;
+  schema: any;
+  logs: StampedLog[];
+  nodes: { [QNodeID: string]: QNode };
+  edges: { [QEdgeID: string]: QEdge };
+  constructor(queryGraph: TrapiQueryGraph, schema: any) {
     this.queryGraph = queryGraph;
     this.schema = schema;
     this.logs = [];
   }
 
-  _validateEmptyNodes(queryGraph) {
+  _validateEmptyNodes(queryGraph: TrapiQueryGraph): void {
     if (Object.keys(queryGraph.nodes).length === 0) {
       throw new InvalidQueryGraphError('Your Query Graph has no nodes defined.');
     }
   }
 
-  _validateOneNodeID(queryGraph) {
-    for (let nodeID in queryGraph.nodes) {
+  _validateOneNodeID(queryGraph: TrapiQueryGraph): void {
+    for (const nodeID in queryGraph.nodes) {
       if (queryGraph.nodes[nodeID] && queryGraph.nodes[nodeID]?.ids?.length > 0) {
         return;
       }
@@ -32,14 +40,14 @@ module.exports = class QueryGraphHandler {
     );
   }
 
-  _validateEmptyEdges(queryGraph) {
+  _validateEmptyEdges(queryGraph: TrapiQueryGraph): void {
     if (Object.keys(queryGraph.edges).length === 0) {
       throw new InvalidQueryGraphError('Your Query Graph has no edges defined.');
     }
   }
 
-  _validateNodeEdgeCorrespondence(queryGraph) {
-    for (let qEdgeID in queryGraph.edges) {
+  _validateNodeEdgeCorrespondence(queryGraph: TrapiQueryGraph): void {
+    for (const qEdgeID in queryGraph.edges) {
       if (!(this.queryGraph.edges[qEdgeID].subject in queryGraph.nodes)) {
         throw new InvalidQueryGraphError(`The subject of edge ${qEdgeID} is not defined in the query graph.`);
       }
@@ -49,7 +57,7 @@ module.exports = class QueryGraphHandler {
     }
   }
 
-  _validateDuplicateEdges(queryGraph) {
+  _validateDuplicateEdges(queryGraph: TrapiQueryGraph): void {
     const edgeSet = new Set();
     for (const edgeID in queryGraph.edges) {
       const subject = queryGraph.edges[edgeID].subject;
@@ -61,7 +69,7 @@ module.exports = class QueryGraphHandler {
     }
   }
 
-  _validateCycles(queryGraph) {
+  _validateCycles(queryGraph: TrapiQueryGraph): void {
     const nodes = {};
     for (const nodeID in queryGraph.nodes) {
       nodes[nodeID] = {
@@ -78,7 +86,7 @@ module.exports = class QueryGraphHandler {
 
     for (const firstNode in nodes) {
       if (nodes[firstNode].visited === true) continue;
-      const stack = [{ curNode: firstNode, parent: -1 }];
+      const stack: { curNode: string; parent: string | number }[] = [{ curNode: firstNode, parent: -1 }];
       nodes[firstNode].visited = true;
       while (stack.length !== 0) {
         const { curNode, parent } = stack.pop();
@@ -94,8 +102,10 @@ module.exports = class QueryGraphHandler {
     }
   }
 
-  _validateNodeProperties(queryGraph) {
-    const schemProps = this.schema?.components?.schemas?.QNode?.properties ? this.schema.components.schemas.QNode.properties : {};
+  _validateNodeProperties(queryGraph: TrapiQueryGraph): void {
+    const schemProps = this.schema?.components?.schemas?.QNode?.properties
+      ? this.schema.components.schemas.QNode.properties
+      : {};
     const nodeProperties = new Set(Object.keys(schemProps));
     const badProperties = new Set();
     const badNodes = new Set();
@@ -114,13 +124,15 @@ module.exports = class QueryGraphHandler {
           'WARNING',
           null,
           `Ignoring unrecognized properties (${[...badProperties].join(',')}) on nodes (${[...badNodes].join(',')}).`,
-        ).getLog()
+        ).getLog(),
       );
     }
   }
 
-  _validateEdgeProperties(queryGraph) {
-    const schemProps = this.schema?.components?.schemas?.QEdge?.properties ? this.schema.components.schemas.QEdge.properties : {};
+  _validateEdgeProperties(queryGraph: TrapiQueryGraph): void {
+    const schemProps = this.schema?.components?.schemas?.QEdge?.properties
+      ? this.schema.components.schemas.QEdge.properties
+      : {};
     const edgeProperties = new Set(Object.keys(schemProps));
     const badProperties = new Set();
     const badEdges = new Set();
@@ -139,12 +151,12 @@ module.exports = class QueryGraphHandler {
           'WARNING',
           null,
           `Ignoring unrecognized properties (${[...badProperties].join(',')}) on edges (${[...badEdges].join(',')}).`,
-        ).getLog()
+        ).getLog(),
       );
     }
   }
 
-  _validateNoDuplicateQualifierTypes(queryGraph) {
+  _validateNoDuplicateQualifierTypes(queryGraph: TrapiQueryGraph): void {
     Object.entries(queryGraph.edges).forEach(([id, edge]) => {
       if (edge.qualifier_constraints) {
         edge.qualifier_constraints.forEach((qualifierSet, i) => {
@@ -162,7 +174,7 @@ module.exports = class QueryGraphHandler {
     });
   }
 
-  _validate(queryGraph) {
+  _validate(queryGraph: TrapiQueryGraph): void {
     this._validateEmptyEdges(queryGraph);
     this._validateEmptyNodes(queryGraph);
     this._validateOneNodeID(queryGraph);
@@ -174,19 +186,17 @@ module.exports = class QueryGraphHandler {
     this._validateNoDuplicateQualifierTypes(queryGraph);
   }
 
-  /**
-   * @private
-   */
-  async _findNodeCategories(curies) {
+  private async _findNodeCategories(curies: string[]): Promise<string[]> {
     const noMatchMessage = `No category match found for ${JSON.stringify(curies)}.`;
     if (curies.length == 1) {
-      let category = await id_resolver.resolveSRI({
+      let matchedCategories: string[];
+      const resolved = await resolveSRI({
         unknown: curies,
       });
       debug(`Query node missing categories...Looking for match...`);
-      if (category[curies[0]] && category[curies[0]].primaryTypes) {
-        category = category[curies[0]].primaryTypes;
-        return category.filter(c => c).map(c => `biolink:${c}`);
+      if (resolved[curies[0]] && resolved[curies[0]].primaryTypes) {
+        matchedCategories = resolved[curies[0]].primaryTypes;
+        return matchedCategories.filter((c) => c).map((c) => `biolink:${c}`);
       } else {
         debug(noMatchMessage);
         this.logs.push(new LogEntry('ERROR', null, noMatchMessage).getLog());
@@ -194,16 +204,16 @@ module.exports = class QueryGraphHandler {
       }
     } else {
       try {
-        let finalCategories = [];
-        const tree = biolink.biolink._biolink_class_tree._objects_in_tree;
+        let finalCategories: string[] = [];
+        const tree = biolink.biolink.classTree.objects;
 
         // get array of all unique categories for all curies
         const allCategories = [
-          ...Object.values(await id_resolver.resolveSRI({ unknown: curies }))
-            .map((curie) => curie.semanticTypes)
-            .filter((semanticTypes) => !semanticTypes.every((item) => item === null))
+          ...Object.values(await resolveSRI({ unknown: curies }))
+            .map((resolvedCurie) => resolvedCurie.semanticTypes)
+            .filter((semanticTypes) => semanticTypes.some((item) => item !== null))
             .map((semanticTypes) => semanticTypes.map((t) => utils.removeBioLinkPrefix(t)))
-            .reduce((set, arr) => new Set([...set, ...arr]), new Set()),
+            .reduce((set: Set<string>, arr: string[]): Set<string> => new Set([...set, ...arr]), new Set()),
         ];
 
         if (allCategories.length) {
@@ -214,40 +224,40 @@ module.exports = class QueryGraphHandler {
           return [];
         }
 
-        allCategories.forEach((cat, i) => {
-          const keepSet = new Set();
-          const rmSet = new Set();
+        allCategories.forEach((category, i) => {
+          const keepSet: Set<string> = new Set();
+          const rmSet: Set<string> = new Set();
           // check against each currently selected category
           finalCategories.forEach((selected) => {
             if (tree[selected].is_mixin) {
               rmSet.add(selected);
             }
-            if (tree[cat].is_mixin) {
-              rmSet.add(cat);
+            if (tree[category].is_mixin) {
+              rmSet.add(category);
             }
-            if (cat === selected) {
-              return keepSet.add(cat);
+            if (category === selected) {
+              return keepSet.add(category);
             }
 
-            let parent = cat;
+            let parent = category;
             while (parent) {
-              if (selected === parent || tree[selected]._children.includes(parent)) {
+              if (selected === parent || tree[selected].children.includes(parent)) {
                 rmSet.add(selected);
-                return keepSet.add(cat);
+                return keepSet.add(category);
               }
-              parent = tree[parent]._parent;
+              parent = tree[parent].parent;
             }
 
             parent = selected;
             while (parent) {
-              if (cat === parent || tree[cat]._children.includes(parent)) {
-                rmSet.add(cat);
+              if (category === parent || tree[category].children.includes(parent)) {
+                rmSet.add(category);
                 return keepSet.add(selected);
               }
-              parent = tree[parent]._parent;
+              parent = tree[parent].parent;
             }
             // add both if neither is ancestor of the other
-            keepSet.add(cat).add(selected);
+            keepSet.add(category).add(selected);
           });
           finalCategories = [...keepSet].filter((cat) => !rmSet.has(cat));
           // in event no categories are kept (due to mixin shenanigans/etc)
@@ -269,12 +279,9 @@ module.exports = class QueryGraphHandler {
     }
   }
 
-  /**
-   * @private
-   */
-  async _storeNodes() {
-    let nodes = {};
-    for (let qNodeID in this.queryGraph.nodes) {
+  private async _storeNodes(): Promise<{ [qNodeID: string]: QNode }> {
+    const nodes: { [qNodeID: string]: QNode } = {};
+    for (const qNodeID in this.queryGraph.nodes) {
       //if node has ID but no categories
       if (
         (!this.queryGraph.nodes[qNodeID].categories && this.queryGraph.nodes[qNodeID].ids) ||
@@ -323,18 +330,21 @@ module.exports = class QueryGraphHandler {
         nodes[qNodeID] = new QNode({ id: qNodeID, ...this.queryGraph.nodes[qNodeID] });
       }
 
-      if (nodes[qNodeID].category !== undefined) {
+      if (nodes[qNodeID].categories !== undefined) {
         if (
-          nodes[qNodeID].category.includes('biolink:Disease') ||
-          nodes[qNodeID].category.includes('biolink:PhenotypicFeature')
+          nodes[qNodeID].categories.includes('biolink:Disease') ||
+          nodes[qNodeID].categories.includes('biolink:PhenotypicFeature')
         ) {
-          nodes[qNodeID].category = nodes[qNodeID].category.filter(
+          nodes[qNodeID].categories = nodes[qNodeID].categories.filter(
             (e) => e !== 'biolink:Disease' && e !== 'biolink:PhenotypicFeature',
           );
-          nodes[qNodeID].category.push('biolink:DiseaseOrPhenotypicFeature');
+          nodes[qNodeID].categories.push('biolink:DiseaseOrPhenotypicFeature');
         }
-        if (nodes[qNodeID].category.includes('biolink:Protein') && !nodes[qNodeID].category.includes('biolink:Gene')) {
-          nodes[qNodeID].category.push('biolink:Gene');
+        if (
+          nodes[qNodeID].categories.includes('biolink:Protein') &&
+          !nodes[qNodeID].categories.includes('biolink:Gene')
+        ) {
+          nodes[qNodeID].categories.push('biolink:Gene');
         }
       }
     }
@@ -344,10 +354,7 @@ module.exports = class QueryGraphHandler {
     return nodes;
   }
 
-  /**
-   *
-   */
-  async calculateEdges() {
+  async calculateEdges(): Promise<QEdge[]> {
     this._validate(this.queryGraph);
     //populate edge and node info
     debug(`(1) Creating edges for manager...`);
@@ -355,9 +362,9 @@ module.exports = class QueryGraphHandler {
       this.nodes = await this._storeNodes();
     }
 
-    let edges = {};
+    const edges = {};
     Object.entries(this.queryGraph.edges).forEach(([qEdgeID, qEdge]) => {
-      let edge_info = {
+      const edge_info = {
         ...qEdge,
         ...{
           subject: this.nodes[qEdge.subject],
@@ -381,4 +388,4 @@ module.exports = class QueryGraphHandler {
     );
     return Object.values(this.edges);
   }
-};
+}
