@@ -26,7 +26,7 @@
                 "eB": {
                     "subject": "nA",
                     "object": "nB",
-                    "predicates": ["biolink:interacts_with"]
+                    "predicates": ["biolink:physically_interacts_with"]
                 },
                 "eC": {
                     "subject": "nB",

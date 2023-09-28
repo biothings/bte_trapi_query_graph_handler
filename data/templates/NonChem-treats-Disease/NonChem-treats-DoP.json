@@ -3,17 +3,18 @@
         "query_graph": {
             "nodes": {
                 "creativeQuerySubject": {
-                    "categories":["biolink:ChemicalEntity"]
+                    "categories":
+                    ["biolink:Procedure", "biolink:Treatment", "biolink:ClinicalIntervention"]
                 },
                 "creativeQueryObject": {
-                    "categories":["biolink:Gene", "biolink:Protein"]
+                    "categories":["biolink:DiseaseOrPhenotypicFeature"]
                }
             },
             "edges": {
                 "eA": {
                     "subject": "creativeQuerySubject",
                     "object": "creativeQueryObject",
-                    "predicates": ["biolink:interacts_with"]
+                    "predicates": ["biolink:treats"]
                 }
             }
         }
