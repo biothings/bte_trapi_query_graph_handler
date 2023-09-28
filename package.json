@@ -47,6 +47,7 @@
     "@biothings-explorer/call-apis": "file:../call-apis",
     "@biothings-explorer/node-expansion": "file:../node-expansion",
     "@biothings-explorer/smartapi-kg": "file:../smartapi-kg",
+    "@sentry/node": "^7.72.0",
     "async": "^3.2.1",
     "biolink-model": "file:../../biolink-model",
     "biomedical_id_resolver": "file:../../biomedical_id_resolver",
