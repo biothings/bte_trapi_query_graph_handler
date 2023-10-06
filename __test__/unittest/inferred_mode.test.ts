@@ -1,59 +1,45 @@
-const { TRAPIQueryHandler } = require('../../src/index');
-const path = require('path');
-const fs = require('fs');
+import TRAPIQueryHandler, { TrapiQueryGraph, TrapiResponse, TrapiResult } from '../../src/index';
+import path from 'path';
+import fs from 'fs';
 const smartAPIPAth = path.resolve(__dirname, '../../../bte-trapi/data/smartapi_specs.json');
 const predicatesPath = path.resolve(__dirname, '../../../bte-trapi/data/predicates.json');
-const _ = require('lodash');
+import _ from 'lodash';
+import { StampedLog, TrapiLog } from '../../src/log_entry';
+import InferredQueryHandler, { CombinedResponse } from '../../src/inferred_mode/inferred_mode';
+import { MatchedTemplate } from '../../src/inferred_mode/template_lookup';
 
 const queryGraph1 = JSON.parse(
-  fs.readFileSync(path.resolve(__dirname, '../data/chemicalEntity_treats_acanthosis.json')),
-).message.query_graph;
+  fs.readFileSync(path.resolve(__dirname, '../data/chemicalEntity_treats_acanthosis.json'), { encoding: 'utf8' }),
+).message.query_graph as TrapiQueryGraph;
 
 describe('Test InferredQueryHandler', () => {
   test('queryIsValid', () => {
-    const InferredQueryHandler = require('../../src/inferred_mode/inferred_mode');
     const noCategories = _.cloneDeep(queryGraph1);
     Object.values(noCategories.nodes).forEach((node) => {
-      node.categories = null;
+      node.categories = undefined;
     });
 
-    let handler = new InferredQueryHandler(
-      {},
-      TRAPIQueryHandler,
-      noCategories,
-      [],
-      {},
-      smartAPIPAth,
-      predicatesPath,
-      true,
-    );
+    const queryGraphHandler = new TRAPIQueryHandler();
+
+    let handler = new InferredQueryHandler(queryGraphHandler, noCategories, [], {}, smartAPIPAth, predicatesPath, true);
 
     expect(handler.queryIsValid).toBeFalsy();
 
     const missingID = _.cloneDeep(queryGraph1);
     Object.values(missingID.nodes).forEach((node) => {
-      node.ids = null;
+      node.ids = undefined;
     });
 
-    handler = new InferredQueryHandler({}, TRAPIQueryHandler, missingID, [], {}, smartAPIPAth, predicatesPath, true);
+    handler = new InferredQueryHandler(queryGraphHandler, missingID, [], {}, smartAPIPAth, predicatesPath, true);
 
     expect(handler.queryIsValid).toBeFalsy();
 
     const missingPredicate = _.cloneDeep(queryGraph1);
     Object.values(missingPredicate.edges).forEach((edge) => {
-      edge.predicates = null;
+      edge.predicates = undefined;
     });
 
-    handler = new InferredQueryHandler(
-      {},
-      TRAPIQueryHandler,
-      missingPredicate,
-      [],
-      {},
-      smartAPIPAth,
-      predicatesPath,
-      true,
-    );
+    handler = new InferredQueryHandler(queryGraphHandler, missingPredicate, [], {}, smartAPIPAth, predicatesPath, true);
 
     expect(handler.queryIsValid).toBeFalsy();
 
@@ -63,8 +49,7 @@ describe('Test InferredQueryHandler', () => {
     });
 
     handler = new InferredQueryHandler(
-      {},
-      TRAPIQueryHandler,
+      queryGraphHandler,
       missingPredicateType2,
       [],
       {},
@@ -80,7 +65,7 @@ describe('Test InferredQueryHandler', () => {
       node.ids = ['id0', 'id1'];
     });
 
-    handler = new InferredQueryHandler({}, TRAPIQueryHandler, tooManyIDs, [], {}, smartAPIPAth, predicatesPath, true);
+    handler = new InferredQueryHandler(queryGraphHandler, tooManyIDs, [], {}, smartAPIPAth, predicatesPath, true);
 
     expect(handler.queryIsValid).toBeFalsy();
 
@@ -90,8 +75,7 @@ describe('Test InferredQueryHandler', () => {
     });
 
     handler = new InferredQueryHandler(
-      {},
-      TRAPIQueryHandler,
+      queryGraphHandler,
       multiplePredicates,
       [],
       {},
@@ -103,8 +87,7 @@ describe('Test InferredQueryHandler', () => {
     expect(handler.queryIsValid).toBeFalsy();
 
     handler = new InferredQueryHandler(
-      {},
-      TRAPIQueryHandler,
+      queryGraphHandler,
       queryGraph1,
       [],
       { smartAPIID: 'test', teamName: 'test' },
@@ -115,16 +98,15 @@ describe('Test InferredQueryHandler', () => {
 
     expect(handler.queryIsValid).toBeFalsy();
 
-    handler = new InferredQueryHandler({}, TRAPIQueryHandler, queryGraph1, [], {}, smartAPIPAth, predicatesPath, true);
+    handler = new InferredQueryHandler(queryGraphHandler, queryGraph1, [], {}, smartAPIPAth, predicatesPath, true);
 
     expect(handler.queryIsValid).toBeTruthy();
   });
 
   test('getQueryParts', () => {
-    const InferredQueryHandler = require('../../src/inferred_mode/inferred_mode');
+    const queryGraphHandler = new TRAPIQueryHandler();
     const handler = new InferredQueryHandler(
-      {},
-      TRAPIQueryHandler,
+      queryGraphHandler,
       queryGraph1,
       [],
       {},
@@ -148,10 +130,9 @@ describe('Test InferredQueryHandler', () => {
   describe('findTemplates', () => {
     test('find templates', async () => {
       // may need updates if biolink changes significantly
-      const InferredQueryHandler = require('../../src/inferred_mode/inferred_mode');
+      const queryGraphHandler = new TRAPIQueryHandler();
       const handler = new InferredQueryHandler(
-        {},
-        TRAPIQueryHandler,
+        queryGraphHandler,
         queryGraph1,
         [],
         {},
@@ -172,15 +153,14 @@ describe('Test InferredQueryHandler', () => {
     });
 
     test("don't find templates", async () => {
-      const InferredQueryHandler = require('../../src/inferred_mode/inferred_mode');
       // may need updates if biolink changes significantly
       const badQuery = _.cloneDeep(queryGraph1);
       badQuery.nodes.n01.categories = ['biolink:disease'];
-      const logs = [];
+      const logs: StampedLog[] = [];
 
+      const queryGraphHandler = new TRAPIQueryHandler();
       const handler = new InferredQueryHandler(
-        {},
-        TRAPIQueryHandler,
+        queryGraphHandler,
         badQuery,
         logs,
         {},
@@ -197,10 +177,9 @@ describe('Test InferredQueryHandler', () => {
   });
 
   test('createQueries', async () => {
-    const InferredQueryHandler = require('../../src/inferred_mode/inferred_mode');
     const spy = jest.spyOn(InferredQueryHandler.prototype, 'findTemplates');
 
-    const templates = [
+    const templates: MatchedTemplate[] = [
       {
         queryGraph: {
           nodes: {
@@ -221,37 +200,13 @@ describe('Test InferredQueryHandler', () => {
             },
           },
         },
-        template: {
-          nodes: {
-            creativeQuerySubject: {
-              categories: [],
-            },
-            nA: {
-              categories: [],
-            },
-            creativeQueryObject: {
-              categories: [],
-            },
-          },
-          edges: {
-            eA: {
-              subject: 'creativeQuerySubject',
-              object: 'nA',
-              predicates: [],
-            },
-            eB: {
-              subject: 'nA',
-              object: 'creativeQueryObject',
-              predicates: [],
-            },
-          },
-        },
+        template: 'Chem-treats-DoP.json',
       },
     ];
 
+    const queryGraphHandler = new TRAPIQueryHandler();
     const handler = new InferredQueryHandler(
-      {},
-      TRAPIQueryHandler,
+      queryGraphHandler,
       queryGraph1,
       [],
       {},
@@ -272,8 +227,7 @@ describe('Test InferredQueryHandler', () => {
 
     // check that undefined deletion works
     const handler2 = new InferredQueryHandler(
-      {},
-      TRAPIQueryHandler,
+      queryGraphHandler,
       {
         nodes: {
           n02: {
@@ -310,17 +264,15 @@ describe('Test InferredQueryHandler', () => {
   });
 
   test('combineResponse', () => {
-    const InferredQueryHandler = require('../../src/inferred_mode/inferred_mode');
+    const options = {
+      provenanceUsesServiceProvider: false,
+    };
+    const queryGraphHandler = new TRAPIQueryHandler(options);
     const inferredQueryHandler = new InferredQueryHandler(
-      {
-        options: {
-          provenanceUsesServiceProvider: false
-        }
-      },
-      TRAPIQueryHandler,
+      queryGraphHandler,
       queryGraph1,
       [],
-      {},
+      options,
       smartAPIPAth,
       predicatesPath,
       true,
@@ -329,7 +281,7 @@ describe('Test InferredQueryHandler', () => {
     const trapiQueryHandler0 = new TRAPIQueryHandler();
     trapiQueryHandler0.logs.push({
       message: 'new fake log',
-    });
+    } as StampedLog);
     trapiQueryHandler0.getResponse = () => ({
       workflow: [{ id: 'lookup' }],
       message: {
@@ -375,16 +327,19 @@ describe('Test InferredQueryHandler', () => {
               predicate: 'biolink:treats',
               subject: 'fakeCompound2',
               object: 'fakeDisease1',
+              sources: [],
             },
             edgeHash2: {
               predicate: 'biolink:treats',
               subject: 'fakeCompound1',
               object: 'fakeDisease1',
+              sources: [],
             },
             edgeHash3: {
               predicate: 'biolink:treats',
               subject: 'fakeCompound3',
               object: 'fakeDisease1',
+              sources: [],
             },
           },
         },
@@ -402,17 +357,19 @@ describe('Test InferredQueryHandler', () => {
                 },
               ],
             },
-            analyses: [{
-              resource_id: 'infores:biothings_explorer',
-              edge_bindings: {
-                e0: [
-                  {
-                    id: 'edgeHash1',
-                  },
-                ],
+            analyses: [
+              {
+                resource_id: 'infores:biothings_explorer',
+                edge_bindings: {
+                  e0: [
+                    {
+                      id: 'edgeHash1',
+                    },
+                  ],
+                },
+                score: 0.5,
               },
-              score: 0.5,
-            }],
+            ],
           },
           {
             node_bindings: {
@@ -427,17 +384,19 @@ describe('Test InferredQueryHandler', () => {
                 },
               ],
             },
-            analyses: [{
-              resource_id: 'infores:biothings_explorer',
-              edge_bindings: {
-                e0: [
-                  {
-                    id: 'edgeHash2',
-                  },
-                ],
+            analyses: [
+              {
+                resource_id: 'infores:biothings_explorer',
+                edge_bindings: {
+                  e0: [
+                    {
+                      id: 'edgeHash2',
+                    },
+                  ],
+                },
+                score: 0.25,
               },
-              score: 0.25,
-            }],
+            ],
           },
           {
             node_bindings: {
@@ -452,28 +411,30 @@ describe('Test InferredQueryHandler', () => {
                 },
               ],
             },
-            analyses: [{
-              resource_id: 'infores:biothings_explorer',
-              edge_bindings: {
-                e0: [
-                  {
-                    id: 'edgeHash3',
-                  },
-                ],
+            analyses: [
+              {
+                resource_id: 'infores:biothings_explorer',
+                edge_bindings: {
+                  e0: [
+                    {
+                      id: 'edgeHash3',
+                    },
+                  ],
+                },
+                score: 0.2,
               },
-              score: 0.2,
-            }],
+            ],
           },
         ],
       },
       logs: [
         {
           message: 'new fake log',
-        },
+        } as TrapiLog,
       ],
     });
 
-    const combinedResponse = {
+    const combinedResponse: CombinedResponse = {
       workflow: [{ id: 'lookup' }],
       message: {
         auxiliary_graphs: {},
@@ -498,11 +459,13 @@ describe('Test InferredQueryHandler', () => {
               predicate: 'biolink:treats',
               subject: 'fakeCompound1',
               object: 'fakeDisease1',
+              sources: [],
             },
             edgeHash2: {
               predicate: 'biolink:treats',
               subject: 'fakeCompound3',
               object: 'fakeDisease1',
+              sources: [],
             },
           },
         },
@@ -520,17 +483,19 @@ describe('Test InferredQueryHandler', () => {
                 },
               ],
             },
-            analyses: [{
-              resource_id: 'infores:biothings_explorer',
-              edge_bindings: {
-                e01: [
-                  {
-                    id: 'edgeHash1',
-                  },
-                ],
+            analyses: [
+              {
+                resource_id: 'infores:biothings_explorer',
+                edge_bindings: {
+                  e01: [
+                    {
+                      id: 'edgeHash1',
+                    },
+                  ],
+                },
+                score: 0.75,
               },
-              score: 0.75,
-            }],
+            ],
           },
           'fakeCompound3-fakeDisease1': {
             node_bindings: {
@@ -545,23 +510,25 @@ describe('Test InferredQueryHandler', () => {
                 },
               ],
             },
-            analyses: [{
-              edge_bindings: {
-                e01: [
-                  {
-                    id: 'edgeHash2',
-                  },
-                ],
+            analyses: [
+              {
+                edge_bindings: {
+                  e01: [
+                    {
+                      id: 'edgeHash2',
+                    },
+                  ],
+                },
+                score: undefined,
               },
-              score: undefined,
-            }],
+            ],
           },
         },
       },
       logs: [
         {
           message: 'fake initial log',
-        },
+        } as StampedLog,
       ],
     };
 
@@ -581,7 +548,9 @@ describe('Test InferredQueryHandler', () => {
     expect(Object.values(mergedResults)[0]).toEqual(1);
     expect(creativeLimitHit).toBeTruthy();
     expect(Object.keys(combinedResponse.message.results)).toHaveLength(3);
-    expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].analyses[0].score).toEqual(0.8421052631578949);
+    expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].analyses[0].score).toEqual(
+      0.8421052631578949,
+    );
     expect(combinedResponse.message.results['fakeCompound3-fakeDisease1'].analyses[0].score).toEqual(0.2);
     expect(combinedResponse.logs).toHaveLength(3);
     expect(combinedResponse.logs[1].message).toMatch('[Template-2]: new fake log');
@@ -641,16 +610,19 @@ describe('Test InferredQueryHandler', () => {
               predicate: 'biolink:negatively_regulates',
               subject: 'fakeCompound4',
               object: 'fakeGene1',
+              sources: [],
             },
             edgeHash2: {
               predicate: 'biolink:causes',
               subject: 'fakeGene1',
               object: 'fakeDisease1',
+              sources: [],
             },
             edgeHash3: {
               predicate: 'biolink:treats',
               subject: 'fakeCompound1',
               object: 'fakeDisease1',
+              sources: [],
             },
           },
         },
@@ -673,23 +645,25 @@ describe('Test InferredQueryHandler', () => {
                 },
               ],
             },
-            analyses: [{
-              resource_id: 'infores:biothings_explorer',
-              edge_bindings: {
-                e0: [
-                  {
-                    id: 'edgeHash1',
-                  },
-                ],
-                e01: [
-                  {
-                    id: 'edgeHash2',
-                  },
-                ],
+            analyses: [
+              {
+                resource_id: 'infores:biothings_explorer',
+                edge_bindings: {
+                  e0: [
+                    {
+                      id: 'edgeHash1',
+                    },
+                  ],
+                  e01: [
+                    {
+                      id: 'edgeHash2',
+                    },
+                  ],
+                },
+                score: 0.99,
               },
-              score: 0.99,
-            }],
-          },
+            ],
+          } as TrapiResult,
           {
             node_bindings: {
               creativeQuerySubject: [
@@ -703,24 +677,26 @@ describe('Test InferredQueryHandler', () => {
                 },
               ],
             },
-            analyses: [{
-              resource_id: 'infores:biothings_explorer',
-              edge_bindings: {
-                e0: [
-                  {
-                    id: 'edgeHash3',
-                  },
-                ],
+            analyses: [
+              {
+                resource_id: 'infores:biothings_explorer',
+                edge_bindings: {
+                  e0: [
+                    {
+                      id: 'edgeHash3',
+                    },
+                  ],
+                },
+                score: 0,
               },
-              score: undefined,
-            }],
-          },
+            ],
+          } as TrapiResult,
         ],
       },
       logs: [
         {
           message: 'new fake log',
-        },
+        } as TrapiLog,
       ],
     });
 
@@ -735,14 +711,15 @@ describe('Test InferredQueryHandler', () => {
     expect(queryHadResults1).toBeTruthy();
     expect(Object.keys(mergedResults1)).toHaveLength(1);
     expect(creativeLimitHit1).toBeTruthy();
-    expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].analyses[0].score).toEqual(0.8421052631578949);
+    expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].analyses[0].score).toEqual(
+      0.8421052631578949,
+    );
   });
 
   test('pruneKnowledgeGraph', () => {
-    const InferredQueryHandler = require('../../src/inferred_mode/inferred_mode');
+    const queryGraphHandler = new TRAPIQueryHandler();
     const handler = new InferredQueryHandler(
-      {},
-      TRAPIQueryHandler,
+      queryGraphHandler,
       queryGraph1,
       [],
       {},
@@ -750,7 +727,7 @@ describe('Test InferredQueryHandler', () => {
       predicatesPath,
       true,
     );
-    const combinedResponse = {
+    const combinedResponse: TrapiResponse = {
       workflow: [{ id: 'lookup' }],
       message: {
         auxiliary_graphs: {},
@@ -775,19 +752,25 @@ describe('Test InferredQueryHandler', () => {
               predicate: 'biolink:treats',
               subject: 'fakeCompound1',
               object: 'fakeDisease1',
-              attributes: [{
-                attribute_type_id: 'biolink:support_graphs',
-                value: []
-              }],
+              sources: [],
+              attributes: [
+                {
+                  attribute_type_id: 'biolink:support_graphs',
+                  value: [],
+                },
+              ],
             },
             edgeHash2: {
               predicate: 'biolink:treats',
               subject: 'fakeCompound3',
               object: 'fakeDisease1',
-              attributes: [{
-                attribute_type_id: 'biolink:support_graphs',
-                value: []
-              }],
+              sources: [],
+              attributes: [
+                {
+                  attribute_type_id: 'biolink:support_graphs',
+                  value: [],
+                },
+              ],
             },
           },
         },
@@ -805,24 +788,26 @@ describe('Test InferredQueryHandler', () => {
                 },
               ],
             },
-            analyses: [{
-              resource_id: 'infores:biothings_explorer',
-              edge_bindings: {
-                e01: [
-                  {
-                    id: 'edgeHash1',
-                  },
-                ],
+            analyses: [
+              {
+                resource_id: 'infores:biothings_explorer',
+                edge_bindings: {
+                  e01: [
+                    {
+                      id: 'edgeHash1',
+                    },
+                  ],
+                },
+                score: 0.75,
               },
-              score: 0.75,
-            }],
-          },
+            ],
+          } as TrapiResult,
         ],
       },
       logs: [
         {
           message: 'fake initial log',
-        },
+        } as StampedLog,
       ],
     };
 
@@ -833,7 +818,7 @@ describe('Test InferredQueryHandler', () => {
 
   test('query', async () => {
     const querySpy = jest.spyOn(TRAPIQueryHandler.prototype, 'query');
-    querySpy.mockImplementation(async () => { });
+    querySpy.mockImplementation(async () => undefined);
     const responseSpy = jest.spyOn(TRAPIQueryHandler.prototype, 'getResponse');
     responseSpy.mockImplementation(() => {
       return {
@@ -874,10 +859,13 @@ describe('Test InferredQueryHandler', () => {
                 subject: 'creativeQuerySubject',
                 object: 'creativeQueryObject',
                 knowledge_type: 'inferred',
-                attributes: [{
-                  attribute_type_id: 'biolink:support_graphs',
-                  value: []
-                }],
+                sources: [],
+                attributes: [
+                  {
+                    attribute_type_id: 'biolink:support_graphs',
+                    value: [],
+                  },
+                ],
               },
             },
           },
@@ -895,27 +883,28 @@ describe('Test InferredQueryHandler', () => {
                   },
                 ],
               },
-              analyses: [{
-                edge_bindings: {
-                  e01: [
-                    {
-                      id: 'edgeHash1',
-                    },
-                  ],
+              analyses: [
+                {
+                  edge_bindings: {
+                    e01: [
+                      {
+                        id: 'edgeHash1',
+                      },
+                    ],
+                  },
+                  score: 0.75,
                 },
-                score: 0.75,
-              }],
+              ],
             },
           ],
         },
         logs: [
           {
             message: 'fake initial log',
-          },
+          } as TrapiLog,
         ],
       };
     });
-    const InferredQueryHandler = require('../../src/inferred_mode/inferred_mode');
     const queryIsValid = jest.spyOn(InferredQueryHandler.prototype, 'queryIsValid', 'get');
     const getQueryParts = jest.spyOn(InferredQueryHandler.prototype, 'getQueryParts');
     const findTemplates = jest.spyOn(InferredQueryHandler.prototype, 'findTemplates');
@@ -927,7 +916,6 @@ describe('Test InferredQueryHandler', () => {
 
     const handler = new InferredQueryHandler(
       parentHandler,
-      TRAPIQueryHandler,
       {
         nodes: {
           creativeQuerySubject: {
@@ -980,8 +968,18 @@ describe('Test InferredQueryHandler', () => {
   test('supportedLookups', async () => {
     const { supportedLookups } = require('../../src/inferred_mode/template_lookup');
     const supported = await supportedLookups();
-    expect(supported).toContainEqual({ subject: 'biolink:Drug', predicate: 'biolink:treats', object: 'biolink:Disease', qualifiers: undefined });
-    expect(supported).toContainEqual({ subject: 'biolink:SmallMolecule', predicate: 'biolink:treats', object: 'biolink:PhenotypicFeature', qualifiers: undefined });
+    expect(supported).toContainEqual({
+      subject: 'biolink:Drug',
+      predicate: 'biolink:treats',
+      object: 'biolink:Disease',
+      qualifiers: undefined,
+    });
+    expect(supported).toContainEqual({
+      subject: 'biolink:SmallMolecule',
+      predicate: 'biolink:treats',
+      object: 'biolink:PhenotypicFeature',
+      qualifiers: undefined,
+    });
     expect(supported.length).toBeGreaterThanOrEqual(5 * 2 * 3);
   });
 });

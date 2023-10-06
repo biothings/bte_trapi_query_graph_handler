@@ -1,8 +1,15 @@
-const QNode = require('../../src/query_node');
+import { SRIBioEntity } from 'biomedical_id_resolver/built/common/types';
+import QNode from '../../src/query_node';
 
 describe('Testing QueryNode Module', () => {
   const node1_equivalent_ids = {
     'NCBIGene:1017': {
+      primaryID: 'NCBIGene:1017',
+      equivalentIDs: ['NCBIGene:1017'],
+      label: 'CDK2',
+      labelAliases: ['CDK2'],
+      primaryTypes: ['Gene'],
+      semanticTypes: ['Gene'],
       db_ids: {
         NCBIGene: ['1017'],
         SYMBOL: ['CDK2'],
@@ -33,7 +40,7 @@ describe('Testing QueryNode Module', () => {
     });
 
     test('test node with equivalent identifiers not set should return false', () => {
-      const gene_node = new QNode({ id: 'n1', categories: 'Gene' });
+      const gene_node = new QNode({ id: 'n1', categories: ['Gene'] });
       const res = gene_node.hasEquivalentIDs();
       expect(res).toBeFalsy();
     });
@@ -41,18 +48,20 @@ describe('Testing QueryNode Module', () => {
 
   describe('Test getEntities', () => {
     test('If equivalent ids are empty, should return an empty array', () => {
-      const gene_node = new QNode({ id: 'n1', categories: 'Gene' });
+      const gene_node = new QNode({ id: 'n1', categories: ['Gene'] });
       gene_node.equivalentIDs = {};
       expect(gene_node.getEntities()).toEqual([]);
     });
 
     test('If equivalent ids are not empty, should return an array of bioentities', () => {
-      const gene_node = new QNode({ id: 'n1', categories: 'Gene' });
+      const gene_node = new QNode({ id: 'n1', categories: ['Gene'] });
       gene_node.equivalentIDs = {
+        //@ts-expect-error: partial data for specific test
         A: {
           primaryID: 'a',
           equivalentIDs: ['b', 'c'],
         },
+        //@ts-expect-error: partial data for specific test
         B: {
           primaryID: 'd',
           equivalentIDs: ['e'],
@@ -73,18 +82,20 @@ describe('Testing QueryNode Module', () => {
 
   describe('Test getPrimaryIDs', () => {
     test('If equivalent ids are empty, should return an empty array', () => {
-      const gene_node = new QNode({ id: 'n1', categories: 'Gene' });
+      const gene_node = new QNode({ id: 'n1', categories: ['Gene'] });
       gene_node.equivalentIDs = {};
       expect(gene_node.getPrimaryIDs()).toEqual([]);
     });
 
     test('If equivalent ids are not empty, should return an array of primaryIDs', () => {
-      const gene_node = new QNode({ id: 'n1', categories: 'Gene' });
+      const gene_node = new QNode({ id: 'n1', categories: ['Gene'] });
       gene_node.equivalentIDs = {
+        //@ts-expect-error: partial data for specific test
         A: {
           primaryID: 'a',
           equivalentIDs: ['b', 'c'],
         },
+        //@ts-expect-error: partial data for specific test
         B: {
           primaryID: 'd',
           equivalentIDs: ['e'],
@@ -96,14 +107,17 @@ describe('Testing QueryNode Module', () => {
 
   describe('Test updateEquivalentIDs', () => {
     test('If equivalent ids does not exist, should set it with the input', () => {
-      const gene_node = new QNode({ id: 'n1', categories: 'Gene' });
+      const gene_node = new QNode({ id: 'n1', categories: ['Gene'] });
+      //@ts-expect-error: partial data for specific test
       gene_node.updateEquivalentIDs({ a: 'b' });
       expect(gene_node.equivalentIDs).toEqual({ a: 'b' });
     });
 
     test('If equivalent ids are not empty, should update the equivalent ids', () => {
-      const gene_node = new QNode({ id: 'n1', categories: 'Gene' });
+      const gene_node = new QNode({ id: 'n1', categories: ['Gene'] });
+      //@ts-expect-error: partial data for specific test
       gene_node.equivalentIDs = { a: 'b', c: 'd' };
+      //@ts-expect-error: partial data for specific test
       gene_node.updateEquivalentIDs({ e: 'f' });
       expect(gene_node.getEquivalentIDs()).toEqual({ a: 'b', c: 'd', e: 'f' });
     });
@@ -111,14 +125,14 @@ describe('Testing QueryNode Module', () => {
 
   describe('Test getCategories function', () => {
     test('If equivalent ids are empty, return itself and its descendants', () => {
-      const node = new QNode({ id: 'n1', categories: 'DiseaseOrPhenotypicFeature' });
+      const node = new QNode({ id: 'n1', categories: ['DiseaseOrPhenotypicFeature'] });
       expect(node.getCategories()).toContain('Disease');
       expect(node.getCategories()).toContain('PhenotypicFeature');
       expect(node.getCategories()).toContain('DiseaseOrPhenotypicFeature');
     });
 
     test('If equivalent ids are empty, return itself and its descendants using NamedThing as example', () => {
-      const node = new QNode({ id: 'n1', categories: 'NamedThing' });
+      const node = new QNode({ id: 'n1', categories: ['NamedThing'] });
       expect(node.getCategories()).toContain('Disease');
       expect(node.getCategories()).toContain('PhenotypicFeature');
       expect(node.getCategories()).toContain('DiseaseOrPhenotypicFeature');
@@ -127,23 +141,23 @@ describe('Testing QueryNode Module', () => {
     });
 
     test('If equivalent ids are empty, return itself and its descendants using Gene as example', () => {
-      const node = new QNode({ id: 'n1', categories: 'Gene' });
+      const node = new QNode({ id: 'n1', categories: ['Gene'] });
       expect(node.getCategories()).toEqual(['Gene']);
     });
 
     test('If equivalent ids are not empty, return all primary semantic types defined in equivalent entities', () => {
-      const node = new QNode({ id: 'n1', categories: 'Gene' });
+      const node = new QNode({ id: 'n1', categories: ['Gene'] });
       node.setEquivalentIDs({
-        A:
-          {
-            primaryTypes: ['m', 'p'],
-            semanticTypes: ['m', 'n', 'p', 'q'],
-          },
-        B:
-          {
-            primaryTypes: ['x'],
-            semanticTypes: ['x', 'y'],
-          },
+        //@ts-expect-error: partial data for specific test
+        A: {
+          primaryTypes: ['m', 'p'],
+          semanticTypes: ['m', 'n', 'p', 'q'],
+        },
+        //@ts-expect-error: partial data for specific test
+        B: {
+          primaryTypes: ['x'],
+          semanticTypes: ['x', 'y'],
+        },
       });
       // console.log(node.getCategories());
       expect(node.getCategories()).toEqual(['Gene', 'm', 'p', 'x']);

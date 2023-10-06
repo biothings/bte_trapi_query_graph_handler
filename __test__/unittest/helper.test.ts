@@ -1,4 +1,4 @@
-const QueryGraphHelper = require('../../src/helper');
+import QueryGraphHelper from '../../src/helper';
 
 describe('Test helper moduler', () => {
   const nodeObject1 = {

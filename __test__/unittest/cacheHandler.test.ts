@@ -1,13 +1,16 @@
-const fs = require('fs');
-const path = require('path');
-const { Readable } = require('stream');
-const { Record } = require('@biothings-explorer/api-response-transform');
-const Redis = require('ioredis-mock');
+import fs from 'fs';
+import path from 'path';
+import { Readable } from 'stream';
+import { Record } from '@biothings-explorer/api-response-transform';
+import RedisMock from 'ioredis-mock';
+import RealCacheHandler from '../../src/cache_handler';
+import MetaKG from '@biothings-explorer/smartapi-kg';
+import QEdge from '../../src/query_edge';
 
-const qEdges = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/qEdges.json')), { encoding: 'utf8' });
+const qEdges = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/qEdges.json'), { encoding: 'utf8' }));
 
 const records = Record.unfreezeRecords(
-  JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/queryRecords.json')), { encoding: 'utf8' }),
+  JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/queryRecords.json'), { encoding: 'utf8' })),
 );
 
 describe('test cache handler', () => {
@@ -15,19 +18,21 @@ describe('test cache handler', () => {
   beforeEach(() => {
     jest.resetModules(); // Most important - it clears the cache
     jest.clearAllMocks();
+    jest.mock('ioredis', () => RedisMock);
     process.env = { ...OLD_ENV }; // Make a copy
-    new Redis().flushall();
+    // new RedisMock().flushall();
   });
 
-  afterAll(() => {
+  afterAll((done) => {
     process.env = OLD_ENV; // Restore old environment
+    done();
   });
 
   describe("ensure caching isn't used when it shouldn't be", () => {
     test("don't use cache when explicitely disabled", async () => {
       process.env.REDIS_HOST = 'mocked';
       process.env.REDIS_PORT = 'mocked';
-      const CacheHandler = require('../../src/cache_handler');
+      const CacheHandler = require('../../src/cache_handler').default as typeof RealCacheHandler;
       const cacheHandler = new CacheHandler(false);
       const categorizeEdges = jest.spyOn(CacheHandler.prototype, 'categorizeEdges');
       const _hashEdgeByMetaKG = jest.spyOn(CacheHandler.prototype, '_hashEdgeByMetaKG');
@@ -50,7 +55,7 @@ describe('test cache handler', () => {
       process.env.REDIS_HOST = 'mocked';
       process.env.REDIS_PORT = 'mocked';
       process.env.RESULT_CACHING = 'false';
-      const CacheHandler = require('../../src/cache_handler');
+      const CacheHandler = require('../../src/cache_handler').default as typeof RealCacheHandler;
       const cacheHandler = new CacheHandler(true);
       const categorizeEdges = jest.spyOn(CacheHandler.prototype, 'categorizeEdges');
       const _hashEdgeByMetaKG = jest.spyOn(CacheHandler.prototype, '_hashEdgeByMetaKG');
@@ -70,7 +75,7 @@ describe('test cache handler', () => {
     });
 
     test("don't use cache when redis disabled", async () => {
-      const CacheHandler = require('../../src/cache_handler');
+      const CacheHandler = require('../../src/cache_handler').default as typeof RealCacheHandler;
       const cacheHandler = new CacheHandler(true);
       const categorizeEdges = jest.spyOn(CacheHandler.prototype, 'categorizeEdges');
       const _hashEdgeByMetaKG = jest.spyOn(CacheHandler.prototype, '_hashEdgeByMetaKG');
@@ -90,10 +95,10 @@ describe('test cache handler', () => {
     });
 
     test("don't use cache when redis specially disabled", async () => {
+      const CacheHandler = require('../../src/cache_handler').default as typeof RealCacheHandler;
       process.env.REDIS_HOST = 'mocked';
       process.env.REDIS_PORT = 'mocked';
-      process.env.INTERNAL_DISABLE_REDIS = true;
-      const CacheHandler = require('../../src/cache_handler');
+      process.env.INTERNAL_DISABLE_REDIS = 'true';
       const cacheHandler = new CacheHandler(true);
       const categorizeEdges = jest.spyOn(CacheHandler.prototype, 'categorizeEdges');
       const _hashEdgeByMetaKG = jest.spyOn(CacheHandler.prototype, '_hashEdgeByMetaKG');
@@ -113,13 +118,13 @@ describe('test cache handler', () => {
 
   describe('test encoding/decoding', () => {
     test('test encoder', async () => {
-      const CacheHandler = require('../../src/cache_handler');
+      const CacheHandler = require('../../src/cache_handler').default as typeof RealCacheHandler;
       const cacheHandler = new CacheHandler(true);
       const encoder = cacheHandler.createEncodeStream();
 
       let encodedString = '';
 
-      await new Promise((resolve) => {
+      await new Promise<void>((resolve) => {
         Readable.from(Record.freezeRecords(records))
           .pipe(encoder)
           .on('data', async (chunk) => {
@@ -134,14 +139,14 @@ describe('test cache handler', () => {
     });
 
     test('test decoder', async () => {
-      const CacheHandler = require('../../src/cache_handler');
+      const CacheHandler = require('../../src/cache_handler').default as typeof RealCacheHandler;
       const cacheHandler = new CacheHandler(true);
       const encoder = cacheHandler.createEncodeStream();
       const decoder = cacheHandler.createDecodeStream();
 
       let encodedString = '';
 
-      await new Promise((resolve) => {
+      await new Promise<void>((resolve) => {
         Readable.from(Record.freezeRecords(records))
           .pipe(encoder)
           .on('data', async (chunk) => {
@@ -150,9 +155,9 @@ describe('test cache handler', () => {
           .on('end', () => resolve());
       });
 
-      const decodedObjs = [];
+      const decodedObjs: unknown[] = [];
 
-      await new Promise((resolve) => {
+      await new Promise<void>((resolve) => {
         Readable.from(encodedString)
           .pipe(decoder)
           .on('data', async (obj) => {
@@ -167,7 +172,7 @@ describe('test cache handler', () => {
 
   describe('Test _hashEdgeByMetaKG', () => {
     test('without metaKG', () => {
-      const CacheHandler = require('../../src/cache_handler');
+      const CacheHandler = require('../../src/cache_handler').default as typeof RealCacheHandler;
       const cacheHandler = new CacheHandler(true);
       const hash = cacheHandler._hashEdgeByMetaKG('test');
 
@@ -175,8 +180,6 @@ describe('test cache handler', () => {
     });
 
     test('with metaKG', () => {
-      const CacheHandler = require('../../src/cache_handler');
-
       const fakeMetaKG1 = {
         ops: [
           {
@@ -224,13 +227,14 @@ describe('test cache handler', () => {
           },
         ],
       };
-      const cacheHandler1 = new CacheHandler(true, fakeMetaKG1);
+      const CacheHandler = require('../../src/cache_handler').default as typeof RealCacheHandler;
+      const cacheHandler1 = new CacheHandler(true, fakeMetaKG1 as MetaKG);
       const hash1 = cacheHandler1._hashEdgeByMetaKG('test');
 
-      const cacheHandler2 = new CacheHandler(true, fakeMetaKG2);
+      const cacheHandler2 = new CacheHandler(true, fakeMetaKG2 as MetaKG);
       const hash2 = cacheHandler2._hashEdgeByMetaKG('test');
 
-      const cacheHandler3 = new CacheHandler(true, fakeMetaKG3);
+      const cacheHandler3 = new CacheHandler(true, fakeMetaKG3 as MetaKG);
       const hash3 = cacheHandler3._hashEdgeByMetaKG('test');
 
       expect(hash1 === 'test').toBeFalsy();
@@ -243,7 +247,7 @@ describe('test cache handler', () => {
   test('_groupQueryRecordsByQEdgeHash', () => {
     process.env.REDIS_HOST = 'mocked';
     process.env.REDIS_PORT = 'mocked';
-    const CacheHandler = require('../../src/cache_handler');
+    const CacheHandler = require('../../src/cache_handler').default as typeof RealCacheHandler;
     const cacheHandler = new CacheHandler(true);
     const groups = cacheHandler._groupQueryRecordsByQEdgeHash(records);
 
@@ -257,25 +261,27 @@ describe('test cache handler', () => {
       Object.values(groups).reduce((arr, group) => {
         arr = [...arr, ...group];
         return arr;
-      }, []),
+      }, [] as unknown[]),
     ).toHaveLength(records.length + numHashes);
   });
 
   test('caching and cache lookup', async () => {
-    process.env.REDIS_HOST = 'localhost';
-    process.env.REDIS_PORT = 1234;
-    const CacheHandler = require('../../src/cache_handler');
+    process.env.REDIS_HOST = 'mocked';
+    process.env.REDIS_PORT = 'mocked';
+    const CacheHandler = require('../../src/cache_handler').default as typeof RealCacheHandler;
     const cacheHandler = new CacheHandler(true);
-    const redisClient = new Redis();
 
     await cacheHandler.cacheEdges(records);
-    const qEdges = Object.values(
-      records.reduce((obj, record) => {
-        if (!(record.qEdge.getHashedEdgeRepresentation() in obj)) {
-          obj[record.qEdge.getHashedEdgeRepresentation()] = record.qEdge;
-        }
-        return obj;
-      }, {}),
+    const qEdges: QEdge[] = Object.values(
+      records.reduce(
+        (obj, record) => {
+          if (!(record.qEdge.getHashedEdgeRepresentation() in obj)) {
+            obj[record.qEdge.getHashedEdgeRepresentation()] = record.qEdge as QEdge;
+          }
+          return obj;
+        },
+        {} as { [qEdgeHash: string]: QEdge },
+      ),
     );
     const { cachedRecords, nonCachedQEdges } = await cacheHandler.categorizeEdges(qEdges);
     expect(nonCachedQEdges).toHaveLength(0);

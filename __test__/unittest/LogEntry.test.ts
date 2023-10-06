@@ -1,4 +1,4 @@
-const logEntry = require('../../src/log_entry');
+import logEntry from '../../src/log_entry';
 
 describe('test log entry module', () => {
   test('if no optional param passed, should return default value', () => {

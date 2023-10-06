@@ -1,4 +1,4 @@
-const utils = require('../../src/utils');
+import * as utils from '../../src/utils';
 
 describe('Test utility functions', () => {
   describe('Test removeBioLinkPrefix function', () => {

@@ -1,4 +1,4 @@
-const biolink = require('../../src/biolink');
+import biolink from '../../src/biolink';
 
 describe('Test BioLinkModel class', () => {
   test('test reverse with correct predicate', () => {
@@ -27,6 +27,7 @@ describe('Test BioLinkModel class', () => {
   });
 
   test('if input not string, return undefined', () => {
+    //@ts-expect-error: Explicitly testing for wrong type
     const res = biolink.reverse(['dd']);
     expect(res).toBeUndefined();
   });

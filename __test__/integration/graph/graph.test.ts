@@ -1,5 +1,5 @@
-const graph = require('../../../src/graph/graph');
-const { Record } = require('@biothings-explorer/api-response-transform');
+import graph from '../../../src/graph/graph';
+import { Record } from '@biothings-explorer/api-response-transform';
 
 describe('Test graph class', () => {
   const qNode1 = {
@@ -20,10 +20,12 @@ describe('Test graph class', () => {
     object: {
       qNodeID: 'qg2',
       curie: 'outputPrimaryCurie',
+      original: 'outputPrimaryCurie',
     },
     subject: {
       qNodeID: 'qg1',
       curie: 'inputPrimaryCurie',
+      original: 'inputPrimaryCurie',
     },
     publications: ['PMID:1', 'PMID:2'],
     mappedResponse: {
@@ -39,10 +41,12 @@ describe('Test graph class', () => {
     object: {
       qNodeID: 'qg2',
       curie: 'outputPrimaryCurie',
+      original: 'outputPrimaryCurie',
     },
     subject: {
       qNodeID: 'qg1',
       curie: 'inputPrimaryCurie',
+      original: 'inputPrimaryCurie',
     },
     publications: ['PMC:1', 'PMC:2'],
     mappedResponse: {
@@ -53,15 +57,17 @@ describe('Test graph class', () => {
   const record3 = new Record({
     api: 'API3',
     metaEdgeSource: 'source3',
-    apiInforesCurie: "infores:API3",
+    apiInforesCurie: 'infores:API3',
     predicate: 'predicate2',
     object: {
       qNodeID: 'qg2',
       curie: 'outputPrimaryCurie',
+      original: 'outputPrimaryCurie',
     },
     subject: {
       qNodeID: 'qg1',
       curie: 'inputPrimaryCurie',
+      original: 'inputPrimaryCurie',
     },
     publications: ['PMC:3', 'PMC:4'],
     mappedResponse: {
@@ -72,15 +78,17 @@ describe('Test graph class', () => {
   const record3a = new Record({
     api: 'API3',
     metaEdgeSource: 'source3',
-    apiInforesCurie: "infores:API3",
+    apiInforesCurie: 'infores:API3',
     predicate: 'predicate2',
     object: {
       qNodeID: 'qg2',
       curie: 'outputPrimaryCurie',
+      original: 'outputPrimaryCurie',
     },
     subject: {
       qNodeID: 'qg1',
       curie: 'inputPrimaryCurie',
+      original: 'inputPrimaryCurie',
     },
     publications: ['PMC:6', 'PMC:7'],
     mappedResponse: {
@@ -93,17 +101,17 @@ describe('Test graph class', () => {
     g.update([record1]);
     expect(g.nodes).toHaveProperty('outputPrimaryCurie');
     expect(g.nodes).toHaveProperty('inputPrimaryCurie');
-    expect(g.nodes['outputPrimaryCurie']._primaryCurie).toEqual('outputPrimaryCurie');
-    expect(g.nodes['outputPrimaryCurie']._qNodeID).toEqual('qg2');
-    expect(Array.from(g.nodes['outputPrimaryCurie']._sourceNodes)).toEqual(['inputPrimaryCurie']);
-    expect(Array.from(g.nodes['outputPrimaryCurie']._sourceQNodeIDs)).toEqual(['qg1']);
-    expect(g.nodes['inputPrimaryCurie']._primaryCurie).toEqual('inputPrimaryCurie');
-    expect(g.nodes['inputPrimaryCurie']._qNodeID).toEqual('qg1');
-    expect(Array.from(g.nodes['inputPrimaryCurie']._targetNodes)).toEqual(['outputPrimaryCurie']);
-    expect(Array.from(g.nodes['inputPrimaryCurie']._targetQNodeIDs)).toEqual(['qg2']);
+    expect(g.nodes['outputPrimaryCurie'].primaryCurie).toEqual('outputPrimaryCurie');
+    expect(g.nodes['outputPrimaryCurie'].qNodeID).toEqual('qg2');
+    expect(Array.from(g.nodes['outputPrimaryCurie'].sourceNodes)).toEqual(['inputPrimaryCurie']);
+    expect(Array.from(g.nodes['outputPrimaryCurie'].sourceQNodeIDs)).toEqual(['qg1']);
+    expect(g.nodes['inputPrimaryCurie'].primaryCurie).toEqual('inputPrimaryCurie');
+    expect(g.nodes['inputPrimaryCurie'].qNodeID).toEqual('qg1');
+    expect(Array.from(g.nodes['inputPrimaryCurie'].targetNodes)).toEqual(['outputPrimaryCurie']);
+    expect(Array.from(g.nodes['inputPrimaryCurie'].targetQNodeIDs)).toEqual(['qg2']);
     expect(g.edges).toHaveProperty('95fe2a8089c0d79ea093b97c5991f7ba');
     expect(Array.from(g.edges['95fe2a8089c0d79ea093b97c5991f7ba'].apis)).toEqual(['API1']);
-    expect(g.edges['95fe2a8089c0d79ea093b97c5991f7ba'].sources).toHaveProperty('source1')
+    expect(g.edges['95fe2a8089c0d79ea093b97c5991f7ba'].sources).toHaveProperty('source1');
     expect(Array.from(g.edges['95fe2a8089c0d79ea093b97c5991f7ba'].publications)).toEqual(['PMID:1', 'PMID:2']);
     expect(g.edges['95fe2a8089c0d79ea093b97c5991f7ba'].attributes).toHaveProperty('relation', new Set(['relation1']));
   });
@@ -113,14 +121,14 @@ describe('Test graph class', () => {
     g.update([record1, record2]);
     expect(g.nodes).toHaveProperty('outputPrimaryCurie');
     expect(g.nodes).toHaveProperty('inputPrimaryCurie');
-    expect(g.nodes['outputPrimaryCurie']._primaryCurie).toEqual('outputPrimaryCurie');
-    expect(g.nodes['outputPrimaryCurie']._qNodeID).toEqual('qg2');
-    expect(Array.from(g.nodes['outputPrimaryCurie']._sourceNodes)).toEqual(['inputPrimaryCurie']);
-    expect(Array.from(g.nodes['outputPrimaryCurie']._sourceQNodeIDs)).toEqual(['qg1']);
-    expect(g.nodes['inputPrimaryCurie']._primaryCurie).toEqual('inputPrimaryCurie');
-    expect(g.nodes['inputPrimaryCurie']._qNodeID).toEqual('qg1');
-    expect(Array.from(g.nodes['inputPrimaryCurie']._targetNodes)).toEqual(['outputPrimaryCurie']);
-    expect(Array.from(g.nodes['inputPrimaryCurie']._targetQNodeIDs)).toEqual(['qg2']);
+    expect(g.nodes['outputPrimaryCurie'].primaryCurie).toEqual('outputPrimaryCurie');
+    expect(g.nodes['outputPrimaryCurie'].qNodeID).toEqual('qg2');
+    expect(Array.from(g.nodes['outputPrimaryCurie'].sourceNodes)).toEqual(['inputPrimaryCurie']);
+    expect(Array.from(g.nodes['outputPrimaryCurie'].sourceQNodeIDs)).toEqual(['qg1']);
+    expect(g.nodes['inputPrimaryCurie'].primaryCurie).toEqual('inputPrimaryCurie');
+    expect(g.nodes['inputPrimaryCurie'].qNodeID).toEqual('qg1');
+    expect(Array.from(g.nodes['inputPrimaryCurie'].targetNodes)).toEqual(['outputPrimaryCurie']);
+    expect(Array.from(g.nodes['inputPrimaryCurie'].targetQNodeIDs)).toEqual(['qg2']);
 
     expect(g.edges).toHaveProperty('95fe2a8089c0d79ea093b97c5991f7ba');
     expect(Array.from(g.edges['95fe2a8089c0d79ea093b97c5991f7ba'].apis)).toEqual(['API1']);
@@ -140,14 +148,14 @@ describe('Test graph class', () => {
     g.update([record1, record2, record3]);
     expect(g.nodes).toHaveProperty('outputPrimaryCurie');
     expect(g.nodes).toHaveProperty('inputPrimaryCurie');
-    expect(g.nodes['outputPrimaryCurie']._primaryCurie).toEqual('outputPrimaryCurie');
-    expect(g.nodes['outputPrimaryCurie']._qNodeID).toEqual('qg2');
-    expect(Array.from(g.nodes['outputPrimaryCurie']._sourceNodes)).toEqual(['inputPrimaryCurie']);
-    expect(Array.from(g.nodes['outputPrimaryCurie']._sourceQNodeIDs)).toEqual(['qg1']);
-    expect(g.nodes['inputPrimaryCurie']._primaryCurie).toEqual('inputPrimaryCurie');
-    expect(g.nodes['inputPrimaryCurie']._qNodeID).toEqual('qg1');
-    expect(Array.from(g.nodes['inputPrimaryCurie']._targetNodes)).toEqual(['outputPrimaryCurie']);
-    expect(Array.from(g.nodes['inputPrimaryCurie']._targetQNodeIDs)).toEqual(['qg2']);
+    expect(g.nodes['outputPrimaryCurie'].primaryCurie).toEqual('outputPrimaryCurie');
+    expect(g.nodes['outputPrimaryCurie'].qNodeID).toEqual('qg2');
+    expect(Array.from(g.nodes['outputPrimaryCurie'].sourceNodes)).toEqual(['inputPrimaryCurie']);
+    expect(Array.from(g.nodes['outputPrimaryCurie'].sourceQNodeIDs)).toEqual(['qg1']);
+    expect(g.nodes['inputPrimaryCurie'].primaryCurie).toEqual('inputPrimaryCurie');
+    expect(g.nodes['inputPrimaryCurie'].qNodeID).toEqual('qg1');
+    expect(Array.from(g.nodes['inputPrimaryCurie'].targetNodes)).toEqual(['outputPrimaryCurie']);
+    expect(Array.from(g.nodes['inputPrimaryCurie'].targetQNodeIDs)).toEqual(['qg2']);
 
     expect(g.edges).toHaveProperty('95fe2a8089c0d79ea093b97c5991f7ba');
     expect(Array.from(g.edges['95fe2a8089c0d79ea093b97c5991f7ba'].apis)).toEqual(['API1']);

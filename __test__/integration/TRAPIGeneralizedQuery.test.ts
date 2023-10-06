@@ -1,4 +1,4 @@
-const TRAPIQueryHandler = require('../../src/index');
+import TRAPIQueryHandler from '../../src/index';
 
 describe('Testing TRAPI QueryHandler Generalized Query Handling', () => {
   const OneHopQuery = {
@@ -22,10 +22,10 @@ describe('Testing TRAPI QueryHandler Generalized Query Handling', () => {
 
   describe('Testing query function', () => {
     test.skip('One hop has only nodes specified', async (done) => {
-      const queryHandler = new TRAPIQueryHandler.TRAPIQueryHandler();
+      const queryHandler = new TRAPIQueryHandler();
       queryHandler.setQueryGraph(OneHopQuery);
       await queryHandler.query();
-      let res = queryHandler.getResponse();
+      const res = queryHandler.getResponse();
       await expect(queryHandler.knowledgeGraph.kg).toHaveProperty('nodes');
       await expect(Object.keys(res.message.knowledge_graph.nodes).length).toBe(2);
       await expect(res.message.knowledge_graph.nodes).toHaveProperty('NCBIGene:5742');

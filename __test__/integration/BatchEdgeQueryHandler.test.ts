@@ -1,8 +1,8 @@
-const BatchEdgeQueryHandler = require('../../src/batch_edge_query');
-const meta_kg = require('@biothings-explorer/smartapi-kg');
+import BatchEdgeQueryHandler from '../../src/batch_edge_query';
+import MetaKG from '@biothings-explorer/smartapi-kg';
 
 describe('Testing BatchEdgeQueryHandler Module', () => {
-  const kg = new meta_kg.default();
+  const kg = new MetaKG();
   kg.constructMetaKGSync();
 
   describe('Testing query function', () => {

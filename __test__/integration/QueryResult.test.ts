@@ -1,9 +1,9 @@
-const { cloneDeep, range } = require('lodash');
-const QNode = require('../../src/query_node');
-const QEdge = require('../../src/query_edge');
-const QueryResult = require('../../src/results_assembly/query_results');
-const { Record } = require('@biothings-explorer/api-response-transform');
-const config = require('../../src/config.js');
+import { cloneDeep, range } from 'lodash';
+import QNode from '../../src/query_node';
+import QEdge from '../../src/query_edge';
+import QueryResult from '../../src/results_assembly/query_results';
+import { Record } from '@biothings-explorer/api-response-transform';
+import { EDGE_ATTRIBUTES_USED_IN_RECORD_HASH } from '../../src/config';
 
 describe('Testing QueryResults Module', () => {
   describe('"Real" Records', () => {
@@ -19,6 +19,7 @@ describe('Testing QueryResults Module', () => {
             source: 'DrugBank',
             score: '0.9',
           },
+          //@ts-expect-error: partial data for specific test
           subject: {
             original: 'SYMBOL:BGLAP',
             normalizedInfo: {
@@ -27,6 +28,7 @@ describe('Testing QueryResults Module', () => {
               equivalentIDs: ['SYMBOL:BGLAP', 'NCBIGene:632'],
             },
           },
+          //@ts-expect-error: partial data for specific test
           object: {
             original: 'CHEMBL.COMPOUND:CHEMBL1200983',
             normalizedInfo: {
@@ -36,17 +38,17 @@ describe('Testing QueryResults Module', () => {
             },
           },
         },
-        config,
+        EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,
         {
           predicate: 'biolink:physically_interacts_with',
           source: 'DGIdb',
           api_name: 'BioThings DGIDB API',
         },
-        edge1
+        edge1,
       );
 
       test('should get n1, n2 and e01', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResult.update({
           e01: {
             connected_to: [],
@@ -73,6 +75,7 @@ describe('Testing QueryResults Module', () => {
         const record1 = new Record(
           {
             publications: ['PMID:123', 'PMID:1234'],
+            //@ts-expect-error: partial data for specific test
             subject: {
               original: 'SYMBOL:KCNMA1',
               normalizedInfo: {
@@ -81,6 +84,7 @@ describe('Testing QueryResults Module', () => {
                 equivalentIDs: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
               },
             },
+            //@ts-expect-error: partial data for specific test
             object: {
               original: 'MONDO:0011122',
               normalizedInfo: {
@@ -90,7 +94,7 @@ describe('Testing QueryResults Module', () => {
               },
             },
           },
-          config,
+          EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,
           {
             predicate: 'biolink:gene_associated_with_condition',
             api_name: 'Automat Pharos',
@@ -101,6 +105,7 @@ describe('Testing QueryResults Module', () => {
         const record2 = new Record(
           {
             publications: ['PMID:345', 'PMID:456'],
+            //@ts-expect-error: partial data for specific test
             subject: {
               original: 'MONDO:0011122',
               normalizedInfo: {
@@ -109,6 +114,7 @@ describe('Testing QueryResults Module', () => {
                 equivalentIDs: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
               },
             },
+            //@ts-expect-error: partial data for specific test
             object: {
               original: 'SYMBOL:KCNMA1',
               normalizedInfo: {
@@ -118,7 +124,7 @@ describe('Testing QueryResults Module', () => {
               },
             },
           },
-          config,
+          EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,
           {
             predicate: 'biolink:condition_associated_with_gene',
             api_name: 'Automat Hetio',
@@ -127,7 +133,7 @@ describe('Testing QueryResults Module', () => {
         );
 
         test('should get n1, n2, n3 and e01, e02', async () => {
-          const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+          const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
 
           await queryResult.update({
             e01: {
@@ -168,6 +174,7 @@ describe('Testing QueryResults Module', () => {
         const record1 = new Record(
           {
             publications: ['PMID:123', 'PMID:1234'],
+            //@ts-expect-error: partial data for specific test
             subject: {
               original: 'SYMBOL:KCNMA1',
               normalizedInfo: {
@@ -176,6 +183,7 @@ describe('Testing QueryResults Module', () => {
                 equivalentIDs: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
               },
             },
+            //@ts-expect-error: partial data for specific test
             object: {
               original: 'MONDO:0011122',
               normalizedInfo: {
@@ -185,7 +193,7 @@ describe('Testing QueryResults Module', () => {
               },
             },
           },
-          config,
+          EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,
           {
             predicate: 'biolink:gene_associated_with_condition',
             api_name: 'Automat Pharos',
@@ -196,6 +204,7 @@ describe('Testing QueryResults Module', () => {
         const record2 = new Record(
           {
             publications: ['PMID:345', 'PMID:456'],
+            //@ts-expect-error: partial data for specific test
             subject: {
               original: 'MONDO:0011122',
               normalizedInfo: {
@@ -204,6 +213,7 @@ describe('Testing QueryResults Module', () => {
                 equivalentIDs: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
               },
             },
+            //@ts-expect-error: partial data for specific test
             object: {
               original: 'SYMBOL:TULP3',
               normalizedInfo: {
@@ -213,7 +223,7 @@ describe('Testing QueryResults Module', () => {
               },
             },
           },
-          config,
+          EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,
           {
             predicate: 'biolink:condition_associated_with_gene',
             api_name: 'Automat Hetio',
@@ -222,7 +232,7 @@ describe('Testing QueryResults Module', () => {
         );
 
         test('should get n1, n2, n3 and e01, e02', async () => {
-          const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+          const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
           await queryResult.update({
             e01: {
               connected_to: ['e02'],
@@ -262,6 +272,7 @@ describe('Testing QueryResults Module', () => {
         const record1 = new Record(
           {
             publications: ['PMID:123', 'PMID:1234'],
+            //@ts-expect-error: partial data for specific test
             subject: {
               original: 'SYMBOL:KCNMA1',
               normalizedInfo: {
@@ -270,6 +281,7 @@ describe('Testing QueryResults Module', () => {
                 equivalentIDs: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
               },
             },
+            //@ts-expect-error: partial data for specific test
             object: {
               original: 'MONDO:0011122',
               normalizedInfo: {
@@ -279,7 +291,7 @@ describe('Testing QueryResults Module', () => {
               },
             },
           },
-          config,
+          EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,
           {
             predicate: 'biolink:gene_associated_with_condition',
             api_name: 'Automat Pharos',
@@ -290,6 +302,7 @@ describe('Testing QueryResults Module', () => {
         const record2 = new Record(
           {
             publications: ['PMID:345', 'PMID:456'],
+            //@ts-expect-error: partial data for specific test
             subject: {
               original: 'MONDO:0011122',
               normalizedInfo: {
@@ -298,6 +311,7 @@ describe('Testing QueryResults Module', () => {
                 equivalentIDs: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
               },
             },
+            //@ts-expect-error: partial data for specific test
             object: {
               original: 'SYMBOL:TULP3',
               normalizedInfo: {
@@ -307,7 +321,7 @@ describe('Testing QueryResults Module', () => {
               },
             },
           },
-          config,
+          EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,
           {
             predicate: 'biolink:condition_associated_with_gene',
             api_name: 'Automat Hetio',
@@ -316,7 +330,7 @@ describe('Testing QueryResults Module', () => {
         );
 
         test('should get n1, n2, n3 and e01, e02', async () => {
-          const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+          const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
           await queryResult.update({
             e01: {
               connected_to: ['e02'],
@@ -356,6 +370,7 @@ describe('Testing QueryResults Module', () => {
         const record1 = new Record(
           {
             publications: ['PMID:123', 'PMID:1234'],
+            //@ts-expect-error: partial data for specific test
             subject: {
               original: 'SYMBOL:KCNMA1',
               normalizedInfo: {
@@ -364,6 +379,7 @@ describe('Testing QueryResults Module', () => {
                 equivalentIDs: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
               },
             },
+            //@ts-expect-error: partial data for specific test
             object: {
               original: 'MONDO:0011122',
               normalizedInfo: {
@@ -373,7 +389,7 @@ describe('Testing QueryResults Module', () => {
               },
             },
           },
-          config,
+          EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,
           {
             predicate: 'biolink:gene_associated_with_condition',
             api_name: 'Automat Pharos',
@@ -386,6 +402,7 @@ describe('Testing QueryResults Module', () => {
         const record2 = new Record(
           {
             publications: ['PMID:345', 'PMID:456'],
+            //@ts-expect-error: partial data for specific test
             subject: {
               original: 'SYMBOL:TULP3',
               normalizedInfo: {
@@ -394,6 +411,7 @@ describe('Testing QueryResults Module', () => {
                 equivalentIDs: ['SYMBOL:TULP3', 'NCBIGene:7289'],
               },
             },
+            //@ts-expect-error: partial data for specific test
             object: {
               original: 'MONDO:0011122',
               normalizedInfo: {
@@ -403,7 +421,7 @@ describe('Testing QueryResults Module', () => {
               },
             },
           },
-          config,
+          EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,
           {
             predicate: 'biolink:condition_associated_with_gene',
             api_name: 'Automat Hetio',
@@ -412,7 +430,7 @@ describe('Testing QueryResults Module', () => {
         );
 
         test('should get n1, n2, n3 and e01, e02', async () => {
-          const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+          const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
           await queryResult.update({
             e01: {
               connected_to: ['e02'],
@@ -452,6 +470,7 @@ describe('Testing QueryResults Module', () => {
         const record1 = new Record(
           {
             publications: ['PMID:123', 'PMID:1234'],
+            //@ts-expect-error: partial data for specific test
             subject: {
               original: 'SYMBOL:KCNMA1',
               normalizedInfo: {
@@ -460,6 +479,7 @@ describe('Testing QueryResults Module', () => {
                 equivalentIDs: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
               },
             },
+            //@ts-expect-error: partial data for specific test
             object: {
               original: 'MONDO:0011122',
               normalizedInfo: {
@@ -469,7 +489,7 @@ describe('Testing QueryResults Module', () => {
               },
             },
           },
-          config,
+          EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,
           {
             predicate: 'biolink:gene_associated_with_condition',
             api_name: 'Automat Pharos',
@@ -482,6 +502,7 @@ describe('Testing QueryResults Module', () => {
         const record2 = new Record(
           {
             publications: ['PMID:345', 'PMID:456'],
+            //@ts-expect-error: partial data for specific test
             subject: {
               original: 'SYMBOL:TULP3',
               normalizedInfo: {
@@ -490,6 +511,7 @@ describe('Testing QueryResults Module', () => {
                 equivalentIDs: ['SYMBOL:TULP3', 'NCBIGene:7289'],
               },
             },
+            //@ts-expect-error: partial data for specific test
             object: {
               original: 'MONDO:0011122',
               normalizedInfo: {
@@ -499,7 +521,7 @@ describe('Testing QueryResults Module', () => {
               },
             },
           },
-          config,
+          EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,
           {
             predicate: 'biolink:condition_associated_with_gene',
             api_name: 'Automat Hetio',
@@ -508,7 +530,7 @@ describe('Testing QueryResults Module', () => {
         );
 
         test('should get n1, n2, n3 and e01, e02', async () => {
-          const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+          const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
           await queryResult.update({
             e01: {
               connected_to: ['e02'],
@@ -549,6 +571,7 @@ describe('Testing QueryResults Module', () => {
       const record1 = new Record(
         {
           publications: ['PMID:123', 'PMID:1234'],
+          //@ts-expect-error: partial data for specific test
           subject: {
             original: 'SYMBOL:KCNMA1',
             normalizedInfo: {
@@ -557,6 +580,7 @@ describe('Testing QueryResults Module', () => {
               equivalentIDs: ['SYMBOL:KCNMA1', 'NCBIGene:3778'],
             },
           },
+          //@ts-expect-error: partial data for specific test
           object: {
             original: 'MONDO:0011122',
             normalizedInfo: {
@@ -566,7 +590,7 @@ describe('Testing QueryResults Module', () => {
             },
           },
         },
-        config,
+        EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,
         {
           predicate: 'biolink:gene_associated_with_condition',
           api_name: 'Automat Pharos',
@@ -577,6 +601,7 @@ describe('Testing QueryResults Module', () => {
       const record2 = new Record(
         {
           publications: ['PMID:345', 'PMID:456'],
+          //@ts-expect-error: partial data for specific test
           subject: {
             original: 'MONDO:0011122',
             normalizedInfo: {
@@ -585,6 +610,7 @@ describe('Testing QueryResults Module', () => {
               equivalentIDs: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
             },
           },
+          //@ts-expect-error: partial data for specific test
           object: {
             original: 'SYMBOL:TULP3',
             normalizedInfo: {
@@ -594,7 +620,7 @@ describe('Testing QueryResults Module', () => {
             },
           },
         },
-        config,
+        EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,
         {
           predicate: 'biolink:condition_associated_with_gene',
           api_name: 'Automat Hetio',
@@ -605,6 +631,7 @@ describe('Testing QueryResults Module', () => {
       const record3 = new Record(
         {
           publications: ['PMID:987', 'PMID:876'],
+          //@ts-expect-error: partial data for specific test
           subject: {
             original: 'MONDO:0011122',
             normalizedInfo: {
@@ -613,6 +640,7 @@ describe('Testing QueryResults Module', () => {
               equivalentIDs: ['MONDO:0011122', 'MESH:D009765', 'name:obesity disorder'],
             },
           },
+          //@ts-expect-error: partial data for specific test
           object: {
             original: 'SYMBOL:TECR',
             normalizedInfo: {
@@ -622,7 +650,7 @@ describe('Testing QueryResults Module', () => {
             },
           },
         },
-        config,
+        EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,
         {
           predicate: 'biolink:condition_associated_with_gene',
           api_name: 'Automat Hetio',
@@ -631,7 +659,7 @@ describe('Testing QueryResults Module', () => {
       );
 
       test('should get 2 results when query graph is -- and records are -<', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
 
         await queryResult.update({
           e01: {
@@ -684,10 +712,12 @@ describe('Testing QueryResults Module', () => {
           a: {
             qNodeID: `n${i}`,
             curie: `n${i}a`,
+            original: `n${i}a`,
           },
           b: {
             qNodeID: `n${i}`,
             curie: `n${i}b`,
+            original: `n${i}b`,
           },
         };
       });
@@ -710,6 +740,7 @@ describe('Testing QueryResults Module', () => {
       return {
         qNodeID: `${node.qNodeID}_with_is_set`,
         curie: node.curie,
+        original: node.original,
         isSet: true,
       };
     };
@@ -977,49 +1008,49 @@ describe('Testing QueryResults Module', () => {
 
     describe('repeat calls', () => {
       test('should get 0 results for update (0) & getResults (1)', async () => {
-        const queryResultInner = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResultInner = new QueryResult({ provenanceUsesServiceProvider: false });
         const resultsInner = queryResultInner.getResults();
         expect(JSON.stringify(resultsInner)).toEqual(JSON.stringify([]));
       });
 
       // inputs all the same below here
 
-      const queryResultOuter = new QueryResult(provenanceUsesServiceProvider = false);
+      const queryResultOuter = new QueryResult({ provenanceUsesServiceProvider: false });
       let resultsOuter;
       test('just wrapping for async', async () => {
         await queryResultOuter.update({
           e0: {
             connected_to: ['e1'],
-            records: [new Record(record0_n0a_n1a, config)],
+            records: [new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
           e1: {
             connected_to: ['e0'],
-            records: [new Record(record1_n1a_n2a, config)],
+            records: [new Record(record1_n1a_n2a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
         });
         resultsOuter = queryResultOuter.getResults();
       });
 
       test('should get same results: update (1) & getResults (1) vs. update (2) & getResults (1)', async () => {
-        const queryResultInner = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResultInner = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResultInner.update({
           e0: {
             connected_to: ['e1'],
-            records: [new Record(record0_n0a_n1a, config)],
+            records: [new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
           e1: {
             connected_to: ['e0'],
-            records: [new Record(record1_n1a_n2a, config)],
+            records: [new Record(record1_n1a_n2a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
         });
         await queryResultInner.update({
           e0: {
             connected_to: ['e1'],
-            records: [new Record(record0_n0a_n1a, config)],
+            records: [new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
           e1: {
             connected_to: ['e0'],
-            records: [new Record(record1_n1a_n2a, config)],
+            records: [new Record(record1_n1a_n2a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
         });
         const resultsInner = queryResultInner.getResults();
@@ -1027,25 +1058,25 @@ describe('Testing QueryResults Module', () => {
       });
 
       test('should get same results: update (1) & getResults (1) vs. update (2) & getResults (2)', async () => {
-        const queryResultInner = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResultInner = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResultInner.update({
           e0: {
             connected_to: ['e1'],
-            records: [new Record(record0_n0a_n1a, config)],
+            records: [new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
           e1: {
             connected_to: ['e0'],
-            records: [new Record(record1_n1a_n2a, config)],
+            records: [new Record(record1_n1a_n2a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
         });
         await queryResultInner.update({
           e0: {
             connected_to: ['e1'],
-            records: [new Record(record0_n0a_n1a, config)],
+            records: [new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
           e1: {
             connected_to: ['e0'],
-            records: [new Record(record1_n1a_n2a, config)],
+            records: [new Record(record1_n1a_n2a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
         });
         queryResultInner.getResults();
@@ -1054,15 +1085,15 @@ describe('Testing QueryResults Module', () => {
       });
 
       test('should get same results: update (1) & getResults (1) vs. update (1) & getResults (2)', async () => {
-        const queryResultInner = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResultInner = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResultInner.update({
           e0: {
             connected_to: ['e1'],
-            records: [new Record(record0_n0a_n1a, config)],
+            records: [new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
           e1: {
             connected_to: ['e0'],
-            records: [new Record(record1_n1a_n2a, config)],
+            records: [new Record(record1_n1a_n2a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
         });
         queryResultInner.getResults();
@@ -1073,11 +1104,11 @@ describe('Testing QueryResults Module', () => {
 
     describe('query graph: →', () => {
       test('should get 1 result with record: →', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResult.update({
           e0: {
             connected_to: [],
-            records: [new Record(record0_n0a_n1a, config)],
+            records: [new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
         });
         const results = queryResult.getResults();
@@ -1090,15 +1121,15 @@ describe('Testing QueryResults Module', () => {
       });
 
       test('should get 4 results for 4 different records per edge: 𝍬', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResult.update({
           e0: {
             connected_to: [],
             records: [
-              new Record(record0_n0a_n1a, config),
-              new Record(record0_n0a_n1b, config),
-              new Record(record0_n0b_n1a, config),
-              new Record(record0_n0b_n1b, config),
+              new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+              new Record(record0_n0a_n1b, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+              new Record(record0_n0b_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+              new Record(record0_n0b_n1b, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
             ],
           },
         });
@@ -1125,15 +1156,15 @@ describe('Testing QueryResults Module', () => {
 
       // TODO: Do we want to test for removing duplicates?
       test('should get 1 result for the same record repeated 4 times: 𝍬', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResult.update({
           e0: {
             connected_to: [],
             records: [
-              new Record(record0_n0a_n1a, config),
-              new Record(record0_n0a_n1a, config),
-              new Record(record0_n0a_n1a, config),
-              new Record(record0_n0a_n1a, config),
+              new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+              new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+              new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+              new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
             ],
           },
         });
@@ -1203,11 +1234,14 @@ describe('Testing QueryResults Module', () => {
       //      });
 
       test('should get 1 result with 2 edge mappings when predicates differ: ⇉', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResult.update({
           e0: {
             connected_to: [],
-            records: [new Record(record0_n0a_n1a_pred0_api1, config), new Record(record0_n0a_n1a_pred1_api1, config)],
+            records: [
+              new Record(record0_n0a_n1a_pred0_api1, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+              new Record(record0_n0a_n1a_pred1_api1, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+            ],
           },
         });
         const results = queryResult.getResults();
@@ -1282,15 +1316,15 @@ describe('Testing QueryResults Module', () => {
 
     describe('query graph: →→', () => {
       test('should get 1 result with records: →→', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResult.update({
           e0: {
             connected_to: ['e1'],
-            records: [new Record(record0_n0a_n1a, config)],
+            records: [new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
           e1: {
             connected_to: ['e0'],
-            records: [new Record(record1_n1a_n2a, config)],
+            records: [new Record(record1_n1a_n2a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
         });
         const results = queryResult.getResults();
@@ -1302,15 +1336,18 @@ describe('Testing QueryResults Module', () => {
         expect(results[0].analyses[0]).toHaveProperty('score');
       });
       test('should get 2 results with records: >-', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResult.update({
           e0: {
             connected_to: ['e1'],
-            records: [new Record(record0_n0a_n1a, config), new Record(record0_n0b_n1a, config)],
+            records: [
+              new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+              new Record(record0_n0b_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+            ],
           },
           e1: {
             connected_to: ['e0'],
-            records: [new Record(record1_n1a_n2a, config)],
+            records: [new Record(record1_n1a_n2a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
         });
         const results = queryResult.getResults();
@@ -1326,15 +1363,21 @@ describe('Testing QueryResults Module', () => {
         expect(results[1].analyses[0]).toHaveProperty('score');
       });
       test('should get 4 results with records: ><', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResult.update({
           e0: {
             connected_to: ['e1'],
-            records: [new Record(record0_n0a_n1a, config), new Record(record0_n0b_n1a, config)],
+            records: [
+              new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+              new Record(record0_n0b_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+            ],
           },
           e1: {
             connected_to: ['e0'],
-            records: [new Record(record1_n1a_n2a, config), new Record(record1_n1a_n2b, config)],
+            records: [
+              new Record(record1_n1a_n2a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+              new Record(record1_n1a_n2b, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+            ],
           },
         });
         const results = queryResult.getResults();
@@ -1358,15 +1401,21 @@ describe('Testing QueryResults Module', () => {
         expect(results[3].analyses[0]).toHaveProperty('score');
       });
       test('should get 2 results with records: >< (is_set for n0)', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResult.update({
           e0_left_is_set: {
             connected_to: ['e1'],
-            records: [new Record(record0_n0a_n1a_left_is_set, config), new Record(record0_n0b_n1a_left_is_set, config)],
+            records: [
+              new Record(record0_n0a_n1a_left_is_set, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+              new Record(record0_n0b_n1a_left_is_set, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+            ],
           },
           e1: {
             connected_to: ['e0_left_is_set'],
-            records: [new Record(record1_n1a_n2a, config), new Record(record1_n1a_n2b, config)],
+            records: [
+              new Record(record1_n1a_n2a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+              new Record(record1_n1a_n2b, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+            ],
           },
         });
         const results = queryResult.getResults();
@@ -1382,18 +1431,21 @@ describe('Testing QueryResults Module', () => {
         expect(results[1].analyses[0]).toHaveProperty('score');
       });
       test('should get 4 results with records: >< (is_set for n1)', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResult.update({
           e0_right_is_set: {
             connected_to: ['e1_left_is_set'],
             records: [
-              new Record(record0_n0a_n1a_right_is_set, config),
-              new Record(record0_n0b_n1a_right_is_set, config),
+              new Record(record0_n0a_n1a_right_is_set, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+              new Record(record0_n0b_n1a_right_is_set, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
             ],
           },
           e1_left_is_set: {
             connected_to: ['e0_right_is_set'],
-            records: [new Record(record1_n1a_n2a_left_is_set, config), new Record(record1_n1a_n2b_left_is_set, config)],
+            records: [
+              new Record(record1_n1a_n2a_left_is_set, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+              new Record(record1_n1a_n2b_left_is_set, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+            ],
           },
         });
         const results = queryResult.getResults();
@@ -1410,15 +1462,21 @@ describe('Testing QueryResults Module', () => {
       });
 
       test('should get 1 result with records: >< (is_set for n0 and n2)', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResult.update({
           e0_left_is_set: {
             connected_to: ['e1_reversed_left_is_set'],
-            records: [new Record(record0_n0a_n1a_left_is_set, config), new Record(record0_n0b_n1a_left_is_set, config)],
+            records: [
+              new Record(record0_n0a_n1a_left_is_set, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+              new Record(record0_n0b_n1a_left_is_set, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+            ],
           },
           e1_reversed_left_is_set: {
             connected_to: ['e0_left_is_set'],
-            records: [new Record(record1_n2a_n1a_left_is_set, config), new Record(record1_n2b_n1a_left_is_set, config)],
+            records: [
+              new Record(record1_n2a_n1a_left_is_set, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+              new Record(record1_n2b_n1a_left_is_set, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+            ],
           },
         });
         const results = queryResult.getResults();
@@ -1426,20 +1484,29 @@ describe('Testing QueryResults Module', () => {
         expect(results.length).toEqual(1);
 
         expect(Object.keys(results[0].node_bindings).sort()).toEqual(['n0_with_is_set', 'n1', 'n2_with_is_set']);
-        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual(['e0_left_is_set', 'e1_reversed_left_is_set']);
+        expect(Object.keys(results[0].analyses[0].edge_bindings).sort()).toEqual([
+          'e0_left_is_set',
+          'e1_reversed_left_is_set',
+        ]);
         expect(results[0].analyses[0]).toHaveProperty('score');
       });
 
       test('should get 1 result with records: >< (is_set for n0, n1 and n2)', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResult.update({
           e0_both_is_set: {
             connected_to: ['e1_both_is_set'],
-            records: [new Record(record0_n0a_n1a_both_is_set, config), new Record(record0_n0b_n1a_both_is_set, config)],
+            records: [
+              new Record(record0_n0a_n1a_both_is_set, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+              new Record(record0_n0b_n1a_both_is_set, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+            ],
           },
           e1_both_is_set: {
             connected_to: ['e0_both_is_set'],
-            records: [new Record(record1_n2a_n1a_both_is_set, config), new Record(record1_n2b_n1a_both_is_set, config)],
+            records: [
+              new Record(record1_n2a_n1a_both_is_set, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+              new Record(record1_n2b_n1a_both_is_set, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+            ],
           },
         });
         const results = queryResult.getResults();
@@ -1456,15 +1523,21 @@ describe('Testing QueryResults Module', () => {
       });
 
       test('should get 2 results with records: ⇉⇉', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResult.update({
           e0: {
             connected_to: ['e1'],
-            records: [new Record(record0_n0a_n1a, config), new Record(record0_n0a_n1b, config)],
+            records: [
+              new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+              new Record(record0_n0a_n1b, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+            ],
           },
           e1: {
             connected_to: ['e0'],
-            records: [new Record(record1_n1a_n2a, config), new Record(record1_n1b_n2a, config)],
+            records: [
+              new Record(record1_n1a_n2a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+              new Record(record1_n1b_n2a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+            ],
           },
         });
         const results = queryResult.getResults();
@@ -1482,15 +1555,21 @@ describe('Testing QueryResults Module', () => {
 
       // TODO: Do we want to test for removing duplicates?
       test('should get 1 result with records: ⇉⇉ (duplicates)', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResult.update({
           e0: {
             connected_to: ['e1'],
-            records: [new Record(record0_n0a_n1a, config), new Record(record0_n0a_n1a, config)],
+            records: [
+              new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+              new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+            ],
           },
           e1: {
             connected_to: ['e0'],
-            records: [new Record(record1_n1a_n2a, config), new Record(record1_n1a_n2a, config)],
+            records: [
+              new Record(record1_n1a_n2a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+              new Record(record1_n1a_n2a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+            ],
           },
         });
         const results = queryResult.getResults();
@@ -1502,15 +1581,18 @@ describe('Testing QueryResults Module', () => {
         expect(results[0].analyses[0]).toHaveProperty('score');
       });
       test('should get 2 results with records: -<', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResult.update({
           e0: {
             connected_to: ['e1'],
-            records: [new Record(record0_n0a_n1a, config)],
+            records: [new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
           e1: {
             connected_to: ['e0'],
-            records: [new Record(record1_n1a_n2a, config), new Record(record1_n1a_n2b, config)],
+            records: [
+              new Record(record1_n1a_n2a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+              new Record(record1_n1a_n2b, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH),
+            ],
           },
         });
         const results = queryResult.getResults();
@@ -1526,15 +1608,15 @@ describe('Testing QueryResults Module', () => {
         expect(results[1].analyses[0]).toHaveProperty('score');
       });
       test('should get 1 result with records: →← (directionality does not match query graph)', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResult.update({
           e0: {
             connected_to: ['e1_reversed'],
-            records: [new Record(record0_n0a_n1a, config)],
+            records: [new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
           e1_reversed: {
             connected_to: ['e0'],
-            records: [new Record(record1_n2a_n1a, config)],
+            records: [new Record(record1_n2a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
         });
         const results = queryResult.getResults();
@@ -1560,8 +1642,8 @@ describe('Testing QueryResults Module', () => {
          * @ n1: 50
          * @ n2: 100
          */
-        const e0Records = [];
-        const e1Records = [];
+        const e0Records: Record[] = [];
+        const e1Records: Record[] = [];
 
         const n0Count = 1;
         const n1Count = 50;
@@ -1642,7 +1724,7 @@ describe('Testing QueryResults Module', () => {
           });
         });
 
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResult.update({
           e0: {
             connected_to: ['e1'],
@@ -1678,8 +1760,8 @@ describe('Testing QueryResults Module', () => {
          * @ n1: 2 (1 common)
          * @ n2: 50001 (50001 common)
          */
-        const e0Records = [];
-        const e1Records = [];
+        const e0Records: Record[] = [];
+        const e1Records: Record[] = [];
 
         // generate connected records
         e0Records.push(
@@ -1732,7 +1814,7 @@ describe('Testing QueryResults Module', () => {
           );
         });
 
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResult.update({
           e0: {
             connected_to: ['e1'],
@@ -2140,15 +2222,15 @@ describe('Testing QueryResults Module', () => {
 
     describe('query graph: →←', () => {
       test('should get 1 result with records: →←', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResult.update({
           e0: {
             connected_to: ['e1_reversed'],
-            records: [new Record(record0_n0a_n1a, config)],
+            records: [new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
           e1_reversed: {
             connected_to: ['e0'],
-            records: [new Record(record1_n2a_n1a, config)],
+            records: [new Record(record1_n2a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
         });
         const results = queryResult.getResults();
@@ -2161,15 +2243,15 @@ describe('Testing QueryResults Module', () => {
       });
 
       test('should get 1 result with records: →→ (directionality does not match query graph)', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResult.update({
           e0: {
             connected_to: ['e1'],
-            records: [new Record(record0_n0a_n1a, config)],
+            records: [new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
           e1: {
             connected_to: ['e0'],
-            records: [new Record(record1_n1a_n2a, config)],
+            records: [new Record(record1_n1a_n2a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
         });
         const results = queryResult.getResults();
@@ -2184,15 +2266,15 @@ describe('Testing QueryResults Module', () => {
 
     describe('query graph: ←→', () => {
       test('should get 1 result for 1 record per edge: ←→', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
         await queryResult.update({
           e1_reversed: {
             connected_to: ['e4'],
-            records: [new Record(record1_n2a_n1a, config)],
+            records: [new Record(record1_n2a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
           e4: {
             connected_to: ['e1_reversed'],
-            records: [new Record(record4_n2a_n5a, config)],
+            records: [new Record(record4_n2a_n5a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
         });
         const results = queryResult.getResults();
@@ -2205,16 +2287,16 @@ describe('Testing QueryResults Module', () => {
       });
 
       test('should get 0 results due to unconnected record: ←̽→', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
 
         await queryResult.update({
           e1_reversed: {
             connected_to: ['e4'],
-            records: [new Record(record1_n2b_n1a, config)],
+            records: [new Record(record1_n2b_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
           e4: {
             connected_to: ['e1_reversed'],
-            records: [new Record(record4_n2a_n5a, config)],
+            records: [new Record(record4_n2a_n5a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
         });
 
@@ -2231,20 +2313,20 @@ describe('Testing QueryResults Module', () => {
        *               -e2-> n3
        */
       test('should get 1 result for 1 record per edge: →⇉⮆', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
 
         await queryResult.update({
           e0: {
             connected_to: ['e1', 'e2'],
-            records: [new Record(record0_n0a_n1a, config)],
+            records: [new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
           e1: {
             connected_to: ['e0', 'e2'],
-            records: [new Record(record1_n1a_n2a, config)],
+            records: [new Record(record1_n1a_n2a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
           e2: {
             connected_to: ['e0', 'e1'],
-            records: [new Record(record2_n1a_n3a, config)],
+            records: [new Record(record2_n1a_n3a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
         });
 
@@ -2302,20 +2384,20 @@ describe('Testing QueryResults Module', () => {
        *               -e2-> n3
        */
       test('should get 1 result for 1 record per edge: →⇆⮆', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
 
         await queryResult.update({
           e0: {
             connected_to: ['e1_reversed', 'e2'],
-            records: [new Record(record0_n0a_n1a, config)],
+            records: [new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
           e1_reversed: {
             connected_to: ['e0', 'e2'],
-            records: [new Record(record1_n2a_n1a, config)],
+            records: [new Record(record1_n2a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
           e2: {
             connected_to: ['e0', 'e1_reversed'],
-            records: [new Record(record2_n1a_n3a, config)],
+            records: [new Record(record2_n1a_n3a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
         });
 
@@ -2335,20 +2417,20 @@ describe('Testing QueryResults Module', () => {
        *               <-e2- n3
        */
       test('should get 1 result for 1 record per edge: →⇇⮆', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
 
         await queryResult.update({
           e0: {
             connected_to: ['e1_reversed', 'e2_reversed'],
-            records: [new Record(record0_n0a_n1a, config)],
+            records: [new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
           e1_reversed: {
             connected_to: ['e0', 'e2_reversed'],
-            records: [new Record(record1_n2a_n1a, config)],
+            records: [new Record(record1_n2a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
           e2_reversed: {
             connected_to: ['e0', 'e1_reversed'],
-            records: [new Record(record2_n3a_n1a, config)],
+            records: [new Record(record2_n3a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
         });
 
@@ -2368,20 +2450,20 @@ describe('Testing QueryResults Module', () => {
        *               ---> n2
        */
       test('should get 0 results due to unconnected record: -<̽', async () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
 
         await queryResult.update({
           e0: {
             connected_to: ['e1', 'e2'],
-            records: [new Record(record0_n0a_n1a, config)],
+            records: [new Record(record0_n0a_n1a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
           e1: {
             connected_to: ['e0', 'e2'],
-            records: [new Record(record1_n1b_n2a, config)],
+            records: [new Record(record1_n1b_n2a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
           e2: {
             connected_to: ['e0', 'e1'],
-            records: [new Record(record2_n1a_n3a, config)],
+            records: [new Record(record2_n1a_n3a, EDGE_ATTRIBUTES_USED_IN_RECORD_HASH)],
           },
         });
 
@@ -2928,7 +3010,7 @@ describe('Testing QueryResults Module', () => {
           gene_symbol: 'HRAS',
         },
       });
-      const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+      const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
       await queryResult.update({
         e01: {
           connected_to: [],
@@ -2946,9 +3028,11 @@ describe('Testing QueryResults Module', () => {
           connected_to: ['e1', 'e2'],
           records: [
             new Record({
+              //@ts-expect-error: partial data for specific test
               subject: {
                 qNodeID: 'n2',
               },
+              //@ts-expect-error: partial data for specific test
               object: {
                 qNodeID: 'n1',
               },
@@ -2959,9 +3043,11 @@ describe('Testing QueryResults Module', () => {
           connected_to: ['e0'],
           records: [
             new Record({
+              //@ts-expect-error: partial data for specific test
               subject: {
                 qNodeID: 'n2',
               },
+              //@ts-expect-error: partial data for specific test
               object: {
                 qNodeID: 'n3',
               },
@@ -2972,9 +3058,11 @@ describe('Testing QueryResults Module', () => {
           connected_to: ['e0'],
           records: [
             new Record({
+              //@ts-expect-error: partial data for specific test
               subject: {
                 qNodeID: 'n0',
               },
+              //@ts-expect-error: partial data for specific test
               object: {
                 qNodeID: 'n1',
               },
@@ -2984,14 +3072,15 @@ describe('Testing QueryResults Module', () => {
       };
 
       test('Should select leaf node', () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
         const [[initialNode, initialEdge]] = queryResult._getValidInitialPairs(exampleRecordsByQEdgeID);
         expect(initialNode).toEqual('n3');
         expect(initialEdge).toEqual('e1');
       });
       test('Should select leaf node with fewest records on associated edge', () => {
-        const queryResult = new QueryResult(provenanceUsesServiceProvider = false);
+        const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
         const example = cloneDeep(exampleRecordsByQEdgeID);
+        //@ts-expect-error: specific test behavior
         example.e1.records.push({ fake: true });
         const [[initialNode, initialEdge]] = queryResult._getValidInitialPairs(example);
         expect(initialNode).toEqual('n0');
