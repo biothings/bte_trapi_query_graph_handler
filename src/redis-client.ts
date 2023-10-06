@@ -70,7 +70,6 @@ interface RedisClientInterface {
   usingLock: (
     resources: string[],
     duration: number,
-    settings: unknown,
     routine?: (signal: RedlockAbortSignal) => Promise<unknown>,
   ) => Promise<unknown>;
   incrTimeout: (key: string, callback: Callback<number>) => Promise<number>;
@@ -106,8 +105,8 @@ function addClientFuncs(client: Redis | Cluster, redlock: Redlock): RedisClientI
         ? addPrefixToAll(timeoutFunc((...args: RedisKey[]) => client.del(...args)))
         : timeoutFunc((...args: RedisKey[]) => client.del(...args)),
     usingLock: lockPrefix(
-      (resources: string[], duration: number, settings, routine?: (signal: RedlockAbortSignal) => Promise<unknown>) =>
-        redlock.using(resources, duration, settings, routine),
+      (resources: string[], duration: number, routine?: (signal: RedlockAbortSignal) => Promise<unknown>) =>
+        redlock.using(resources, duration, routine),
     ),
     incrTimeout: decorate((key: string) => client.incr(key)),
     decrTimeout: decorate((key: string) => client.decr(key)),

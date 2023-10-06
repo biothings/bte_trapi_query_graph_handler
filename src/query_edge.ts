@@ -7,7 +7,6 @@ import QNode from './query_node';
 import { QNodeInfo } from './query_node';
 import { StampedLog } from './log_entry';
 import { TrapiAttributeConstraint, TrapiQualifierConstraint } from './types';
-// import { FrozenRecord } from '../../api-response-transform/built/record';
 
 const debug = Debug('bte:biothings-explorer-trapi:QEdge');
 

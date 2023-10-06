@@ -10,7 +10,7 @@ import { StampedLog } from './log_entry';
 import { QueryHandlerOptions } from '.';
 import QEdge from './query_edge';
 import { UnavailableAPITracker } from './types';
-import { Record } from '../../api-response-transform/built';
+import { Record } from '@biothings-explorer/api-response-transform';
 
 export interface BatchEdgeQueryOptions extends QueryHandlerOptions {
   recordHashEdgeAttributes: string[];
@@ -24,7 +24,7 @@ export default class BatchEdgeQueryHandler {
   options: QueryHandlerOptions;
   resolveOutputIDs: boolean;
   qEdges: QEdge | QEdge[];
-  constructor(metaKG: MetaKG, resolveOutputIDs = true, options: BatchEdgeQueryOptions) {
+  constructor(metaKG: MetaKG, resolveOutputIDs = true, options?: BatchEdgeQueryOptions) {
     this.metaKG = metaKG;
     this.subscribers = [];
     this.logs = [];

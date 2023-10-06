@@ -5,7 +5,7 @@ import async from 'async';
 import biolink from '../biolink';
 import { getTemplates, MatchedTemplate, TemplateLookup } from './template_lookup';
 import { scaled_sigmoid, inverse_scaled_sigmoid } from '../results_assembly/score';
-import { QueryHandlerOptions, TRAPIQueryHandler } from '..';
+import TRAPIQueryHandler, { QueryHandlerOptions } from '../index';
 import {
   CompactQualifiers,
   TrapiAuxGraphCollection,
@@ -20,11 +20,12 @@ import {
 const debug = Debug('bte:biothings-explorer-trapi:inferred-mode');
 
 export interface CombinedResponse {
-  workflow: { id: string }[];
+  description?: string;
+  workflow?: { id: string }[];
   message: {
     query_graph: TrapiQueryGraph;
     knowledge_graph: TrapiKnowledgeGraph;
-    auxiliary_graphs: TrapiAuxGraphCollection;
+    auxiliary_graphs?: TrapiAuxGraphCollection;
     results: {
       [resultID: string]: TrapiResult;
     };
@@ -488,6 +489,8 @@ export default class InferredQueryHandler {
     const { qEdgeID, qEdge, qSubject, qObject } = this.getQueryParts();
     const subQueries = await this.createQueries(qEdge, qSubject, qObject);
     const combinedResponse = {
+      status: 'Success',
+      description: '',
       schema_version: global.SCHEMA_VERSION,
       biolink_version: global.BIOLINK_VERSION,
       workflow: [{ id: 'lookup' }],

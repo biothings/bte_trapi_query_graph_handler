@@ -26,8 +26,8 @@ export default class KnowledgeGraph {
     [edgeID: string]: TrapiKGEdge;
   };
   kg: TrapiKnowledgeGraph;
-  apiList: APIDefinition[];
-  constructor(apiList: APIDefinition[]) {
+  apiList?: APIDefinition[];
+  constructor(apiList?: APIDefinition[]) {
     this.nodes = {};
     this.edges = {};
     this.kg = {
@@ -84,7 +84,7 @@ export default class KnowledgeGraph {
     for (const key in kgNode.nodeAttributes) {
       node.attributes.push({
         attribute_type_id: key,
-        value: kgNode.nodeAttributes[key],
+        value: kgNode.nodeAttributes[key] as string[],
         //value_type_id: 'bts:' + key,
       });
     }

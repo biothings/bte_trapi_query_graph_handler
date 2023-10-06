@@ -20,19 +20,19 @@ declare global {
 }
 
 export interface TrapiQNode {
-  ids: string[];
-  categories: string[];
-  is_set: boolean;
-  constraints: TrapiAttributeConstraint[];
+  ids?: string[];
+  categories?: string[];
+  is_set?: boolean;
+  constraints?: TrapiAttributeConstraint[];
 }
 
 export interface TrapiQEdge {
-  knowledge_type: string;
-  predicates: string[];
+  knowledge_type?: string;
+  predicates?: string[];
   subject: string;
   object: string;
-  attribute_constraints: TrapiAttributeConstraint[];
-  qualifier_constraints: TrapiQualifierConstraint[];
+  attribute_constraints?: TrapiAttributeConstraint[];
+  qualifier_constraints?: TrapiQualifierConstraint[];
 }
 
 export interface TrapiQueryGraph {
@@ -83,9 +83,10 @@ export interface TrapiAttribute {
   original_attribute_name?: string;
   value: string | string[] | number | number[];
   value_type_id?: string;
-  attribute_source?: string;
-  value_url?: string;
+  attribute_source?: string | null;
+  value_url?: string | null;
   attributes?: TrapiAttribute;
+  [additionalProperties: string]: string | string[] | null | TrapiAttribute | number | number[];
 }
 
 export interface TrapiQualifier {
@@ -117,8 +118,8 @@ export interface TrapiEdgeBinding {
 }
 
 export interface TrapiAnalysis {
-  resource_id: string;
-  score: number;
+  resource_id?: string;
+  score?: number;
   edge_bindings: {
     [qEdgeID: string]: TrapiEdgeBinding[];
   };
@@ -152,14 +153,14 @@ export interface TrapiAuxGraphCollection {
 }
 
 export interface TrapiResponse {
-  description: string;
-  schema_version: string;
-  biolink_version: string;
-  workflow: { id: string }[];
+  description?: string;
+  schema_version?: string;
+  biolink_version?: string;
+  workflow?: { id: string }[];
   message: {
     query_graph: TrapiQueryGraph;
     knowledge_graph: TrapiKnowledgeGraph;
-    auxiliary_graphs: TrapiAuxGraphCollection;
+    auxiliary_graphs?: TrapiAuxGraphCollection;
     results: TrapiResult[];
   };
   logs: TrapiLog[];

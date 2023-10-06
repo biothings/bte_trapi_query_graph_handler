@@ -10,7 +10,7 @@ const debug = Debug('bte:biothings-explorer-trapi:QNode');
 export interface QNodeInfo {
   id: string;
   categories?: string[];
-  ids: string[];
+  ids?: string[];
   is_set?: boolean;
   expanded_curie?: ExpandedCuries;
   held_curie?: string[];

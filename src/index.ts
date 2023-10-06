@@ -11,10 +11,8 @@ import EdgeManager from './edge_manager';
 import _ from 'lodash';
 import QEdge2APIEdgeHandler from './qedge2apiedge';
 import LogEntry, { StampedLog } from './log_entry';
-import { redisClient, getNewRedisClient } from './redis-client';
 import { promises as fs } from 'fs';
 import { getDescendants } from '@biothings-explorer/node-expansion';
-import { getTemplates, supportedLookups } from './inferred_mode/template_lookup';
 import { resolveSRI, SRIResolverFailiure } from 'biomedical_id_resolver';
 import InferredQueryHandler from './inferred_mode/inferred_mode';
 import KGNode from './graph/kg_node';
@@ -32,7 +30,15 @@ import {
 import BTEGraph from './graph/graph';
 import QEdge from './query_edge';
 
-export { InvalidQueryGraphError, redisClient, getNewRedisClient, LogEntry, getTemplates, supportedLookups };
+// Exports for external availability
+export * from './types';
+export { redisClient, getNewRedisClient } from './redis-client';
+export { getTemplates, supportedLookups } from './inferred_mode/template_lookup';
+export { default as QEdge } from './query_edge';
+export { default as QNode } from './query_node';
+export { default as InvalidQueryGraphError } from './exceptions/invalid_query_graph_error';
+export { default as LogEntry } from './log_entry';
+export * from './qedge2apiedge';
 
 export interface QueryHandlerOptions {
   provenanceUsesServiceProvider?: boolean;
@@ -48,7 +54,7 @@ export interface QueryHandlerOptions {
   caching?: boolean; // from request url query values
   EDGE_ATTRIBUTES_USED_IN_RECORD_HASH?: string[];
 }
-export class TRAPIQueryHandler {
+export default class TRAPIQueryHandler {
   logs: StampedLog[];
   options: QueryHandlerOptions;
   includeReasoner: boolean;
@@ -62,7 +68,12 @@ export class TRAPIQueryHandler {
   auxGraphs: TrapiAuxGraphCollection;
   finalizedResults: TrapiResult[];
   queryGraph: TrapiQueryGraph;
-  constructor(options = {}, smartAPIPath = undefined, predicatesPath = undefined, includeReasoner = true) {
+  constructor(
+    options: QueryHandlerOptions = {},
+    smartAPIPath: string = undefined,
+    predicatesPath: string = undefined,
+    includeReasoner = true,
+  ) {
     this.logs = [];
     this.options = options;
     this.options.provenanceUsesServiceProvider = this.options.smartAPIID || this.options.teamName ? true : false;
@@ -173,8 +184,8 @@ export class TRAPIQueryHandler {
           subject,
           object,
         });
-        const source = Object.keys(ontologyKnowledgeSourceMapping).find(([prefix]) => {
-          if (expanded.includes(prefix)) return true;
+        const source = Object.entries(ontologyKnowledgeSourceMapping).find(([prefix]) => {
+          return expanded.includes(prefix);
         })[1];
         subclassEdge.addSource([
           { resource_id: source, resource_role: 'primary_knowledge_source' },
@@ -599,9 +610,9 @@ export class TRAPIQueryHandler {
       new LogEntry(
         'INFO',
         null,
-        `execution Summary: (${KGNodes}) nodes / (${kgEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${
+        `Execution Summary: (${KGNodes}) nodes / (${kgEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${
           cached ? ` (${cached} cached qEdges)` : ''
-        } returned results from(${sources.length}) unique APIs ${sources.length === 1 ? 's' : ''} `,
+        } returned results from(${sources.length}) unique API${sources.length === 1 ? 's' : ''}`,
       ).getLog(),
       new LogEntry('INFO', null, `APIs: ${sources.join(', ')} `).getLog(),
     ];
@@ -640,7 +651,7 @@ export class TRAPIQueryHandler {
           null,
           `The following APIs were unavailable at the time of execution: ${global.missingAPIs
             .map((spec) => spec.info.title)
-            .join(', ')} `,
+            .join(', ')}`,
         ).getLog(),
       );
     }

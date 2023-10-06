@@ -5,8 +5,8 @@ const CURIE_WITH_PREFIXES = ['MONDO', 'DOID', 'UBERON', 'EFO', 'HP', 'CHEBI', 'C
 import Debug from 'debug';
 import QEdge from './query_edge';
 import MetaKG from '@biothings-explorer/smartapi-kg';
-import { SmartAPIKGOperationObject } from '../../smartapi-kg/built/parser/types';
-import { SRIBioEntity } from '../../../biomedical_id_resolver/built/common/types';
+import { SmartAPIKGOperationObject } from '@biothings-explorer/smartapi-kg';
+import { SRIBioEntity } from 'biomedical_id_resolver';
 const debug = Debug('bte:biothings-explorer-trapi:qedge2btedge');
 
 export interface MetaXEdge extends SmartAPIKGOperationObject {
