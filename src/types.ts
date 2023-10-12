@@ -1,11 +1,9 @@
 // TODO change how types are exported on smartapi-kg so this is a normal package import
-import { SRIBioEntity } from '../../../biomedical_id_resolver/built/common/types';
-import { SmartAPIKGOperationObject } from '../../smartapi-kg/built/parser/types';
+import { SmartAPISpec } from '@biothings-explorer/smartapi-kg';
 import { TrapiLog } from './log_entry';
-import QEdge from './query_edge';
 
 declare global {
-  var missingAPIs: any;
+  var missingAPIs: SmartAPISpec[];
   var BIOLINK_VERSION: string;
   var SCHEMA_VERSION: string;
   var parentPort: MessagePort;
@@ -14,9 +12,11 @@ declare global {
     queryGraph: TrapiQueryGraph;
     isCreativeMode: boolean;
     creativeTemplate?: string;
+    totalRecords: number;
+    jobID?: string;
+    callback_url?: string;
   };
   var job: any; // TODO type as Piscina job
-  var missingAPIs: any;
 }
 
 export interface TrapiQNode {

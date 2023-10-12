@@ -61,21 +61,21 @@ function lockPrefix<F extends AsyncFunction>(func: F) {
 }
 
 interface RedisClientInterface {
-  getTimeout: (key: RedisKey, callback?: Callback<string>) => Promise<string>;
-  setTimeout: (key: RedisKey, value: string | number | Buffer, callback?: Callback<string>) => Promise<'OK'>;
+  getTimeout: (key: RedisKey) => Promise<string>;
+  setTimeout: (key: RedisKey, value: string | number | Buffer) => Promise<'OK'>;
   hsetTimeout: (...args: [key: RedisKey, ...fieldValues: (string | Buffer | number)[]]) => Promise<number>;
-  hgetallTimeout: (key: RedisKey, callback?: Callback<Record<string, string>>) => Promise<Record<string, string>>;
-  expireTimeout: (key: RedisKey, seconds: string | number, callback?: Callback<number>) => Promise<number>;
+  hgetallTimeout: (key: RedisKey) => Promise<Record<string, string>>;
+  expireTimeout: (key: RedisKey, seconds: string | number) => Promise<number>;
   delTimeout: (...args: RedisKey[]) => Promise<number>;
   usingLock: (
     resources: string[],
     duration: number,
     routine?: (signal: RedlockAbortSignal) => Promise<unknown>,
   ) => Promise<unknown>;
-  incrTimeout: (key: string, callback: Callback<number>) => Promise<number>;
-  decrTimeout: (key: string, callback: Callback<number>) => Promise<number>;
+  incrTimeout: (key: string) => Promise<number>;
+  decrTimeout: (key: string) => Promise<number>;
   existsTimeout: (...args: RedisKey[]) => Promise<number>;
-  pingTimeout: (callback?: Callback<'PONG'>) => Promise<'PONG'>;
+  pingTimeout: () => Promise<'PONG'>;
 }
 
 function addClientFuncs(client: Redis | Cluster, redlock: Redlock): RedisClientInterface {

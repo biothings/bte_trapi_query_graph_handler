@@ -13,8 +13,13 @@ export interface MetaXEdge extends SmartAPIKGOperationObject {
   reasoner_edge: QEdge;
 }
 
+export interface TemplatedInput {
+  queryInputs: string | string[];
+  [additionalAttributes: string]: string | string[];
+}
+
 export interface APIEdge extends MetaXEdge {
-  input: unknown;
+  input: string | string[] | TemplatedInput;
   input_resolved_identifiers: {
     [curie: string]: SRIBioEntity;
   };
@@ -32,15 +37,11 @@ export interface BatchAPIEdge extends APIEdge {
 }
 
 export interface TemplateNonBatchAPIEdge extends APIEdge {
-  input: {
-    queryInputs: string;
-  };
+  input: TemplatedInput;
 }
 
 export interface TemplateBatchAPIEdge extends APIEdge {
-  input: {
-    queryInputs: string[];
-  };
+  input: TemplatedInput;
 }
 
 export default class QEdge2APIEdgeHandler {
