@@ -1,6 +1,6 @@
 import { resolveSRI } from 'biomedical_id_resolver';
 import Debug from 'debug';
-import { ResolverInput, SRIResolverOutput } from '../../../biomedical_id_resolver/built/common/types';
+import { ResolverInput, SRIResolverOutput } from 'biomedical_id_resolver';
 import { Record } from '@biothings-explorer/api-response-transform';
 import QEdge from './query_edge';
 import { NodeNormalizerResultObj } from '../../api-response-transform/built';

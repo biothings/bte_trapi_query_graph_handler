@@ -12,7 +12,13 @@
     "resolveJsonModule": true,
     "strict": false,
     "noImplicitAny": false,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "@biothings-explorer/call-apis": ["../call-apis"],
+      "biolink-model": ["../biolink-model"],
+      "biomedical_id_resolver": ["../biomedical_id_resolver"],
+      "@biothings-explorer/smartapi-kg": ["../smartapi-kg"]
+    }
   },
   "include": ["./src/**/*", "./src/biolink.json", "./src/smartapi_specs.json", "./src/predicates.json"],
   "exclude": ["node_modules", "__tests__/"],
@@ -21,14 +27,13 @@
       "path": "../call-apis"
     },
     {
-      "path": "../../biomedical_id_resolver"
+      "path": "../biomedical_id_resolver"
     },
     {
       "path": "../smartapi-kg"
     },
     {
-      "path": "../../biolink-model"
+      "path": "../biolink-model"
     }
-
   ]
 }

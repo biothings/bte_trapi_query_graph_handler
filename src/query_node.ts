@@ -4,7 +4,7 @@ import * as utils from './utils';
 import biolink from './biolink';
 import Debug from 'debug';
 import InvalidQueryGraphError from './exceptions/invalid_query_graph_error';
-import { SRIBioEntity } from '../../../biomedical_id_resolver/built/common/types';
+import { SRIBioEntity } from 'biomedical_id_resolver';
 const debug = Debug('bte:biothings-explorer-trapi:QNode');
 
 export interface QNodeInfo {
@@ -31,7 +31,7 @@ export interface ExpandedCuries {
 export default class QNode {
   id: string;
   categories: string[];
-  equivalentIDs: SRIResolvedSet;
+  equivalentIDs?: SRIResolvedSet;
   expandedCategories: string[];
   equivalentIDsUpdated: boolean;
   curie: string[];
@@ -285,7 +285,7 @@ export default class QNode {
   }
 
   hasEquivalentIDs(): boolean {
-    return !(typeof this.equivalentIDs === 'undefined' || this.equivalentIDs === {});
+    return !(typeof this.equivalentIDs === 'undefined');
   }
 
   getEntityCount(): number {
