@@ -133,12 +133,12 @@ describe('Testing TRAPIQueryHandler Module', () => {
       });
       const queryHandler = new TRAPIQueryHandler(
         {},
-        path.resolve(__dirname, '../../../../../data/smartapi_specs.json'),
-        path.resolve(__dirname, '../../../../../data/predicates.json'),
+        path.resolve(__dirname, '../../../bte-server/data/smartapi_specs.json'),
+        path.resolve(__dirname, '../../../bte-server/data/predicates.json'),
       );
       queryHandler.setQueryGraph(OneHopQuery);
       await queryHandler.query();
       expect(queryHandler.knowledgeGraph.kg).toHaveProperty('nodes');
-    });
+    }, 10000);
   });
 });

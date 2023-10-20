@@ -144,6 +144,7 @@ describe('test TRAPIQueryHandler methods', () => {
             name: 'fake API',
           },
         ],
+        exclude: []
       },
     });
     const unregisteredAPIs = await handler.findUnregisteredAPIs();
