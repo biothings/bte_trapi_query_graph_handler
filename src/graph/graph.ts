@@ -190,4 +190,4 @@ export default class BTEGraph {
       });
     });
   }
-};
+}

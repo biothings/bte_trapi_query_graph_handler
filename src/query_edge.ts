@@ -376,7 +376,8 @@ export default class QEdge {
           kept.push(res);
         }
       }
-    }    if (save_kept) {
+    }
+    if (save_kept) {
       // only override recordss if there was any filtering done.
       this.records = kept;
       debug(`(6) Reduced to (${this.records.length}) records.`);
