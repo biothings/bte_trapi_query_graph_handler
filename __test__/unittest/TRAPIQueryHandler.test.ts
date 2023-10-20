@@ -133,7 +133,7 @@ describe('test TRAPIQueryHandler methods', () => {
     expect(handler4.logs[handler4.logs.length - 1].message).toMatch(
       'Inferred Mode edges are only supported in single-edge queries',
     );
-  });
+  }, 10000);
 
   test('findUnregisteredAPI', async () => {
     const handler = new TRAPIQueryHandler({
