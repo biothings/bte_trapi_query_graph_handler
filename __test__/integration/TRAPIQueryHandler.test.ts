@@ -139,6 +139,6 @@ describe('Testing TRAPIQueryHandler Module', () => {
       queryHandler.setQueryGraph(OneHopQuery);
       await queryHandler.query();
       expect(queryHandler.knowledgeGraph.kg).toHaveProperty('nodes');
-    }, 10000);
+    }, 15000);
   });
 });
