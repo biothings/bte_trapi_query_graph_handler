@@ -8,7 +8,7 @@ A on-the-fly query engine for BioThings Explorer based on TRAPI Query Graph.
 ## Install
 
 ```bash
-npm i @biothings-explorer/query_graph_handler
+pnpm i @biothings-explorer/query_graph_handler
 ```
 
 ## Usage
