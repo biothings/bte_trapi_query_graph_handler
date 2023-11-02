@@ -13,7 +13,7 @@ import QEdge2APIEdgeHandler from './qedge2apiedge';
 import LogEntry, { StampedLog } from './log_entry';
 import { promises as fs } from 'fs';
 import { getDescendants } from '@biothings-explorer/node-expansion';
-import { resolveSRI, SRIResolverFailiure } from 'biomedical_id_resolver';
+import { resolveSRI, SRINodeNormFailure } from 'biomedical_id_resolver';
 import InferredQueryHandler from './inferred_mode/inferred_mode';
 import KGNode from './graph/kg_node';
 import KGEdge from './graph/kg_edge';
@@ -418,7 +418,7 @@ export default class TRAPIQueryHandler {
       this.logs = [...this.logs, ...queryGraphHandler.logs];
       return queryEdges;
     } catch (err) {
-      if (err instanceof InvalidQueryGraphError || err instanceof SRIResolverFailiure) {
+      if (err instanceof InvalidQueryGraphError || err instanceof SRINodeNormFailure) {
         throw err;
       } else {
         console.log(err.stack);
