@@ -56,6 +56,7 @@
     "@biothings-explorer/call-apis": "workspace:../call-apis",
     "@biothings-explorer/node-expansion": "workspace:../node-expansion",
     "@biothings-explorer/smartapi-kg": "workspace:../smartapi-kg",
+    "@biothings-explorer/utils": "workspace:../utils",
     "@sentry/node": "^7.74.1",
     "async": "^3.2.4",
     "biolink-model": "workspace:../biolink-model",

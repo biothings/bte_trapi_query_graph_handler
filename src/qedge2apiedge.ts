@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import LogEntry, { StampedLog } from './log_entry';
+import { LogEntry, StampedLog } from '@biothings-explorer/utils';
 import * as config from './config';
 const CURIE_WITH_PREFIXES = ['MONDO', 'DOID', 'UBERON', 'EFO', 'HP', 'CHEBI', 'CL', 'MGI', 'NCIT'];
 import Debug from 'debug';

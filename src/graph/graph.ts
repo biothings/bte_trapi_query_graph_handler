@@ -1,7 +1,7 @@
 import kg_edge from './kg_edge';
 import kg_node from './kg_node';
 import Debug from 'debug';
-import LogEntry, { StampedLog } from '../log_entry';
+import { LogEntry, StampedLog } from '@biothings-explorer/utils';
 import KGNode from './kg_node';
 import KGEdge from './kg_edge';
 import { Record } from '../../../api-response-transform/built';

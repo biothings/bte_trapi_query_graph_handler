@@ -1,4 +1,4 @@
-import LogEntry, { StampedLog } from '../log_entry';
+import { LogEntry, StampedLog } from '@biothings-explorer/utils';
 import { TrapiResult } from '../types';
 import Debug from 'debug';
 import { zip } from 'lodash';
