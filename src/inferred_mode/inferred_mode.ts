@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import LogEntry, { StampedLog } from '../log_entry';
+import { LogEntry, StampedLog } from '@biothings-explorer/utils';
 import * as utils from '../utils';
 import async from 'async';
 import biolink from '../biolink';

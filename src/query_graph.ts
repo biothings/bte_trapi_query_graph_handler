@@ -1,6 +1,6 @@
 import QEdge from './query_edge';
 import InvalidQueryGraphError from './exceptions/invalid_query_graph_error';
-import LogEntry, { StampedLog } from './log_entry';
+import { LogEntry, StampedLog } from '@biothings-explorer/utils';
 import Debug from 'debug';
 import QNode from './query_node';
 import biolink from './biolink';

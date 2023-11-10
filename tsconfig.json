@@ -1,23 +1,15 @@
 {
+  "$schema": "http://json.schemastore.org/tsconfig",
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "incremental": true,
     "outDir": "./built",
-    "allowJs": true,
-    "target": "es2020",
-    "module": "commonjs",
     "rootDir": "./src",
-    "composite": true,
-    "declaration": true,
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "strict": false,
-    "noImplicitAny": false,
-    "skipLibCheck": true,
     "paths": {
       "@biothings-explorer/call-apis": ["../call-apis"],
       "biolink-model": ["../biolink-model"],
       "biomedical_id_resolver": ["../biomedical_id_resolver"],
-      "@biothings-explorer/smartapi-kg": ["../smartapi-kg"]
+      "@biothings-explorer/smartapi-kg": ["../smartapi-kg"],
+      "@biothings-explorer/utils": ["../utils"]
     }
   },
   "include": ["./src/**/*", "./src/biolink.json", "./src/smartapi_specs.json", "./src/predicates.json"],
@@ -34,6 +26,9 @@
     },
     {
       "path": "../biolink-model"
+    },
+    {
+      "path": "../utils"
     }
   ]
 }

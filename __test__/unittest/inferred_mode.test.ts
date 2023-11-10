@@ -4,7 +4,7 @@ import fs from 'fs';
 const smartAPIPAth = path.resolve(__dirname, '../../../bte-trapi/data/smartapi_specs.json');
 const predicatesPath = path.resolve(__dirname, '../../../bte-trapi/data/predicates.json');
 import _ from 'lodash';
-import { StampedLog, TrapiLog } from '../../src/log_entry';
+import { StampedLog, TrapiLog } from '@biothings-explorer/utils';
 import InferredQueryHandler, { CombinedResponse } from '../../src/inferred_mode/inferred_mode';
 import { MatchedTemplate } from '../../src/inferred_mode/template_lookup';
 

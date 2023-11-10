@@ -52,18 +52,20 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@biothings-explorer/api-response-transform": "file:../api-response-transform",
-    "@biothings-explorer/call-apis": "file:../call-apis",
-    "@biothings-explorer/node-expansion": "file:../node-expansion",
-    "@biothings-explorer/smartapi-kg": "file:../smartapi-kg",
+    "@biothings-explorer/api-response-transform": "workspace:../api-response-transform",
+    "@biothings-explorer/call-apis": "workspace:../call-apis",
+    "@biothings-explorer/node-expansion": "workspace:../node-expansion",
+    "@biothings-explorer/smartapi-kg": "workspace:../smartapi-kg",
+    "@biothings-explorer/utils": "workspace:../utils",
     "@sentry/node": "^7.74.1",
     "async": "^3.2.4",
-    "biolink-model": "file:../biolink-model",
-    "biomedical_id_resolver": "file:../biomedical_id_resolver",
+    "biolink-model": "workspace:../biolink-model",
+    "biomedical_id_resolver": "workspace:../biomedical_id_resolver",
     "chi-square-p-value": "^1.0.5",
     "debug": "^4.3.4",
     "ioredis": "^5.3.2",
     "lodash": "^4.17.21",
+    "lz4": "^0.6.5",
     "redlock": "5.0.0-beta.2"
   }
 }

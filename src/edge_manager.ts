@@ -1,11 +1,11 @@
 import _ from 'lodash';
-import LogEntry, { StampedLog } from './log_entry';
+import { LogEntry, StampedLog } from '@biothings-explorer/utils';
 import BTEError from './exceptions/bte_error';
 import Debug from 'debug';
 const debug = Debug('bte:biothings-explorer-trapi:edge-manager');
 import * as config from './config';
 import BatchEdgeQueryHandler, { BatchEdgeQueryOptions } from './batch_edge_query';
-import * as Sentry from '@sentry/node';
+import { Telemetry } from '@biothings-explorer/utils';
 import QEdge from './query_edge';
 import MetaKG from '@biothings-explorer/smartapi-kg';
 import { QueryHandlerOptions } from '.';
@@ -451,16 +451,12 @@ export default class QueryEdgeManager {
       // storing records will trigger a node entity count update
       currentQEdge.storeRecords(queryRecords);
 
-      const span1 = Sentry?.getCurrentHub()?.getScope()?.getTransaction()?.startChild({
-        description: 'filteringRecords',
-      });
+      const span1 = Telemetry.startSpan({ description: 'filteringRecords' });
       // filter records
       this.updateEdgeRecords(currentQEdge);
       span1?.finish();
 
-      const span2 = Sentry?.getCurrentHub()?.getScope()?.getTransaction()?.startChild({
-        description: 'updatingRecordEdges',
-      });
+      const span2 = Telemetry.startSpan({ description: 'updatingRecordEdges' });
 
       // update and filter neighbors
       this.updateAllOtherEdges(currentQEdge);
