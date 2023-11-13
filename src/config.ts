@@ -3,12 +3,12 @@ const API_BATCH_SIZE = [
   {
     id: '1d288b3a3caf75d541ffaae3aab386c8',
     name: 'BioThings SEMMEDDB API',
-    max: 100,
+    max: 50,
   },
   {
     id: '978fe380a147a8641caf72320862697b',
     name: 'Text Mining Targeted Association API',
-    max: 100,
+    max: 50,
   },
   {
     id: '02af7d098ab304e80d6f4806c3527027',
