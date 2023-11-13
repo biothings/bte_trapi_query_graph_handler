@@ -361,7 +361,7 @@ export default class TRAPIQueryHandler {
    * Set TRAPI Query Graph
    * @param { object } queryGraph - TRAPI Query Graph Object
    */
-  async setQueryGraph(queryGraph: TrapiQueryGraph): Promise<void> {
+  setQueryGraph(queryGraph: TrapiQueryGraph): void {
     this.originalQueryGraph = _.cloneDeep(queryGraph);
     this.queryGraph = queryGraph;
     for (const nodeId in queryGraph.nodes) {
