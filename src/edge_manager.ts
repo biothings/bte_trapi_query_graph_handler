@@ -397,6 +397,7 @@ export default class QueryEdgeManager {
   async executeEdges(): Promise<boolean> {
     const unavailableAPIs: UnavailableAPITracker = {};
     while (this.getEdgesNotExecuted()) {
+      const span = Telemetry.startSpan({ description: 'edgeExecution' });
       //next available/most efficient edge
       const currentQEdge = this.getNext();
       //crate queries from edge
@@ -446,6 +447,7 @@ export default class QueryEdgeManager {
             `qEdge (${currentQEdge.getID()}) got 0 records. Your query terminates.`,
           ).getLog(),
         );
+        span.finish();
         return;
       }
       // storing records will trigger a node entity count update
@@ -473,6 +475,7 @@ export default class QueryEdgeManager {
             `qEdge (${currentQEdge.getID()}) kept 0 records. Your query terminates.`,
           ).getLog(),
         );
+        span.finish();
         return;
       }
       // edge all done
@@ -486,6 +489,7 @@ export default class QueryEdgeManager {
     if (process.env.DUMP_RECORDS) {
       await this.dumpRecords(this.getRecords());
     }
+    span.finish();
     return true;
   }
 }
