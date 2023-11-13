@@ -203,29 +203,14 @@ export default class QueryEdgeManager {
     const execObjectCuries = qEdge.reverse ? subjectCuries : objectCuries;
 
     records.forEach((record) => {
-      //check sub curies against $input ids
-      const subjectIDs: Set<string> = new Set();
-      const objectIDs: Set<string> = new Set();
-      let objectMatch = 0;
-      let subjectMatch = 0;
+      // check against original, primaryID, and equivalent ids
+      const subjectIDs = [record.subject.original, record.subject.curie, ...record.subject.equivalentCuries];
+      const objectIDs = [record.object.original, record.object.curie, ...record.object.equivalentCuries];
 
-      //compare record I/O ids against edge node ids
-      // #1 check equivalent ids
-      record.subject.equivalentCuries.forEach((curie) => {
-        subjectIDs.add(curie);
-      });
-      record.object.equivalentCuries.forEach((curie) => {
-        objectIDs.add(curie);
-      });
-      // #2 ensure we have the primaryID
-      subjectIDs.add(record.subject.curie);
-      objectIDs.add(record.object.curie);
-      // #3 make sure we at least have the original
-      subjectIDs.add(record.subject.original);
-      objectIDs.add(record.object.original);
-      // check ids
-      subjectMatch = _.intersection([...subjectIDs], execSubjectCuries).length;
-      objectMatch = _.intersection([...objectIDs], execObjectCuries).length;
+      // there must be at least a minimal intersection
+      const subjectMatch = subjectIDs.some((curie) => execSubjectCuries.includes(curie));
+      const objectMatch = objectIDs.some((curie) => execObjectCuries.includes(curie));
+
       //if both ends match then keep record
       if (subjectMatch && objectMatch) {
         keep.push(record);
@@ -397,6 +382,7 @@ export default class QueryEdgeManager {
   async executeEdges(): Promise<boolean> {
     const unavailableAPIs: UnavailableAPITracker = {};
     while (this.getEdgesNotExecuted()) {
+      const span = Telemetry.startSpan({ description: 'edgeExecution' });
       //next available/most efficient edge
       const currentQEdge = this.getNext();
       //crate queries from edge
@@ -446,6 +432,7 @@ export default class QueryEdgeManager {
             `qEdge (${currentQEdge.getID()}) got 0 records. Your query terminates.`,
           ).getLog(),
         );
+        span.finish();
         return;
       }
       // storing records will trigger a node entity count update
@@ -473,6 +460,7 @@ export default class QueryEdgeManager {
             `qEdge (${currentQEdge.getID()}) kept 0 records. Your query terminates.`,
           ).getLog(),
         );
+        span.finish();
         return;
       }
       // edge all done
@@ -486,6 +474,7 @@ export default class QueryEdgeManager {
     if (process.env.DUMP_RECORDS) {
       await this.dumpRecords(this.getRecords());
     }
+    span.finish();
     return true;
   }
 }
