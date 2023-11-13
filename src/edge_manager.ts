@@ -466,6 +466,7 @@ export default class QueryEdgeManager {
       // edge all done
       currentQEdge.executed = true;
       debug(`(10) Edge successfully queried.`);
+      span.finish();
     }
     this._logSkippedQueries(unavailableAPIs);
     // collect and organize records
@@ -474,7 +475,6 @@ export default class QueryEdgeManager {
     if (process.env.DUMP_RECORDS) {
       await this.dumpRecords(this.getRecords());
     }
-    span.finish();
     return true;
   }
 }
