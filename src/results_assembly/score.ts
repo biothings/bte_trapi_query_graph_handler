@@ -1,9 +1,12 @@
 import Debug from 'debug';
 import axios from 'axios';
 const debug = Debug('bte:biothings-explorer-trapi:score');
+import os from 'os';
+import async from 'async';
 
 import _ from 'lodash';
 import { ConsolidatedSolutionRecord, RecordsByQEdgeID } from './query_results';
+import { Telemetry } from '@biothings-explorer/utils';
 
 const tuning_param = 2.0;
 
@@ -25,19 +28,27 @@ export interface ScoreCombos {
 async function query(queryPairs: string[][]): Promise<ScoreCombos> {
   const url = 'https://biothings.ncats.io/semmeddb/query/ngd';
   const batchSize = 250;
+  const concurrency_limit = os.cpus().length * 2;
 
   debug('Querying', queryPairs.length, 'combos.');
 
   const chunked_input = _.chunk(queryPairs, batchSize);
   try {
-    const axios_queries = chunked_input.map((input) => {
-      return axios.post(url, {
+    const response = await async.mapLimit(chunked_input, concurrency_limit, async (input) => {
+      const data = {
         umls: input,
         expand: 'both',
+      };
+      Telemetry.addBreadcrumb({
+        category: 'requestBody',
+        data: { data },
       });
+      const start = performance.now();
+      const response = await axios.post(url, data);
+      const end = performance.now();
+      return response;
     });
     //convert res array into single object with all curies
-    const response = await Promise.all(axios_queries);
     const result = response
       .map((r): ngdScoreCombo[] => r.data.filter((combo: ngdScoreCombo) => Number.isFinite(combo.ngd)))
       .flat(); // get numerical scores and flatten array
