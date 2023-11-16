@@ -35,18 +35,22 @@ async function query(queryPairs: string[][]): Promise<ScoreCombos> {
   const chunked_input = _.chunk(queryPairs, batchSize);
   try {
     const response = await async.mapLimit(chunked_input, concurrency_limit, async (input) => {
+      const span = Telemetry.startSpan({ description: 'NGDScoreRequest' });
       const data = {
         umls: input,
         expand: 'both',
       };
-      Telemetry.addBreadcrumb({
-        category: 'requestBody',
-        data: { data },
-      });
-      const start = performance.now();
-      const response = await axios.post(url, data);
-      const end = performance.now();
-      return response;
+      span.setData('requestBody', data);
+      try {
+        // const start = performance.now();
+        const response = await axios.post(url, data);
+        // const end = performance.now();
+        span.finish();
+        return response;
+      } catch (err) {
+        debug(`NGD score query failed: ${err}`);
+        span.finish();
+      }
     });
     //convert res array into single object with all curies
     const result = response
