@@ -517,7 +517,7 @@ export default class InferredQueryHandler {
 
     await async.eachOfSeries(subQueries, async ({ template, queryGraph }, i) => {
       const span = Telemetry.startSpan({ description: 'creativeTemplate' });
-      span.setData('template', i + 1);
+      span.setData('template', (i as number) + 1);
       i = i as number;
       if (stop) {
         span.finish();
