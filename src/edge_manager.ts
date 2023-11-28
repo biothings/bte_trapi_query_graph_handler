@@ -212,7 +212,10 @@ export default class QueryEdgeManager {
       const objectMatch = objectIDs.some((curie) => execObjectCuries.includes(curie));
 
       //if both ends match then keep record
-      if (subjectMatch && objectMatch) {
+
+      // Don't keep self-edges
+      const selfEdge = [...subjectIDs].some((curie) => objectIDs.has(curie));
+      if (subjectMatch && objectMatch && !selfEdge) {
         keep.push(record);
       }
     });
