@@ -178,6 +178,8 @@ export default class TRAPIQueryHandler {
       subclassCuries.forEach(([original, expanded]) => {
         const subject = nodeID;
         const object = primaryIDsByOriginalID[original];
+        // Don't keep self-subclass
+        if (subject === object) return;
         const subclassEdgeID = `expanded-${subject}-subclass_of-${object}`;
         if (subclassEdgeID in this.bteGraph.edges) return;
         const subclassEdge = new KGEdge(subclassEdgeID, {
