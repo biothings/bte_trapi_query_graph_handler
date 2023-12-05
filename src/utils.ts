@@ -9,11 +9,12 @@ export function getUnique<Type>(input: Type[]): Type[] {
   return Array.from(new Set(input));
 }
 
-export function removeBioLinkPrefix(input: string): string {
-  if (input && input.startsWith('biolink:')) {
-    return input.slice(8);
+export function removeBioLinkPrefix<T extends string | string[]>(input: T): T {
+  if (Array.isArray(input)) {
+    return input.map((str: string) => str.replace('biolink:', '')) as T;
+  } else {
+    return input.replace('biolink:', '') as T;
   }
-  return input;
 }
 
 // This gets the intersection of two sets.
