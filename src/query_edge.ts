@@ -151,14 +151,25 @@ export default class QEdge {
       return {
         qualifier_set: qualifierSetObj.qualifier_set.map(({ qualifier_type_id, qualifier_value }) => {
           const new_qualifier_values = qualifier_type_id.includes('predicate')
-            ? Array.from(
-                new Set(
-                  biolink
-                    .getDescendantPredicates(utils.removeBioLinkPrefix(qualifier_value))
-                    .map((item) => `biolink:${utils.removeBioLinkPrefix(item)}`),
-                ),
-              )
-            : Array.from(new Set(biolink.getDescendantQualifiers(utils.removeBioLinkPrefix(qualifier_value))));
+            ? Array.isArray(qualifier_value)
+              ? Array.from(
+                  qualifier_value.reduce((set: Set<string>, predicate: string) => {
+                    biolink
+                      .getDescendantPredicates(utils.removeBioLinkPrefix(predicate))
+                      .forEach((item) => set.add(`biolink:${utils.removeBioLinkPrefix(item)}`));
+                    return set;
+                  }, new Set()),
+                )
+              : Array.from(
+                  new Set(
+                    biolink
+                      .getDescendantPredicates(utils.removeBioLinkPrefix(qualifier_value))
+                      .map((item) => `biolink:${utils.removeBioLinkPrefix(item)}`),
+                  ),
+                )
+            : Array.from(
+                new Set(biolink.getDescendantQualifiers(utils.removeBioLinkPrefix(qualifier_value as string))),
+              );
 
           return {
             qualifier_type_id,
@@ -180,7 +191,11 @@ export default class QEdge {
             let newQualifierType = qualifier_type_id;
             let newQualifierValue = qualifier_value;
             if (qualifier_type_id.includes('predicate')) {
-              newQualifierValue = `biolink:${this.getReversedPredicate(qualifier_value.replace('biolink:', ''))}`;
+              if (Array.isArray(qualifier_value)) {
+                newQualifierValue = qualifier_value.map((str) => `biolink:${str.replace('biolink', '')}`);
+              } else {
+                newQualifierValue = `biolink:${qualifier_value.replace('biolink:', '')}`;
+              }
             }
             if (qualifier_type_id.includes('subject')) {
               newQualifierType = qualifier_type_id.replace('subject', 'object');
@@ -204,7 +219,9 @@ export default class QEdge {
       return Object.fromEntries(
         qualifierSetObj.qualifier_set.map(({ qualifier_type_id, qualifier_value }) => [
           qualifier_type_id.replace('biolink:', ''),
-          qualifier_value.replace('biolink:', ''),
+          Array.isArray(qualifier_value)
+            ? qualifier_value.map((string) => string.replace('biolink:', ''))
+            : qualifier_value.replace('biolink:', ''),
         ]),
       );
     });

@@ -25,7 +25,7 @@ export default class KGEdge {
   };
   publications: Set<string>;
   qualifiers: {
-    [qualifier_type_id: string]: string;
+    [qualifier_type_id: string]: string | string[];
   };
   attributes: {
     [attribute_type_id: string]: Set<string> | TrapiAttribute[];
@@ -105,7 +105,7 @@ export default class KGEdge {
     });
   }
 
-  addQualifier(name: string, value: string): void {
+  addQualifier(name: string, value: string | string[]): void {
     this.qualifiers[name] = value;
   }
 
