@@ -168,7 +168,9 @@ export default class InferredQueryHandler {
       return Object.fromEntries(
         qualifierSetObj.qualifier_set.map(({ qualifier_type_id, qualifier_value }) => [
           qualifier_type_id.replace('biolink:', ''),
-          qualifier_value.replace('biolink:', ''),
+          Array.isArray(qualifier_value)
+            ? qualifier_value.map((string) => string.replace('biolink:', ''))
+            : qualifier_value.replace('biolink:', ''),
         ]),
       ) as CompactQualifiers;
     });
