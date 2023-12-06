@@ -20,6 +20,11 @@ const API_BATCH_SIZE = [
     name: 'Multiomics BigGIM-DrugResponse KP API',
     max: 100,
   },
+  {
+    id: '0212611d1c670f9107baf00b77f0889a',
+    name: 'CTD API',
+    max: 80,
+  },
 ];
 
 // max node IDs an edge with no other IDs can have
