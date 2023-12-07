@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import LogEntry, { StampedLog } from '../log_entry';
+import { LogEntry, StampedLog, Telemetry } from '@biothings-explorer/utils';
 import * as utils from '../utils';
 import async from 'async';
 import biolink from '../biolink';
@@ -256,6 +256,7 @@ export default class InferredQueryHandler {
     qEdge: TrapiQEdge,
     combinedResponse: CombinedResponse,
   ): CombinedResponseReport {
+    const span = Telemetry.startSpan({ description: 'creativeCombineResponse' });
     const newResponse = handler.getResponse();
     const report: CombinedResponseReport = {
       querySuccess: 0,
@@ -424,6 +425,7 @@ export default class InferredQueryHandler {
     if (Object.keys(combinedResponse.message.results).length >= this.CREATIVE_LIMIT && !report.creativeLimitHit) {
       report.creativeLimitHit = Object.keys(newResponse.message.results).length;
     }
+    span.finish();
     return report;
   }
 
@@ -516,8 +518,11 @@ export default class InferredQueryHandler {
     } = {};
 
     await async.eachOfSeries(subQueries, async ({ template, queryGraph }, i) => {
+      const span = Telemetry.startSpan({ description: 'creativeTemplate' });
+      span.setData('template', (i as number) + 1);
       i = i as number;
       if (stop) {
+        span.finish();
         return;
       }
       if (global.queryInformation?.queryGraph) {
@@ -560,6 +565,7 @@ export default class InferredQueryHandler {
           debug(message);
           combinedResponse.logs.push(new LogEntry(`INFO`, null, message).getLog());
         }
+        span.finish();
       } catch (error) {
         handler.logs.forEach((log) => {
           combinedResponse.logs.push(log);
@@ -567,6 +573,7 @@ export default class InferredQueryHandler {
         const message = `ERROR:  Template-${i + 1} failed due to error ${error}`;
         debug(message);
         combinedResponse.logs.push(new LogEntry(`ERROR`, null, message).getLog());
+        span.finish();
         return;
       }
     });

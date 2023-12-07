@@ -32,6 +32,7 @@
   },
   "homepage": "https://github.com/biothings/bte_trapi_query_graph_handler#readme",
   "devDependencies": {
+    "@types/async": "^3.2.22",
     "@types/debug": "^4.1.10",
     "@types/jest": "^29.5.6",
     "@types/lodash": "^4.14.200",
@@ -56,6 +57,7 @@
     "@biothings-explorer/call-apis": "workspace:../call-apis",
     "@biothings-explorer/node-expansion": "workspace:../node-expansion",
     "@biothings-explorer/smartapi-kg": "workspace:../smartapi-kg",
+    "@biothings-explorer/utils": "workspace:../utils",
     "@sentry/node": "^7.74.1",
     "async": "^3.2.4",
     "biolink-model": "workspace:../biolink-model",

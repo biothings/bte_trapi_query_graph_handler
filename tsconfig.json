@@ -8,7 +8,8 @@
       "@biothings-explorer/call-apis": ["../call-apis"],
       "biolink-model": ["../biolink-model"],
       "biomedical_id_resolver": ["../biomedical_id_resolver"],
-      "@biothings-explorer/smartapi-kg": ["../smartapi-kg"]
+      "@biothings-explorer/smartapi-kg": ["../smartapi-kg"],
+      "@biothings-explorer/utils": ["../utils"]
     }
   },
   "include": ["./src/**/*", "./src/biolink.json", "./src/smartapi_specs.json", "./src/predicates.json"],
@@ -25,6 +26,9 @@
     },
     {
       "path": "../biolink-model"
+    },
+    {
+      "path": "../utils"
     }
   ]
 }

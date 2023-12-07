@@ -10,14 +10,13 @@ import Graph from './graph/graph';
 import EdgeManager from './edge_manager';
 import _ from 'lodash';
 import QEdge2APIEdgeHandler from './qedge2apiedge';
-import LogEntry, { StampedLog } from './log_entry';
+import { LogEntry, StampedLog } from '@biothings-explorer/utils';
 import { promises as fs } from 'fs';
 import { getDescendants } from '@biothings-explorer/node-expansion';
 import { resolveSRI, SRINodeNormFailure } from 'biomedical_id_resolver';
 import InferredQueryHandler from './inferred_mode/inferred_mode';
 import KGNode from './graph/kg_node';
 import KGEdge from './graph/kg_edge';
-import * as Sentry from '@sentry/node';
 import {
   APIList,
   TrapiAuxGraphCollection,
@@ -29,6 +28,7 @@ import {
 } from './types';
 import BTEGraph from './graph/graph';
 import QEdge from './query_edge';
+import { Telemetry } from '@biothings-explorer/utils';
 
 // Exports for external availability
 export * from './types';
@@ -37,8 +37,6 @@ export { getTemplates, supportedLookups } from './inferred_mode/template_lookup'
 export { default as QEdge } from './query_edge';
 export { default as QNode } from './query_node';
 export { default as InvalidQueryGraphError } from './exceptions/invalid_query_graph_error';
-export * from './log_entry';
-export { default as LogEntry } from './log_entry';
 export * from './qedge2apiedge';
 
 export interface QueryHandlerOptions {
@@ -317,14 +315,14 @@ export default class TRAPIQueryHandler {
   async addQueryNodes(): Promise<void> {
     const qNodeIDsByOriginalID: Map<string, TrapiQNode> = new Map();
     const curiesToResolve = [
-      ...Object.values(this.queryGraph.nodes).reduce((set, qNode) => {
+      ...Object.values(this.queryGraph.nodes).reduce((set: Set<string>, qNode) => {
         qNode.ids?.forEach((id) => {
           set.add(id);
           qNodeIDsByOriginalID.set(id, qNode);
         });
         return set;
-      }, new Set() as Set<string>),
-    ];
+      }, new Set()),
+    ] as string[];
     const resolvedCuries = await resolveSRI({ unknown: curiesToResolve });
     Object.entries(resolvedCuries).forEach(([originalCurie, resolvedEntity]) => {
       if (!this.bteGraph.nodes[resolvedEntity.primaryID]) {
@@ -365,7 +363,7 @@ export default class TRAPIQueryHandler {
    * Set TRAPI Query Graph
    * @param { object } queryGraph - TRAPI Query Graph Object
    */
-  async setQueryGraph(queryGraph: TrapiQueryGraph): Promise<void> {
+  setQueryGraph(queryGraph: TrapiQueryGraph): void {
     this.originalQueryGraph = _.cloneDeep(queryGraph);
     this.queryGraph = queryGraph;
     for (const nodeId in queryGraph.nodes) {
@@ -625,9 +623,7 @@ export default class TRAPIQueryHandler {
     this._initializeResponse();
     await this.addQueryNodes();
 
-    const span1 = Sentry?.getCurrentHub()?.getScope()?.getTransaction()?.startChild({
-      description: 'loadMetaKG',
-    });
+    const span1 = Telemetry.startSpan({ description: 'loadMetaKG' });
 
     debug('Start to load metakg.');
     const metaKG = this._loadMetaKG();
@@ -673,9 +669,7 @@ export default class TRAPIQueryHandler {
     debug(`(3) All edges created ${JSON.stringify(queryEdges)} `);
 
     if (this._queryUsesInferredMode()) {
-      const span2 = Sentry?.getCurrentHub()?.getScope()?.getTransaction()?.startChild({
-        description: 'creativeExecution',
-      });
+      const span2 = Telemetry.startSpan({ description: 'creativeExecution' });
       await this._handleInferredEdges();
       span2?.finish();
       return;
@@ -692,9 +686,7 @@ export default class TRAPIQueryHandler {
       return;
     }
 
-    const span3 = Sentry?.getCurrentHub()?.getScope()?.getTransaction()?.startChild({
-      description: 'resultsAssembly',
-    });
+    const span3 = Telemetry.startSpan({ description: 'resultsAssembly' });
 
     // update query graph
     this.bteGraph.update(manager.getRecords());

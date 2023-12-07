@@ -1,11 +1,11 @@
 import _ from 'lodash';
-import LogEntry, { StampedLog } from './log_entry';
+import { LogEntry, StampedLog } from '@biothings-explorer/utils';
 import BTEError from './exceptions/bte_error';
 import Debug from 'debug';
 const debug = Debug('bte:biothings-explorer-trapi:edge-manager');
 import * as config from './config';
 import BatchEdgeQueryHandler, { BatchEdgeQueryOptions } from './batch_edge_query';
-import * as Sentry from '@sentry/node';
+import { Telemetry } from '@biothings-explorer/utils';
 import QEdge from './query_edge';
 import MetaKG from '@biothings-explorer/smartapi-kg';
 import { QueryHandlerOptions } from '.';
@@ -203,33 +203,19 @@ export default class QueryEdgeManager {
     const execObjectCuries = qEdge.reverse ? subjectCuries : objectCuries;
 
     records.forEach((record) => {
-      //check sub curies against $input ids
-      const subjectIDs: Set<string> = new Set();
-      const objectIDs: Set<string> = new Set();
-      let objectMatch = 0;
-      let subjectMatch = 0;
+      // check against original, primaryID, and equivalent ids
+      const subjectIDs = [record.subject.original, record.subject.curie, ...record.subject.equivalentCuries];
+      const objectIDs = [record.object.original, record.object.curie, ...record.object.equivalentCuries];
 
-      //compare record I/O ids against edge node ids
-      // #1 check equivalent ids
-      record.subject.equivalentCuries.forEach((curie) => {
-        subjectIDs.add(curie);
-      });
-      record.object.equivalentCuries.forEach((curie) => {
-        objectIDs.add(curie);
-      });
-      // #2 ensure we have the primaryID
-      subjectIDs.add(record.subject.curie);
-      objectIDs.add(record.object.curie);
-      // #3 make sure we at least have the original
-      subjectIDs.add(record.subject.original);
-      objectIDs.add(record.object.original);
-      // check ids
-      subjectMatch = _.intersection([...subjectIDs], execSubjectCuries).length;
-      objectMatch = _.intersection([...objectIDs], execObjectCuries).length;
+      // there must be at least a minimal intersection
+      const subjectMatch =
+        subjectIDs.some((curie) => execSubjectCuries.includes(curie)) || execSubjectCuries.length === 0;
+      const objectMatch = objectIDs.some((curie) => execObjectCuries.includes(curie)) || execObjectCuries.length === 0;
+
       //if both ends match then keep record
 
       // Don't keep self-edges
-      const selfEdge = [...subjectIDs].some((curie) => objectIDs.has(curie));
+      const selfEdge = [...subjectIDs].some((curie) => objectIDs.includes(curie));
       if (subjectMatch && objectMatch && !selfEdge) {
         keep.push(record);
       }
@@ -400,6 +386,7 @@ export default class QueryEdgeManager {
   async executeEdges(): Promise<boolean> {
     const unavailableAPIs: UnavailableAPITracker = {};
     while (this.getEdgesNotExecuted()) {
+      const span = Telemetry.startSpan({ description: 'edgeExecution' });
       //next available/most efficient edge
       const currentQEdge = this.getNext();
       //crate queries from edge
@@ -449,21 +436,18 @@ export default class QueryEdgeManager {
             `qEdge (${currentQEdge.getID()}) got 0 records. Your query terminates.`,
           ).getLog(),
         );
+        span.finish();
         return;
       }
       // storing records will trigger a node entity count update
       currentQEdge.storeRecords(queryRecords);
 
-      const span1 = Sentry?.getCurrentHub()?.getScope()?.getTransaction()?.startChild({
-        description: 'filteringRecords',
-      });
+      const span1 = Telemetry.startSpan({ description: 'filteringRecords' });
       // filter records
       this.updateEdgeRecords(currentQEdge);
       span1?.finish();
 
-      const span2 = Sentry?.getCurrentHub()?.getScope()?.getTransaction()?.startChild({
-        description: 'updatingRecordEdges',
-      });
+      const span2 = Telemetry.startSpan({ description: 'updatingRecordEdges' });
 
       // update and filter neighbors
       this.updateAllOtherEdges(currentQEdge);
@@ -480,11 +464,13 @@ export default class QueryEdgeManager {
             `qEdge (${currentQEdge.getID()}) kept 0 records. Your query terminates.`,
           ).getLog(),
         );
+        span.finish();
         return;
       }
       // edge all done
       currentQEdge.executed = true;
       debug(`(10) Edge successfully queried.`);
+      span.finish();
     }
     this._logSkippedQueries(unavailableAPIs);
     // collect and organize records

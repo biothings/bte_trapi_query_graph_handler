@@ -1,6 +1,6 @@
 // TODO change how types are exported on smartapi-kg so this is a normal package import
 import { SmartAPISpec } from '@biothings-explorer/smartapi-kg';
-import { TrapiLog } from './log_entry';
+import { TrapiLog } from '@biothings-explorer/utils';
 
 declare global {
   var missingAPIs: SmartAPISpec[];
@@ -16,7 +16,9 @@ declare global {
     jobID?: string;
     callback_url?: string;
   };
-  var job: any; // TODO type as Piscina job
+  var job: {
+    log: (logString: string) => void;
+  }; // TODO type as Piscina job
 }
 
 export interface TrapiQNode {

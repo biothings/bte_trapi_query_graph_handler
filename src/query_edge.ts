@@ -5,7 +5,7 @@ import biolink from './biolink';
 import { Record, RecordNode, FrozenRecord } from '@biothings-explorer/api-response-transform';
 import QNode from './query_node';
 import { QNodeInfo } from './query_node';
-import { StampedLog } from './log_entry';
+import { LogEntry, StampedLog } from '@biothings-explorer/utils';
 import { TrapiAttributeConstraint, TrapiQualifierConstraint } from './types';
 
 const debug = Debug('bte:biothings-explorer-trapi:QEdge');
