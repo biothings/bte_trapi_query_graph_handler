@@ -104,8 +104,8 @@ export default class CacheHandler {
       caching === false
         ? false
         : process.env.RESULT_CACHING !== 'false'
-        ? !(process.env.REDIS_HOST === undefined) && !(process.env.REDIS_PORT === undefined)
-        : false;
+          ? !(process.env.REDIS_HOST === undefined) && !(process.env.REDIS_PORT === undefined)
+          : false;
     this.recordConfig = recordConfig;
     this.logs.push(
       new LogEntry('DEBUG', null, `REDIS cache is ${this.cacheEnabled === true ? '' : 'not'} enabled.`).getLog(),
@@ -231,7 +231,7 @@ export default class CacheHandler {
         if (global.parentPort) {
           global.parentPort.postMessage({ threadId, addCacheKey: redisID });
         }
-        await redisClient.client.usingLock([`redisLock:${redisID}`], 600000, async () => {
+        await redisClient.client.usingLock([`redisLock:${redisID}`, 'redisLock:EdgeCaching'], 600000, async () => {
           try {
             await redisClient.client.delTimeout(redisID); // prevents weird overwrite edge cases
             await new Promise<void>((resolve, reject) => {
