@@ -603,13 +603,13 @@ export default class InferredQueryHandler {
       );
     }
     const response = combinedResponse as unknown as TrapiResponse;
-    response.description = `Query processed successfully, retrieved ${response.message.results.length} results.`;
     // sort records by score
     response.message.results = Object.values(combinedResponse.message.results).sort((a, b) => {
       return b.analyses[0].score - a.analyses[0].score ? b.analyses[0].score - a.analyses[0].score : 0;
     });
     // trim extra results and prune kg
     response.message.results = response.message.results.slice(0, this.CREATIVE_LIMIT);
+    response.description = `Query processed successfully, retrieved ${response.message.results.length} results.`;
     this.pruneKnowledgeGraph(response);
     // get the final summary log
     if (successfulQueries) {
