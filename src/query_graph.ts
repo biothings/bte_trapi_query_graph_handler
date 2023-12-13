@@ -57,6 +57,14 @@ export default class QueryGraph {
     }
   }
 
+  _validateBatchSize(queryGraph: TrapiQueryGraph): void {
+    Object.entries(queryGraph.nodes).forEach(([nodeID, node]) => {
+      if (node.ids && node.ids.length > 150) {
+        throw new InvalidQueryGraphError(`Query node ${nodeID} exceeds batch size limit.`);
+      }
+    });
+  }
+
   _validateDuplicateEdges(queryGraph: TrapiQueryGraph): void {
     const edgeSet = new Set();
     for (const edgeID in queryGraph.edges) {
@@ -182,6 +190,7 @@ export default class QueryGraph {
     this._validateDuplicateEdges(queryGraph);
     this._validateNodeProperties(queryGraph);
     this._validateEdgeProperties(queryGraph);
+    this._validateBatchSize(queryGraph);
     this._validateCycles(queryGraph);
     this._validateNoDuplicateQualifierTypes(queryGraph);
   }
