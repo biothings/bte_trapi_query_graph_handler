@@ -26,7 +26,12 @@ export interface ScoreCombos {
 
 // create lookup table for ngd scores in the format: {inputUMLS-outputUMLS: ngd}
 async function query(queryPairs: string[][]): Promise<ScoreCombos> {
-  const url = 'https://biothings.ncats.io/semmeddb/query/ngd';
+  const url = {
+    dev: 'https://biothings.ci.transltr.io/semmeddb/query/ngd',
+    ci: 'https://biothings.ci.transltr.io/semmeddb/query/ngd',
+    test: 'https://biothings.test.transltr.io/semmeddb/query/ngd',
+    prod: 'https://biothings.ncats.io/semmeddb/query/ngd',
+  }[process.env.INSTANCE_ENV ?? 'prod'];
   const batchSize = 250;
   const concurrency_limit = os.cpus().length * 2;
 
