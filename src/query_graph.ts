@@ -59,7 +59,7 @@ export default class QueryGraph {
 
   _validateBatchSize(queryGraph: TrapiQueryGraph): void {
     Object.entries(queryGraph.nodes).forEach(([nodeID, node]) => {
-      if (node.ids.length > 150) {
+      if (node.ids && node.ids.length > 150) {
         throw new InvalidQueryGraphError(`Query node ${nodeID} exceeds batch size limit.`);
       }
     });
