@@ -102,11 +102,9 @@ export default class InferredQueryHandler {
       return false;
     }
 
-    const tooManyIDs =
-      1 <
-      Object.values(this.queryGraph.nodes).reduce((sum, node) => {
-        return typeof node.ids !== 'undefined' ? sum + node.ids.length : sum;
-      }, 0);
+    const tooManyIDs = Object.values(this.queryGraph.nodes).some((node) => {
+      return typeof node.ids !== 'undefined' && node.ids.length > 1;
+    });
     if (tooManyIDs) {
       const message = 'Inferred Mode queries with multiple IDs are not supported. Your query terminates.';
       this.logs.push(new LogEntry('WARNING', null, message).getLog());
