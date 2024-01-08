@@ -32,8 +32,8 @@ function timeoutFunc<F extends AsyncFunction>(func: F, timeoutms = 0) {
  */
 function addPrefix<F extends AsyncFunction>(func: F) {
   return (arg0: Parameters<F>[0], ...args: DropFirst<Parameters<F>>): ReturnType<F> => {
-    if (args.length > 0) {
-      arg0 = `${prefix}${arg0}`;
+    if (arg0 && (arg0 as string).length > 0) {
+      arg0 = `${prefix}${arg0 as string}`;
     }
     return func(arg0, ...args) as ReturnType<F>;
   };
