@@ -32,7 +32,6 @@ import { Telemetry } from '@biothings-explorer/utils';
 
 // Exports for external availability
 export * from './types';
-export { redisClient, getNewRedisClient } from './redis-client';
 export { getTemplates, supportedLookups } from './inferred_mode/template_lookup';
 export { default as QEdge } from './query_edge';
 export { default as QNode } from './query_node';

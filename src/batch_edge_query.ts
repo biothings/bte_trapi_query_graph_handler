@@ -1,4 +1,5 @@
-import call_api, { RedisClient } from '@biothings-explorer/call-apis';
+import call_api from '@biothings-explorer/call-apis';
+import { redisClient } from '@biothings-explorer/utils';
 import QEdge2APIEdgeHandler, { APIEdge } from './qedge2apiedge';
 import NodesUpdateHandler from './update_nodes';
 import Debug from 'debug';
@@ -7,7 +8,7 @@ import CacheHandler from './cache_handler';
 import { threadId } from 'worker_threads';
 import MetaKG from '@biothings-explorer/smartapi-kg';
 import { StampedLog } from '@biothings-explorer/utils';
-import { QueryHandlerOptions, redisClient } from '.';
+import { QueryHandlerOptions } from '.';
 import QEdge from './query_edge';
 import { UnavailableAPITracker } from './types';
 import { Record } from '@biothings-explorer/api-response-transform';
@@ -62,7 +63,7 @@ export default class BatchEdgeQueryHandler {
    * @private
    */
   async _queryAPIEdges(APIEdges: APIEdge[], unavailableAPIs: UnavailableAPITracker = {}): Promise<Record[]> {
-    const executor = new call_api(APIEdges, this.options, redisClient as RedisClient);
+    const executor = new call_api(APIEdges, this.options, redisClient);
     const records: Record[] = await executor.query(this.resolveOutputIDs, unavailableAPIs);
     this.logs = [...this.logs, ...executor.logs];
     return records;
