@@ -1,4 +1,4 @@
-import { redisClient } from './redis-client';
+import { redisClient } from '@biothings-explorer/utils';
 import Debug from 'debug';
 const debug = Debug('bte:biothings-explorer-trapi:cache_handler');
 import { LogEntry, StampedLog } from '@biothings-explorer/utils';
