@@ -55,7 +55,6 @@ const EDGE_ATTRIBUTES_USED_IN_RECORD_HASH = [
   //"NCIT:C61594",
   // Multiomics BigGIM Drug-Response 2023-05-31: may later change?
   'biolink:context_qualifier',
-  'biolink:primary_knowledge_source',   // added 2024-01-17
   // commenting it out since I haven't tested if it works for this KP or
   //   if it'll cause bugs when processing other KPs.
   //   It is only needed to differentiate records from some operations
