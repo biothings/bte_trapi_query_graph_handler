@@ -257,7 +257,9 @@ export default class CacheHandler {
                   resolve();
                 });
             });
-            await redisClient.client.expireTimeout(redisID, process.env.REDIS_KEY_EXPIRE_TIME || 1800);
+            if (process.env.QEDGE_CACHE_TIME_S !== "0") {
+                await redisClient.client.expireTimeout(redisID, process.env.QEDGE_CACHE_TIME_S || 1800);
+            }
           } catch (error) {
             failedHashes.push(hash);
             debug(
