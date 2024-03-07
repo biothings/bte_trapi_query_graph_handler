@@ -176,19 +176,31 @@ export default class QNode {
     return [...combined];
   }
 
+  
   intersectWithExpandedCuries(newCuries: ExpandedCuries): void {
     const keep: { [mainID: string]: string[] } = {};
+
+    const existingSet = new Set();
+    for (const key in this.expanded_curie) {
+      for (const curie of this.expanded_curie[key]) {
+        existingSet.add(curie.toLowerCase());
+      }
+    }
+
     // If a new entity has any alias intersection with an existing entity, keep it
-    Object.entries(newCuries).forEach(([newMainID, currentAliases]) => {
-      const someIntersection = Object.values(this.expanded_curie).some((existingAliases) => {
-        return currentAliases.some((currentAlias) =>
-          existingAliases.some((existingAlias) => currentAlias.toLowerCase() === existingAlias.toLowerCase()),
-        );
-      });
+    for (const [newMainID, currentAliases] of Object.entries(newCuries)) {
+      let someIntersection = false;
+      for (const curie of currentAliases) {
+        if (existingSet.has(curie.toLowerCase())) {
+          someIntersection = true;
+          break;
+        }
+      }
+
       if (someIntersection) {
         if (!keep[newMainID]) keep[newMainID] = currentAliases;
       }
-    });
+    }
 
     //save expanded curies (main + aliases)
     this.expanded_curie = keep;
