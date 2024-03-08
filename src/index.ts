@@ -1,4 +1,4 @@
-import MetaKG from '@biothings-explorer/smartapi-kg';
+import MetaKG, { SmartAPIKGOperationObject } from '@biothings-explorer/smartapi-kg';
 import path from 'path';
 import QueryGraph from './query_graph';
 import KnowledgeGraph from './graph/knowledge_graph';
@@ -28,6 +28,7 @@ import {
 } from './types';
 import BTEGraph from './graph/graph';
 import QEdge from './query_edge';
+import { redisClient } from './redis-client';
 import { Telemetry } from '@biothings-explorer/utils';
 
 // Exports for external availability
@@ -51,6 +52,7 @@ export interface QueryHandlerOptions {
   resolveOutputIDs?: boolean;
   submitter?: string;
   caching?: boolean; // from request url query values
+  metakg?: SmartAPIKGOperationObject[]; // list of meta kg ops
   EDGE_ATTRIBUTES_USED_IN_RECORD_HASH?: string[];
 }
 export default class TRAPIQueryHandler {
@@ -87,14 +89,26 @@ export default class TRAPIQueryHandler {
 
   async findUnregisteredAPIs() {
     const configListAPIs = this.options.apiList['include'];
-    const smartapiRegistry = await fs.readFile(this.path, { encoding: 'utf8' });
+
+    let smartapiRegistry;
+    if (redisClient.clientEnabled) {
+        const redisData = await redisClient.client.getTimeout(`bte:smartapi:specs`)
+        if (redisData) {
+            smartapiRegistry = JSON.parse(redisData);
+        }
+    }
+
+    if (!smartapiRegistry) {
+        const file = await fs.readFile(this.path, "utf-8");
+        smartapiRegistry = JSON.parse(file);
+    }
 
     const smartapiIds: string[] = [];
     const inforesIds: string[] = [];
     const unregisteredAPIs: string[] = [];
 
     // TODO typing for smartapiRegistration
-    JSON.parse(smartapiRegistry).hits.forEach((smartapiRegistration) => {
+    smartapiRegistry.hits.forEach((smartapiRegistration) => {
       smartapiIds.push(smartapiRegistration._id);
       inforesIds.push(smartapiRegistration.info?.['x-translator']?.infores);
     });
@@ -110,14 +124,20 @@ export default class TRAPIQueryHandler {
     return unregisteredAPIs;
   }
 
-  _loadMetaKG(): MetaKG {
-    const metaKG = new MetaKG(this.path, this.predicatePath);
+  async _loadMetaKG(): Promise<MetaKG> {
     debug(
       `Query options are: ${JSON.stringify({
         ...this.options,
         schema: this.options.schema ? this.options.schema.info.version : 'not included',
+        metakg: ""
       })}`,
     );
+
+    if (this.options.metakg) {
+        return new MetaKG(undefined, undefined, (this.options as any).metakg);
+    }
+
+    const metaKG = new MetaKG(this.path, this.predicatePath);
     debug(`SmartAPI Specs read from path: ${this.path}`);
     metaKG.constructMetaKGSync(this.includeReasoner, this.options);
     return metaKG;
@@ -626,7 +646,7 @@ export default class TRAPIQueryHandler {
     const span1 = Telemetry.startSpan({ description: 'loadMetaKG' });
 
     debug('Start to load metakg.');
-    const metaKG = this._loadMetaKG();
+    const metaKG = await this._loadMetaKG();
     if (!metaKG.ops.length) {
       let error: string;
       if (this.options.smartAPIID) {
