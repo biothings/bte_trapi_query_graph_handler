@@ -134,7 +134,9 @@ export default class TRAPIQueryHandler {
     );
 
     if (this.options.metakg) {
-        return new MetaKG(undefined, undefined, (this.options as any).metakg);
+        const metaKG = new MetaKG(undefined, undefined, (this.options as any).metakg);
+        metaKG.filterKG(this.options);
+        return metaKG;
     }
 
     const metaKG = new MetaKG(this.path, this.predicatePath);
