@@ -13,7 +13,7 @@
                 "eA": {
                     "subject": "creativeQuerySubject",
                     "object": "creativeQueryObject",
-                    "predicates": ["biolink:treats"]
+                    "predicates": ["biolink:treats_or_applied_or_studied_to_treat"]
                 }
             }
         }
