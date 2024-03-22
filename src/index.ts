@@ -18,7 +18,6 @@ import InferredQueryHandler from './inferred_mode/inferred_mode';
 import KGNode from './graph/kg_node';
 import KGEdge from './graph/kg_edge';
 import {
-  APIList,
   TrapiAuxGraphCollection,
   TrapiAuxiliaryGraph,
   TrapiQNode,
@@ -26,33 +25,19 @@ import {
   TrapiResponse,
   TrapiResult,
 } from './types';
+import { QueryHandlerOptions } from '@biothings-explorer/types';
 import BTEGraph from './graph/graph';
 import QEdge from './query_edge';
 import { Telemetry } from '@biothings-explorer/utils';
 
 // Exports for external availability
 export * from './types';
-export { redisClient, getNewRedisClient } from './redis-client';
 export { getTemplates, supportedLookups } from './inferred_mode/template_lookup';
 export { default as QEdge } from './query_edge';
 export { default as QNode } from './query_node';
 export { default as InvalidQueryGraphError } from './exceptions/invalid_query_graph_error';
 export * from './qedge2apiedge';
 
-export interface QueryHandlerOptions {
-  provenanceUsesServiceProvider?: boolean;
-  smartAPIID?: string;
-  teamName?: string;
-  enableIDResolution?: boolean;
-  // TODO: type instances of `any`
-  apiList?: APIList;
-  schema?: any; // might be hard to type -- it's the entire TRAPI schema IIRC
-  dryrun?: boolean;
-  resolveOutputIDs?: boolean;
-  submitter?: string;
-  caching?: boolean; // from request url query values
-  EDGE_ATTRIBUTES_USED_IN_RECORD_HASH?: string[];
-}
 export default class TRAPIQueryHandler {
   logs: StampedLog[];
   options: QueryHandlerOptions;
@@ -448,13 +433,11 @@ export default class TRAPIQueryHandler {
 
         let log_msg: string;
         if (currentQEdge.reverse) {
-          log_msg = `qEdge ${currentQEdge.id} (reversed): ${currentQEdge.object.categories} > ${
-            currentQEdge.predicate ? `${currentQEdge.predicate} > ` : ''
-          }${currentQEdge.subject.categories}`;
+          log_msg = `qEdge ${currentQEdge.id} (reversed): ${currentQEdge.object.categories} > ${currentQEdge.predicate ? `${currentQEdge.predicate} > ` : ''
+            }${currentQEdge.subject.categories}`;
         } else {
-          log_msg = `qEdge ${currentQEdge.id}: ${currentQEdge.subject.categories} > ${
-            currentQEdge.predicate ? `${currentQEdge.predicate} > ` : ''
-          }${currentQEdge.object.categories}`;
+          log_msg = `qEdge ${currentQEdge.id}: ${currentQEdge.subject.categories} > ${currentQEdge.predicate ? `${currentQEdge.predicate} > ` : ''
+            }${currentQEdge.object.categories}`;
         }
         this.logs.push(new LogEntry('INFO', null, log_msg).getLog());
 
@@ -495,9 +478,8 @@ export default class TRAPIQueryHandler {
     });
     const qEdgesLogStr = qEdgesToLog.length > 1 ? `[${qEdgesToLog.join(', ')}]` : `${qEdgesToLog.join(', ')}`;
     if (len > 0) {
-      const terminateLog = `Query Edge${len !== 1 ? 's' : ''} ${qEdgesLogStr} ${
-        len !== 1 ? 'have' : 'has'
-      } no MetaKG edges. Your query terminates.`;
+      const terminateLog = `Query Edge${len !== 1 ? 's' : ''} ${qEdgesLogStr} ${len !== 1 ? 'have' : 'has'
+        } no MetaKG edges. Your query terminates.`;
       debug(terminateLog);
       this.logs.push(new LogEntry('WARNING', null, terminateLog).getLog());
       return false;
@@ -611,8 +593,7 @@ export default class TRAPIQueryHandler {
       new LogEntry(
         'INFO',
         null,
-        `Execution Summary: (${KGNodes}) nodes / (${kgEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${
-          cached ? ` (${cached} cached qEdges)` : ''
+        `Execution Summary: (${KGNodes}) nodes / (${kgEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${cached ? ` (${cached} cached qEdges)` : ''
         } returned results from(${sources.length}) unique API${sources.length === 1 ? 's' : ''}`,
       ).getLog(),
       new LogEntry('INFO', null, `APIs: ${sources.join(', ')} `).getLog(),

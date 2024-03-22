@@ -1,25 +1,4 @@
-// TODO change how types are exported on smartapi-kg so this is a normal package import
-import { SmartAPISpec } from '@biothings-explorer/smartapi-kg';
 import { TrapiLog } from '@biothings-explorer/utils';
-
-declare global {
-  var missingAPIs: SmartAPISpec[];
-  var BIOLINK_VERSION: string;
-  var SCHEMA_VERSION: string;
-  var parentPort: MessagePort;
-  var cachingTasks: Promise<void>[];
-  var queryInformation: {
-    queryGraph: TrapiQueryGraph;
-    isCreativeMode: boolean;
-    creativeTemplate?: string;
-    totalRecords: number;
-    jobID?: string;
-    callback_url?: string;
-  };
-  var job: {
-    log: (logString: string) => void;
-  }; // TODO type as Piscina job
-}
 
 export interface TrapiQNode {
   ids?: string[];
@@ -168,19 +147,6 @@ export interface TrapiResponse {
   logs: TrapiLog[];
 }
 
-export type APIDefinition = {
-  // Must have one of id or infores
-  id?: string; // SmartAPI ID, takes priority over infores
-  name: string; // Must match name on SmartAPI registry
-  infores?: string; // infores of API
-  primarySource?: boolean;
-} & ({ id: string } | { infores: string });
-
-export interface APIList {
-  include: APIDefinition[];
-  // takes priority over include, taking into account id/infores prioritization
-  exclude: APIDefinition[];
-}
 
 export interface UnavailableAPITracker {
   [server: string]: { skip: boolean; skippedQueries: number };

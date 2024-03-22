@@ -1,4 +1,4 @@
-import { redisClient } from './redis-client';
+import { redisClient } from '@biothings-explorer/utils';
 import Debug from 'debug';
 const debug = Debug('bte:biothings-explorer-trapi:cache_handler');
 import { LogEntry, StampedLog } from '@biothings-explorer/utils';
@@ -10,8 +10,8 @@ import { Readable, Transform } from 'stream';
 import { Record, RecordPackage } from '@biothings-explorer/api-response-transform';
 import { threadId } from 'worker_threads';
 import MetaKG from '../../smartapi-kg/built';
-import { QueryHandlerOptions } from '.';
 import QEdge from './query_edge';
+import { QueryHandlerOptions } from '@biothings-explorer/types';
 
 export interface RecordPacksByQedgeMetaKGHash {
   [QEdgeHash: string]: RecordPackage;
@@ -113,7 +113,7 @@ export default class CacheHandler {
   }
 
   async categorizeEdges(qEdges: QEdge[]): Promise<{ cachedRecords: Record[]; nonCachedQEdges: QEdge[] }> {
-    if (this.cacheEnabled === false || process.env.INTERNAL_DISABLE_REDIS) {
+    if (this.cacheEnabled === false || process.env.INTERNAL_DISABLE_REDIS === "true") {
       return {
         cachedRecords: [],
         nonCachedQEdges: qEdges,
@@ -210,7 +210,7 @@ export default class CacheHandler {
   }
 
   async cacheEdges(queryRecords: Record[]): Promise<void> {
-    if (this.cacheEnabled === false || process.env.INTERNAL_DISABLE_REDIS) {
+    if (this.cacheEnabled === false || process.env.INTERNAL_DISABLE_REDIS === "true") {
       if (global.parentPort) {
         global.parentPort.postMessage({ threadId, cacheDone: true });
       }

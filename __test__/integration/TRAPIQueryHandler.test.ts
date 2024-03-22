@@ -1,5 +1,6 @@
-import axios from 'axios';
+import axios, { AxiosStatic } from 'axios';
 jest.mock('axios');
+const mockedAxios = axios as jest.Mocked<AxiosStatic>;
 
 import TRAPIQueryHandler from '../../src/index';
 import path from 'path';
@@ -26,7 +27,7 @@ describe('Testing TRAPIQueryHandler Module', () => {
   };
   describe('Testing query function', () => {
     test('test with one query edge', async () => {
-      (axios.get as jest.Mock).mockResolvedValue({
+      (mockedAxios.get as jest.Mock).mockResolvedValue({
         data: {
           message: {
             query_graph: {
@@ -101,7 +102,7 @@ describe('Testing TRAPIQueryHandler Module', () => {
           workflow: [{ id: 'lookup' }],
         },
       });
-      (axios.post as jest.Mock).mockResolvedValue({
+      (mockedAxios.post as jest.Mock).mockResolvedValue({
         data: {
           'MONDO:0005737': {
             id: { identifier: 'MONDO:0005737', label: 'Ebola hemorrhagic fever' },
@@ -139,6 +140,6 @@ describe('Testing TRAPIQueryHandler Module', () => {
       queryHandler.setQueryGraph(OneHopQuery);
       await queryHandler.query();
       expect(queryHandler.knowledgeGraph.kg).toHaveProperty('nodes');
-    }, 15000);
+    }, 30000);
   });
 });

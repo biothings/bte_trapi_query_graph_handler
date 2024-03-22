@@ -1,7 +1,6 @@
 import { toArray } from '../utils';
 import Debug from 'debug';
 import {
-  APIList,
   TrapiAttribute,
   TrapiKnowledgeGraph,
   TrapiKGEdge,
@@ -10,11 +9,11 @@ import {
   TrapiKGNodes,
   TrapiQualifier,
   TrapiSource,
-  APIDefinition,
 } from '../types';
 import KGNode from './kg_node';
 import KGEdge from './kg_edge';
 import { BTEGraphUpdate } from './graph';
+import { APIDefinition } from '@biothings-explorer/types';
 
 const debug = Debug('bte:biothings-explorer-trapi:KnowledgeGraph');
 
