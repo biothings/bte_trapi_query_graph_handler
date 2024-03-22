@@ -8,18 +8,18 @@ import CacheHandler from './cache_handler';
 import { threadId } from 'worker_threads';
 import MetaKG from '@biothings-explorer/smartapi-kg';
 import { StampedLog } from '@biothings-explorer/utils';
-import { QueryHandlerOptions } from '.';
+import { QueryHandlerOptions } from '@biothings-explorer/types';
 import QEdge from './query_edge';
 import { UnavailableAPITracker } from './types';
 import { Record } from '@biothings-explorer/api-response-transform';
 
 export interface BatchEdgeQueryOptions extends QueryHandlerOptions {
   recordHashEdgeAttributes: string[];
+  caching: boolean;
 }
 
 export default class BatchEdgeQueryHandler {
   metaKG: MetaKG;
-  subscribers: any[];
   logs: StampedLog[];
   caching: boolean;
   options: QueryHandlerOptions;
@@ -27,7 +27,6 @@ export default class BatchEdgeQueryHandler {
   qEdges: QEdge | QEdge[];
   constructor(metaKG: MetaKG, resolveOutputIDs = true, options?: BatchEdgeQueryOptions) {
     this.metaKG = metaKG;
-    this.subscribers = [];
     this.logs = [];
     this.caching = options && options.caching;
     this.options = options;
@@ -101,7 +100,7 @@ export default class BatchEdgeQueryHandler {
             const equivalentAlreadyIncluded = qEdge
               .getInputNode()
               .getEquivalentIDs()
-              [curie].equivalentIDs.some((equivalentCurie) => reducedCuries.includes(equivalentCurie));
+            [curie].equivalentIDs.some((equivalentCurie) => reducedCuries.includes(equivalentCurie));
             if (!equivalentAlreadyIncluded) {
               reducedCuries.push(curie);
             } else {
@@ -113,8 +112,7 @@ export default class BatchEdgeQueryHandler {
         strippedCuries.push(...nodeStrippedCuries);
         if (nodeStrippedCuries.length > 0) {
           debug(
-            `stripped (${nodeStrippedCuries.length}) duplicate equivalent curies from ${
-              node.id
+            `stripped (${nodeStrippedCuries.length}) duplicate equivalent curies from ${node.id
             }: ${nodeStrippedCuries.join(',')}`,
           );
         }
@@ -173,32 +171,5 @@ export default class BatchEdgeQueryHandler {
     nodeUpdate.update(queryRecords);
     debug('Update nodes completed!');
     return queryRecords;
-  }
-
-  /**
-   * Register subscribers
-   * @param {object} subscriber
-   */
-  subscribe(subscriber): void {
-    this.subscribers.push(subscriber);
-  }
-
-  /**
-   * Unsubscribe a listener
-   * @param {object} subscriber
-   */
-  unsubscribe(subscriber): void {
-    this.subscribers = this.subscribers.filter((fn) => {
-      if (fn != subscriber) return fn;
-    });
-  }
-
-  /**
-   * Nofity all listeners
-   */
-  notify(res): void {
-    this.subscribers.map((subscriber) => {
-      subscriber.update(res);
-    });
   }
 }
