@@ -413,7 +413,7 @@ export default class TRAPIQueryHandler {
 
   async _processQueryGraph(queryGraph: TrapiQueryGraph): Promise<QEdge[]> {
     try {
-      const queryGraphHandler = new QueryGraph(queryGraph, this.options.schema);
+      const queryGraphHandler = new QueryGraph(queryGraph, this.options.schema, this._queryIsPathfinder());
       const queryEdges = await queryGraphHandler.calculateEdges();
       this.logs = [...this.logs, ...queryGraphHandler.logs];
       return queryEdges;
@@ -509,6 +509,12 @@ export default class TRAPIQueryHandler {
     }
   }
 
+  _queryIsPathfinder(): boolean {
+    const inferredEdgeCount = Object.values(this.queryGraph.edges).reduce((i, edge) => i + (edge.knowledge_type === 'inferred' ? 1 : 0), 0);
+    const pinnedNodes = Object.values(this.queryGraph.nodes).reduce((i, node) => i + (node.ids != null ? 1 : 0), 0);
+    return inferredEdgeCount === 3 && pinnedNodes == 2 && Object.keys(this.queryGraph.edges).length === 3 && Object.keys(this.queryGraph.nodes).length === 3;
+  }
+
   _queryUsesInferredMode(): boolean {
     const inferredEdge = Object.values(this.queryGraph.edges).some((edge) => edge.knowledge_type === 'inferred');
     return inferredEdge;
@@ -519,7 +525,50 @@ export default class TRAPIQueryHandler {
     return oneHop;
   }
 
-  async _handleInferredEdges(): Promise<void> {
+  async _handlePathfinder(): Promise<void> {
+    const [unpinnedNodeId, unpinnedNode] = Object.entries(this.queryGraph.nodes).find(([_, node]) => !node.ids);
+    // remove unpinned node & all edges involving unpinned node for now
+    delete this.queryGraph.nodes[unpinnedNodeId];
+    const intermediateEdges = Object.entries(this.queryGraph.edges).filter(([_, edge]) => edge.subject === unpinnedNodeId || edge.object === unpinnedNodeId);
+    const mainEdge = Object.entries(this.queryGraph.edges).find(([_, edge]) => edge.subject !== unpinnedNodeId && edge.object !== unpinnedNodeId);
+
+    // intermediateEdges should be in order of n0 -> un & un -> n1
+    if (intermediateEdges[0][1].subject === unpinnedNodeId) {
+        let temp = intermediateEdges[0];
+        intermediateEdges[0] = intermediateEdges[1];
+        intermediateEdges[1] = temp;
+    }
+
+    // remove intermediates for creative execution
+    intermediateEdges.forEach(([edgeId, _]) => delete this.queryGraph.edges[edgeId]);
+
+    if (Object.keys(this.queryGraph.edges).length !== 1) {
+        const message = 'Pathfinder Mode needs exactly one edge between nodes with IDs. Your query terminates.';
+        debug(message);
+        this.logs.push(new LogEntry('WARNING', null, message).getLog());
+        return;
+    }
+
+    if (intermediateEdges[0][1].subject !== mainEdge[1].subject || intermediateEdges[1][1].object !== mainEdge[1].object || intermediateEdges[0][1].object !== unpinnedNodeId || intermediateEdges[1][1].subject !== unpinnedNodeId) {
+        const message = 'Intermediate edges for Pathfinder are incorrect. Your query terminates.';
+        debug(message);
+        this.logs.push(new LogEntry('WARNING', null, message).getLog());
+        return;
+    }
+
+    // test
+    console.log("recognized pathfinder");
+
+    // run creative mode
+    await this._handleInferredEdges(true);
+    const creativeResponse = this.getResponse();
+
+    // restore query graph
+    this.queryGraph.nodes[unpinnedNodeId] = unpinnedNode;
+    intermediateEdges.forEach(([edgeId, edge]) => this.queryGraph.edges[edgeId] = edge);
+  }
+
+  async _handleInferredEdges(pathfinder = false): Promise<void> {
     if (!this._queryIsOneHop()) {
       const message = 'Inferred Mode edges are only supported in single-edge queries. Your query terminates.';
       debug(message);
@@ -534,6 +583,7 @@ export default class TRAPIQueryHandler {
       this.path,
       this.predicatePath,
       this.includeReasoner,
+      pathfinder
     );
     const inferredQueryResponse = await inferredQueryHandler.query();
     if (inferredQueryResponse) {
@@ -667,6 +717,13 @@ export default class TRAPIQueryHandler {
       return;
     }
     debug(`(3) All edges created ${JSON.stringify(queryEdges)} `);
+
+    if (this._queryIsPathfinder()) {
+        const span2 = Telemetry.startSpan({ description: 'pathfinderExecution' });
+        await this._handlePathfinder();
+        span2?.finish();
+        return;
+    }
 
     if (this._queryUsesInferredMode()) {
       const span2 = Telemetry.startSpan({ description: 'creativeExecution' });

@@ -51,6 +51,7 @@ export default class InferredQueryHandler {
   path: string;
   predicatePath: string;
   includeReasoner: boolean;
+  pathfinder: boolean;
   CREATIVE_LIMIT: number;
   constructor(
     parent: TRAPIQueryHandler,
@@ -60,6 +61,7 @@ export default class InferredQueryHandler {
     path: string,
     predicatePath: string,
     includeReasoner: boolean,
+    pathfinder: boolean
   ) {
     this.parent = parent;
     this.queryGraph = queryGraph;
@@ -68,6 +70,7 @@ export default class InferredQueryHandler {
     this.path = path;
     this.predicatePath = predicatePath;
     this.includeReasoner = includeReasoner;
+    this.pathfinder = pathfinder;
     this.CREATIVE_LIMIT = process.env.CREATIVE_LIMIT ? parseInt(process.env.CREATIVE_LIMIT) : 500;
   }
 
@@ -107,7 +110,7 @@ export default class InferredQueryHandler {
       Object.values(this.queryGraph.nodes).reduce((sum, node) => {
         return typeof node.ids !== 'undefined' ? sum + node.ids.length : sum;
       }, 0);
-    if (tooManyIDs) {
+    if (tooManyIDs && !this.pathfinder) {
       const message = 'Inferred Mode queries with multiple IDs are not supported. Your query terminates.';
       this.logs.push(new LogEntry('WARNING', null, message).getLog());
       debug(message);
@@ -195,7 +198,7 @@ export default class InferredQueryHandler {
       }, []);
       return [...arr, ...objectCombos];
     }, []);
-    const templates = await getTemplates(lookupObjects);
+    const templates = await getTemplates(lookupObjects, this.pathfinder);
 
     const logMessage = `Got ${templates.length} inferred query templates.`;
     debug(logMessage);
