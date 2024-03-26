@@ -530,7 +530,7 @@ export default class TRAPIQueryHandler {
     // remove unpinned node & all edges involving unpinned node for now
     delete this.queryGraph.nodes[unpinnedNodeId];
     const intermediateEdges = Object.entries(this.queryGraph.edges).filter(([_, edge]) => edge.subject === unpinnedNodeId || edge.object === unpinnedNodeId);
-    const mainEdge = Object.entries(this.queryGraph.edges).find(([_, edge]) => edge.subject !== unpinnedNodeId && edge.object !== unpinnedNodeId);
+    const [mainEdgeID, mainEdge] = Object.entries(this.queryGraph.edges).find(([_, edge]) => edge.subject !== unpinnedNodeId && edge.object !== unpinnedNodeId);
 
     // intermediateEdges should be in order of n0 -> un & un -> n1
     if (intermediateEdges[0][1].subject === unpinnedNodeId) {
@@ -549,7 +549,7 @@ export default class TRAPIQueryHandler {
         return;
     }
 
-    if (intermediateEdges[0][1].subject !== mainEdge[1].subject || intermediateEdges[1][1].object !== mainEdge[1].object || intermediateEdges[0][1].object !== unpinnedNodeId || intermediateEdges[1][1].subject !== unpinnedNodeId) {
+    if (intermediateEdges[0][1].subject !== mainEdge.subject || intermediateEdges[1][1].object !== mainEdge.object || intermediateEdges[0][1].object !== unpinnedNodeId || intermediateEdges[1][1].subject !== unpinnedNodeId) {
         const message = 'Intermediate edges for Pathfinder are incorrect. Your query terminates.';
         debug(message);
         this.logs.push(new LogEntry('WARNING', null, message).getLog());
@@ -562,10 +562,83 @@ export default class TRAPIQueryHandler {
     // run creative mode
     await this._handleInferredEdges(true);
     const creativeResponse = this.getResponse();
+    const originalAnalyses = (creativeResponse as any).original_analyses;
+    delete (creativeResponse as any).original_analyses;
 
     // restore query graph
     this.queryGraph.nodes[unpinnedNodeId] = unpinnedNode;
     intermediateEdges.forEach(([edgeId, edge]) => this.queryGraph.edges[edgeId] = edge);
+    
+    // set up a graph structure
+    const kgEdge = creativeResponse.message.results[0].analyses[0].edge_bindings[mainEdgeID][0].id;
+    const kgSrc = creativeResponse.message.results[0].node_bindings[mainEdge.subject][0].id;
+    const kgDst = creativeResponse.message.results[0].node_bindings[mainEdge.object][0].id;
+    const dfsNodes: {[node: string]: {dst: string, edge: string}[]} = {};
+    for (const supportGraph of creativeResponse.message.knowledge_graph.edges[kgEdge].attributes.find(attr => attr.attribute_type_id === 'biolink:support_graphs').value as string[]) {
+        const auxGraph = creativeResponse.message.auxiliary_graphs[supportGraph];
+        for (const subEdge of auxGraph.edges) {
+            const kgSubEdge = creativeResponse.message.knowledge_graph.edges[subEdge];
+            if (!dfsNodes[kgSubEdge.subject]) {
+                dfsNodes[kgSubEdge.subject] = [];
+            }
+            dfsNodes[kgSubEdge.subject].push({ dst: kgSubEdge.object, edge: subEdge });
+        }
+    }
+
+    // perform dfs
+    const stack = [{ node: kgSrc, path: [kgSrc] }];
+    const newResultObject: {[id: string]: TrapiResult} = {};
+    const newAuxGraphs: {[id: string]: {edges: Set<string>}} = {};
+    while (stack.length !== 0) {
+        const { node, path } = stack.pop();
+        if (node === kgDst) {
+           if (path.length > 3) {
+                // loop through all intermediate nodes (nodes are even indices)
+                for (let i = 2; i < path.length - 2; i += 2) {
+                    const intermediateNode = path[i];
+                    if (!(`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}` in newResultObject)) {
+                        newResultObject[`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}`] = {
+                            node_bindings: {
+                                [mainEdge.subject]: [{ id: kgSrc }],
+                                [mainEdge.object]: [{ id: kgDst }],
+                                [unpinnedNodeId]: [{ id: intermediateNode }]
+                            },
+                            analyses: [{
+                                resource_id: "infores:biothings-explorer",
+                                edge_bindings: {
+                                    [mainEdgeID]: [{ id: kgEdge }]
+                                },
+                                score: 1
+                            }],
+                        };
+                        newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}`] = { edges: new Set(path.slice(1, i).filter((_, ind) => ind % 2 == 0)) };
+                        newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}`] = { edges: new Set(path.slice(i + 1).filter((_, ind) => ind % 2 == 0)) };
+                    } else {
+                        path.slice(1, i).filter((_, ind) => ind % 2 == 0).forEach(edge => newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}`].edges.add(edge));
+                        path.slice(i + 1).filter((_, ind) => ind % 2 == 0).forEach(edge => newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}`].edges.add(edge));
+                    }
+                }
+           }
+        } else {
+            for (const neighbor of dfsNodes[node]) {
+                if (!path.includes(neighbor.dst)) {
+                    stack.push({ node: neighbor.dst, path: [...path, neighbor.edge, neighbor.dst ] });
+                }
+            }
+        }
+    }
+
+    creativeResponse.message.results = Object.values(newResultObject);
+    
+    const finalNewAuxGraphs: {[id: string]: {edges: string[]}} = newAuxGraphs as any;
+    for (const auxGraph in finalNewAuxGraphs) {
+        finalNewAuxGraphs[auxGraph].edges = Array.from(finalNewAuxGraphs[auxGraph].edges);
+    }
+    Object.assign(creativeResponse.message.auxiliary_graphs, finalNewAuxGraphs);
+    
+    // TODO: Add knowledge graph edges & combine scoring information
+
+    this.getResponse = () => creativeResponse;
   }
 
   async _handleInferredEdges(pathfinder = false): Promise<void> {

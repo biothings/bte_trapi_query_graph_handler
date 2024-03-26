@@ -16,6 +16,8 @@ import {
   TrapiQueryGraph,
   TrapiResponse,
   TrapiResult,
+  TrapiAnalysis,
+  CreativePathfinderResponse
 } from '../types';
 const debug = Debug('bte:biothings-explorer-trapi:inferred-mode');
 
@@ -31,6 +33,9 @@ export interface CombinedResponse {
     };
   };
   logs: StampedLog[];
+  original_analyses?: {
+    [graphId: string]: TrapiAnalysis;
+  }
 }
 
 export interface CombinedResponseReport {
@@ -260,7 +265,7 @@ export default class InferredQueryHandler {
     combinedResponse: CombinedResponse,
   ): CombinedResponseReport {
     const span = Telemetry.startSpan({ description: 'creativeCombineResponse' });
-    const newResponse = handler.getResponse();
+    const newResponse: CreativePathfinderResponse = handler.getResponse();
     const report: CombinedResponseReport = {
       querySuccess: 0,
       queryHadResults: false,
@@ -286,6 +291,7 @@ export default class InferredQueryHandler {
         combinedResponse.message.auxiliary_graphs[auxGraphID] = auxGraph;
       }
     });
+
     // add results
     newResponse.message.results.forEach((result) => {
       const translatedResult: TrapiResult = {
@@ -302,6 +308,7 @@ export default class InferredQueryHandler {
           },
         ],
       };
+
       const resultCreativeSubjectID = translatedResult.node_bindings[qEdge.subject]
         .map((binding) => binding.id)
         .join(',');
@@ -356,6 +363,10 @@ export default class InferredQueryHandler {
             [] as string[],
           ),
         };
+
+        if (this.pathfinder) {
+            combinedResponse.original_analyses[auxGraphID] = translatedResult.analyses[0];
+        }
       }
 
       if (resultID in combinedResponse.message.results) {
@@ -511,6 +522,7 @@ export default class InferredQueryHandler {
         results: {},
       },
       logs: this.logs,
+      ...(this.pathfinder && { original_analyses: {} })
     } as CombinedResponse;
     // add/combine nodes
     const resultQueries = [];
