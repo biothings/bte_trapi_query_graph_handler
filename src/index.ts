@@ -573,15 +573,18 @@ export default class TRAPIQueryHandler {
     const kgEdge = creativeResponse.message.results[0].analyses[0].edge_bindings[mainEdgeID][0].id;
     const kgSrc = creativeResponse.message.results[0].node_bindings[mainEdge.subject][0].id;
     const kgDst = creativeResponse.message.results[0].node_bindings[mainEdge.object][0].id;
-    const dfsNodes: {[node: string]: {dst: string, edge: string}[]} = {};
+    const dfsNodes: {[node: string]: {[dst: string]: string[]}} = {};
     for (const supportGraph of creativeResponse.message.knowledge_graph.edges[kgEdge].attributes.find(attr => attr.attribute_type_id === 'biolink:support_graphs').value as string[]) {
         const auxGraph = creativeResponse.message.auxiliary_graphs[supportGraph];
         for (const subEdge of auxGraph.edges) {
             const kgSubEdge = creativeResponse.message.knowledge_graph.edges[subEdge];
             if (!dfsNodes[kgSubEdge.subject]) {
-                dfsNodes[kgSubEdge.subject] = [];
+                dfsNodes[kgSubEdge.subject] = {};
             }
-            dfsNodes[kgSubEdge.subject].push({ dst: kgSubEdge.object, edge: subEdge });
+            if (!dfsNodes[kgSubEdge.subject][kgSubEdge.object]) {
+                dfsNodes[kgSubEdge.subject][kgSubEdge.object] = [];
+            }
+            dfsNodes[kgSubEdge.subject][kgSubEdge.object].push(subEdge);
         }
     }
 
@@ -592,10 +595,23 @@ export default class TRAPIQueryHandler {
     while (stack.length !== 0) {
         const { node, path } = stack.pop();
         if (node === kgDst) {
-           if (path.length > 3) {
-                // loop through all intermediate nodes (nodes are even indices)
-                for (let i = 2; i < path.length - 2; i += 2) {
+           if (path.length > 2) {
+                // loop through all intermediate nodes
+                for (let i = 1; i < path.length - 1; i++) {
                     const intermediateNode = path[i];
+                    const firstEdges = [];
+                    const secondEdges = [];
+                    for (let j = 0; j < i; j++) {
+                        for (let edge of dfsNodes[path[j]][path[j+1]]) {
+                            firstEdges.push(edge);
+                        }
+                    }
+                    for (let j = i; j < path.length - 1; j++) {
+                        for (let edge of dfsNodes[path[j]][path[j+1]]) {
+                            secondEdges.push(edge);
+                        }
+                    }
+
                     if (!(`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}` in newResultObject)) {
                         newResultObject[`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}`] = {
                             node_bindings: {
@@ -606,23 +622,54 @@ export default class TRAPIQueryHandler {
                             analyses: [{
                                 resource_id: "infores:biothings-explorer",
                                 edge_bindings: {
-                                    [mainEdgeID]: [{ id: kgEdge }]
+                                    [mainEdgeID]: [{ id: kgEdge }],
+                                    [intermediateEdges[0][0]]: [{ id: `pathfinder-${kgSrc}-${intermediateNode}` }],
+                                    [intermediateEdges[1][0]]: [{ id: `pathfinder-${intermediateNode}-${kgDst}` }],
                                 },
                                 score: 1
                             }],
                         };
-                        newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}`] = { edges: new Set(path.slice(1, i).filter((_, ind) => ind % 2 == 0)) };
-                        newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}`] = { edges: new Set(path.slice(i + 1).filter((_, ind) => ind % 2 == 0)) };
+                        creativeResponse.message.knowledge_graph.edges[`pathfinder-${kgSrc}-${intermediateNode}`] = {
+                            predicate: 'biolink:related_to',
+                            subject: kgSrc,
+                            object: intermediateNode,
+                            sources: [
+                                {
+                                    resource_id: this.options.provenanceUsesServiceProvider
+                                    ? 'infores:service-provider-trapi'
+                                    : 'infores:biothings-explorer',
+                                    resource_role: 'primary_knowledge_source',
+                                },
+                            ],
+                            attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${kgSrc}-${intermediateNode}-support`] }],
+                        };
+                        creativeResponse.message.knowledge_graph.edges[`pathfinder-${intermediateNode}-${kgDst}`] = {
+                            predicate: 'biolink:related_to',
+                            subject: intermediateNode,
+                            object: kgDst,
+                            sources: [
+                                {
+                                    resource_id: this.options.provenanceUsesServiceProvider
+                                    ? 'infores:service-provider-trapi'
+                                    : 'infores:biothings-explorer',
+                                    resource_role: 'primary_knowledge_source',
+                                },
+                            ],
+                            attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${intermediateNode}-${kgDst}-support`] }],
+                        };
+                        newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}-support`] = { edges: new Set(firstEdges) };
+                        newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}-support`] = { edges: new Set(secondEdges) };
+
                     } else {
-                        path.slice(1, i).filter((_, ind) => ind % 2 == 0).forEach(edge => newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}`].edges.add(edge));
-                        path.slice(i + 1).filter((_, ind) => ind % 2 == 0).forEach(edge => newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}`].edges.add(edge));
+                        firstEdges.forEach(edge => newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}-support`].edges.add(edge));
+                        secondEdges.forEach(edge => newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}-support`].edges.add(edge));
                     }
                 }
            }
         } else {
-            for (const neighbor of dfsNodes[node]) {
-                if (!path.includes(neighbor.dst)) {
-                    stack.push({ node: neighbor.dst, path: [...path, neighbor.edge, neighbor.dst ] });
+            for (const neighbor in dfsNodes[node]) {
+                if (!path.includes(neighbor)) {
+                    stack.push({ node: neighbor, path: [...path, neighbor ] });
                 }
             }
         }
@@ -636,7 +683,10 @@ export default class TRAPIQueryHandler {
     }
     Object.assign(creativeResponse.message.auxiliary_graphs, finalNewAuxGraphs);
     
-    // TODO: Add knowledge graph edges & combine scoring information
+    // TODO: combine scoring information
+    // TODO: Fix 500 cap impl
+    // TODO: formatting
+    // TODO: move to a seperate file if this gets too big?
 
     this.getResponse = () => creativeResponse;
   }
