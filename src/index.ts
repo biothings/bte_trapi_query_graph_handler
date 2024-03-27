@@ -3,6 +3,7 @@ import path from 'path';
 import QueryGraph from './query_graph';
 import KnowledgeGraph from './graph/knowledge_graph';
 import TrapiResultsAssembler from './results_assembly/query_results';
+import { scaled_sigmoid, inverse_scaled_sigmoid } from './results_assembly/score';
 import InvalidQueryGraphError from './exceptions/invalid_query_graph_error';
 import Debug from 'debug';
 const debug = Debug('bte:biothings-explorer-trapi:main');
@@ -574,6 +575,7 @@ export default class TRAPIQueryHandler {
     const kgSrc = creativeResponse.message.results[0].node_bindings[mainEdge.subject][0].id;
     const kgDst = creativeResponse.message.results[0].node_bindings[mainEdge.object][0].id;
     const dfsNodes: {[node: string]: {[dst: string]: string[]}} = {};
+    const supportGraphsPerNode: {[node: string]: Set<string>} = {};
     for (const supportGraph of creativeResponse.message.knowledge_graph.edges[kgEdge].attributes.find(attr => attr.attribute_type_id === 'biolink:support_graphs').value as string[]) {
         const auxGraph = creativeResponse.message.auxiliary_graphs[supportGraph];
         for (const subEdge of auxGraph.edges) {
@@ -585,6 +587,11 @@ export default class TRAPIQueryHandler {
                 dfsNodes[kgSubEdge.subject][kgSubEdge.object] = [];
             }
             dfsNodes[kgSubEdge.subject][kgSubEdge.object].push(subEdge);
+
+            if (!supportGraphsPerNode[kgSubEdge.subject]) {
+                supportGraphsPerNode[kgSubEdge.subject] = new Set();
+            }
+            supportGraphsPerNode[kgSubEdge.subject].add(supportGraph);
         }
     }
 
@@ -626,7 +633,7 @@ export default class TRAPIQueryHandler {
                                     [intermediateEdges[0][0]]: [{ id: `pathfinder-${kgSrc}-${intermediateNode}` }],
                                     [intermediateEdges[1][0]]: [{ id: `pathfinder-${intermediateNode}-${kgDst}` }],
                                 },
-                                score: 1
+                                score: undefined
                             }],
                         };
                         creativeResponse.message.knowledge_graph.edges[`pathfinder-${kgSrc}-${intermediateNode}`] = {
@@ -659,6 +666,18 @@ export default class TRAPIQueryHandler {
                         };
                         newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}-support`] = { edges: new Set(firstEdges) };
                         newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}-support`] = { edges: new Set(secondEdges) };
+
+                        // calculate score
+                        if (supportGraphsPerNode[intermediateNode]?.size > 0) {
+                            let score = undefined;
+                            for (const supportGraph of supportGraphsPerNode[intermediateNode]) {
+                                score = scaled_sigmoid(
+                                    inverse_scaled_sigmoid(score ?? 0) +
+                                    inverse_scaled_sigmoid(originalAnalyses[supportGraph].score),
+                                );
+                            }
+                            newResultObject[`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}`].analyses[0].score = score;
+                        }
 
                     } else {
                         firstEdges.forEach(edge => newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}-support`].edges.add(edge));
