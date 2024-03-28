@@ -292,6 +292,9 @@ export default class InferredQueryHandler {
       }
     });
 
+    // modified count used for pathfinder
+    const pfIntermediateSet = new Set();
+
     // add results
     newResponse.message.results.forEach((result) => {
       const translatedResult: TrapiResult = {
@@ -308,6 +311,17 @@ export default class InferredQueryHandler {
           },
         ],
       };
+
+      if (this.pathfinder) {
+        for (let [nodeID, bindings] of Object.entries(result.node_bindings)) {
+          if (nodeID === "creativeQuerySubject" || nodeID === "creativeQueryObject") {
+            continue;
+          }
+          for (const binding of bindings) {
+            pfIntermediateSet.add(binding.id);
+          }
+        }
+      }
 
       const resultCreativeSubjectID = translatedResult.node_bindings[qEdge.subject]
         .map((binding) => binding.id)
@@ -436,8 +450,9 @@ export default class InferredQueryHandler {
     }
     report.querySuccess = 1;
 
-    if (Object.keys(combinedResponse.message.results).length >= this.CREATIVE_LIMIT && !report.creativeLimitHit) {
-      report.creativeLimitHit = Object.keys(newResponse.message.results).length;
+    const resSize = this.pathfinder ? pfIntermediateSet.size : Object.keys(combinedResponse.message.results).length;
+    if (resSize >= this.CREATIVE_LIMIT && !report.creativeLimitHit) {
+      report.creativeLimitHit = resSize;
     }
     span.finish();
     return report;
@@ -568,9 +583,9 @@ export default class InferredQueryHandler {
           stop = true;
           const message = [
             `Addition of ${creativeLimitHit} results from Template ${i + 1}`,
-            Object.keys(combinedResponse.message.results).length === this.CREATIVE_LIMIT ? ' meets ' : ' exceeds ',
+            creativeLimitHit === this.CREATIVE_LIMIT ? ' meets ' : ' exceeds ',
             `creative result maximum of ${this.CREATIVE_LIMIT} (reaching ${
-              Object.keys(combinedResponse.message.results).length
+              creativeLimitHit
             } merged). `,
             `Response will be truncated to top-scoring ${this.CREATIVE_LIMIT} results. Skipping remaining ${
               subQueries.length - (i + 1)

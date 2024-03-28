@@ -557,9 +557,6 @@ export default class TRAPIQueryHandler {
         return;
     }
 
-    // test
-    console.log("recognized pathfinder");
-
     // run creative mode
     await this._handleInferredEdges(true);
     const creativeResponse = this.getResponse();
@@ -569,6 +566,14 @@ export default class TRAPIQueryHandler {
     // restore query graph
     this.queryGraph.nodes[unpinnedNodeId] = unpinnedNode;
     intermediateEdges.forEach(([edgeId, edge]) => this.queryGraph.edges[edgeId] = edge);
+    creativeResponse.message.query_graph = this.queryGraph;
+
+    // if no results then we are done
+    if (creativeResponse.message.results.length === 0) {
+        this.getResponse = () => creativeResponse;
+        return;
+    }
+
     
     // set up a graph structure
     const kgEdge = creativeResponse.message.results[0].analyses[0].edge_bindings[mainEdgeID][0].id;
@@ -694,18 +699,20 @@ export default class TRAPIQueryHandler {
         }
     }
 
-    creativeResponse.message.results = Object.values(newResultObject);
-    
+    creativeResponse.message.results = Object.values(newResultObject).sort((a, b) => (b.analyses[0].score ?? 0) - (a.analyses[0].score ?? 0)).slice(0, process.env.CREATIVE_LIMIT ? parseInt(process.env.CREATIVE_LIMIT) : 500);
+    creativeResponse.description = `Query processed successfully, retrieved ${creativeResponse.message.results.length} results.`
+
     const finalNewAuxGraphs: {[id: string]: {edges: string[]}} = newAuxGraphs as any;
     for (const auxGraph in finalNewAuxGraphs) {
         finalNewAuxGraphs[auxGraph].edges = Array.from(finalNewAuxGraphs[auxGraph].edges);
     }
     Object.assign(creativeResponse.message.auxiliary_graphs, finalNewAuxGraphs);
     
-    // TODO: combine scoring information
-    // TODO: Fix 500 cap impl
+    // TODO: Add logs/debug statements in this function
     // TODO: formatting
     // TODO: move to a seperate file if this gets too big?
+    // TODO: test other templates
+    // TODO: make unit tests
 
     this.getResponse = () => creativeResponse;
   }
