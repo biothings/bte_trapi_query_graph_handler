@@ -231,7 +231,7 @@ export default class QueryEdgeManager {
     return keep;
   }
 
-  collectRecords(): void {
+  collectRecords(): boolean {
     //go through edges and collect records organized by edge
     let recordsByQEdgeID: RecordsByQEdgeID = {};
     //all res merged
@@ -268,12 +268,10 @@ export default class QueryEdgeManager {
         new LogEntry(
           'WARNING',
           null,
-          `qEdges ${JSON.stringify(brokenEdges)} ` + `resulted in (0) records. No complete paths can be formed.`,
+          `qEdges ${brokenEdges} resulted in (0) records. No complete paths can be formed.`,
         ).getLog(),
       );
-      debug(
-        `(12) qEdges ${JSON.stringify(brokenEdges)} ` + `resulted in (0) records. No complete paths can be formed.`,
-      );
+      debug(`(12) qEdges ${brokenEdges} resulted in (0) records. No complete paths can be formed.`);
     }
     //Organized by edge: update query records
     this._organizedRecords = recordsByQEdgeID;
@@ -289,8 +287,12 @@ export default class QueryEdgeManager {
     //         console.log(err);
     //     }
     // });
-    debug(`(12) Collected (${this._records.length}) records!`);
-    this.logs.push(new LogEntry('DEBUG', null, `Edge manager collected (${this._records.length}) records!`).getLog());
+    if (!brokenChain) {
+      debug(`(12) Collected (${this._records.length}) records!`);
+      this.logs.push(new LogEntry('DEBUG', null, `Edge manager collected (${this._records.length}) records!`).getLog());
+    }
+
+    return !brokenChain;
   }
 
   updateEdgeRecords(currentQEdge: QEdge): void {
@@ -474,7 +476,13 @@ export default class QueryEdgeManager {
     }
     this._logSkippedQueries(unavailableAPIs);
     // collect and organize records
-    this.collectRecords();
+    if (!this.collectRecords()) {
+      debug(`(X) Terminating...No complete paths.`);
+      this.logs.push(
+        new LogEntry('WARNING', null, `No complete paths could be formed. Your query terminates.`).getLog(),
+      );
+      return;
+    }
     // dump records if set to do so
     if (process.env.DUMP_RECORDS) {
       await this.dumpRecords(this.getRecords());
