@@ -600,6 +600,10 @@ export default class TRAPIQueryHandler {
         }
     }
 
+    const message1 = '[Pathfinder]: Performing serach for intermediate nodes.';
+    debug(message1);
+    this.logs.push(new LogEntry('INFO', null, message1).getLog());
+
     // perform dfs
     const stack = [{ node: kgSrc, path: [kgSrc] }];
     const newResultObject: {[id: string]: TrapiResult} = {};
@@ -707,11 +711,13 @@ export default class TRAPIQueryHandler {
         finalNewAuxGraphs[auxGraph].edges = Array.from(finalNewAuxGraphs[auxGraph].edges);
     }
     Object.assign(creativeResponse.message.auxiliary_graphs, finalNewAuxGraphs);
+
+    const message2 = `[Pathfinder]: Pathfinder found ${creativeResponse.message.results.length} intermediate nodes and created ${Object.keys(finalNewAuxGraphs).length} support graphs.`;
+    debug(message2);
+    this.logs.push(new LogEntry('INFO', null, message2).getLog());
     
-    // TODO: Add logs/debug statements in this function
     // TODO: formatting
     // TODO: move to a seperate file if this gets too big?
-    // TODO: test other templates
     // TODO: make unit tests
 
     this.getResponse = () => creativeResponse;
