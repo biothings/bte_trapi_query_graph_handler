@@ -66,7 +66,7 @@ export default class InferredQueryHandler {
     path: string,
     predicatePath: string,
     includeReasoner: boolean,
-    pathfinder: boolean
+    pathfinder = false
   ) {
     this.parent = parent;
     this.queryGraph = queryGraph;
