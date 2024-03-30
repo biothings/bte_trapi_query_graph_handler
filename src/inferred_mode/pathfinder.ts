@@ -2,7 +2,7 @@ import TRAPIQueryHandler, { QueryHandlerOptions } from '../index';
 import { TrapiResponse, TrapiQEdge, TrapiResult, TrapiQueryGraph, TrapiQNode, TrapiAnalysis } from '../types';
 import InferredQueryHandler from './inferred_mode';
 import { scaled_sigmoid, inverse_scaled_sigmoid } from '../results_assembly/score';
-import { LogEntry, StampedLog } from '@biothings-explorer/utils';
+import { LogEntry, StampedLog, Telemetry } from '@biothings-explorer/utils';
 import Debug from 'debug';
 const debug = Debug('bte:biothings-explorer-trapi:pathfinder');
 
@@ -97,10 +97,15 @@ export default class PathfinderQueryHandler {
 
     this.parse(creativeResponse);
 
+    // logs
+    creativeResponse.logs = this.logs.map(log => log.toJSON());
+
     return creativeResponse;
   }
 
   parse(creativeResponse: TrapiResponse) {
+    const span = Telemetry.startSpan({ description: 'pathfinderParse' });
+
     this.originalAnalyses = (creativeResponse as any).original_analyses;
     delete (creativeResponse as any).original_analyses;
 
@@ -134,7 +139,7 @@ export default class PathfinderQueryHandler {
       }
     }
 
-    const message1 = '[Pathfinder]: Performing serach for intermediate nodes.';
+    const message1 = '[Pathfinder]: Performing search for intermediate nodes.';
     debug(message1);
     this.logs.push(new LogEntry('INFO', null, message1).getLog());
 
@@ -153,10 +158,14 @@ export default class PathfinderQueryHandler {
     debug(message2);
     this.logs.push(new LogEntry('INFO', null, message2).getLog());
 
+    span.finish();
+
     return creativeResponse;
   }
 
   _searchForIntermediates(creativeResponse: TrapiResponse, dfsNodes: DfsGraph, supportGraphsPerNode: { [node: string]: Set<string> }, kgSrc: string, kgDst: string, kgEdge: string): ResultAuxObject {
+    const span = Telemetry.startSpan({ description: 'pathfinderIntermediateSearch' });
+
     // perform dfs
     const stack = [{ node: kgSrc, path: [kgSrc] }];
     const newResultObject: ResultObject = {};
@@ -255,6 +264,8 @@ export default class PathfinderQueryHandler {
         }
       }
     }
+
+    span.finish();
 
     return { results: newResultObject, graphs: newAuxGraphs };
   }

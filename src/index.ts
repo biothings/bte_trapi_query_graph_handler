@@ -529,7 +529,9 @@ export default class TRAPIQueryHandler {
     const pathfinderHandler = new PathfinderQueryHandler(this.logs, this.queryGraph, this);
     const pathfinderResponse = await pathfinderHandler.query();
 
-    this.getResponse = () => pathfinderResponse;
+    if (pathfinderResponse) {
+        this.getResponse = () => pathfinderResponse;
+    }
   }
 
   async _handleInferredEdges(): Promise<void> {
@@ -625,7 +627,7 @@ export default class TRAPIQueryHandler {
         'INFO',
         null,
         `Execution Summary: (${KGNodes}) nodes / (${kgEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${cached ? ` (${cached} cached qEdges)` : ''
-        } returned results from(${sources.length}) unique API${sources.length === 1 ? 's' : ''}`,
+        } returned results from(${sources.length}) unique API ${sources.length === 1 ? 's' : ''}`,
       ).getLog(),
       new LogEntry('INFO', null, `APIs: ${sources.join(', ')} `).getLog(),
     ];

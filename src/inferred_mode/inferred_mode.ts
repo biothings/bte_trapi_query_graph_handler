@@ -645,7 +645,9 @@ export default class InferredQueryHandler {
         .getSummaryLog(response, response.logs as StampedLog[], resultQueries)
         .forEach((log) => response.logs.push(log));
     }
-    response.logs = (response.logs as StampedLog[]).map((log) => log.toJSON());
+    if (!this.pathfinder) {
+        response.logs = (response.logs as StampedLog[]).map((log) => log.toJSON());
+    }
 
     return response;
   }
