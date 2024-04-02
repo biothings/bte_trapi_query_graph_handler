@@ -127,19 +127,20 @@ export default class PathfinderQueryHandler {
     const kgEdge = creativeResponse.message.results[0].analyses[0].edge_bindings[this.mainEdgeId][0].id;
     const kgSrc = creativeResponse.message.results[0].node_bindings[this.mainEdge.subject][0].id;
     const kgDst = creativeResponse.message.results[0].node_bindings[this.mainEdge.object][0].id;
-    const dfsNodes: DfsGraph = {};
+    const dfsGraph: DfsGraph = {};
     const supportGraphsPerNode: { [node: string]: Set<string> } = {};
-    for (const supportGraph of (creativeResponse.message.knowledge_graph.edges[kgEdge]?.attributes?.find(attr => attr.attribute_type_id === 'biolink:support_graphs')?.value ?? []) as string[]) {
+    const supportGraphs = (creativeResponse.message.knowledge_graph.edges[kgEdge]?.attributes?.find(attr => attr.attribute_type_id === 'biolink:support_graphs')?.value ?? []) as string[];
+    for (const supportGraph of supportGraphs) {
       const auxGraph = (creativeResponse.message.auxiliary_graphs ?? {})[supportGraph];
       for (const subEdge of auxGraph.edges) {
         const kgSubEdge = creativeResponse.message.knowledge_graph.edges[subEdge];
-        if (!dfsNodes[kgSubEdge.subject]) {
-          dfsNodes[kgSubEdge.subject] = {};
+        if (!dfsGraph[kgSubEdge.subject]) {
+          dfsGraph[kgSubEdge.subject] = {};
         }
-        if (!dfsNodes[kgSubEdge.subject][kgSubEdge.object]) {
-          dfsNodes[kgSubEdge.subject][kgSubEdge.object] = [];
+        if (!dfsGraph[kgSubEdge.subject][kgSubEdge.object]) {
+          dfsGraph[kgSubEdge.subject][kgSubEdge.object] = [];
         }
-        dfsNodes[kgSubEdge.subject][kgSubEdge.object].push(subEdge);
+        dfsGraph[kgSubEdge.subject][kgSubEdge.object].push(subEdge);
 
         if (!supportGraphsPerNode[kgSubEdge.subject]) {
           supportGraphsPerNode[kgSubEdge.subject] = new Set();
@@ -152,7 +153,7 @@ export default class PathfinderQueryHandler {
     debug(message1);
     this.logs.push(new LogEntry('INFO', null, message1).getLog());
 
-    const { results: newResultObject, graphs: newAuxGraphs } = this._searchForIntermediates(creativeResponse, dfsNodes, supportGraphsPerNode, kgSrc, kgDst, kgEdge);
+    const { results: newResultObject, graphs: newAuxGraphs } = this._searchForIntermediates(creativeResponse, dfsGraph, supportGraphsPerNode, kgSrc, kgDst, kgEdge);
 
     creativeResponse.message.results = Object.values(newResultObject).sort((a, b) => (b.analyses[0].score ?? 0) - (a.analyses[0].score ?? 0)).slice(0, this.CREATIVE_LIMIT);
     creativeResponse.description = `Query processed successfully, retrieved ${creativeResponse.message.results.length} results.`
@@ -172,7 +173,7 @@ export default class PathfinderQueryHandler {
     return creativeResponse;
   }
 
-  _searchForIntermediates(creativeResponse: TrapiResponse, dfsNodes: DfsGraph, supportGraphsPerNode: { [node: string]: Set<string> }, kgSrc: string, kgDst: string, kgEdge: string): ResultAuxObject {
+  _searchForIntermediates(creativeResponse: TrapiResponse, dfsGraph: DfsGraph, supportGraphsPerNode: { [node: string]: Set<string> }, kgSrc: string, kgDst: string, kgEdge: string): ResultAuxObject {
     const span = Telemetry.startSpan({ description: 'pathfinderIntermediateSearch' });
 
     // perform dfs
@@ -184,7 +185,7 @@ export default class PathfinderQueryHandler {
 
       // continue creating path if we haven't reached end yet
       if (node !== kgDst) {
-        for (const neighbor in dfsNodes[node]) {
+        for (const neighbor in dfsGraph[node]) {
           if (!path.includes(neighbor)) {
             stack.push({ node: neighbor, path: [...path, neighbor] });
           }
@@ -203,14 +204,10 @@ export default class PathfinderQueryHandler {
         const firstEdges: string[] = [];
         const secondEdges: string[] = [];
         for (let j = 0; j < i; j++) {
-          for (let edge of dfsNodes[path[j]][path[j + 1]]) {
-            firstEdges.push(edge);
-          }
+          firstEdges.push.apply(firstEdges, dfsGraph[path[j]][path[j+1]]);
         }
         for (let j = i; j < path.length - 1; j++) {
-          for (let edge of dfsNodes[path[j]][path[j + 1]]) {
-            secondEdges.push(edge);
-          }
+          secondEdges.push.apply(firstEdges, dfsGraph[path[j]][path[j+1]]);
         }
 
         if (`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}` in newResultObject) {
