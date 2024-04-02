@@ -47,35 +47,23 @@ export default class PathfinderQueryHandler {
   }
 
   async query() {
-    [this.unpinnedNodeId, this.unpinnedNode] = Object.entries(this.queryGraph.nodes).find(([_, node]) => !node.ids);
+    // add log for PF mode
+    this.logs.push(new LogEntry('INFO', null, 'Proceeding in Pathfinder mode.').getLog());
+    debug('Proceeding in Pathfinder mode');
+
+    const err = this.extractData();
+
+    if (typeof err === 'string') {
+        debug(err);
+        this.logs.push(new LogEntry('WARNING', null, err).getLog());
+        return;
+    }
+
     // remove unpinned node & all edges involving unpinned node for now
     delete this.queryGraph.nodes[this.unpinnedNodeId];
-    this.intermediateEdges = Object.entries(this.queryGraph.edges).filter(([_, edge]) => edge.subject === this.unpinnedNodeId || edge.object === this.unpinnedNodeId);
-    [this.mainEdgeId, this.mainEdge] = Object.entries(this.queryGraph.edges).find(([_, edge]) => edge.subject !== this.unpinnedNodeId && edge.object !== this.unpinnedNodeId);
-
-    // intermediateEdges should be in order of n0 -> un & un -> n1
-    if (this.intermediateEdges[0][1].subject === this.unpinnedNodeId) {
-      let temp = this.intermediateEdges[0];
-      this.intermediateEdges[0] = this.intermediateEdges[1];
-      this.intermediateEdges[1] = temp;
-    }
 
     // remove intermediates for creative execution
     this.intermediateEdges.forEach(([edgeId, _]) => delete this.queryGraph.edges[edgeId]);
-
-    if (Object.keys(this.queryGraph.edges).length !== 1) {
-      const message = 'Pathfinder Mode needs exactly one edge between nodes with IDs. Your query terminates.';
-      debug(message);
-      this.logs.push(new LogEntry('WARNING', null, message).getLog());
-      return;
-    }
-
-    if (this.intermediateEdges[0][1].subject !== this.mainEdge.subject || this.intermediateEdges[1][1].object !== this.mainEdge.object || this.intermediateEdges[0][1].object !== this.unpinnedNodeId || this.intermediateEdges[1][1].subject !== this.unpinnedNodeId) {
-      const message = 'Intermediate edges for Pathfinder are incorrect. Your query terminates.';
-      debug(message);
-      this.logs.push(new LogEntry('WARNING', null, message).getLog());
-      return;
-    }
 
     // run creative mode
     const inferredQueryHandler = new InferredQueryHandler(
@@ -102,6 +90,27 @@ export default class PathfinderQueryHandler {
 
     return creativeResponse;
   }
+
+  // extracts info from query into variables that are used by pathfinder
+  // returns string if an error occurred
+  extractData(): undefined | string {
+    [this.unpinnedNodeId, this.unpinnedNode] = Object.entries(this.queryGraph.nodes).find(([_, node]) => !node.ids);
+
+    this.intermediateEdges = Object.entries(this.queryGraph.edges).filter(([_, edge]) => edge.subject === this.unpinnedNodeId || edge.object === this.unpinnedNodeId);
+    [this.mainEdgeId, this.mainEdge] = Object.entries(this.queryGraph.edges).find(([_, edge]) => edge.subject !== this.unpinnedNodeId && edge.object !== this.unpinnedNodeId);
+
+    // intermediateEdges should be in order of n0 -> un & un -> n1
+    if (this.intermediateEdges[0][1].subject === this.unpinnedNodeId) {
+      let temp = this.intermediateEdges[0];
+      this.intermediateEdges[0] = this.intermediateEdges[1];
+      this.intermediateEdges[1] = temp;
+    }
+  
+    if (this.intermediateEdges[0][1].subject !== this.mainEdge.subject || this.intermediateEdges[1][1].object !== this.mainEdge.object || this.intermediateEdges[0][1].object !== this.unpinnedNodeId || this.intermediateEdges[1][1].subject !== this.unpinnedNodeId) {
+      return 'Intermediate edges for Pathfinder are incorrect. Should follow pinned node -> unpinned node -> pinned node. Your query terminates.';
+    }
+  }
+
 
   parse(creativeResponse: TrapiResponse) {
     const span = Telemetry.startSpan({ description: 'pathfinderParse' });
