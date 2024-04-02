@@ -181,95 +181,102 @@ export default class PathfinderQueryHandler {
     const newAuxGraphs: AuxGraphObject = {};
     while (stack.length !== 0) {
       const { node, path } = stack.pop()!;
-      if (node === kgDst) {
-        if (path.length > 2) {
-          // loop through all intermediate nodes
-          for (let i = 1; i < path.length - 1; i++) {
-            const intermediateNode = path[i];
-            const firstEdges: string[] = [];
-            const secondEdges: string[] = [];
-            for (let j = 0; j < i; j++) {
-              for (let edge of dfsNodes[path[j]][path[j + 1]]) {
-                firstEdges.push(edge);
-              }
-            }
-            for (let j = i; j < path.length - 1; j++) {
-              for (let edge of dfsNodes[path[j]][path[j + 1]]) {
-                secondEdges.push(edge);
-              }
-            }
 
-            if (!(`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}` in newResultObject)) {
-              newResultObject[`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}`] = {
-                node_bindings: {
-                  [this.mainEdge.subject]: [{ id: kgSrc }],
-                  [this.mainEdge.object]: [{ id: kgDst }],
-                  [this.unpinnedNodeId]: [{ id: intermediateNode }]
-                },
-                analyses: [{
-                  resource_id: "infores:biothings-explorer",
-                  edge_bindings: {
-                    [this.mainEdgeId]: [{ id: kgEdge }],
-                    [this.intermediateEdges[0][0]]: [{ id: `pathfinder-${kgSrc}-${intermediateNode}` }],
-                    [this.intermediateEdges[1][0]]: [{ id: `pathfinder-${intermediateNode}-${kgDst}` }],
-                  },
-                  score: undefined
-                }],
-              };
-              creativeResponse.message.knowledge_graph.edges[`pathfinder-${kgSrc}-${intermediateNode}`] = {
-                predicate: 'biolink:related_to',
-                subject: kgSrc,
-                object: intermediateNode,
-                sources: [
-                  {
-                    resource_id: this.options.provenanceUsesServiceProvider
-                      ? 'infores:service-provider-trapi'
-                      : 'infores:biothings-explorer',
-                    resource_role: 'primary_knowledge_source',
-                  },
-                ],
-                attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${kgSrc}-${intermediateNode}-support`] }],
-              };
-              creativeResponse.message.knowledge_graph.edges[`pathfinder-${intermediateNode}-${kgDst}`] = {
-                predicate: 'biolink:related_to',
-                subject: intermediateNode,
-                object: kgDst,
-                sources: [
-                  {
-                    resource_id: this.options.provenanceUsesServiceProvider
-                      ? 'infores:service-provider-trapi'
-                      : 'infores:biothings-explorer',
-                    resource_role: 'primary_knowledge_source',
-                  },
-                ],
-                attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${intermediateNode}-${kgDst}-support`] }],
-              };
-              newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}-support`] = { edges: new Set(firstEdges) };
-              newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}-support`] = { edges: new Set(secondEdges) };
-
-              // calculate score
-              if (supportGraphsPerNode[intermediateNode]?.size > 0) {
-                let score: number | undefined = undefined;
-                for (const supportGraph of supportGraphsPerNode[intermediateNode]) {
-                  score = scaled_sigmoid(
-                    inverse_scaled_sigmoid(score ?? 0) +
-                    inverse_scaled_sigmoid(this.originalAnalyses[supportGraph].score),
-                  );
-                }
-                newResultObject[`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}`].analyses[0].score = score;
-              }
-
-            } else {
-              firstEdges.forEach(edge => newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}-support`].edges.add(edge));
-              secondEdges.forEach(edge => newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}-support`].edges.add(edge));
-            }
-          }
-        }
-      } else {
+      // continue creating path if we haven't reached end yet
+      if (node !== kgDst) {
         for (const neighbor in dfsNodes[node]) {
           if (!path.includes(neighbor)) {
             stack.push({ node: neighbor, path: [...path, neighbor] });
           }
+        }
+        continue;
+      }
+
+      // path to dest too short
+      if (path.length <= 2) {
+        continue;
+      }
+
+      // loop through all intermediate nodes in path to dest
+      for (let i = 1; i < path.length - 1; i++) {
+        const intermediateNode = path[i];
+        const firstEdges: string[] = [];
+        const secondEdges: string[] = [];
+        for (let j = 0; j < i; j++) {
+          for (let edge of dfsNodes[path[j]][path[j + 1]]) {
+            firstEdges.push(edge);
+          }
+        }
+        for (let j = i; j < path.length - 1; j++) {
+          for (let edge of dfsNodes[path[j]][path[j + 1]]) {
+            secondEdges.push(edge);
+          }
+        }
+
+        if (`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}` in newResultObject) {
+          firstEdges.forEach(edge => newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}-support`].edges.add(edge));
+          secondEdges.forEach(edge => newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}-support`].edges.add(edge));
+          continue;
+        }
+
+        // create new edges & aux graph
+        newResultObject[`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}`] = {
+          node_bindings: {
+            [this.mainEdge.subject]: [{ id: kgSrc }],
+            [this.mainEdge.object]: [{ id: kgDst }],
+            [this.unpinnedNodeId]: [{ id: intermediateNode }]
+          },
+          analyses: [{
+            resource_id: "infores:biothings-explorer",
+            edge_bindings: {
+              [this.mainEdgeId]: [{ id: kgEdge }],
+              [this.intermediateEdges[0][0]]: [{ id: `pathfinder-${kgSrc}-${intermediateNode}` }],
+              [this.intermediateEdges[1][0]]: [{ id: `pathfinder-${intermediateNode}-${kgDst}` }],
+            },
+            score: undefined
+          }],
+        };
+        creativeResponse.message.knowledge_graph.edges[`pathfinder-${kgSrc}-${intermediateNode}`] = {
+          predicate: 'biolink:related_to',
+          subject: kgSrc,
+          object: intermediateNode,
+          sources: [
+            {
+              resource_id: this.options.provenanceUsesServiceProvider
+                ? 'infores:service-provider-trapi'
+                : 'infores:biothings-explorer',
+              resource_role: 'primary_knowledge_source',
+            },
+          ],
+          attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${kgSrc}-${intermediateNode}-support`] }],
+        };
+        creativeResponse.message.knowledge_graph.edges[`pathfinder-${intermediateNode}-${kgDst}`] = {
+          predicate: 'biolink:related_to',
+          subject: intermediateNode,
+          object: kgDst,
+          sources: [
+            {
+              resource_id: this.options.provenanceUsesServiceProvider
+                ? 'infores:service-provider-trapi'
+                : 'infores:biothings-explorer',
+              resource_role: 'primary_knowledge_source',
+            },
+          ],
+          attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${intermediateNode}-${kgDst}-support`] }],
+        };
+        newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}-support`] = { edges: new Set(firstEdges) };
+        newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}-support`] = { edges: new Set(secondEdges) };
+
+        // calculate score
+        if (supportGraphsPerNode[intermediateNode]?.size > 0) {
+          let score: number | undefined = undefined;
+          for (const supportGraph of supportGraphsPerNode[intermediateNode]) {
+            score = scaled_sigmoid(
+              inverse_scaled_sigmoid(score ?? 0) +
+              inverse_scaled_sigmoid(this.originalAnalyses[supportGraph].score),
+            );
+          }
+          newResultObject[`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}`].analyses[0].score = score;
         }
       }
     }
