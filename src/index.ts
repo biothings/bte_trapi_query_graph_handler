@@ -509,7 +509,7 @@ export default class TRAPIQueryHandler {
 
   _queryIsPathfinder(): boolean {
     const inferredEdgeCount = Object.values(this.queryGraph.edges).reduce((i, edge) => i + (edge.knowledge_type === 'inferred' ? 1 : 0), 0);
-    const pinnedNodes = Object.values(this.queryGraph.nodes).reduce((i, node) => i + (node.ids != null ? 1 : 0), 0);
+    const pinnedNodes = Object.values(this.queryGraph.nodes).reduce((i, node) => i + (node.ids?.length > 0 ? 1 : 0), 0);
     return inferredEdgeCount === 3 && pinnedNodes == 2 && Object.keys(this.queryGraph.edges).length === 3 && Object.keys(this.queryGraph.nodes).length === 3;
   }
 
