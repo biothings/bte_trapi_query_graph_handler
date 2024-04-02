@@ -16,8 +16,7 @@ import {
   TrapiQueryGraph,
   TrapiResponse,
   TrapiResult,
-  TrapiAnalysis,
-  CreativePathfinderResponse
+  TrapiAnalysis
 } from '../types';
 const debug = Debug('bte:biothings-explorer-trapi:inferred-mode');
 
@@ -263,7 +262,7 @@ export default class InferredQueryHandler {
     combinedResponse: CombinedResponse,
   ): CombinedResponseReport {
     const span = Telemetry.startSpan({ description: 'creativeCombineResponse' });
-    const newResponse: CreativePathfinderResponse = handler.getResponse();
+    const newResponse = handler.getResponse();
     const report: CombinedResponseReport = {
       querySuccess: 0,
       queryHadResults: false,

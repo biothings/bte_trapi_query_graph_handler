@@ -168,10 +168,6 @@ export interface TrapiResponse {
   logs: TrapiLog[];
 }
 
-export interface CreativePathfinderResponse extends TrapiResponse {
-    scores?: { [resID: string]: number };
-}
-
 export type APIDefinition = {
   // Must have one of id or infores
   id?: string; // SmartAPI ID, takes priority over infores

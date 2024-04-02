@@ -58,7 +58,7 @@ export async function getTemplates(lookups: TemplateLookup[], pathfinder = false
   const matchingTemplatePaths: string[] = templateGroups.reduce((matches: string[], group: TemplateGroup) => {
     const lookupMatch = lookups.some((lookup) => {
       return (
-        group.pathfinder === pathfinder &&
+        (!!group.pathfinder === pathfinder) &&
         group.subject.includes(lookup.subject) &&
         group.object.includes(lookup.object) &&
         group.predicate.includes(lookup.predicate) &&
