@@ -30,7 +30,6 @@
                         "biolink:gene_associated_with_condition",
                         "biolink:biomarker_for",
                         "biolink:affects",
-                        "biolink:causes",
                         "biolink:contributes_to"
                     ]
                 }
