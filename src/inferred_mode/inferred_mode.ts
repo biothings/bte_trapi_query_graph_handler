@@ -5,7 +5,8 @@ import async from 'async';
 import biolink from '../biolink';
 import { getTemplates, MatchedTemplate, TemplateLookup } from './template_lookup';
 import { scaled_sigmoid, inverse_scaled_sigmoid } from '../results_assembly/score';
-import TRAPIQueryHandler, { QueryHandlerOptions } from '../index';
+import TRAPIQueryHandler from '../index';
+import { QueryHandlerOptions } from '@biothings-explorer/types';
 import {
   CompactQualifiers,
   TrapiAuxGraphCollection,
@@ -382,9 +383,9 @@ export default class InferredQueryHandler {
         if (typeof combinedResponse.message.results[resultID].analyses[0].score !== 'undefined') {
           combinedResponse.message.results[resultID].analyses[0].score = resScore
             ? scaled_sigmoid(
-                inverse_scaled_sigmoid(combinedResponse.message.results[resultID].analyses[0].score) +
-                  inverse_scaled_sigmoid(resScore),
-              )
+              inverse_scaled_sigmoid(combinedResponse.message.results[resultID].analyses[0].score) +
+              inverse_scaled_sigmoid(resScore),
+            )
             : combinedResponse.message.results[resultID].analyses[0].score;
         } else {
           combinedResponse.message.results[resultID].analyses[0].score = resScore;
@@ -552,11 +553,9 @@ export default class InferredQueryHandler {
           const message = [
             `Addition of ${creativeLimitHit} results from Template ${i + 1}`,
             Object.keys(combinedResponse.message.results).length === this.CREATIVE_LIMIT ? ' meets ' : ' exceeds ',
-            `creative result maximum of ${this.CREATIVE_LIMIT} (reaching ${
-              Object.keys(combinedResponse.message.results).length
+            `creative result maximum of ${this.CREATIVE_LIMIT} (reaching ${Object.keys(combinedResponse.message.results).length
             } merged). `,
-            `Response will be truncated to top-scoring ${this.CREATIVE_LIMIT} results. Skipping remaining ${
-              subQueries.length - (i + 1)
+            `Response will be truncated to top-scoring ${this.CREATIVE_LIMIT} results. Skipping remaining ${subQueries.length - (i + 1)
             } `,
             subQueries.length - (i + 1) === 1 ? `template.` : `templates.`,
           ].join('');
@@ -581,9 +580,8 @@ export default class InferredQueryHandler {
       const total =
         Object.values(mergedResultsCount).reduce((sum, count) => sum + count, 0) +
         Object.keys(mergedResultsCount).length;
-      const message = `Merging Summary: (${total}) inferred-template results were merged into (${
-        Object.keys(mergedResultsCount).length
-      }) final results, reducing result count by (${total - Object.keys(mergedResultsCount).length})`;
+      const message = `Merging Summary: (${total}) inferred-template results were merged into (${Object.keys(mergedResultsCount).length
+        }) final results, reducing result count by (${total - Object.keys(mergedResultsCount).length})`;
       debug(message);
       combinedResponse.logs.push(new LogEntry('INFO', null, message).getLog());
     }
