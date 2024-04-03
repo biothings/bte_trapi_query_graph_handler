@@ -76,7 +76,8 @@
     "predicate": ["related_to"],
     "object": ["Gene", "Protein"],
     "templates": [
-
+      "pf-chem-gene-gene.json",
+      "pf-chem-gene-gene-gene.json"
     ]
   },
   {
