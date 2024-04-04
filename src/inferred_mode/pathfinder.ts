@@ -208,7 +208,7 @@ export default class PathfinderQueryHandler {
           firstEdges.push.apply(firstEdges, dfsGraph[path[j]][path[j+1]]);
         }
         for (let j = i; j < path.length - 1; j++) {
-          secondEdges.push.apply(firstEdges, dfsGraph[path[j]][path[j+1]]);
+          secondEdges.push.apply(secondEdges, dfsGraph[path[j]][path[j+1]]);
         }
 
         if (`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}` in newResultObject) {
