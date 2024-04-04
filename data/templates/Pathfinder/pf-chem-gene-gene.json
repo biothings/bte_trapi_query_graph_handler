@@ -6,10 +6,10 @@
                     "categories":["biolink:ChemicalEntity"]
                 },
                 "nA": {
-                    "categories":["biolink:Gene"]
+                    "categories":["biolink:Gene", "biolink:Protein"]
                 },
                 "creativeQueryObject": {
-                    "categories":["biolink:DiseaseOrPhenotypicFeature"]
+                    "categories":["biolink:Gene", "biolink:Protein"]
                }
             },
             "edges": {
@@ -19,18 +19,18 @@
                     "predicates": [
                         "biolink:regulates",
                         "biolink:affects",
-                        "biolink:interacts_with",
-                        "biolink:associated_with"
+                        "biolink:interacts_with"
                     ]
                 },
                 "eB": {
                     "subject": "nA",
                     "object": "creativeQueryObject",
                     "predicates": [
-                        "biolink:gene_associated_with_condition",
-                        "biolink:biomarker_for",
+                        "biolink:regulates",
+                        "biolink:regulated_by",
                         "biolink:affects",
-                        "biolink:contributes_to"
+                        "biolink:affected_by",
+                        "biolink:interacts_with"
                     ]
                 }
             }
