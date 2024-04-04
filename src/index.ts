@@ -19,7 +19,6 @@ import PathfinderQueryHandler from './inferred_mode/pathfinder';
 import KGNode from './graph/kg_node';
 import KGEdge from './graph/kg_edge';
 import {
-  APIList,
   TrapiAuxGraphCollection,
   TrapiAuxiliaryGraph,
   TrapiQNode,
@@ -27,33 +26,19 @@ import {
   TrapiResponse,
   TrapiResult,
 } from './types';
+import { QueryHandlerOptions } from '@biothings-explorer/types';
 import BTEGraph from './graph/graph';
 import QEdge from './query_edge';
 import { Telemetry } from '@biothings-explorer/utils';
 
 // Exports for external availability
 export * from './types';
-export { redisClient, getNewRedisClient } from './redis-client';
 export { getTemplates, supportedLookups } from './inferred_mode/template_lookup';
 export { default as QEdge } from './query_edge';
 export { default as QNode } from './query_node';
 export { default as InvalidQueryGraphError } from './exceptions/invalid_query_graph_error';
 export * from './qedge2apiedge';
 
-export interface QueryHandlerOptions {
-  provenanceUsesServiceProvider?: boolean;
-  smartAPIID?: string;
-  teamName?: string;
-  enableIDResolution?: boolean;
-  // TODO: type instances of `any`
-  apiList?: APIList;
-  schema?: any; // might be hard to type -- it's the entire TRAPI schema IIRC
-  dryrun?: boolean;
-  resolveOutputIDs?: boolean;
-  submitter?: string;
-  caching?: boolean; // from request url query values
-  EDGE_ATTRIBUTES_USED_IN_RECORD_HASH?: string[];
-}
 export default class TRAPIQueryHandler {
   logs: StampedLog[];
   options: QueryHandlerOptions;
@@ -627,7 +612,7 @@ export default class TRAPIQueryHandler {
         'INFO',
         null,
         `Execution Summary: (${KGNodes}) nodes / (${kgEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${cached ? ` (${cached} cached qEdges)` : ''
-        } returned results from(${sources.length}) unique API ${sources.length === 1 ? 's' : ''}`,
+        } returned results from(${sources.length}) unique API${sources.length === 1 ? 's' : ''}`,
       ).getLog(),
       new LogEntry('INFO', null, `APIs: ${sources.join(', ')} `).getLog(),
     ];
