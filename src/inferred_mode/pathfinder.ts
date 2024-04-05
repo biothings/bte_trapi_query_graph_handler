@@ -164,16 +164,15 @@ export default class PathfinderQueryHandler {
 
     const finalNewAuxGraphs: { [id: string]: { edges: string[] } } = {};
     for (const res in creativeResponse.message.results) {
-      const edges = [...creativeResponse.message.results[res].analyses[0].edge_bindings[this.intermediateEdges[0][0]], ...creativeResponse.message.results[res].analyses[0].edge_bindings[this.intermediateEdges[1][0]]];
-      for (const edge of edges) {
-        const auxGraph = creativeResponse.message.knowledge_graph.edges[edge.id].attributes.find(attr => attr.attribute_type_id === 'biolink:support_graphs')?.value[0];
-        finalNewAuxGraphs[auxGraph] = { edges: Array.from(newAuxGraphs[auxGraph].edges) };
+      for (const eb of Object.values(creativeResponse.message.results[res].analyses[0].edge_bindings)) {
+        for (const edge of eb) {
+          const auxGraph = creativeResponse.message.knowledge_graph.edges[edge.id].attributes.find(attr => attr.attribute_type_id === 'biolink:support_graphs')?.value[0];
+          finalNewAuxGraphs[auxGraph] = { edges: Array.from(newAuxGraphs[auxGraph].edges) };
+        }
       }
     }
 
     Object.assign(creativeResponse.message.auxiliary_graphs!, finalNewAuxGraphs);
-    // prune main aux graphs
-    creativeResponse.message.knowledge_graph.edges[kgEdge].attributes.find(attr => attr.attribute_type_id === 'biolink:support_graphs').value = Object.keys(finalNewAuxGraphs);
 
     const message2 = `[Pathfinder]: Pathfinder found ${creativeResponse.message.results.length} intermediate nodes and created ${Object.keys(finalNewAuxGraphs).length} support graphs.`;
     debug(message2);
@@ -222,8 +221,14 @@ export default class PathfinderQueryHandler {
         }
 
         if (`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}` in newResultObject) {
-          firstEdges.forEach(edge => newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}-support`].edges.add(edge));
-          secondEdges.forEach(edge => newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}-support`].edges.add(edge));
+          firstEdges.forEach(edge => { 
+            newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}-support`].edges.add(edge); 
+            newAuxGraphs[`pathfinder-${intermediateNode}-support`].edges.add(edge) 
+          });
+          secondEdges.forEach(edge => { 
+            newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}-support`].edges.add(edge);
+            newAuxGraphs[`pathfinder-${intermediateNode}-support`].edges.add(edge);
+          });
           continue;
         }
 
@@ -237,7 +242,7 @@ export default class PathfinderQueryHandler {
           analyses: [{
             resource_id: "infores:biothings-explorer",
             edge_bindings: {
-              [this.mainEdgeId]: [{ id: kgEdge }],
+              [this.mainEdgeId]: [{ id: `pathfinder-${intermediateNode}` }],
               [this.intermediateEdges[0][0]]: [{ id: `pathfinder-${kgSrc}-${intermediateNode}` }],
               [this.intermediateEdges[1][0]]: [{ id: `pathfinder-${intermediateNode}-${kgDst}` }],
             },
@@ -272,8 +277,23 @@ export default class PathfinderQueryHandler {
           ],
           attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${intermediateNode}-${kgDst}-support`] }],
         };
+        creativeResponse.message.knowledge_graph.edges[`pathfinder-${intermediateNode}`] = {
+          predicate: 'biolink:related_to',
+          subject: intermediateNode,
+          object: kgDst,
+          sources: [
+            {
+              resource_id: this.options.provenanceUsesServiceProvider
+                ? 'infores:service-provider-trapi'
+                : 'infores:biothings-explorer',
+              resource_role: 'primary_knowledge_source',
+            },
+          ],
+          attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${intermediateNode}-support`] }],
+        };
         newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}-support`] = { edges: new Set(firstEdges) };
         newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}-support`] = { edges: new Set(secondEdges) };
+        newAuxGraphs[`pathfinder-${intermediateNode}-support`] = { edges: new Set([...firstEdges, ...secondEdges]) };
 
         // calculate score
         if (supportGraphsPerNode[intermediateNode]?.size > 0) {
