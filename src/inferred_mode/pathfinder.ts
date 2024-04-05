@@ -86,6 +86,9 @@ export default class PathfinderQueryHandler {
 
     this.parse(creativeResponse);
 
+    // prune KG
+    inferredQueryHandler.pruneKnowledgeGraph(creativeResponse);
+
     // logs
     creativeResponse.logs = this.logs.map(log => log.toJSON());
 
@@ -159,11 +162,18 @@ export default class PathfinderQueryHandler {
     creativeResponse.message.results = Object.values(newResultObject).sort((a, b) => (b.analyses[0].score ?? 0) - (a.analyses[0].score ?? 0)).slice(0, this.CREATIVE_LIMIT);
     creativeResponse.description = `Query processed successfully, retrieved ${creativeResponse.message.results.length} results.`
 
-    const finalNewAuxGraphs: { [id: string]: { edges: string[] } } = newAuxGraphs as any;
-    for (const auxGraph in finalNewAuxGraphs) {
-      finalNewAuxGraphs[auxGraph].edges = Array.from(finalNewAuxGraphs[auxGraph].edges);
+    const finalNewAuxGraphs: { [id: string]: { edges: string[] } } = {};
+    for (const res in creativeResponse.message.results) {
+      const edges = [...creativeResponse.message.results[res].analyses[0].edge_bindings[this.intermediateEdges[0][0]], ...creativeResponse.message.results[res].analyses[0].edge_bindings[this.intermediateEdges[1][0]]];
+      for (const edge of edges) {
+        const auxGraph = creativeResponse.message.knowledge_graph.edges[edge.id].attributes.find(attr => attr.attribute_type_id === 'biolink:support_graphs')?.value[0];
+        finalNewAuxGraphs[auxGraph] = { edges: Array.from(newAuxGraphs[auxGraph].edges) };
+      }
     }
+
     Object.assign(creativeResponse.message.auxiliary_graphs!, finalNewAuxGraphs);
+    // prune main aux graphs
+    creativeResponse.message.knowledge_graph.edges[kgEdge].attributes.find(attr => attr.attribute_type_id === 'biolink:support_graphs').value = Object.keys(finalNewAuxGraphs);
 
     const message2 = `[Pathfinder]: Pathfinder found ${creativeResponse.message.results.length} intermediate nodes and created ${Object.keys(finalNewAuxGraphs).length} support graphs.`;
     debug(message2);
