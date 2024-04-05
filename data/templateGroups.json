@@ -104,7 +104,8 @@
                "DiseaseOrPhenotypicFeature"
               ],
     "templates": [
-      
+      "pf-gene-anything-disease.json",
+      "pf-gene-chem-gene-disease.json"
     ]
   }
 ]
