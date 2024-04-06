@@ -279,7 +279,7 @@ export default class PathfinderQueryHandler {
         };
         creativeResponse.message.knowledge_graph.edges[`pathfinder-${intermediateNode}`] = {
           predicate: 'biolink:related_to',
-          subject: intermediateNode,
+          subject: kgSrc,
           object: kgDst,
           sources: [
             {
