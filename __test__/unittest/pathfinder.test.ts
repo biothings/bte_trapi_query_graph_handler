@@ -70,6 +70,29 @@ describe('Test Pathfinder', () => {
     const pfResponse = pfHandler.parse(creativeResult1);
 
     expect(pfResponse.message.results.length).toEqual(500);
-    expect(Object.keys(pfResponse.message.auxiliary_graphs!).length).toEqual(2119);
+    expect(Object.keys(pfResponse.message.auxiliary_graphs!).length).toEqual(2363);
+
+    const n0 = pfResponse.message.results[0].node_bindings['n0'][0].id;
+    const un = pfResponse.message.results[0].node_bindings['un'][0].id;
+    const n2 = pfResponse.message.results[0].node_bindings['n2'][0].id;
+
+    const n0ToUn = pfResponse.message.results[0].analyses[0].edge_bindings['e0'][0].id;
+    const unToN2 = pfResponse.message.results[0].analyses[0].edge_bindings['e1'][0].id;
+    const n0ToN2 = pfResponse.message.results[0].analyses[0].edge_bindings['e2'][0].id;
+
+    // check nodes on edges
+    expect(pfResponse.message.knowledge_graph.edges[n0ToUn].subject).toEqual(n0);
+    expect(pfResponse.message.knowledge_graph.edges[n0ToUn].object).toEqual(un);
+    expect(pfResponse.message.knowledge_graph.edges[unToN2].subject).toEqual(un);
+    expect(pfResponse.message.knowledge_graph.edges[unToN2].object).toEqual(n2);
+    expect(pfResponse.message.knowledge_graph.edges[n0ToN2].subject).toEqual(n0);
+    expect(pfResponse.message.knowledge_graph.edges[n0ToN2].object).toEqual(n2);
+
+    // check that aux graphs are correct
+    const n0ToUnAux = pfResponse.message.knowledge_graph.edges[n0ToUn].attributes?.find(s => s.attribute_type_id === 'biolink:support_graphs')?.value as string;
+    const unToN2Aux = pfResponse.message.knowledge_graph.edges[unToN2].attributes?.find(s => s.attribute_type_id === 'biolink:support_graphs')?.value as string;
+    const n0ToN2Aux = pfResponse.message.knowledge_graph.edges[n0ToN2].attributes?.find(s => s.attribute_type_id === 'biolink:support_graphs')?.value as string;
+
+    expect(pfResponse.message.auxiliary_graphs![n0ToN2Aux].edges.sort()).toEqual([...pfResponse.message.auxiliary_graphs![n0ToUnAux].edges, ...pfResponse.message.auxiliary_graphs![unToN2Aux].edges].sort());
   });
 });
