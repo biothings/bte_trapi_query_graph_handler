@@ -70,6 +70,7 @@
   },
   {
     "name": "Pathfinder: Chem-Gene",
+    "pathfinder": true,
     "subject": ["Drug", "SmallMolecule", 
                 "ChemicalEntity", "ComplexMolecularMixture", "MolecularMixture"
                ],
