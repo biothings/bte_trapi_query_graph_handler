@@ -173,6 +173,8 @@ export default class TRAPIQueryHandler {
         const source = Object.entries(ontologyKnowledgeSourceMapping).find(([prefix]) => {
           return expanded.includes(prefix);
         })[1];
+        subclassEdge.addAdditionalAttributes('biolink:knowledge_level', 'knowledge_assertion')
+        subclassEdge.addAdditionalAttributes('biolink:agent_type', 'manual_agent')
         subclassEdge.addSource([
           { resource_id: source, resource_role: 'primary_knowledge_source' },
           {
@@ -221,6 +223,8 @@ export default class TRAPIQueryHandler {
           object: object,
         });
         boundEdge.addAdditionalAttributes('biolink:support_graphs', [supportGraphID]);
+        boundEdge.addAdditionalAttributes('biolink:knowledge_level', 'logical_entailment')
+        boundEdge.addAdditionalAttributes('biolink:agent_type', 'automated_agent')
         boundEdge.addSource([
           {
             resource_id: this.options.provenanceUsesServiceProvider
