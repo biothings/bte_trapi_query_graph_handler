@@ -1,5 +1,5 @@
-import { ProvenanceChainItem } from '@biothings-explorer/api-response-transform';
-import { TrapiAttribute } from '../types';
+import { TrapiSource } from '@biothings-explorer/types';
+import { TrapiAttribute } from '@biothings-explorer/types';
 
 export interface KGEdgeInfo {
   object: string;
@@ -68,7 +68,7 @@ export default class KGEdge {
     });
   }
 
-  addSource(source: ProvenanceChainItem | ProvenanceChainItem[]): void {
+  addSource(source: TrapiSource | TrapiSource[]): void {
     if (typeof source === 'undefined') {
       return;
     }

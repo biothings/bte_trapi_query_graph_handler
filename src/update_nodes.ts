@@ -3,7 +3,7 @@ import Debug from 'debug';
 import { ResolverInput, SRIResolverOutput } from 'biomedical_id_resolver';
 import { Record } from '@biothings-explorer/api-response-transform';
 import QEdge from './query_edge';
-import { NodeNormalizerResultObj } from '../../api-response-transform/built';
+import { NodeNormalizerResultObj } from '@biothings-explorer/api-response-transform';
 const debug = Debug('bte:biothings-explorer-trapi:nodeUpdateHandler');
 
 export interface CuriesByCategory {

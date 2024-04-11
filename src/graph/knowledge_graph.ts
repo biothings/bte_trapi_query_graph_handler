@@ -9,7 +9,7 @@ import {
   TrapiKGNodes,
   TrapiQualifier,
   TrapiSource,
-} from '../types';
+} from '@biothings-explorer/types';
 import KGNode from './kg_node';
 import KGEdge from './kg_edge';
 import { BTEGraphUpdate } from './graph';
