@@ -137,6 +137,7 @@ export default class KnowledgeGraph {
         const trapiSource: TrapiSource = {
           ...sourceObj,
           upstream_resource_ids: sourceObj.upstream_resource_ids ? [...sourceObj.upstream_resource_ids] : undefined,
+          source_record_urls: sourceObj.source_record_urls ? [...sourceObj.source_record_urls] : undefined,
         };
         sources.push(trapiSource);
       });
