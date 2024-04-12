@@ -502,7 +502,7 @@ export default class InferredQueryHandler {
       description: '',
       schema_version: global.SCHEMA_VERSION,
       biolink_version: global.BIOLINK_VERSION,
-      workflow: [{ id: 'lookup' }],
+      workflow: [{ id: 'lookup_and_score' }],
       message: {
         query_graph: this.queryGraph,
         knowledge_graph: {

@@ -337,7 +337,7 @@ export default class TRAPIQueryHandler {
       description: `Query processed successfully, retrieved ${results.length} results.`,
       schema_version: global.SCHEMA_VERSION,
       biolink_version: global.BIOLINK_VERSION,
-      workflow: [{ id: 'lookup' }],
+      workflow: [{ id: this.options.smartAPIID || this.options.teamName ? 'lookup' : 'lookup_and_score' }],
       message: {
         query_graph: this.originalQueryGraph,
         knowledge_graph: this.knowledgeGraph.kg,
