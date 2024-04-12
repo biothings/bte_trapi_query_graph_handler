@@ -332,7 +332,11 @@ export default class InferredQueryHandler {
                 resource_role: 'primary_knowledge_source',
               },
             ],
-            attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [] }],
+            attributes: [
+              { attribute_type_id: 'biolink:support_graphs', value: [] },
+              { attribute_type_id: 'biolink:knowledge_level', value: "prediction" },
+              { attribute_type_id: 'biolink:agent_type', value: "computational_model" },
+            ],
           };
         }
         let auxGraphSuffix = 0;
