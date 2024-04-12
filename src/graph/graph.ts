@@ -105,10 +105,10 @@ export default class BTEGraph {
             this.edges[recordHash].addAdditionalAttributes(item, record.mappedResponse[item]);
           });
         if (record.knowledge_level) {
-          this.edges[recordHash].addAdditionalAttributes('knowledge_level', record.knowledge_level);
+          this.edges[recordHash].addAdditionalAttributes('biolink:knowledge_level', record.knowledge_level);
         }
         if (record.agent_type) {
-          this.edges[recordHash].addAdditionalAttributes('agent_type', record.agent_type);
+          this.edges[recordHash].addAdditionalAttributes('biolink:agent_type', record.agent_type);
         }
         this.edges[recordHash].addSource(record.provenanceChain);
         Object.entries(record.qualifiers).forEach(([qualifierType, qualifier]) => {
