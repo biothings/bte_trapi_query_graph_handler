@@ -9,7 +9,7 @@ import {
   TrapiKGNodes,
   TrapiQualifier,
   TrapiSource,
-} from '../types';
+} from '@biothings-explorer/types';
 import KGNode from './kg_node';
 import KGEdge from './kg_edge';
 import { BTEGraphUpdate } from './graph';
@@ -142,6 +142,7 @@ export default class KnowledgeGraph {
         const trapiSource: TrapiSource = {
           ...sourceObj,
           upstream_resource_ids: sourceObj.upstream_resource_ids ? [...sourceObj.upstream_resource_ids] : undefined,
+          source_record_urls: sourceObj.source_record_urls ? [...sourceObj.source_record_urls] : undefined,
         };
         sources.push(trapiSource);
       });

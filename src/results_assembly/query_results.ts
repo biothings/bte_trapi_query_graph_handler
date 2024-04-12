@@ -1,5 +1,5 @@
 import { LogEntry, StampedLog } from '@biothings-explorer/utils';
-import { TrapiResult } from '../types';
+import { TrapiResult } from '@biothings-explorer/types';
 import Debug from 'debug';
 import { zip } from 'lodash';
 const debug = Debug('bte:biothings-explorer-trapi:QueryResult');

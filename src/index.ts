@@ -24,7 +24,7 @@ import {
   TrapiQueryGraph,
   TrapiResponse,
   TrapiResult,
-} from './types';
+} from '@biothings-explorer/types';
 import { QueryHandlerOptions } from '@biothings-explorer/types';
 import BTEGraph from './graph/graph';
 import QEdge from './query_edge';
