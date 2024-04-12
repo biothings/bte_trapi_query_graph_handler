@@ -24,7 +24,7 @@ import {
   TrapiQueryGraph,
   TrapiResponse,
   TrapiResult,
-} from './types';
+} from '@biothings-explorer/types';
 import { QueryHandlerOptions } from '@biothings-explorer/types';
 import BTEGraph from './graph/graph';
 import QEdge from './query_edge';
@@ -173,6 +173,8 @@ export default class TRAPIQueryHandler {
         const source = Object.entries(ontologyKnowledgeSourceMapping).find(([prefix]) => {
           return expanded.includes(prefix);
         })[1];
+        subclassEdge.addAdditionalAttributes('biolink:knowledge_level', 'knowledge_assertion')
+        subclassEdge.addAdditionalAttributes('biolink:agent_type', 'manual_agent')
         subclassEdge.addSource([
           { resource_id: source, resource_role: 'primary_knowledge_source' },
           {
@@ -209,7 +211,7 @@ export default class TRAPIQueryHandler {
         suffix += 1;
       }
       const supportGraphID = `support${suffix}-${boundEdgeID}`;
-      auxGraphs[supportGraphID] = { edges: supportGraph };
+      auxGraphs[supportGraphID] = { edges: supportGraph, attributes: [] };
       if (!edgesIDsByAuxGraphID[supportGraphID]) {
         edgesIDsByAuxGraphID[supportGraphID] = new Set();
       }
@@ -221,6 +223,8 @@ export default class TRAPIQueryHandler {
           object: object,
         });
         boundEdge.addAdditionalAttributes('biolink:support_graphs', [supportGraphID]);
+        boundEdge.addAdditionalAttributes('biolink:knowledge_level', 'logical_entailment')
+        boundEdge.addAdditionalAttributes('biolink:agent_type', 'automated_agent')
         boundEdge.addSource([
           {
             resource_id: this.options.provenanceUsesServiceProvider
@@ -250,7 +254,7 @@ export default class TRAPIQueryHandler {
                     boundIDs.add(binding.id);
                   }
                 } else if (!boundIDs.has(nodesToRebind[binding.id].newNode)) {
-                  newBindings.push({ id: nodesToRebind[binding.id].newNode });
+                  newBindings.push({ id: nodesToRebind[binding.id].newNode, attributes: [] });
                   boundIDs.add(nodesToRebind[binding.id].newNode);
                 }
                 return { boundIDs, newBindings };
@@ -272,7 +276,7 @@ export default class TRAPIQueryHandler {
                     boundIDs.add(binding.id);
                   }
                 } else if (!boundIDs.has(edgesToRebind[binding.id])) {
-                  newBindings.push({ id: edgesToRebind[binding.id] });
+                  newBindings.push({ id: edgesToRebind[binding.id], attributes: [] });
                   boundIDs.add(edgesToRebind[binding.id]);
                   resultBoundEdgesWithAuxGraphs.add(edgesToRebind[binding.id]);
                 }
@@ -333,7 +337,7 @@ export default class TRAPIQueryHandler {
       description: `Query processed successfully, retrieved ${results.length} results.`,
       schema_version: global.SCHEMA_VERSION,
       biolink_version: global.BIOLINK_VERSION,
-      workflow: [{ id: 'lookup' }],
+      workflow: [{ id: this.options.smartAPIID || this.options.teamName ? 'lookup' : 'lookup_and_score' }],
       message: {
         query_graph: this.originalQueryGraph,
         knowledge_graph: this.knowledgeGraph.kg,
