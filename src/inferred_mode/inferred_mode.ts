@@ -288,8 +288,8 @@ export default class InferredQueryHandler {
     newResponse.message.results.forEach((result) => {
       const translatedResult: TrapiResult = {
         node_bindings: {
-          [qEdge.subject]: [{ id: result.node_bindings.creativeQuerySubject[0].id }],
-          [qEdge.object]: [{ id: result.node_bindings.creativeQueryObject[0].id }],
+          [qEdge.subject]: [{ id: result.node_bindings.creativeQuerySubject[0].id, attributes: [] }],
+          [qEdge.object]: [{ id: result.node_bindings.creativeQueryObject[0].id, attributes: [] }],
         },
         pfocr: result.pfocr?.length ? result.pfocr : undefined,
         analyses: [
@@ -311,14 +311,14 @@ export default class InferredQueryHandler {
       // Direct edge answers stand on their own, not as an inferred edge.
       if (Object.keys(result.node_bindings).length == 2) {
         const boundEdgeID = Object.values(result.analyses[0].edge_bindings)[0][0].id;
-        translatedResult.analyses[0].edge_bindings = { [qEdgeID]: [{ id: boundEdgeID }] };
+        translatedResult.analyses[0].edge_bindings = { [qEdgeID]: [{ id: boundEdgeID, attributes: [] }] };
       } else {
         // Create an aux graph using the result and associate it with an inferred Edge
         const inferredEdgeID = `inferred-${resultCreativeSubjectID}-${qEdge.predicates[0].replace(
           'biolink:',
           '',
         )}-${resultCreativeObjectID}`;
-        translatedResult.analyses[0].edge_bindings = { [qEdgeID]: [{ id: inferredEdgeID }] };
+        translatedResult.analyses[0].edge_bindings = { [qEdgeID]: [{ id: inferredEdgeID, attributes: [] }] };
         if (!combinedResponse.message.knowledge_graph.edges[inferredEdgeID]) {
           combinedResponse.message.knowledge_graph.edges[inferredEdgeID] = {
             subject: resultCreativeSubjectID,
@@ -357,6 +357,7 @@ export default class InferredQueryHandler {
             },
             [] as string[],
           ),
+          attributes: []
         };
       }
 
