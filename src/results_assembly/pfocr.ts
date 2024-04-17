@@ -4,7 +4,7 @@ const debug = Debug('bte:biothings-explorer-trapi:pfocr');
 import { intersection } from '../utils';
 import _ from 'lodash';
 import { LogEntry, StampedLog } from '@biothings-explorer/utils';
-import { TrapiResult } from '../types';
+import { TrapiResult } from '@biothings-explorer/types';
 
 // the minimum acceptable intersection size between the CURIEs
 // in a TRAPI result and in a PFOCR figure.

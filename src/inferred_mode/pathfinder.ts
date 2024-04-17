@@ -1,9 +1,8 @@
 import TRAPIQueryHandler from '../index';
-import { TrapiResponse, TrapiQEdge, TrapiResult, TrapiQueryGraph, TrapiQNode, TrapiAnalysis } from '../types';
+import { TrapiResponse, TrapiQEdge, TrapiResult, TrapiQueryGraph, TrapiQNode, TrapiAnalysis, QueryHandlerOptions } from '@biothings-explorer/types';
 import InferredQueryHandler from './inferred_mode';
 import { scaled_sigmoid, inverse_scaled_sigmoid } from '../results_assembly/score';
 import { LogEntry, StampedLog, Telemetry } from '@biothings-explorer/utils';
-import { QueryHandlerOptions } from '@biothings-explorer/types';
 import Debug from 'debug';
 const debug = Debug('bte:biothings-explorer-trapi:pathfinder');
 
