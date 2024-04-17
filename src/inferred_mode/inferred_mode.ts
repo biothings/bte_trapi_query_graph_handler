@@ -16,6 +16,7 @@ import {
   TrapiQueryGraph,
   TrapiResponse,
   TrapiResult,
+  TrapiAnalysis
 } from '@biothings-explorer/types';
 import { CompactQualifiers } from '../index';
 const debug = Debug('bte:biothings-explorer-trapi:inferred-mode');
@@ -32,6 +33,9 @@ export interface CombinedResponse {
     };
   };
   logs: StampedLog[];
+  original_analyses?: {
+    [graphId: string]: TrapiAnalysis;
+  }
 }
 
 export interface CombinedResponseReport {
@@ -52,6 +56,7 @@ export default class InferredQueryHandler {
   path: string;
   predicatePath: string;
   includeReasoner: boolean;
+  pathfinder: boolean;
   CREATIVE_LIMIT: number;
   constructor(
     parent: TRAPIQueryHandler,
@@ -61,6 +66,7 @@ export default class InferredQueryHandler {
     path: string,
     predicatePath: string,
     includeReasoner: boolean,
+    pathfinder = false
   ) {
     this.parent = parent;
     this.queryGraph = queryGraph;
@@ -69,6 +75,7 @@ export default class InferredQueryHandler {
     this.path = path;
     this.predicatePath = predicatePath;
     this.includeReasoner = includeReasoner;
+    this.pathfinder = pathfinder;
     this.CREATIVE_LIMIT = process.env.CREATIVE_LIMIT ? parseInt(process.env.CREATIVE_LIMIT) : 500;
   }
 
@@ -103,12 +110,10 @@ export default class InferredQueryHandler {
       return false;
     }
 
-    const tooManyIDs =
-      1 <
-      Object.values(this.queryGraph.nodes).reduce((sum, node) => {
-        return typeof node.ids !== 'undefined' ? sum + node.ids.length : sum;
-      }, 0);
-    if (tooManyIDs) {
+    const tooManyIDs = Object.values(this.queryGraph.nodes).some((node) => {
+      return typeof node.ids !== 'undefined' && node.ids.length > 1;
+    });
+    if (tooManyIDs && !this.pathfinder) {
       const message = 'Inferred Mode queries with multiple IDs are not supported. Your query terminates.';
       this.logs.push(new LogEntry('WARNING', null, message).getLog());
       debug(message);
@@ -196,7 +201,7 @@ export default class InferredQueryHandler {
       }, []);
       return [...arr, ...objectCombos];
     }, []);
-    const templates = await getTemplates(lookupObjects);
+    const templates = await getTemplates(lookupObjects, this.pathfinder);
 
     const logMessage = `Got ${templates.length} inferred query templates.`;
     debug(logMessage);
@@ -284,6 +289,11 @@ export default class InferredQueryHandler {
         combinedResponse.message.auxiliary_graphs[auxGraphID] = auxGraph;
       }
     });
+
+    // modified count used for pathfinder
+    const pfIntermediateSet = new Set();
+
+    let auxGraphSuffixes: {[inferredEdgeID: string]: number} = {};
     // add results
     newResponse.message.results.forEach((result) => {
       const translatedResult: TrapiResult = {
@@ -300,6 +310,18 @@ export default class InferredQueryHandler {
           },
         ],
       };
+
+      if (this.pathfinder) {
+        for (let [nodeID, bindings] of Object.entries(result.node_bindings)) {
+          if (nodeID === "creativeQuerySubject" || nodeID === "creativeQueryObject") {
+            continue;
+          }
+          for (const binding of bindings) {
+            pfIntermediateSet.add(binding.id);
+          }
+        }
+      }
+
       const resultCreativeSubjectID = translatedResult.node_bindings[qEdge.subject]
         .map((binding) => binding.id)
         .join(',');
@@ -339,13 +361,9 @@ export default class InferredQueryHandler {
             ],
           };
         }
-        let auxGraphSuffix = 0;
-        while (
-          Object.keys(combinedResponse.message.auxiliary_graphs).includes(`${inferredEdgeID}-support${auxGraphSuffix}`)
-        ) {
-          auxGraphSuffix += 1;
-        }
-        const auxGraphID = `${inferredEdgeID}-support${auxGraphSuffix}`;
+        if (!auxGraphSuffixes[inferredEdgeID]) auxGraphSuffixes[inferredEdgeID] = 0;
+        const auxGraphID = `${inferredEdgeID}-support${auxGraphSuffixes[inferredEdgeID]}`;
+        auxGraphSuffixes[inferredEdgeID]++;
         (combinedResponse.message.knowledge_graph.edges[inferredEdgeID].attributes[0].value as string[]).push(
           auxGraphID,
         );
@@ -359,6 +377,10 @@ export default class InferredQueryHandler {
           ),
           attributes: []
         };
+
+        if (this.pathfinder) {
+            combinedResponse.original_analyses[auxGraphID] = translatedResult.analyses[0];
+        }
       }
 
       if (resultID in combinedResponse.message.results) {
@@ -428,8 +450,9 @@ export default class InferredQueryHandler {
     }
     report.querySuccess = 1;
 
-    if (Object.keys(combinedResponse.message.results).length >= this.CREATIVE_LIMIT && !report.creativeLimitHit) {
-      report.creativeLimitHit = Object.keys(newResponse.message.results).length;
+    const resSize = this.pathfinder ? pfIntermediateSet.size : Object.keys(combinedResponse.message.results).length;
+    if (resSize >= this.CREATIVE_LIMIT && !report.creativeLimitHit) {
+      report.creativeLimitHit = resSize;
     }
     span.finish();
     return report;
@@ -514,6 +537,7 @@ export default class InferredQueryHandler {
         results: {},
       },
       logs: this.logs,
+      ...(this.pathfinder && { original_analyses: {} })
     } as CombinedResponse;
     // add/combine nodes
     const resultQueries = [];
@@ -559,9 +583,9 @@ export default class InferredQueryHandler {
           stop = true;
           const message = [
             `Addition of ${creativeLimitHit} results from Template ${i + 1}`,
-            Object.keys(combinedResponse.message.results).length === this.CREATIVE_LIMIT ? ' meets ' : ' exceeds ',
+            creativeLimitHit === this.CREATIVE_LIMIT ? ' meets ' : ' exceeds ',
             `creative result maximum of ${this.CREATIVE_LIMIT} (reaching ${
-              Object.keys(combinedResponse.message.results).length
+              creativeLimitHit
             } merged). `,
             `Response will be truncated to top-scoring ${this.CREATIVE_LIMIT} results. Skipping remaining ${
               subQueries.length - (i + 1)
@@ -623,7 +647,9 @@ export default class InferredQueryHandler {
         .getSummaryLog(response, response.logs as StampedLog[], resultQueries)
         .forEach((log) => response.logs.push(log));
     }
-    response.logs = (response.logs as StampedLog[]).map((log) => log.toJSON());
+    if (!this.pathfinder) {
+        response.logs = (response.logs as StampedLog[]).map((log) => log.toJSON());
+    }
 
     return response;
   }

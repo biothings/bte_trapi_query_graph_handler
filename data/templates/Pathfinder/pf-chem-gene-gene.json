@@ -1,0 +1,39 @@
+{
+    "message": {
+        "query_graph": {
+            "nodes": {
+                "creativeQuerySubject": {
+                    "categories":["biolink:ChemicalEntity"]
+                },
+                "nA": {
+                    "categories":["biolink:Gene", "biolink:Protein"]
+                },
+                "creativeQueryObject": {
+                    "categories":["biolink:Gene", "biolink:Protein"]
+               }
+            },
+            "edges": {
+                "eA": {
+                    "subject": "creativeQuerySubject",
+                    "object": "nA",
+                    "predicates": [
+                        "biolink:regulates",
+                        "biolink:affects",
+                        "biolink:interacts_with"
+                    ]
+                },
+                "eB": {
+                    "subject": "nA",
+                    "object": "creativeQueryObject",
+                    "predicates": [
+                        "biolink:regulates",
+                        "biolink:regulated_by",
+                        "biolink:affects",
+                        "biolink:affected_by",
+                        "biolink:interacts_with"
+                    ]
+                }
+            }
+        }
+    }
+}

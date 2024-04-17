@@ -51,5 +51,62 @@
       "Chem-physically_interacts-GeneThatDownregs-Gene.json",
       "Chem-physically_interacts-Gene.json"
     ]
+  },
+  {
+    "name": "Pathfinder: Drug-Disease",
+    "pathfinder": true,
+    "subject": ["Drug", "SmallMolecule", 
+                "ChemicalEntity", "ComplexMolecularMixture", "MolecularMixture"
+               ],
+    "predicate": ["related_to"],
+    "object": ["Disease", "PhenotypicFeature",
+               "DiseaseOrPhenotypicFeature"
+              ],
+    "templates": [
+      "pf-drug-gene-disease.json",
+      "pf-drug-gene-cell-disease.json",
+      "pf-drug-gene-physioAndpath-disease.json"
+    ]
+  },
+  {
+    "name": "Pathfinder: Chem-Gene",
+    "pathfinder": true,
+    "subject": ["Drug", "SmallMolecule", 
+                "ChemicalEntity", "ComplexMolecularMixture", "MolecularMixture"
+               ],
+    "predicate": ["related_to"],
+    "object": ["Gene", "Protein"],
+    "templates": [
+      "pf-chem-gene-gene.json",
+      "pf-chem-gene-gene-gene.json"
+    ]
+  },
+  {
+    "name": "Pathfinder: Disease-Disease",
+    "pathfinder": true,
+    "subject": ["Disease", "PhenotypicFeature",
+               "DiseaseOrPhenotypicFeature"
+              ],
+    "predicate": ["related_to"],
+    "object": ["Disease", "PhenotypicFeature",
+               "DiseaseOrPhenotypicFeature"
+              ],
+    "templates": [
+      "pf-disease-seqvar-disease.json",
+      "pf-disease-gene-disease.json"
+    ]
+  },
+  {
+    "name": "Pathfinder: Gene-Disease",
+    "pathfinder": true,
+    "subject": ["Gene", "Protein"],
+    "predicate": ["related_to"],
+    "object": ["Disease", "PhenotypicFeature",
+               "DiseaseOrPhenotypicFeature"
+              ],
+    "templates": [
+      "pf-gene-anything-disease.json",
+      "pf-gene-chem-gene-disease.json"
+    ]
   }
 ]

@@ -26,6 +26,7 @@ export interface TemplateGroup {
   object: string[];
   qualifiers?: CompactQualifiers;
   templates: string[];
+  pathfinder: boolean;
 }
 
 export interface CompactEdge {
@@ -35,7 +36,7 @@ export interface CompactEdge {
   qualifiers: CompactQualifiers;
 }
 
-export async function getTemplates(lookups: TemplateLookup[]): Promise<MatchedTemplate[]> {
+export async function getTemplates(lookups: TemplateLookup[], pathfinder = false): Promise<MatchedTemplate[]> {
   async function getFiles(dir: string): Promise<string[]> {
     const rootFiles = await fs.readdir(path.resolve(dir));
     return await async.reduce(rootFiles, [] as string[], async (arr, fname: string) => {
@@ -58,6 +59,7 @@ export async function getTemplates(lookups: TemplateLookup[]): Promise<MatchedTe
   const matchingTemplatePaths: string[] = templateGroups.reduce((matches: string[], group: TemplateGroup) => {
     const lookupMatch = lookups.some((lookup) => {
       return (
+        (!!group.pathfinder === pathfinder) &&
         group.subject.includes(lookup.subject) &&
         group.object.includes(lookup.object) &&
         group.predicate.includes(lookup.predicate) &&
