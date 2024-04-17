@@ -293,6 +293,7 @@ export default class InferredQueryHandler {
     // modified count used for pathfinder
     const pfIntermediateSet = new Set();
 
+    let auxGraphSuffixes: {[inferredEdgeID: string]: number} = {};
     // add results
     newResponse.message.results.forEach((result) => {
       const translatedResult: TrapiResult = {
@@ -356,13 +357,9 @@ export default class InferredQueryHandler {
             attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [] }],
           };
         }
-        let auxGraphSuffix = 0;
-        while (
-          Object.keys(combinedResponse.message.auxiliary_graphs).includes(`${inferredEdgeID}-support${auxGraphSuffix}`)
-        ) {
-          auxGraphSuffix += 1;
-        }
-        const auxGraphID = `${inferredEdgeID}-support${auxGraphSuffix}`;
+        if (!auxGraphSuffixes[inferredEdgeID]) auxGraphSuffixes[inferredEdgeID] = 0;
+        const auxGraphID = `${inferredEdgeID}-support${auxGraphSuffixes[inferredEdgeID]}`;
+        auxGraphSuffixes[inferredEdgeID]++;
         (combinedResponse.message.knowledge_graph.edges[inferredEdgeID].attributes[0].value as string[]).push(
           auxGraphID,
         );
