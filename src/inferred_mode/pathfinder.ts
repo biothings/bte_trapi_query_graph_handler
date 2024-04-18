@@ -156,7 +156,7 @@ export default class PathfinderQueryHandler {
     debug(message1);
     this.logs.push(new LogEntry('INFO', null, message1).getLog());
 
-    const { results: newResultObject, graphs: newAuxGraphs } = this._searchForIntermediates(creativeResponse, dfsGraph, supportGraphsPerNode, kgSrc, kgDst, kgEdge);
+    const { results: newResultObject, graphs: newAuxGraphs } = this._searchForIntermediates(creativeResponse, dfsGraph, supportGraphsPerNode, kgSrc, kgDst);
 
     creativeResponse.message.results = Object.values(newResultObject).sort((a, b) => (b.analyses[0].score ?? 0) - (a.analyses[0].score ?? 0)).slice(0, this.CREATIVE_LIMIT);
     creativeResponse.description = `Query processed successfully, retrieved ${creativeResponse.message.results.length} results.`
@@ -166,7 +166,11 @@ export default class PathfinderQueryHandler {
       for (const eb of Object.values(creativeResponse.message.results[res].analyses[0].edge_bindings)) {
         for (const edge of eb) {
           const auxGraph = creativeResponse.message.knowledge_graph.edges[edge.id].attributes.find(attr => attr.attribute_type_id === 'biolink:support_graphs')?.value[0];
-          finalNewAuxGraphs[auxGraph] = { edges: Array.from(newAuxGraphs[auxGraph].edges) };
+          finalNewAuxGraphs[auxGraph] = { edges: [] };
+          for (const ed of newAuxGraphs[auxGraph].edges) {
+            const [st, en] = ed.split('-');
+            finalNewAuxGraphs[auxGraph].edges.push.apply(finalNewAuxGraphs[auxGraph].edges, dfsGraph[st][en]);
+          }
         }
       }
     }
@@ -182,15 +186,18 @@ export default class PathfinderQueryHandler {
     return creativeResponse;
   }
 
-  _searchForIntermediates(creativeResponse: TrapiResponse, dfsGraph: DfsGraph, supportGraphsPerNode: { [node: string]: Set<string> }, kgSrc: string, kgDst: string, kgEdge: string): ResultAuxObject {
+  _searchForIntermediates(creativeResponse: TrapiResponse, dfsGraph: DfsGraph, supportGraphsPerNode: { [node: string]: Set<string> }, kgSrc: string, kgDst: string): ResultAuxObject {
     const span = Telemetry.startSpan({ description: 'pathfinderIntermediateSearch' });
 
     // perform dfs
     const stack = [{ node: kgSrc, path: [kgSrc] }];
     const newResultObject: ResultObject = {};
     const newAuxGraphs: AuxGraphObject = {};
+    let a= 0;
+    let b=0;
     while (stack.length !== 0) {
       const { node, path } = stack.pop()!;
+      a++;
 
       // continue creating path if we haven't reached end yet
       if (node !== kgDst) {
@@ -206,30 +213,29 @@ export default class PathfinderQueryHandler {
       if (path.length <= 2) {
         continue;
       }
-
+b++;
       // loop through all intermediate nodes in path to dest
       for (let i = 1; i < path.length - 1; i++) {
         const intermediateNode = path[i];
-        const firstEdges: string[] = [];
-        const secondEdges: string[] = [];
-        for (let j = 0; j < i; j++) {
-          firstEdges.push.apply(firstEdges, dfsGraph[path[j]][path[j+1]]);
-        }
-        for (let j = i; j < path.length - 1; j++) {
-          secondEdges.push.apply(secondEdges, dfsGraph[path[j]][path[j+1]]);
+
+        if (!(`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}` in newResultObject)) {
+          newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}-support`] = { edges: new Set() };
+          newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}-support`] = { edges: new Set() };
+          newAuxGraphs[`pathfinder-${intermediateNode}-support`] = { edges: new Set() };
         }
 
-        if (`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}` in newResultObject) {
-          firstEdges.forEach(edge => { 
-            newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}-support`].edges.add(edge); 
-            newAuxGraphs[`pathfinder-${intermediateNode}-support`].edges.add(edge) 
-          });
-          secondEdges.forEach(edge => { 
-            newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}-support`].edges.add(edge);
-            newAuxGraphs[`pathfinder-${intermediateNode}-support`].edges.add(edge);
-          });
-          continue;
+        // add "edges" to aux graphs (kg edges will be added later)
+        for (let j = 0; j < i; j++) {
+          newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}-support`].edges.add(`${[path[j]]}-${[path[j+1]]}`);
+          newAuxGraphs[`pathfinder-${intermediateNode}-support`].edges.add(`${[path[j]]}-${[path[j+1]]}`);
         }
+        for (let j = i; j < path.length - 1; j++) {
+          newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}-support`].edges.add(`${[path[j]]}-${[path[j+1]]}`);
+          newAuxGraphs[`pathfinder-${intermediateNode}-support`].edges.add(`${[path[j]]}-${[path[j+1]]}`);
+        } 
+
+        // code below is only for new results
+        if (`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}` in newResultObject) continue;
 
         // create new edges & aux graph
         newResultObject[`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}`] = {
@@ -290,9 +296,6 @@ export default class PathfinderQueryHandler {
           ],
           attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${intermediateNode}-support`] }],
         };
-        newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}-support`] = { edges: new Set(firstEdges) };
-        newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}-support`] = { edges: new Set(secondEdges) };
-        newAuxGraphs[`pathfinder-${intermediateNode}-support`] = { edges: new Set([...firstEdges, ...secondEdges]) };
 
         // calculate score
         if (supportGraphsPerNode[intermediateNode]?.size > 0) {
