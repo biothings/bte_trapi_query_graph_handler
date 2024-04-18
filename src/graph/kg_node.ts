@@ -1,4 +1,4 @@
-import { TrapiAttribute } from '../types';
+import { TrapiAttribute } from '@biothings-explorer/types';
 
 export interface KGNodeInfo {
   label: string;

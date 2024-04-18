@@ -9,7 +9,7 @@ import chunker from 'stream-chunker';
 import { Readable, Transform } from 'stream';
 import { Record, RecordPackage } from '@biothings-explorer/api-response-transform';
 import { threadId } from 'worker_threads';
-import MetaKG from '../../smartapi-kg/built';
+import MetaKG from '@biothings-explorer/smartapi-kg';
 import QEdge from './query_edge';
 import { QueryHandlerOptions } from '@biothings-explorer/types';
 
@@ -113,7 +113,7 @@ export default class CacheHandler {
   }
 
   async categorizeEdges(qEdges: QEdge[]): Promise<{ cachedRecords: Record[]; nonCachedQEdges: QEdge[] }> {
-    if (this.cacheEnabled === false || process.env.INTERNAL_DISABLE_REDIS === "true") {
+    if (this.cacheEnabled === false || process.env.INTERNAL_DISABLE_REDIS === 'true') {
       return {
         cachedRecords: [],
         nonCachedQEdges: qEdges,
@@ -210,7 +210,7 @@ export default class CacheHandler {
   }
 
   async cacheEdges(queryRecords: Record[]): Promise<void> {
-    if (this.cacheEnabled === false || process.env.INTERNAL_DISABLE_REDIS === "true") {
+    if (this.cacheEnabled === false || process.env.INTERNAL_DISABLE_REDIS === 'true') {
       if (global.parentPort) {
         global.parentPort.postMessage({ threadId, cacheDone: true });
       }
@@ -257,8 +257,8 @@ export default class CacheHandler {
                   resolve();
                 });
             });
-            if (process.env.QEDGE_CACHE_TIME_S !== "0") {
-                await redisClient.client.expireTimeout(redisID, process.env.QEDGE_CACHE_TIME_S || 1800);
+            if (process.env.QEDGE_CACHE_TIME_S !== '0') {
+              await redisClient.client.expireTimeout(redisID, process.env.QEDGE_CACHE_TIME_S || 1800);
             }
           } catch (error) {
             failedHashes.push(hash);

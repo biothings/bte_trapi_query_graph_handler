@@ -2,7 +2,8 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import async from 'async';
-import { TrapiQueryGraph, CompactQualifiers } from '../types';
+import { TrapiQueryGraph } from '@biothings-explorer/types';
+import { CompactQualifiers } from '../types';
 
 export interface TemplateLookup {
   subject: string;

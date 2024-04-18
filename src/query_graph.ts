@@ -7,7 +7,7 @@ import biolink from './biolink';
 import { resolveSRI } from 'biomedical_id_resolver';
 import _ from 'lodash';
 import * as utils from './utils';
-import { TrapiQueryGraph } from './types';
+import { TrapiQueryGraph } from '@biothings-explorer/types';
 
 const debug = Debug('bte:biothings-explorer-trapi:query_graph');
 
