@@ -379,7 +379,7 @@ export default class InferredQueryHandler {
         };
 
         if (this.pathfinder) {
-            combinedResponse.original_analyses[auxGraphID] = translatedResult.analyses[0];
+            combinedResponse.original_analyses[auxGraphID] = result.analyses[0];
         }
       }
 

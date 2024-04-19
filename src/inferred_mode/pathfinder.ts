@@ -19,8 +19,12 @@ interface AuxGraphObject {
   [id: string]: { edges: Set<string> }
 }
 
+interface FullGraph {
+  [node: string]: { [dst: string]: Set<string> }
+}
+
 interface DfsGraph {
-  [node: string]: { [dst: string]: string[] }
+  [node: string]: { [dst: string]: boolean };
 }
 
 export default class PathfinderQueryHandler {
@@ -130,20 +134,20 @@ export default class PathfinderQueryHandler {
     const kgEdge = creativeResponse.message.results[0].analyses[0].edge_bindings[this.mainEdgeId][0].id;
     const kgSrc = creativeResponse.message.results[0].node_bindings[this.mainEdge.subject][0].id;
     const kgDst = creativeResponse.message.results[0].node_bindings[this.mainEdge.object][0].id;
-    const dfsGraph: DfsGraph = {};
+    const fullGraph: FullGraph = {};
     const supportGraphsPerNode: { [node: string]: Set<string> } = {};
     const supportGraphs = (creativeResponse.message.knowledge_graph.edges[kgEdge]?.attributes?.find(attr => attr.attribute_type_id === 'biolink:support_graphs')?.value ?? []) as string[];
     for (const supportGraph of supportGraphs) {
       const auxGraph = (creativeResponse.message.auxiliary_graphs ?? {})[supportGraph];
       for (const subEdge of auxGraph.edges) {
         const kgSubEdge = creativeResponse.message.knowledge_graph.edges[subEdge];
-        if (!dfsGraph[kgSubEdge.subject]) {
-          dfsGraph[kgSubEdge.subject] = {};
+        if (!fullGraph[kgSubEdge.subject]) {
+          fullGraph[kgSubEdge.subject] = {};
         }
-        if (!dfsGraph[kgSubEdge.subject][kgSubEdge.object]) {
-          dfsGraph[kgSubEdge.subject][kgSubEdge.object] = [];
+        if (!fullGraph[kgSubEdge.subject][kgSubEdge.object]) {
+          fullGraph[kgSubEdge.subject][kgSubEdge.object] = new Set();
         }
-        dfsGraph[kgSubEdge.subject][kgSubEdge.object].push(subEdge);
+        fullGraph[kgSubEdge.subject][kgSubEdge.object].add(subEdge);
 
         if (!supportGraphsPerNode[kgSubEdge.subject]) {
           supportGraphsPerNode[kgSubEdge.subject] = new Set();
@@ -156,7 +160,7 @@ export default class PathfinderQueryHandler {
     debug(message1);
     this.logs.push(new LogEntry('INFO', null, message1).getLog());
 
-    const { results: newResultObject, graphs: newAuxGraphs } = this._searchForIntermediates(creativeResponse, dfsGraph, supportGraphsPerNode, kgSrc, kgDst);
+    const { results: newResultObject, graphs: newAuxGraphs } = this._searchForIntermediates(creativeResponse, supportGraphsPerNode, kgSrc, kgDst);
 
     creativeResponse.message.results = Object.values(newResultObject).sort((a, b) => (b.analyses[0].score ?? 0) - (a.analyses[0].score ?? 0)).slice(0, this.CREATIVE_LIMIT);
     creativeResponse.description = `Query processed successfully, retrieved ${creativeResponse.message.results.length} results.`
@@ -168,8 +172,8 @@ export default class PathfinderQueryHandler {
           const auxGraph = creativeResponse.message.knowledge_graph.edges[edge.id].attributes.find(attr => attr.attribute_type_id === 'biolink:support_graphs')?.value[0];
           finalNewAuxGraphs[auxGraph] = { edges: [] };
           for (const ed of newAuxGraphs[auxGraph].edges) {
-            const [st, en] = ed.split('-');
-            finalNewAuxGraphs[auxGraph].edges.push.apply(finalNewAuxGraphs[auxGraph].edges, dfsGraph[st][en]);
+            const [st, en] = ed.split('\n');
+            finalNewAuxGraphs[auxGraph].edges.push.apply(finalNewAuxGraphs[auxGraph].edges, Array.from(fullGraph[st][en]));
           }
         }
       }
@@ -186,127 +190,138 @@ export default class PathfinderQueryHandler {
     return creativeResponse;
   }
 
-  _searchForIntermediates(creativeResponse: TrapiResponse, dfsGraph: DfsGraph, supportGraphsPerNode: { [node: string]: Set<string> }, kgSrc: string, kgDst: string): ResultAuxObject {
+  _searchForIntermediates(creativeResponse: TrapiResponse, supportGraphsPerNode: { [node: string]: Set<string> }, kgSrc: string, kgDst: string): ResultAuxObject {
     const span = Telemetry.startSpan({ description: 'pathfinderIntermediateSearch' });
 
-    // perform dfs
-    const stack = [{ node: kgSrc, path: [kgSrc] }];
     const newResultObject: ResultObject = {};
     const newAuxGraphs: AuxGraphObject = {};
-    let a= 0;
-    let b=0;
-    while (stack.length !== 0) {
-      const { node, path } = stack.pop()!;
-      a++;
-
-      // continue creating path if we haven't reached end yet
-      if (node !== kgDst) {
-        for (const neighbor in dfsGraph[node]) {
-          if (!path.includes(neighbor)) {
-            stack.push({ node: neighbor, path: [...path, neighbor] });
-          }
+    for (let analysis of Object.values(this.originalAnalyses)) {
+      const dfsGraph: DfsGraph = {};
+      for (const subEdge of Object.values(analysis.edge_bindings).map(eb => eb[0].id)) {
+        const kgSubEdge = creativeResponse.message.knowledge_graph.edges[subEdge];
+        if (!dfsGraph[kgSubEdge.subject]) {
+          dfsGraph[kgSubEdge.subject] = {};
         }
-        continue;
+        if (!dfsGraph[kgSubEdge.subject][kgSubEdge.object]) {
+          dfsGraph[kgSubEdge.subject][kgSubEdge.object] = true;
+        }
       }
 
-      // path to dest too short
-      if (path.length <= 2) {
-        continue;
-      }
-b++;
-      // loop through all intermediate nodes in path to dest
-      for (let i = 1; i < path.length - 1; i++) {
-        const intermediateNode = path[i];
+      // perform dfs
+      const stack = [{ node: kgSrc, path: [kgSrc] }];
 
-        if (!(`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}` in newResultObject)) {
-          newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}-support`] = { edges: new Set() };
-          newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}-support`] = { edges: new Set() };
-          newAuxGraphs[`pathfinder-${intermediateNode}-support`] = { edges: new Set() };
-        }
-
-        // add "edges" to aux graphs (kg edges will be added later)
-        for (let j = 0; j < i; j++) {
-          newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}-support`].edges.add(`${[path[j]]}-${[path[j+1]]}`);
-          newAuxGraphs[`pathfinder-${intermediateNode}-support`].edges.add(`${[path[j]]}-${[path[j+1]]}`);
-        }
-        for (let j = i; j < path.length - 1; j++) {
-          newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}-support`].edges.add(`${[path[j]]}-${[path[j+1]]}`);
-          newAuxGraphs[`pathfinder-${intermediateNode}-support`].edges.add(`${[path[j]]}-${[path[j+1]]}`);
-        } 
-
-        // code below is only for new results
-        if (`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}` in newResultObject) continue;
-
-        // create new edges & aux graph
-        newResultObject[`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}`] = {
-          node_bindings: {
-            [this.mainEdge.subject]: [{ id: kgSrc }],
-            [this.mainEdge.object]: [{ id: kgDst }],
-            [this.unpinnedNodeId]: [{ id: intermediateNode }]
-          },
-          analyses: [{
-            resource_id: "infores:biothings-explorer",
-            edge_bindings: {
-              [this.mainEdgeId]: [{ id: `pathfinder-${intermediateNode}` }],
-              [this.intermediateEdges[0][0]]: [{ id: `pathfinder-${kgSrc}-${intermediateNode}` }],
-              [this.intermediateEdges[1][0]]: [{ id: `pathfinder-${intermediateNode}-${kgDst}` }],
-            },
-            score: undefined
-          }],
-        };
-        creativeResponse.message.knowledge_graph.edges[`pathfinder-${kgSrc}-${intermediateNode}`] = {
-          predicate: 'biolink:related_to',
-          subject: kgSrc,
-          object: intermediateNode,
-          sources: [
-            {
-              resource_id: this.options.provenanceUsesServiceProvider
-                ? 'infores:service-provider-trapi'
-                : 'infores:biothings-explorer',
-              resource_role: 'primary_knowledge_source',
-            },
-          ],
-          attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${kgSrc}-${intermediateNode}-support`] }],
-        };
-        creativeResponse.message.knowledge_graph.edges[`pathfinder-${intermediateNode}-${kgDst}`] = {
-          predicate: 'biolink:related_to',
-          subject: intermediateNode,
-          object: kgDst,
-          sources: [
-            {
-              resource_id: this.options.provenanceUsesServiceProvider
-                ? 'infores:service-provider-trapi'
-                : 'infores:biothings-explorer',
-              resource_role: 'primary_knowledge_source',
-            },
-          ],
-          attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${intermediateNode}-${kgDst}-support`] }],
-        };
-        creativeResponse.message.knowledge_graph.edges[`pathfinder-${intermediateNode}`] = {
-          predicate: 'biolink:related_to',
-          subject: kgSrc,
-          object: kgDst,
-          sources: [
-            {
-              resource_id: this.options.provenanceUsesServiceProvider
-                ? 'infores:service-provider-trapi'
-                : 'infores:biothings-explorer',
-              resource_role: 'primary_knowledge_source',
-            },
-          ],
-          attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${intermediateNode}-support`] }],
-        };
-
-        // calculate score
-        if (supportGraphsPerNode[intermediateNode]?.size > 0) {
-          let score: number | undefined = undefined;
-          for (const supportGraph of supportGraphsPerNode[intermediateNode]) {
-            score = scaled_sigmoid(
-              inverse_scaled_sigmoid(score ?? 0) +
-              inverse_scaled_sigmoid(this.originalAnalyses[supportGraph].score),
-            );
+      while (stack.length !== 0) {
+        const { node, path } = stack.pop()!;
+  
+        // continue creating path if we haven't reached end yet
+        if (node !== kgDst) {
+          for (const neighbor in dfsGraph[node]) {
+            if (!path.includes(neighbor)) {
+              stack.push({ node: neighbor, path: [...path, neighbor] });
+            }
           }
-          newResultObject[`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}`].analyses[0].score = score;
+          continue;
+        }
+  
+        // path to dest too short
+        if (path.length <= 2) {
+          continue;
+        }
+
+        // loop through all intermediate nodes in path to dest
+        for (let i = 1; i < path.length - 1; i++) {
+          const intermediateNode = path[i];
+
+          if (!(`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}` in newResultObject)) {
+            newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}-support`] = { edges: new Set() };
+            newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}-support`] = { edges: new Set() };
+            newAuxGraphs[`pathfinder-${intermediateNode}-support`] = { edges: new Set() };
+          }
+
+          // add "edges" to aux graphs (kg edges will be added later)
+          for (let j = 0; j < i; j++) {
+            newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}-support`].edges.add(`${path[j]}\n${path[j+1]}`);
+            newAuxGraphs[`pathfinder-${intermediateNode}-support`].edges.add(`${path[j]}\n${path[j+1]}`);
+          }
+          for (let j = i; j < path.length - 1; j++) {
+            newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}-support`].edges.add(`${path[j]}\n${path[j+1]}`);
+            newAuxGraphs[`pathfinder-${intermediateNode}-support`].edges.add(`${path[j]}\n${path[j+1]}`);
+          } 
+
+          // code below is only for new results
+          if (`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}` in newResultObject) continue;
+
+          // create new edges & aux graph
+          newResultObject[`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}`] = {
+            node_bindings: {
+              [this.mainEdge.subject]: [{ id: kgSrc }],
+              [this.mainEdge.object]: [{ id: kgDst }],
+              [this.unpinnedNodeId]: [{ id: intermediateNode }]
+            },
+            analyses: [{
+              resource_id: "infores:biothings-explorer",
+              edge_bindings: {
+                [this.mainEdgeId]: [{ id: `pathfinder-${intermediateNode}` }],
+                [this.intermediateEdges[0][0]]: [{ id: `pathfinder-${kgSrc}-${intermediateNode}` }],
+                [this.intermediateEdges[1][0]]: [{ id: `pathfinder-${intermediateNode}-${kgDst}` }],
+              },
+              score: undefined
+            }],
+          };
+          creativeResponse.message.knowledge_graph.edges[`pathfinder-${kgSrc}-${intermediateNode}`] = {
+            predicate: 'biolink:related_to',
+            subject: kgSrc,
+            object: intermediateNode,
+            sources: [
+              {
+                resource_id: this.options.provenanceUsesServiceProvider
+                  ? 'infores:service-provider-trapi'
+                  : 'infores:biothings-explorer',
+                resource_role: 'primary_knowledge_source',
+              },
+            ],
+            attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${kgSrc}-${intermediateNode}-support`] }],
+          };
+          creativeResponse.message.knowledge_graph.edges[`pathfinder-${intermediateNode}-${kgDst}`] = {
+            predicate: 'biolink:related_to',
+            subject: intermediateNode,
+            object: kgDst,
+            sources: [
+              {
+                resource_id: this.options.provenanceUsesServiceProvider
+                  ? 'infores:service-provider-trapi'
+                  : 'infores:biothings-explorer',
+                resource_role: 'primary_knowledge_source',
+              },
+            ],
+            attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${intermediateNode}-${kgDst}-support`] }],
+          };
+          creativeResponse.message.knowledge_graph.edges[`pathfinder-${intermediateNode}`] = {
+            predicate: 'biolink:related_to',
+            subject: kgSrc,
+            object: kgDst,
+            sources: [
+              {
+                resource_id: this.options.provenanceUsesServiceProvider
+                  ? 'infores:service-provider-trapi'
+                  : 'infores:biothings-explorer',
+                resource_role: 'primary_knowledge_source',
+              },
+            ],
+            attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${intermediateNode}-support`] }],
+          };
+
+          // calculate score
+          if (supportGraphsPerNode[intermediateNode]?.size > 0) {
+            let score: number | undefined = undefined;
+            for (const supportGraph of supportGraphsPerNode[intermediateNode]) {
+              score = scaled_sigmoid(
+                inverse_scaled_sigmoid(score ?? 0) +
+                inverse_scaled_sigmoid(this.originalAnalyses[supportGraph].score),
+              );
+            }
+            newResultObject[`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}`].analyses[0].score = score;
+          }
         }
       }
     }
