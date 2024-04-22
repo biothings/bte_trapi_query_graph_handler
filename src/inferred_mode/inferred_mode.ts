@@ -5,9 +5,9 @@ import async from 'async';
 import biolink from '../biolink';
 import { getTemplates, MatchedTemplate, TemplateLookup } from './template_lookup';
 import { scaled_sigmoid, inverse_scaled_sigmoid } from '../results_assembly/score';
-import TRAPIQueryHandler, { QueryHandlerOptions } from '../index';
+import TRAPIQueryHandler from '../index';
 import {
-  CompactQualifiers,
+  QueryHandlerOptions,
   TrapiAuxGraphCollection,
   TrapiEdgeBinding,
   TrapiKnowledgeGraph,
@@ -16,7 +16,8 @@ import {
   TrapiQueryGraph,
   TrapiResponse,
   TrapiResult,
-} from '../types';
+} from '@biothings-explorer/types';
+import { CompactQualifiers } from '../index';
 const debug = Debug('bte:biothings-explorer-trapi:inferred-mode');
 
 export interface CombinedResponse {
@@ -287,8 +288,8 @@ export default class InferredQueryHandler {
     newResponse.message.results.forEach((result) => {
       const translatedResult: TrapiResult = {
         node_bindings: {
-          [qEdge.subject]: [{ id: result.node_bindings.creativeQuerySubject[0].id }],
-          [qEdge.object]: [{ id: result.node_bindings.creativeQueryObject[0].id }],
+          [qEdge.subject]: [{ id: result.node_bindings.creativeQuerySubject[0].id, attributes: [] }],
+          [qEdge.object]: [{ id: result.node_bindings.creativeQueryObject[0].id, attributes: [] }],
         },
         pfocr: result.pfocr?.length ? result.pfocr : undefined,
         analyses: [
@@ -310,14 +311,14 @@ export default class InferredQueryHandler {
       // Direct edge answers stand on their own, not as an inferred edge.
       if (Object.keys(result.node_bindings).length == 2) {
         const boundEdgeID = Object.values(result.analyses[0].edge_bindings)[0][0].id;
-        translatedResult.analyses[0].edge_bindings = { [qEdgeID]: [{ id: boundEdgeID }] };
+        translatedResult.analyses[0].edge_bindings = { [qEdgeID]: [{ id: boundEdgeID, attributes: [] }] };
       } else {
         // Create an aux graph using the result and associate it with an inferred Edge
         const inferredEdgeID = `inferred-${resultCreativeSubjectID}-${qEdge.predicates[0].replace(
           'biolink:',
           '',
         )}-${resultCreativeObjectID}`;
-        translatedResult.analyses[0].edge_bindings = { [qEdgeID]: [{ id: inferredEdgeID }] };
+        translatedResult.analyses[0].edge_bindings = { [qEdgeID]: [{ id: inferredEdgeID, attributes: [] }] };
         if (!combinedResponse.message.knowledge_graph.edges[inferredEdgeID]) {
           combinedResponse.message.knowledge_graph.edges[inferredEdgeID] = {
             subject: resultCreativeSubjectID,
@@ -331,7 +332,11 @@ export default class InferredQueryHandler {
                 resource_role: 'primary_knowledge_source',
               },
             ],
-            attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [] }],
+            attributes: [
+              { attribute_type_id: 'biolink:support_graphs', value: [] },
+              { attribute_type_id: 'biolink:knowledge_level', value: "prediction" },
+              { attribute_type_id: 'biolink:agent_type', value: "computational_model" },
+            ],
           };
         }
         let auxGraphSuffix = 0;
@@ -352,6 +357,7 @@ export default class InferredQueryHandler {
             },
             [] as string[],
           ),
+          attributes: []
         };
       }
 
@@ -497,7 +503,7 @@ export default class InferredQueryHandler {
       description: '',
       schema_version: global.SCHEMA_VERSION,
       biolink_version: global.BIOLINK_VERSION,
-      workflow: [{ id: 'lookup' }],
+      workflow: [{ id: 'lookup_and_score' }],
       message: {
         query_graph: this.queryGraph,
         knowledge_graph: {

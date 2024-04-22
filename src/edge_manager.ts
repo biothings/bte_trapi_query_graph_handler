@@ -8,7 +8,7 @@ import BatchEdgeQueryHandler, { BatchEdgeQueryOptions } from './batch_edge_query
 import { Telemetry } from '@biothings-explorer/utils';
 import QEdge from './query_edge';
 import MetaKG from '@biothings-explorer/smartapi-kg';
-import { QueryHandlerOptions } from '.';
+import { QueryHandlerOptions } from '@biothings-explorer/types';
 import { Record } from '@biothings-explorer/api-response-transform';
 import { UnavailableAPITracker } from './types';
 import { RecordsByQEdgeID } from './results_assembly/query_results';
@@ -108,7 +108,7 @@ export default class QueryEdgeManager {
     }
     debug(
       `(5) Sending next edge '${nextQEdge.getID()}' ` +
-        `WITH entity count...(${nextQEdge.subject.entity_count || nextQEdge.object.entity_count})`,
+      `WITH entity count...(${nextQEdge.subject.entity_count || nextQEdge.object.entity_count})`,
     );
     return this.preSendOffCheck(nextQEdge);
   }
@@ -117,9 +117,9 @@ export default class QueryEdgeManager {
     this._qEdges.forEach((qEdge) => {
       debug(
         `'${qEdge.getID()}'` +
-          ` : (${qEdge.subject.entity_count || 0}) ` +
-          `${qEdge.reverse ? '<--' : '-->'}` +
-          ` (${qEdge.object.entity_count || 0})`,
+        ` : (${qEdge.subject.entity_count || 0}) ` +
+        `${qEdge.reverse ? '<--' : '-->'}` +
+        ` (${qEdge.object.entity_count || 0})`,
       );
     });
   }
@@ -127,9 +127,8 @@ export default class QueryEdgeManager {
   _logSkippedQueries(unavailableAPIs: UnavailableAPITracker): void {
     Object.entries(unavailableAPIs).forEach(([api, { skippedQueries }]) => {
       if (skippedQueries > 0) {
-        const skipMessage = `${skippedQueries} additional quer${skippedQueries > 1 ? 'ies' : 'y'} to ${api} ${
-          skippedQueries > 1 ? 'were' : 'was'
-        } skipped as the API was unavailable.`;
+        const skipMessage = `${skippedQueries} additional quer${skippedQueries > 1 ? 'ies' : 'y'} to ${api} ${skippedQueries > 1 ? 'were' : 'was'
+          } skipped as the API was unavailable.`;
         debug(skipMessage);
         this.logs.push(new LogEntry('WARNING', null, skipMessage).getLog());
       }
@@ -195,7 +194,7 @@ export default class QueryEdgeManager {
     const objectCuries = qEdge.object.curie;
     debug(
       `'${qEdge.getID()}' Reversed[${qEdge.reverse}] (${JSON.stringify(subjectCuries.length || 0)})` +
-        `--(${JSON.stringify(objectCuries.length || 0)}) entities / (${records.length}) records.`,
+      `--(${JSON.stringify(objectCuries.length || 0)}) entities / (${records.length}) records.`,
     );
     // debug(`IDS SUB ${JSON.stringify(sub_count)}`)
     // debug(`IDS OBJ ${JSON.stringify(obj_count)}`)
@@ -231,7 +230,7 @@ export default class QueryEdgeManager {
     return keep;
   }
 
-  collectRecords(): void {
+  collectRecords(): boolean {
     //go through edges and collect records organized by edge
     let recordsByQEdgeID: RecordsByQEdgeID = {};
     //all res merged
@@ -268,12 +267,10 @@ export default class QueryEdgeManager {
         new LogEntry(
           'WARNING',
           null,
-          `qEdges ${JSON.stringify(brokenEdges)} ` + `resulted in (0) records. No complete paths can be formed.`,
+          `qEdges ${brokenEdges} resulted in (0) records. No complete paths can be formed.`,
         ).getLog(),
       );
-      debug(
-        `(12) qEdges ${JSON.stringify(brokenEdges)} ` + `resulted in (0) records. No complete paths can be formed.`,
-      );
+      debug(`(12) qEdges ${brokenEdges} resulted in (0) records. No complete paths can be formed.`);
     }
     //Organized by edge: update query records
     this._organizedRecords = recordsByQEdgeID;
@@ -289,8 +286,12 @@ export default class QueryEdgeManager {
     //         console.log(err);
     //     }
     // });
-    debug(`(12) Collected (${this._records.length}) records!`);
-    this.logs.push(new LogEntry('DEBUG', null, `Edge manager collected (${this._records.length}) records!`).getLog());
+    if (!brokenChain) {
+      debug(`(12) Collected (${this._records.length}) records!`);
+      this.logs.push(new LogEntry('DEBUG', null, `Edge manager collected (${this._records.length}) records!`).getLog());
+    }
+
+    return !brokenChain;
   }
 
   updateEdgeRecords(currentQEdge: QEdge): void {
@@ -395,8 +396,7 @@ export default class QueryEdgeManager {
         new LogEntry(
           'INFO',
           null,
-          `Executing ${currentQEdge.getID()}${currentQEdge.isReversed() ? ' (reversed)' : ''}: ${
-            currentQEdge.subject.id
+          `Executing ${currentQEdge.getID()}${currentQEdge.isReversed() ? ' (reversed)' : ''}: ${currentQEdge.subject.id
           } ${currentQEdge.isReversed() ? '<--' : '-->'} ${currentQEdge.object.id}`,
         ).getLog(),
       );
@@ -474,7 +474,13 @@ export default class QueryEdgeManager {
     }
     this._logSkippedQueries(unavailableAPIs);
     // collect and organize records
-    this.collectRecords();
+    if (!this.collectRecords()) {
+      debug(`(X) Terminating...No complete paths.`);
+      this.logs.push(
+        new LogEntry('WARNING', null, `No complete paths could be formed. Your query terminates.`).getLog(),
+      );
+      return;
+    }
     // dump records if set to do so
     if (process.env.DUMP_RECORDS) {
       await this.dumpRecords(this.getRecords());

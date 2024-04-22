@@ -6,7 +6,7 @@ import { Record, RecordNode, FrozenRecord } from '@biothings-explorer/api-respon
 import QNode from './query_node';
 import { QNodeInfo } from './query_node';
 import { LogEntry, StampedLog } from '@biothings-explorer/utils';
-import { TrapiAttributeConstraint, TrapiQualifierConstraint } from './types';
+import { TrapiAttributeConstraint, TrapiQualifierConstraint } from '@biothings-explorer/types';
 
 const debug = Debug('bte:biothings-explorer-trapi:QEdge');
 

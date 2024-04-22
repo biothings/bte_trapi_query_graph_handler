@@ -1,5 +1,5 @@
-import { ProvenanceChainItem } from '@biothings-explorer/api-response-transform';
-import { TrapiAttribute } from '../types';
+import { TrapiSource } from '@biothings-explorer/types';
+import { TrapiAttribute } from '@biothings-explorer/types';
 
 export interface KGEdgeInfo {
   object: string;
@@ -20,6 +20,7 @@ export default class KGEdge {
         resource_id: string;
         resource_role: string;
         upstream_resource_ids?: Set<string>;
+        source_record_urls?: Set<string>;
       };
     };
   };
@@ -68,7 +69,7 @@ export default class KGEdge {
     });
   }
 
-  addSource(source: ProvenanceChainItem | ProvenanceChainItem[]): void {
+  addSource(source: TrapiSource | TrapiSource[]): void {
     if (typeof source === 'undefined') {
       return;
     }
@@ -77,18 +78,25 @@ export default class KGEdge {
     }
     source.forEach((item) => {
       if (!this.sources[item.resource_id]) this.sources[item.resource_id] = {};
+      if (item.upstream_resource_ids && !Array.isArray(item.upstream_resource_ids)) {
+        item.upstream_resource_ids = [item.upstream_resource_ids];
+      }
+      if (item.source_record_urls && !Array.isArray(item.source_record_urls)) {
+        item.source_record_urls = [item.source_record_urls];
+      }
       if (!this.sources[item.resource_id][item.resource_role]) {
         this.sources[item.resource_id][item.resource_role] = {
           resource_id: item.resource_id,
           resource_role: item.resource_role,
           upstream_resource_ids: item.upstream_resource_ids ? new Set(item.upstream_resource_ids) : undefined,
+          source_record_urls: item.source_record_urls ? new Set(item.source_record_urls) : undefined,
         };
-      }
-      if (item.upstream_resource_ids && !Array.isArray(item.upstream_resource_ids)) {
-        item.upstream_resource_ids = [item.upstream_resource_ids];
       }
       item.upstream_resource_ids?.forEach((upstream) =>
         this.sources[item.resource_id][item.resource_role].upstream_resource_ids.add(upstream),
+      );
+      item.source_record_urls?.forEach((url) =>
+        this.sources[item.resource_id][item.resource_role].source_record_urls.add(url),
       );
     });
   }

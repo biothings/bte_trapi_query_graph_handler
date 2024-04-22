@@ -1,4 +1,4 @@
-import MetaKG, { SmartAPIKGOperationObject } from '@biothings-explorer/smartapi-kg';
+import MetaKG from '@biothings-explorer/smartapi-kg';
 import path from 'path';
 import QueryGraph from './query_graph';
 import KnowledgeGraph from './graph/knowledge_graph';
@@ -18,43 +18,27 @@ import InferredQueryHandler from './inferred_mode/inferred_mode';
 import KGNode from './graph/kg_node';
 import KGEdge from './graph/kg_edge';
 import {
-  APIList,
   TrapiAuxGraphCollection,
   TrapiAuxiliaryGraph,
   TrapiQNode,
   TrapiQueryGraph,
   TrapiResponse,
   TrapiResult,
-} from './types';
+} from '@biothings-explorer/types';
+import { QueryHandlerOptions } from '@biothings-explorer/types';
 import BTEGraph from './graph/graph';
 import QEdge from './query_edge';
-import { redisClient } from './redis-client';
+import { redisClient } from '@biothings-explorer/utils';
 import { Telemetry } from '@biothings-explorer/utils';
 
 // Exports for external availability
 export * from './types';
-export { redisClient, getNewRedisClient } from './redis-client';
 export { getTemplates, supportedLookups } from './inferred_mode/template_lookup';
 export { default as QEdge } from './query_edge';
 export { default as QNode } from './query_node';
 export { default as InvalidQueryGraphError } from './exceptions/invalid_query_graph_error';
 export * from './qedge2apiedge';
 
-export interface QueryHandlerOptions {
-  provenanceUsesServiceProvider?: boolean;
-  smartAPIID?: string;
-  teamName?: string;
-  enableIDResolution?: boolean;
-  // TODO: type instances of `any`
-  apiList?: APIList;
-  schema?: any; // might be hard to type -- it's the entire TRAPI schema IIRC
-  dryrun?: boolean;
-  resolveOutputIDs?: boolean;
-  submitter?: string;
-  caching?: boolean; // from request url query values
-  metakg?: SmartAPIKGOperationObject[]; // list of meta kg ops
-  EDGE_ATTRIBUTES_USED_IN_RECORD_HASH?: string[];
-}
 export default class TRAPIQueryHandler {
   logs: StampedLog[];
   options: QueryHandlerOptions;
@@ -92,10 +76,10 @@ export default class TRAPIQueryHandler {
 
     let smartapiRegistry;
     if (redisClient.clientEnabled) {
-        const redisData = await redisClient.client.getTimeout(`bte:smartapi:specs`)
-        if (redisData) {
-            smartapiRegistry = JSON.parse(redisData);
-        }
+      const redisData = await redisClient.client.getTimeout(`bte:smartapi:specs`)
+      if (redisData) {
+        smartapiRegistry = JSON.parse(redisData);
+      }
     }
 
     if (!smartapiRegistry) {
@@ -134,9 +118,9 @@ export default class TRAPIQueryHandler {
     );
 
     if (this.options.metakg) {
-        const metaKG = new MetaKG(undefined, undefined, (this.options as any).metakg);
-        metaKG.filterKG(this.options);
-        return metaKG;
+      const metaKG = new MetaKG(undefined, undefined, (this.options as any).metakg);
+      metaKG.filterKG(this.options);
+      return metaKG;
     }
 
     const metaKG = new MetaKG(this.path, this.predicatePath);
@@ -210,6 +194,8 @@ export default class TRAPIQueryHandler {
         const source = Object.entries(ontologyKnowledgeSourceMapping).find(([prefix]) => {
           return expanded.includes(prefix);
         })[1];
+        subclassEdge.addAdditionalAttributes('biolink:knowledge_level', 'knowledge_assertion')
+        subclassEdge.addAdditionalAttributes('biolink:agent_type', 'manual_agent')
         subclassEdge.addSource([
           { resource_id: source, resource_role: 'primary_knowledge_source' },
           {
@@ -246,7 +232,7 @@ export default class TRAPIQueryHandler {
         suffix += 1;
       }
       const supportGraphID = `support${suffix}-${boundEdgeID}`;
-      auxGraphs[supportGraphID] = { edges: supportGraph };
+      auxGraphs[supportGraphID] = { edges: supportGraph, attributes: [] };
       if (!edgesIDsByAuxGraphID[supportGraphID]) {
         edgesIDsByAuxGraphID[supportGraphID] = new Set();
       }
@@ -258,6 +244,8 @@ export default class TRAPIQueryHandler {
           object: object,
         });
         boundEdge.addAdditionalAttributes('biolink:support_graphs', [supportGraphID]);
+        boundEdge.addAdditionalAttributes('biolink:knowledge_level', 'logical_entailment')
+        boundEdge.addAdditionalAttributes('biolink:agent_type', 'automated_agent')
         boundEdge.addSource([
           {
             resource_id: this.options.provenanceUsesServiceProvider
@@ -287,7 +275,7 @@ export default class TRAPIQueryHandler {
                     boundIDs.add(binding.id);
                   }
                 } else if (!boundIDs.has(nodesToRebind[binding.id].newNode)) {
-                  newBindings.push({ id: nodesToRebind[binding.id].newNode });
+                  newBindings.push({ id: nodesToRebind[binding.id].newNode, attributes: [] });
                   boundIDs.add(nodesToRebind[binding.id].newNode);
                 }
                 return { boundIDs, newBindings };
@@ -309,7 +297,7 @@ export default class TRAPIQueryHandler {
                     boundIDs.add(binding.id);
                   }
                 } else if (!boundIDs.has(edgesToRebind[binding.id])) {
-                  newBindings.push({ id: edgesToRebind[binding.id] });
+                  newBindings.push({ id: edgesToRebind[binding.id], attributes: [] });
                   boundIDs.add(edgesToRebind[binding.id]);
                   resultBoundEdgesWithAuxGraphs.add(edgesToRebind[binding.id]);
                 }
@@ -370,7 +358,7 @@ export default class TRAPIQueryHandler {
       description: `Query processed successfully, retrieved ${results.length} results.`,
       schema_version: global.SCHEMA_VERSION,
       biolink_version: global.BIOLINK_VERSION,
-      workflow: [{ id: 'lookup' }],
+      workflow: [{ id: this.options.smartAPIID || this.options.teamName ? 'lookup' : 'lookup_and_score' }],
       message: {
         query_graph: this.originalQueryGraph,
         knowledge_graph: this.knowledgeGraph.kg,
@@ -470,13 +458,11 @@ export default class TRAPIQueryHandler {
 
         let log_msg: string;
         if (currentQEdge.reverse) {
-          log_msg = `qEdge ${currentQEdge.id} (reversed): ${currentQEdge.object.categories} > ${
-            currentQEdge.predicate ? `${currentQEdge.predicate} > ` : ''
-          }${currentQEdge.subject.categories}`;
+          log_msg = `qEdge ${currentQEdge.id} (reversed): ${currentQEdge.object.categories} > ${currentQEdge.predicate ? `${currentQEdge.predicate} > ` : ''
+            }${currentQEdge.subject.categories}`;
         } else {
-          log_msg = `qEdge ${currentQEdge.id}: ${currentQEdge.subject.categories} > ${
-            currentQEdge.predicate ? `${currentQEdge.predicate} > ` : ''
-          }${currentQEdge.object.categories}`;
+          log_msg = `qEdge ${currentQEdge.id}: ${currentQEdge.subject.categories} > ${currentQEdge.predicate ? `${currentQEdge.predicate} > ` : ''
+            }${currentQEdge.object.categories}`;
         }
         this.logs.push(new LogEntry('INFO', null, log_msg).getLog());
 
@@ -517,9 +503,8 @@ export default class TRAPIQueryHandler {
     });
     const qEdgesLogStr = qEdgesToLog.length > 1 ? `[${qEdgesToLog.join(', ')}]` : `${qEdgesToLog.join(', ')}`;
     if (len > 0) {
-      const terminateLog = `Query Edge${len !== 1 ? 's' : ''} ${qEdgesLogStr} ${
-        len !== 1 ? 'have' : 'has'
-      } no MetaKG edges. Your query terminates.`;
+      const terminateLog = `Query Edge${len !== 1 ? 's' : ''} ${qEdgesLogStr} ${len !== 1 ? 'have' : 'has'
+        } no MetaKG edges. Your query terminates.`;
       debug(terminateLog);
       this.logs.push(new LogEntry('WARNING', null, terminateLog).getLog());
       return false;
@@ -633,8 +618,7 @@ export default class TRAPIQueryHandler {
       new LogEntry(
         'INFO',
         null,
-        `Execution Summary: (${KGNodes}) nodes / (${kgEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${
-          cached ? ` (${cached} cached qEdges)` : ''
+        `Execution Summary: (${KGNodes}) nodes / (${kgEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${cached ? ` (${cached} cached qEdges)` : ''
         } returned results from(${sources.length}) unique API${sources.length === 1 ? 's' : ''}`,
       ).getLog(),
       new LogEntry('INFO', null, `APIs: ${sources.join(', ')} `).getLog(),
