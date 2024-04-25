@@ -523,7 +523,16 @@ export default class InferredQueryHandler {
       [resultID: string]: number;
     } = {};
 
+    
+    const MAX_TIME = 4.5 * 60 * 1000; // 4 minutes
+    const QUERY_TIME = 2.5 * 60 * 1000; // 2.5 minutes
+    const start = Date.now();
+
     await async.eachOfSeries(subQueries, async ({ template, queryGraph }, i) => {
+      if (Date.now() - start > MAX_TIME - QUERY_TIME) {
+        debug(`Skipping template because the query has been running for ${(Date.now() - start) / 1000} seconds, and this template is projected to take ${QUERY_TIME / 1000} seconds`);
+        return;
+      }
       const span = Telemetry.startSpan({ description: 'creativeTemplate' });
       span.setData('template', (i as number) + 1);
       i = i as number;
