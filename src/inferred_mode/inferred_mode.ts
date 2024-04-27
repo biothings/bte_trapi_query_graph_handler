@@ -214,7 +214,7 @@ export default class InferredQueryHandler {
   async createQueries(qEdge: TrapiQEdge, qSubject: TrapiQNode, qObject: TrapiQNode): Promise<FilledTemplate[]> {
     const templates = await this.findTemplates(qEdge, qSubject, qObject);
     // combine creative query with templates
-    const subQueries = templates.map(({ template, queryGraph }) => {
+    const subQueries = templates.map(({ template, queryGraph, durationMin }) => {
       queryGraph.nodes.creativeQuerySubject.categories = [
         ...new Set([...queryGraph.nodes.creativeQuerySubject.categories, ...qSubject.categories]),
       ];
@@ -244,7 +244,7 @@ export default class InferredQueryHandler {
         delete queryGraph.nodes.creativeQueryObject.ids;
       }
 
-      return { template, queryGraph };
+      return { template, queryGraph, durationMin };
     });
 
     return subQueries;
@@ -525,12 +525,13 @@ export default class InferredQueryHandler {
 
     
     const MAX_TIME = 4.5 * 60 * 1000; // 4 minutes
-    const QUERY_TIME = 2.5 * 60 * 1000; // 2.5 minutes
+    const DEFAULT_QUERY_TIME = 2.5 * 60 * 1000; // 2.5 minutes
     const start = Date.now();
 
-    await async.eachOfSeries(subQueries, async ({ template, queryGraph }, i) => {
-      if (Date.now() - start > MAX_TIME - QUERY_TIME) {
-        debug(`Skipping template because the query has been running for ${(Date.now() - start) / 1000} seconds, and this template is projected to take ${QUERY_TIME / 1000} seconds`);
+    await async.eachOfSeries(subQueries, async ({ template, queryGraph, durationMin }, i) => {
+      const queryTime = durationMin * 60 * 1000 ?? DEFAULT_QUERY_TIME;
+      if (Date.now() - start > MAX_TIME - queryTime) {
+        debug(`Skipping template because the query has been running for ${(Date.now() - start) / 1000} seconds, and this template is projected to take ${queryTime / 1000} seconds`);
         return;
       }
       const span = Telemetry.startSpan({ description: 'creativeTemplate' });

@@ -17,6 +17,7 @@ export interface TemplateLookup {
 export interface MatchedTemplate {
   template: string;
   queryGraph: TrapiQueryGraph;
+  durationMin?: number;
 }
 
 export interface TemplateGroup {
@@ -77,9 +78,11 @@ export async function getTemplates(lookups: TemplateLookup[]): Promise<MatchedTe
     return matches;
   }, [] as string[]);
   return await async.map(matchingTemplatePaths, async (templatePath: string) => {
+    const templateData = JSON.parse(await fs.readFile(templatePath, { encoding: 'utf8' }));
     return {
       template: templatePath.substring(templatePath.lastIndexOf('/') + 1),
-      queryGraph: JSON.parse(await fs.readFile(templatePath, { encoding: 'utf8' })).message.query_graph,
+      queryGraph: templateData.message.query_graph,
+      durationMin: templateData.durationMin
     };
   });
 }
