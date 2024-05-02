@@ -38,7 +38,6 @@ export interface CombinedResponseReport {
   querySuccess: number;
   queryHadResults: boolean;
   mergedResults: { [resultID: string]: number };
-  creativeLimitHit: boolean | number;
 }
 
 // MatchedTemplate, but with IDs, etc. filled in
@@ -52,7 +51,6 @@ export default class InferredQueryHandler {
   path: string;
   predicatePath: string;
   includeReasoner: boolean;
-  CREATIVE_LIMIT: number;
   constructor(
     parent: TRAPIQueryHandler,
     queryGraph: TrapiQueryGraph,
@@ -69,7 +67,6 @@ export default class InferredQueryHandler {
     this.path = path;
     this.predicatePath = predicatePath;
     this.includeReasoner = includeReasoner;
-    this.CREATIVE_LIMIT = process.env.CREATIVE_LIMIT ? parseInt(process.env.CREATIVE_LIMIT) : 500;
   }
 
   get queryIsValid(): boolean {
@@ -263,7 +260,6 @@ export default class InferredQueryHandler {
       querySuccess: 0,
       queryHadResults: false,
       mergedResults: {},
-      creativeLimitHit: false,
     };
     let mergedThisTemplate = 0;
     const resultIDsFromPrevious = new Set(Object.keys(combinedResponse.message.results));
@@ -428,9 +424,6 @@ export default class InferredQueryHandler {
     }
     report.querySuccess = 1;
 
-    if (Object.keys(combinedResponse.message.results).length >= this.CREATIVE_LIMIT && !report.creativeLimitHit) {
-      report.creativeLimitHit = Object.keys(newResponse.message.results).length;
-    }
     span.finish();
     return report;
   }
@@ -550,7 +543,7 @@ export default class InferredQueryHandler {
         // make query and combine results/kg/logs/etc
         handler.setQueryGraph(queryGraph);
         await handler.query();
-        const { querySuccess, queryHadResults, mergedResults, creativeLimitHit } = this.combineResponse(
+        const { querySuccess, queryHadResults, mergedResults } = this.combineResponse(
           i,
           handler,
           qEdgeID,
@@ -564,23 +557,6 @@ export default class InferredQueryHandler {
           mergedResultsCount[result] =
             result in mergedResultsCount ? mergedResultsCount[result] + countMerged : countMerged;
         });
-        // log to user if we should stop
-        if (creativeLimitHit) {
-          stop = true;
-          const message = [
-            `Addition of ${creativeLimitHit} results from Template ${i + 1}`,
-            Object.keys(combinedResponse.message.results).length === this.CREATIVE_LIMIT ? ' meets ' : ' exceeds ',
-            `creative result maximum of ${this.CREATIVE_LIMIT} (reaching ${
-              Object.keys(combinedResponse.message.results).length
-            } merged). `,
-            `Response will be truncated to top-scoring ${this.CREATIVE_LIMIT} results. Skipping remaining ${
-              subQueries.length - (i + 1)
-            } `,
-            subQueries.length - (i + 1) === 1 ? `template.` : `templates.`,
-          ].join('');
-          debug(message);
-          combinedResponse.logs.push(new LogEntry(`INFO`, null, message).getLog());
-        }
         span.finish();
       } catch (error) {
         handler.logs.forEach((log) => {
@@ -610,11 +586,7 @@ export default class InferredQueryHandler {
         new LogEntry(
           'INFO',
           null,
-          [
-            `Final result count`,
-            Object.keys(combinedResponse.message.results).length > this.CREATIVE_LIMIT ? ' (before truncation):' : ':',
-            ` ${Object.keys(combinedResponse.message.results).length}`,
-          ].join(''),
+          `Final result count: ${Object.keys(combinedResponse.message.results).length}`,
         ).getLog(),
       );
     }
@@ -623,8 +595,7 @@ export default class InferredQueryHandler {
     response.message.results = Object.values(combinedResponse.message.results).sort((a, b) => {
       return b.analyses[0].score - a.analyses[0].score ? b.analyses[0].score - a.analyses[0].score : 0;
     });
-    // trim extra results and prune kg
-    response.message.results = response.message.results.slice(0, this.CREATIVE_LIMIT);
+    // prune kg
     response.description = `Query processed successfully, retrieved ${response.message.results.length} results.`;
     this.pruneKnowledgeGraph(response);
     // get the final summary log
