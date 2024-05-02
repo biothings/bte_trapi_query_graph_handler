@@ -529,7 +529,7 @@ export default class InferredQueryHandler {
     const start = Date.now();
 
     await async.eachOfSeries(subQueries, async ({ template, queryGraph, durationMin }, i) => {
-      const queryTime = durationMin * 60 * 1000 ?? DEFAULT_QUERY_TIME;
+      const queryTime = (typeof durationMin == 'number') ? durationMin * 60 * 1000 : DEFAULT_QUERY_TIME;
       if (Date.now() - start > MAX_TIME - queryTime) {
         debug(`Skipping template because the query has been running for ${(Date.now() - start) / 1000} seconds, and this template is projected to take ${queryTime / 1000} seconds`);
         return;
