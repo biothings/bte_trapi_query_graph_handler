@@ -161,9 +161,7 @@ export default class KnowledgeGraph {
       attributes.push({
         attribute_type_id: key,
         // technically works for numbers as well
-        value: NON_ARRAY_ATTRIBUTES.includes(key)
-          ? [...(value as Set<string>)].reduce((acc, val) => acc + val)
-          : Array.from(value as Set<string>),
+        value: formatted_value,
         //value_type_id: 'bts:' + key,
       });
     });
