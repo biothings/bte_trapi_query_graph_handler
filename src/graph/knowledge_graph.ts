@@ -17,7 +17,7 @@ import { APIDefinition } from '@biothings-explorer/types';
 
 const debug = Debug('bte:biothings-explorer-trapi:KnowledgeGraph');
 
-const NON_ARRAY_ATTRIBUTES = ['biolink:knowledge_level', 'biolink:agent_type'];
+const NON_ARRAY_ATTRIBUTES = ['biolink:knowledge_level', 'biolink:agent_type', 'biolink:evidence_count'];
 
 export default class KnowledgeGraph {
   nodes: {
