@@ -598,7 +598,7 @@ export default class TRAPIQueryHandler {
         'INFO',
         null,
         `Execution Summary: (${KGNodes}) nodes / (${kgEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${cached ? ` (${cached} cached qEdges)` : ''
-        } returned results from(${sources.length}) unique API${sources.length === 1 ? 's' : ''}`,
+        } returned results from (${sources.length}) unique API${sources.length !== 1 ? 's' : ''}`,
       ).getLog(),
       new LogEntry('INFO', null, `APIs: ${sources.join(', ')} `).getLog(),
     ];
