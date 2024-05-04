@@ -51,6 +51,7 @@ export default class InferredQueryHandler {
   path: string;
   predicatePath: string;
   includeReasoner: boolean;
+  CREATIVE_LIMIT: number;
   constructor(
     parent: TRAPIQueryHandler,
     queryGraph: TrapiQueryGraph,
@@ -67,6 +68,7 @@ export default class InferredQueryHandler {
     this.path = path;
     this.predicatePath = predicatePath;
     this.includeReasoner = includeReasoner;
+    this.CREATIVE_LIMIT = process.env.CREATIVE_LIMIT ? parseInt(process.env.CREATIVE_LIMIT) : 500;
   }
 
   get queryIsValid(): boolean {
@@ -586,7 +588,11 @@ export default class InferredQueryHandler {
         new LogEntry(
           'INFO',
           null,
-          `Final result count: ${Object.keys(combinedResponse.message.results).length}`,
+          [
+            `Final result count`,
+            Object.keys(combinedResponse.message.results).length > this.CREATIVE_LIMIT ? ' (before truncation):' : ':',
+            ` ${Object.keys(combinedResponse.message.results).length}`,
+          ].join('')
         ).getLog(),
       );
     }
@@ -595,7 +601,8 @@ export default class InferredQueryHandler {
     response.message.results = Object.values(combinedResponse.message.results).sort((a, b) => {
       return b.analyses[0].score - a.analyses[0].score ? b.analyses[0].score - a.analyses[0].score : 0;
     });
-    // prune kg
+    // trim extra results and prune kg
+    response.message.results = response.message.results.slice(0, this.CREATIVE_LIMIT);
     response.description = `Query processed successfully, retrieved ${response.message.results.length} results.`;
     this.pruneKnowledgeGraph(response);
     // get the final summary log
