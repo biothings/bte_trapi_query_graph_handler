@@ -1,4 +1,5 @@
-import TRAPIQueryHandler, { TrapiQueryGraph, TrapiResponse } from '../../src/index';
+import TRAPIQueryHandler from '../../src/index';
+import { TrapiQueryGraph, TrapiResponse } from '@biothings-explorer/types';
 import path from 'path';
 import fs from 'fs';
 import _ from 'lodash';
@@ -94,5 +95,54 @@ describe('Test Pathfinder', () => {
     const n0ToN2Aux = pfResponse.message.knowledge_graph.edges[n0ToN2].attributes?.find(s => s.attribute_type_id === 'biolink:support_graphs')?.value as string;
 
     expect(pfResponse.message.auxiliary_graphs![n0ToN2Aux].edges.sort()).toEqual([...pfResponse.message.auxiliary_graphs![n0ToUnAux].edges, ...pfResponse.message.auxiliary_graphs![unToN2Aux].edges].sort());
+
+    //
+    // check that edges / nodes / aux graphs are properly pruned
+    //
+    pfHandler._pruneKg(pfResponse);
+    const edgeBoundNodes: Set<string> = new Set();
+    const resultsBoundEdges: Set<string> = new Set();
+    const resultBoundAuxGraphs: Set<string> = new Set();
+
+    // Handle nodes and edges bound to results directly
+    pfResponse.message.results.forEach((result) => {
+      Object.entries(result.analyses[0].edge_bindings).forEach(([, bindings]) => {
+        bindings.forEach((binding) => resultsBoundEdges.add(binding.id));
+      });
+    });
+
+    // Handle edges bound via auxiliary graphs
+    // This will iterate over new edges as they're added
+    resultsBoundEdges.forEach((edgeID) => {
+      edgeBoundNodes.add(pfResponse.message.knowledge_graph.edges[edgeID].subject);
+      edgeBoundNodes.add(pfResponse.message.knowledge_graph.edges[edgeID].object);
+      pfResponse.message.knowledge_graph.edges[edgeID].attributes!.find(({ attribute_type_id, value }) => {
+        if (attribute_type_id === 'biolink:support_graphs') {
+          (value as string[]).forEach((auxGraphID) => {
+            resultBoundAuxGraphs.add(auxGraphID);
+            pfResponse.message.auxiliary_graphs![auxGraphID].edges.forEach((auxGraphEdgeID) => {
+              edgeBoundNodes.add(pfResponse.message.knowledge_graph.edges[auxGraphEdgeID].subject);
+              edgeBoundNodes.add(pfResponse.message.knowledge_graph.edges[auxGraphEdgeID].object);
+              resultsBoundEdges.add(auxGraphEdgeID);
+            });
+          });
+          return true;
+        }
+      });
+    });
+
+    const extraNodes = Object.keys(pfResponse.message.knowledge_graph.nodes).filter(nodeID => !edgeBoundNodes.has(nodeID));
+    expect(extraNodes).toEqual([]);
+    const extraEdges = Object.keys(pfResponse.message.knowledge_graph.edges).filter(edgeID => !resultsBoundEdges.has(edgeID));
+    expect(extraEdges).toEqual([]);
+    const extraAuxGraphs = Object.keys(pfResponse.message.auxiliary_graphs!).filter(auxGraphID => !resultBoundAuxGraphs.has(auxGraphID));
+    expect(extraAuxGraphs).toEqual([]);
+
+    const missingNodes = Array.from(edgeBoundNodes).filter(nodeID => !pfResponse.message.knowledge_graph.nodes[nodeID]);
+    expect(missingNodes).toEqual([]);
+    const missingEdges = Array.from(resultsBoundEdges).filter(edgeID => !pfResponse.message.knowledge_graph.edges[edgeID]);
+    expect(missingEdges).toEqual([]);
+    const missingAuxGraphs = Array.from(resultBoundAuxGraphs).filter(auxGraphID => !pfResponse.message.auxiliary_graphs![auxGraphID]);
+    expect(missingAuxGraphs).toEqual([]);
   });
 });

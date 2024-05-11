@@ -41,6 +41,7 @@ export default class PathfinderQueryHandler {
   mainEdgeId: string;
   mainEdge: TrapiQEdge;
   originalAnalyses: { [id: string]: TrapiAnalysis };
+  inferredQueryHandler: InferredQueryHandler;
 
   constructor(logs: StampedLog[], queryGraph: TrapiQueryGraph, parent: TRAPIQueryHandler) {
     this.logs = logs;
@@ -70,7 +71,7 @@ export default class PathfinderQueryHandler {
     this.intermediateEdges.forEach(([edgeId, _]) => delete this.queryGraph.edges[edgeId]);
 
     // run creative mode
-    const inferredQueryHandler = new InferredQueryHandler(
+    this.inferredQueryHandler = new InferredQueryHandler(
       this.parent,
       this.queryGraph,
       this.logs,
@@ -80,7 +81,7 @@ export default class PathfinderQueryHandler {
       this.parent.includeReasoner,
       true
     );
-    const creativeResponse = await inferredQueryHandler.query();
+    const creativeResponse = await this.inferredQueryHandler.query();
 
     // restore query graph
     this.queryGraph.nodes[this.unpinnedNodeId] = this.unpinnedNode;
@@ -88,9 +89,7 @@ export default class PathfinderQueryHandler {
     creativeResponse.message.query_graph = this.queryGraph;
 
     this.parse(creativeResponse);
-
-    // prune KG
-    inferredQueryHandler.pruneKnowledgeGraph(creativeResponse);
+    this._pruneKg(creativeResponse);
 
     // logs
     creativeResponse.logs = this.logs.map(log => log.toJSON());
@@ -118,6 +117,21 @@ export default class PathfinderQueryHandler {
     }
   }
 
+  _pruneKg(creativeResponse: TrapiResponse) {
+    if (!this.inferredQueryHandler) {
+        this.inferredQueryHandler = new InferredQueryHandler(
+            this.parent,
+            this.queryGraph,
+            this.logs,
+            this.options,
+            this.parent.path,
+            this.parent.predicatePath,
+            this.parent.includeReasoner,
+            true
+        );
+    }
+    this.inferredQueryHandler.pruneKnowledgeGraph(creativeResponse);
+  }
 
   parse(creativeResponse: TrapiResponse) {
     const span = Telemetry.startSpan({ description: 'pathfinderParse' });
