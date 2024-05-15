@@ -261,6 +261,7 @@ export default class InferredQueryHandler {
     qEdgeID: string,
     qEdge: TrapiQEdge,
     combinedResponse: CombinedResponse,
+    auxGraphSuffixes: {[inferredEdgeID: string]: number}
   ): CombinedResponseReport {
     const span = Telemetry.startSpan({ description: 'creativeCombineResponse' });
     const newResponse = handler.getResponse();
@@ -293,7 +294,6 @@ export default class InferredQueryHandler {
     // modified count used for pathfinder
     const pfIntermediateSet = new Set();
 
-    let auxGraphSuffixes: {[inferredEdgeID: string]: number} = {};
     // add results
     newResponse.message.results.forEach((result) => {
       const translatedResult: TrapiResult = {
@@ -379,7 +379,7 @@ export default class InferredQueryHandler {
         };
 
         if (this.pathfinder) {
-            combinedResponse.original_analyses[auxGraphID] = translatedResult.analyses[0];
+            combinedResponse.original_analyses[auxGraphID] = result.analyses[0];
         }
       }
 
@@ -546,6 +546,7 @@ export default class InferredQueryHandler {
     const mergedResultsCount: {
       [resultID: string]: number;
     } = {};
+    const auxGraphSuffixes: {[inferredEdgeID: string]: number} = {};
 
     await async.eachOfSeries(subQueries, async ({ template, queryGraph }, i) => {
       const span = Telemetry.startSpan({ description: 'creativeTemplate' });
@@ -570,6 +571,7 @@ export default class InferredQueryHandler {
           qEdgeID,
           qEdge,
           combinedResponse,
+          auxGraphSuffixes
         );
         // update values used in logging
         successfulQueries += querySuccess;
