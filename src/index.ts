@@ -1,4 +1,4 @@
-import MetaKG from '@biothings-explorer/smartapi-kg';
+import MetaKG, { SmartAPIQueryResult } from '@biothings-explorer/smartapi-kg';
 import path from 'path';
 import QueryGraph from './query_graph';
 import KnowledgeGraph from './graph/knowledge_graph';
@@ -73,7 +73,7 @@ export default class TRAPIQueryHandler {
   async findUnregisteredAPIs() {
     const configListAPIs = this.options.apiList['include'];
 
-    let smartapiRegistry;
+    let smartapiRegistry: SmartAPIQueryResult;
     if (this.options.smartapi) {
       smartapiRegistry = this.options.smartapi;
     } else {
