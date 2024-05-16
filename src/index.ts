@@ -28,7 +28,6 @@ import {
 import { QueryHandlerOptions } from '@biothings-explorer/types';
 import BTEGraph from './graph/graph';
 import QEdge from './query_edge';
-import { redisClient } from '@biothings-explorer/utils';
 import { Telemetry } from '@biothings-explorer/utils';
 
 // Exports for external availability
@@ -75,16 +74,11 @@ export default class TRAPIQueryHandler {
     const configListAPIs = this.options.apiList['include'];
 
     let smartapiRegistry;
-    if (redisClient.clientEnabled) {
-      const redisData = await redisClient.client.getTimeout(`bte:smartapi:specs`)
-      if (redisData) {
-        smartapiRegistry = JSON.parse(redisData);
-      }
-    }
-
-    if (!smartapiRegistry) {
-        const file = await fs.readFile(this.path, "utf-8");
-        smartapiRegistry = JSON.parse(file);
+    if (this.options.smartapi) {
+      smartapiRegistry = this.options.smartapi;
+    } else {
+      const file = await fs.readFile(this.path, "utf-8");
+      smartapiRegistry = JSON.parse(file);
     }
 
     const smartapiIds: string[] = [];
@@ -113,7 +107,8 @@ export default class TRAPIQueryHandler {
       `Query options are: ${JSON.stringify({
         ...this.options,
         schema: this.options.schema ? this.options.schema.info.version : 'not included',
-        metakg: ""
+        metakg: "",
+        smartapi: ""
       })}`,
     );
 
