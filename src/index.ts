@@ -1,4 +1,4 @@
-import MetaKG from '@biothings-explorer/smartapi-kg';
+import MetaKG, { SmartAPIQueryResult } from '@biothings-explorer/smartapi-kg';
 import path from 'path';
 import QueryGraph from './query_graph';
 import KnowledgeGraph from './graph/knowledge_graph';
@@ -72,14 +72,21 @@ export default class TRAPIQueryHandler {
 
   async findUnregisteredAPIs() {
     const configListAPIs = this.options.apiList['include'];
-    const smartapiRegistry = await fs.readFile(this.path, { encoding: 'utf8' });
+
+    let smartapiRegistry: SmartAPIQueryResult;
+    if (this.options.smartapi) {
+      smartapiRegistry = this.options.smartapi;
+    } else {
+      const file = await fs.readFile(this.path, "utf-8");
+      smartapiRegistry = JSON.parse(file);
+    }
 
     const smartapiIds: string[] = [];
     const inforesIds: string[] = [];
     const unregisteredAPIs: string[] = [];
 
     // TODO typing for smartapiRegistration
-    JSON.parse(smartapiRegistry).hits.forEach((smartapiRegistration) => {
+    smartapiRegistry.hits.forEach((smartapiRegistration) => {
       smartapiIds.push(smartapiRegistration._id);
       inforesIds.push(smartapiRegistration.info?.['x-translator']?.infores);
     });
@@ -95,14 +102,23 @@ export default class TRAPIQueryHandler {
     return unregisteredAPIs;
   }
 
-  _loadMetaKG(): MetaKG {
-    const metaKG = new MetaKG(this.path, this.predicatePath);
+  async _loadMetaKG(): Promise<MetaKG> {
     debug(
       `Query options are: ${JSON.stringify({
         ...this.options,
         schema: this.options.schema ? this.options.schema.info.version : 'not included',
+        metakg: "",
+        smartapi: ""
       })}`,
     );
+
+    if (this.options.metakg) {
+      const metaKG = new MetaKG(undefined, undefined, (this.options as any).metakg);
+      metaKG.filterKG(this.options);
+      return metaKG;
+    }
+
+    const metaKG = new MetaKG(this.path, this.predicatePath);
     debug(`SmartAPI Specs read from path: ${this.path}`);
     metaKG.constructMetaKGSync(this.includeReasoner, this.options);
     return metaKG;
@@ -611,7 +627,7 @@ export default class TRAPIQueryHandler {
     const span1 = Telemetry.startSpan({ description: 'loadMetaKG' });
 
     debug('Start to load metakg.');
-    const metaKG = this._loadMetaKG();
+    const metaKG = await this._loadMetaKG();
     if (!metaKG.ops.length) {
       let error: string;
       if (this.options.smartAPIID) {
