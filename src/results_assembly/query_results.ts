@@ -1,5 +1,5 @@
 import { LogEntry, StampedLog } from '@biothings-explorer/utils';
-import { TrapiResult } from '@biothings-explorer/types';
+import { TrapiKnowledgeGraph, TrapiResult } from '@biothings-explorer/types';
 import Debug from 'debug';
 import { zip } from 'lodash';
 const debug = Debug('bte:biothings-explorer-trapi:QueryResult');
@@ -7,6 +7,7 @@ import { getScores, calculateScore, ScoreCombos } from './score';
 import { Record } from '@biothings-explorer/api-response-transform';
 import { enrichTrapiResultsWithPfocrFigures } from './pfocr';
 import * as config from '../config';
+import QueryGraph from '../query_graph';
 
 export interface RecordsByQEdgeID {
   [qEdgeID: string]: {
@@ -150,6 +151,8 @@ export default class TrapiResultsAssembler {
   _getQueryGraphSolutions(
     recordsByQEdgeID: RecordsByQEdgeID,
     qEdgeID: string,
+    queryGraph: QueryGraph,
+    kg: TrapiKnowledgeGraph,
     edgeCount: number,
     queryGraphSolutions: QueryGraphSolutionEdge[][],
     queryGraphSolution: QueryGraphSolutionEdge[],
@@ -189,7 +192,7 @@ export default class TrapiResultsAssembler {
 
     records
       .filter((record) => {
-        return [getMatchingPrimaryCurie(record), undefined].indexOf(primaryCurieToMatch) > -1;
+        return [getMatchingPrimaryCurie(record), undefined].indexOf(primaryCurieToMatch) > -1 && queryGraph.edges[qEdgeID].meetsConstraints(kg.edges[record.recordHash], kg.nodes[kg.edges[record.recordHash].subject], kg.nodes[kg.edges[record.recordHash].object]);
       })
       .forEach((record, i) => {
         // primaryCurie example: 'NCBIGene:1234'
@@ -222,6 +225,8 @@ export default class TrapiResultsAssembler {
           this._getQueryGraphSolutions(
             recordsByQEdgeID,
             connectedQEdgeID,
+            queryGraph,
+            kg,
             edgeCount,
             queryGraphSolutions,
             queryGraphSolution,
@@ -272,7 +277,7 @@ export default class TrapiResultsAssembler {
    * can safely assume every call to update contains all the records.
    *
    */
-  async update(recordsByQEdgeID: RecordsByQEdgeID, shouldScore = true): Promise<void> {
+  async update(recordsByQEdgeID: RecordsByQEdgeID, queryGraph: QueryGraph, kg: TrapiKnowledgeGraph, shouldScore = true): Promise<void> {
     debug(`Updating query results now!`);
 
     let scoreCombos: ScoreCombos;
@@ -317,6 +322,8 @@ export default class TrapiResultsAssembler {
     this._getQueryGraphSolutions(
       recordsByQEdgeID,
       initialQEdgeID,
+      queryGraph,
+      kg,
       qEdgeCount,
       queryGraphSolutions,
       [], // first queryGraphSolution
