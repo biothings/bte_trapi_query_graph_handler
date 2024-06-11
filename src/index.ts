@@ -557,6 +557,9 @@ export default class TRAPIQueryHandler {
       this.logs.push(new LogEntry('WARNING', null, message).getLog());
       return;
     }
+    if (await this._checkContraints()) {
+      return;
+    }
     const inferredQueryHandler = new InferredQueryHandler(
       this,
       this.queryGraph,
@@ -577,7 +580,7 @@ export default class TRAPIQueryHandler {
     Object.values(this.queryGraph).forEach((item) => {
       Object.values(item).forEach((element: any) => {
         element.constraints?.forEach((constraint: { name: string }) => constraints.add(constraint.name));
-        // element.attribute_constraints?.forEach((constraint: { name: string }) => constraints.add(constraint.name));
+        element.attribute_constraints?.forEach((constraint: { name: string }) => constraints.add(constraint.name));
         // element.qualifier_constraints?.forEach((constraint) => constraints.add(constraint.name));
       });
     });
@@ -593,7 +596,7 @@ export default class TRAPIQueryHandler {
         new LogEntry(
           'ERROR',
           null,
-          `BTE does not currently support any type of constraint. Your query Terminates.`,
+          `BTE does not currently support constraints with creative mode. Your query Terminates.`,
         ).getLog(),
       );
       return true;
@@ -686,10 +689,7 @@ export default class TRAPIQueryHandler {
     }
 
     const queryEdges = await this._processQueryGraph();
-    // TODO remove this when constraints implemented
-    if (await this._checkContraints()) {
-      return;
-    }
+
     if ((this.options.smartAPIID || this.options.teamName) && Object.values(this.queryGraph.edges).length > 1) {
       const message = 'smartAPI/team-specific endpoints only support single-edge queries. Your query terminates.';
       this.logs.push(new LogEntry('WARNING', null, message).getLog());
