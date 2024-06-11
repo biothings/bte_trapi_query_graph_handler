@@ -463,6 +463,18 @@ export default class QEdge {
           return true;
         }
         return edge_attribute === constraintValue;
+      case 'matches':
+        if (typeof constraintValue === 'string') {
+          let regexStr = constraintValue;
+          // make sure regex matches the whole string
+          if (constraintValue.at(0) !== '^') regexStr = '^' + regexStr;
+          if (constraintValue.at(constraintValue.length - 1) !== '$') regexStr += '$';
+          let regex = new RegExp(regexStr);
+          for (let attr of utils.toArray(edge_attribute)) {
+            if (regex.test(attr)) return true;
+          }
+        }
+        return false;
       case '>':
         return edge_attribute > constraintValue;
       case '<':
