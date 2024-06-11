@@ -724,8 +724,6 @@ export default class TRAPIQueryHandler {
     //update query results
     await this.trapiResultsAssembler.update(
       manager.getOrganizedRecords(),
-      this.queryGraphHandler,
-      this.knowledgeGraph.kg,
       !(this.options.smartAPIID || this.options.teamName)
     );
     this.logs = [...this.logs, ...this.trapiResultsAssembler.logs];

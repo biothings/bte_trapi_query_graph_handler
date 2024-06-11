@@ -14,6 +14,8 @@ import { UnavailableAPITracker } from './types';
 import { RecordsByQEdgeID } from './results_assembly/query_results';
 import path from 'path';
 import { promises as fs } from 'fs';
+import KnowledgeGraph from './graph/knowledge_graph';
+import BTEGraph from './graph/graph';
 
 export default class QueryEdgeManager {
   private _qEdges: QEdge[];
@@ -211,7 +213,7 @@ export default class QueryEdgeManager {
         subjectIDs.some((curie) => execSubjectCuries.includes(curie)) || execSubjectCuries.length === 0;
       const objectMatch = objectIDs.some((curie) => execObjectCuries.includes(curie)) || execObjectCuries.length === 0;
 
-      //if both ends match then keep record
+      // if both ends match then keep record
 
       // Don't keep self-edges
       const selfEdge = [...subjectIDs].some((curie) => objectIDs.includes(curie));
@@ -225,6 +227,32 @@ export default class QueryEdgeManager {
         'DEBUG',
         null,
         `'${qEdge.getID()}' kept (${keep.length}) / dropped (${records.length - keep.length}) records.`,
+      ).getLog(),
+    );
+    return keep;
+  }
+
+  _constrainEdgeRecords(qEdge: QEdge, records: Record[]) {
+    const keep: Record[] = [];
+    const bte = new BTEGraph();
+    const kg = new KnowledgeGraph();
+    bte.update(records);
+    kg.update(bte);
+    records.forEach(record => {
+      const edge = kg.kg.edges[record.recordHash];
+      const sub = qEdge.reverse ? kg.kg.nodes[edge.object] : kg.kg.nodes[edge.subject];
+      const obj = qEdge.reverse ? kg.kg.nodes[edge.subject] : kg.kg.nodes[edge.object];
+      if (qEdge.meetsConstraints(edge, sub, obj)) {
+        keep.push(record);
+      }
+    });
+
+    debug(`'${qEdge.getID()}' dropped (${records.length - keep.length}) records based on edge/node constraints.`);
+    this.logs.push(
+      new LogEntry(
+        'DEBUG',
+        null,
+        `'${qEdge.getID()}' kept (${keep.length}) / dropped (${records.length - keep.length}) records (based on node/edge constraints).`,
       ).getLog(),
     );
     return keep;
@@ -296,8 +324,10 @@ export default class QueryEdgeManager {
 
   updateEdgeRecords(currentQEdge: QEdge): void {
     //1. filter edge records based on current status
-    const filteredRecords = this._filterEdgeRecords(currentQEdge);
-    //2.trigger node update / entity update based on new status
+    let filteredRecords = this._filterEdgeRecords(currentQEdge);
+    //2. make sure node/edge constraints are met
+    filteredRecords = this._constrainEdgeRecords(currentQEdge, filteredRecords); 
+    //3. trigger node update / entity update based on new status
     currentQEdge.storeRecords(filteredRecords);
   }
 

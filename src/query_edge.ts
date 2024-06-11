@@ -356,7 +356,6 @@ export default class QEdge {
 
   
   storeRecords(records: Record[]): void {
-    debug((new Error()).stack)
     debug(`(6) Storing records...`);
     // store new records in current edge
     this.records = records;
