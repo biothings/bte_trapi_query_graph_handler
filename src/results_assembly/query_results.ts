@@ -1,5 +1,5 @@
 import { LogEntry, StampedLog } from '@biothings-explorer/utils';
-import { TrapiResult } from '@biothings-explorer/types';
+import { TrapiKnowledgeGraph, TrapiResult } from '@biothings-explorer/types';
 import Debug from 'debug';
 import { zip } from 'lodash';
 const debug = Debug('bte:biothings-explorer-trapi:QueryResult');
@@ -7,6 +7,7 @@ import { getScores, calculateScore, ScoreCombos } from './score';
 import { Record } from '@biothings-explorer/api-response-transform';
 import { enrichTrapiResultsWithPfocrFigures } from './pfocr';
 import * as config from '../config';
+import QueryGraph from '../query_graph';
 
 export interface RecordsByQEdgeID {
   [qEdgeID: string]: {

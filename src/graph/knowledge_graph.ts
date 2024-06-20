@@ -9,6 +9,7 @@ import {
   TrapiKGNodes,
   TrapiQualifier,
   TrapiSource,
+  TrapiAttributeConstraint,
 } from '@biothings-explorer/types';
 import KGNode from './kg_node';
 import KGEdge from './kg_edge';
@@ -200,6 +201,8 @@ export default class KnowledgeGraph {
   }
 
   update(bteGraph: BTEGraphUpdate): void {
+    this.nodes = {};
+    this.edges = {};
     Object.keys(bteGraph.nodes).map((node) => {
       this.nodes[bteGraph.nodes[node].primaryCurie] = this._createNode(bteGraph.nodes[node]);
     });
