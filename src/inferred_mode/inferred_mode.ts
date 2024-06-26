@@ -52,6 +52,7 @@ export default class InferredQueryHandler {
   predicatePath: string;
   includeReasoner: boolean;
   CREATIVE_LIMIT: number;
+  CREATIVE_TIMEOUT: number;
   constructor(
     parent: TRAPIQueryHandler,
     queryGraph: TrapiQueryGraph,
@@ -69,6 +70,7 @@ export default class InferredQueryHandler {
     this.predicatePath = predicatePath;
     this.includeReasoner = includeReasoner;
     this.CREATIVE_LIMIT = process.env.CREATIVE_LIMIT ? parseInt(process.env.CREATIVE_LIMIT) : 500;
+    this.CREATIVE_TIMEOUT = process.env.CREATIVE_TIMEOUT_S ? parseInt(process.env.CREATIVE_TIMEOUT) * 1000 : 4.8 * 60 * 1000;
   }
 
   get queryIsValid(): boolean {
@@ -518,8 +520,6 @@ export default class InferredQueryHandler {
       [resultID: string]: number;
     } = {};
 
-    const QUERY_TIMEOUT = 4.8 * 60 * 1000; // 4.5 minutes
-
     const completedHandlers = await Promise.all(
       subQueries.map(async ({ template, queryGraph }, i) => {
         const span = Telemetry.startSpan({ description: 'creativeTemplate' });
@@ -527,7 +527,7 @@ export default class InferredQueryHandler {
         const handler = new TRAPIQueryHandler(this.options, this.path, this.predicatePath, this.includeReasoner);
         handler.setQueryGraph(queryGraph);
         try {
-          await timeoutPromise(handler.query(AbortSignal.timeout(QUERY_TIMEOUT)), QUERY_TIMEOUT);
+          await timeoutPromise(handler.query(AbortSignal.timeout(this.CREATIVE_TIMEOUT)), this.CREATIVE_TIMEOUT);
         } catch (error) {
           handler.logs.forEach((log) => {
             combinedResponse.logs.push(log);
