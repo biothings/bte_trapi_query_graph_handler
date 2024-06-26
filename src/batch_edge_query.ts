@@ -8,7 +8,7 @@ import CacheHandler from './cache_handler';
 import { threadId } from 'worker_threads';
 import MetaKG from '@biothings-explorer/smartapi-kg';
 import { StampedLog } from '@biothings-explorer/utils';
-import { QueryHandlerOptions } from '@biothings-explorer/types';
+import { QueryHandlerOptions, ThreadMessage } from '@biothings-explorer/types';
 import QEdge from './query_edge';
 import { UnavailableAPITracker } from './types';
 import { Record } from '@biothings-explorer/api-response-transform';
@@ -141,7 +141,7 @@ export default class BatchEdgeQueryHandler {
     if (nonCachedQEdges.length === 0) {
       queryRecords = [];
       if (global.parentPort) {
-        global.parentPort.postMessage({ threadId, cacheDone: true });
+        global.parentPort.postMessage({ threadId, type: 'cacheDone', value: true } satisfies ThreadMessage);
       }
     } else {
       debug('Start to convert qEdges into APIEdges....');
