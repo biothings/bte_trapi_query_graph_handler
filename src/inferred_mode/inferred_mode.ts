@@ -70,7 +70,7 @@ export default class InferredQueryHandler {
     this.predicatePath = predicatePath;
     this.includeReasoner = includeReasoner;
     this.CREATIVE_LIMIT = process.env.CREATIVE_LIMIT ? parseInt(process.env.CREATIVE_LIMIT) : 500;
-    this.CREATIVE_TIMEOUT = process.env.CREATIVE_TIMEOUT_S ? parseInt(process.env.CREATIVE_TIMEOUT) * 1000 : 4.8 * 60 * 1000;
+    this.CREATIVE_TIMEOUT = process.env.CREATIVE_TIMEOUT_S ? parseInt(process.env.CREATIVE_TIMEOUT) * 1000 : 4.75 * 60 * 1000;
   }
 
   get queryIsValid(): boolean {
@@ -520,6 +520,11 @@ export default class InferredQueryHandler {
       [resultID: string]: number;
     } = {};
 
+    // perf debugging
+    const startUsage = process.cpuUsage();
+    const startTime = new Date().getTime();
+    const ncpu = require('os').cpus().length;
+
     const completedHandlers = await Promise.all(
       subQueries.map(async ({ template, queryGraph }, i) => {
         const span = Telemetry.startSpan({ description: 'creativeTemplate' });
@@ -542,6 +547,12 @@ export default class InferredQueryHandler {
         return { i, handler };
       })
     );
+
+    // perf debugging
+    const endTime = new Date().getTime();
+    const timeDelta = (endTime - startTime) * 10 * ncpu;
+    const { user, system } = process.cpuUsage(startUsage);
+    debug(`Average CPU Usage: ${(system + user) / timeDelta}%`);
 
     for (const handlerInfo of completedHandlers) {
       if (handlerInfo === undefined) continue;
