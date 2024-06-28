@@ -113,7 +113,7 @@ export function scaled_sigmoid(input: number): number {
 }
 
 export function inverse_scaled_sigmoid(input: number): number {
-  return -tuning_param * Math.log(2 / (input + 1) - 1);
+  return tuning_param * Math.tan((2 / Math.PI) * input);
 }
 
 export function calculateScore(
