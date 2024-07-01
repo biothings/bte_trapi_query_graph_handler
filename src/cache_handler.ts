@@ -7,11 +7,10 @@ import helper from './helper';
 import lz4 from 'lz4';
 import chunker from 'stream-chunker';
 import { Readable, Transform } from 'stream';
-import { Record, RecordPackage } from '@biothings-explorer/api-response-transform';
+import { Record, RecordPackage, QEdge } from '@biothings-explorer/types';
 import { threadId } from 'worker_threads';
 import MetaKG from '@biothings-explorer/smartapi-kg';
-import QEdge from './query_edge';
-import { QueryHandlerOptions } from '@biothings-explorer/types';
+import { QueryHandlerOptions, ThreadMessage } from '@biothings-explorer/types';
 
 export interface RecordPacksByQedgeMetaKGHash {
   [QEdgeHash: string]: RecordPackage;
@@ -212,12 +211,12 @@ export default class CacheHandler {
   async cacheEdges(queryRecords: Record[]): Promise<void> {
     if (this.cacheEnabled === false || process.env.INTERNAL_DISABLE_REDIS === 'true') {
       if (global.parentPort) {
-        global.parentPort.postMessage({ threadId, cacheDone: true });
+        global.parentPort.postMessage({ threadId, type: 'cacheDone', value: true } satisfies ThreadMessage);
       }
       return;
     }
     if (global.parentPort) {
-      global.parentPort.postMessage({ threadId, cacheInProgress: 1 });
+      global.parentPort.postMessage({ threadId, type: 'cacheInProgress', value: 1 } satisfies ThreadMessage);
     }
     debug('Start to cache query records.');
     try {
@@ -229,7 +228,7 @@ export default class CacheHandler {
         // lock to prevent caching to/reading from actively caching edge
         const redisID = 'bte:edgeCache:' + hash;
         if (global.parentPort) {
-          global.parentPort.postMessage({ threadId, addCacheKey: redisID });
+          global.parentPort.postMessage({ threadId, type: 'addCacheKey', value: redisID } satisfies ThreadMessage);
         }
         await redisClient.client.usingLock([`redisLock:${redisID}`, 'redisLock:EdgeCaching'], 600000, async () => {
           try {
@@ -267,7 +266,7 @@ export default class CacheHandler {
             );
           } finally {
             if (global.parentPort) {
-              global.parentPort.postMessage({ threadId, completeCacheKey: redisID });
+              global.parentPort.postMessage({ threadId, type: 'completeCacheKey', value: redisID } satisfies ThreadMessage);
             }
           }
         });
@@ -284,7 +283,7 @@ export default class CacheHandler {
       debug(`Caching failed due to ${error}. This does not terminate the query.`);
     } finally {
       if (global.parentPort) {
-        global.parentPort.postMessage({ threadId, cacheDone: 1 });
+        global.parentPort.postMessage({ threadId, type: 'cacheDone', value: 1 } satisfies ThreadMessage);
       }
     }
   }
