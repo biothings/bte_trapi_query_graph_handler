@@ -4,8 +4,7 @@ import Debug from 'debug';
 import { LogEntry, StampedLog } from '@biothings-explorer/utils';
 import KGNode from './kg_node';
 import KGEdge from './kg_edge';
-import { Record } from '@biothings-explorer/api-response-transform';
-import { TrapiAuxiliaryGraph, TrapiResult } from '@biothings-explorer/types';
+import { TrapiAuxiliaryGraph, TrapiResult, Record } from '@biothings-explorer/types';
 import KnowledgeGraph from './knowledge_graph';
 const debug = Debug('bte:biothings-explorer-trapi:Graph');
 

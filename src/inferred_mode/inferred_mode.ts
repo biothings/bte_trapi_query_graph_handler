@@ -2,7 +2,7 @@ import Debug from 'debug';
 import { LogEntry, StampedLog, Telemetry } from '@biothings-explorer/utils';
 import * as utils from '../utils';
 import async from 'async';
-import biolink from '../biolink';
+import { biolink } from '@biothings-explorer/utils';
 import { getTemplates, MatchedTemplate, TemplateLookup } from './template_lookup';
 import { scaled_sigmoid, inverse_scaled_sigmoid } from '../results_assembly/score';
 import TRAPIQueryHandler from '../index';

@@ -1,9 +1,8 @@
 import MetaKG, { SmartAPIQueryResult } from '@biothings-explorer/smartapi-kg';
 import path from 'path';
-import QueryGraph from './query_graph';
 import KnowledgeGraph from './graph/knowledge_graph';
 import TrapiResultsAssembler from './results_assembly/query_results';
-import InvalidQueryGraphError from './exceptions/invalid_query_graph_error';
+import { QueryGraph, InvalidQueryGraphError }  from '@biothings-explorer/types';
 import Debug from 'debug';
 const debug = Debug('bte:biothings-explorer-trapi:main');
 import Graph from './graph/graph';
@@ -25,17 +24,13 @@ import {
   TrapiResponse,
   TrapiResult,
 } from '@biothings-explorer/types';
-import { QueryHandlerOptions } from '@biothings-explorer/types';
+import { QueryHandlerOptions, QEdge } from '@biothings-explorer/types';
 import BTEGraph from './graph/graph';
-import QEdge from './query_edge';
 import { Telemetry } from '@biothings-explorer/utils';
 
 // Exports for external availability
 export * from './types';
 export { getTemplates, supportedLookups } from './inferred_mode/template_lookup';
-export { default as QEdge } from './query_edge';
-export { default as QNode } from './query_node';
-export { default as InvalidQueryGraphError } from './exceptions/invalid_query_graph_error';
 export * from './qedge2apiedge';
 
 export default class TRAPIQueryHandler {
@@ -108,7 +103,8 @@ export default class TRAPIQueryHandler {
         ...this.options,
         schema: this.options.schema ? this.options.schema.info.version : 'not included',
         metakg: "",
-        smartapi: ""
+        smartapi: "",
+        apiList: "[omitted]"
       })}`,
     );
 

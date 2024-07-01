@@ -1,9 +1,6 @@
-import { resolveSRI } from 'biomedical_id_resolver';
 import Debug from 'debug';
-import { ResolverInput, SRIResolverOutput } from 'biomedical_id_resolver';
-import { Record } from '@biothings-explorer/api-response-transform';
-import QEdge from './query_edge';
-import { NodeNormalizerResultObj } from '@biothings-explorer/api-response-transform';
+import { ResolverInput, SRIResolverOutput, SRIBioEntity, resolveSRI } from 'biomedical_id_resolver';
+import { Record, QEdge } from "@biothings-explorer/types";
 const debug = Debug('bte:biothings-explorer-trapi:nodeUpdateHandler');
 
 export interface CuriesByCategory {
@@ -64,7 +61,7 @@ export default class NodesUpdateHandler {
     return;
   }
 
-  _createEquivalentIDsObject(record: Record): { [curie: string]: NodeNormalizerResultObj } {
+  _createEquivalentIDsObject(record: Record): { [curie: string]: SRIBioEntity } {
     if (record.object.normalizedInfo !== undefined) {
       return {
         [record.object.curie]: record.object.normalizedInfo,

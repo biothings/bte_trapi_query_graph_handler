@@ -7,10 +7,9 @@ import helper from './helper';
 import lz4 from 'lz4';
 import chunker from 'stream-chunker';
 import { Readable, Transform } from 'stream';
-import { Record, RecordPackage } from '@biothings-explorer/api-response-transform';
+import { Record, RecordPackage, QEdge } from '@biothings-explorer/types';
 import { threadId } from 'worker_threads';
 import MetaKG from '@biothings-explorer/smartapi-kg';
-import QEdge from './query_edge';
 import { QueryHandlerOptions, ThreadMessage } from '@biothings-explorer/types';
 
 export interface RecordPacksByQedgeMetaKGHash {
