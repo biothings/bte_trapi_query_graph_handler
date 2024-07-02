@@ -4,6 +4,8 @@ const mockedAxios = axios as jest.Mocked<AxiosStatic>;
 
 import TRAPIQueryHandler from '../../src/index';
 import path from 'path';
+import { Subquery, SubqueryRelay } from '@biothings-explorer/call-apis';
+import { MessageChannel } from 'worker_threads';
 
 describe('Testing TRAPIQueryHandler Module', () => {
   const disease_entity_node = {
@@ -25,6 +27,27 @@ describe('Testing TRAPIQueryHandler Module', () => {
       },
     },
   };
+
+  beforeAll(async () => {
+    const subqueryRelay = new SubqueryRelay();
+    const { port1: toWorker, port2: fromWorker } = new MessageChannel();
+    global.parentPort = toWorker;
+    fromWorker.on("message", async (msg: any) => {
+      const { queries, options } = msg.value
+      subqueryRelay.subscribe(
+        await Promise.all(queries.map(async query => await Subquery.unfreeze(query))),
+        options,
+        ({ hash, records, logs, apiUnavailable }) => {
+          fromWorker.postMessage({
+            threadId: 0,
+            type: "subQueryResult",
+            value: { hash, records, logs, apiUnavailable },
+          });
+        },
+      );
+    });
+  });
+
   describe('Testing query function', () => {
     test('test with one query edge', async () => {
       (mockedAxios.get as jest.Mock).mockResolvedValue({
