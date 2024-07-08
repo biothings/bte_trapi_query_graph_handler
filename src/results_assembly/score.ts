@@ -26,7 +26,7 @@ export interface ScoreCombos {
 
 // create lookup table for ngd scores in the format: {inputUMLS-outputUMLS: ngd}
 async function query(queryPairs: string[][]): Promise<ScoreCombos> {
-  const NGD_TIMEOUT = process.env.NGD_TIMEOUT_MS ? parseInt(process.env.NGD_TIMEOUT_MS) : 20 * 1000;
+  const NGD_TIMEOUT = process.env.NGD_TIMEOUT_MS ? parseInt(process.env.NGD_TIMEOUT_MS) : 10 * 1000;
 
   const url = {
     dev: 'https://biothings.ci.transltr.io/semmeddb/query/ngd',
@@ -74,20 +74,9 @@ async function query(queryPairs: string[][]): Promise<ScoreCombos> {
   }
 }
 
-// edits array in place
-function shuffle<T>(array: T[]): T[] {
-  for (let i = array.length - 1; i > 0; i--) {
-    let j = Math.floor(Math.random() * (i + 1)); // random index from 0 to i
-    let t = array[i];
-    array[i] = array[j];
-    array[j] = t;
-  }
-  return array;
-}
-
 // retrieve all ngd scores at once
 export async function getScores(recordsByQEdgeID: RecordsByQEdgeID): Promise<ScoreCombos> {
-  const pairs: { [input_umls: string]: Set<string> } = {};
+  const pairsToAdd: { [recordHash: string]: string[] } = {};
 
   let combosWithoutIDs = 0;
 
@@ -95,13 +84,14 @@ export async function getScores(recordsByQEdgeID: RecordsByQEdgeID): Promise<Sco
     records.forEach((record) => {
       const inputUMLS = record.subject.UMLS || [];
       const outputUMLS = record.object.UMLS || [];
+      const hash = record.recordHash;
 
       inputUMLS?.forEach((input_umls) => {
-        if (!(input_umls in pairs)) {
-          pairs[input_umls] = new Set();
+        if (!(hash in pairsToAdd)) {
+          pairsToAdd[hash] = [];
         }
         outputUMLS?.forEach((output_umls) => {
-          pairs[input_umls].add(output_umls);
+          pairsToAdd[hash].push(`${input_umls}\n${output_umls}`);
         });
       });
 
@@ -112,15 +102,20 @@ export async function getScores(recordsByQEdgeID: RecordsByQEdgeID): Promise<Sco
     });
   });
 
-  const queries = Object.keys(pairs)
-    .map((inputUMLS) => {
-      return [...pairs[inputUMLS]].map((outputUMLS) => [inputUMLS, outputUMLS]);
-    })
-    .flat();
+  // organize queries to be distributed among different records
+  const pairs = new Set<string>();
+  let running = true;
+  while (running) {
+    running = false;
+    for (const hash in pairsToAdd) {
+      if (pairsToAdd[hash].length > 0) {
+        pairs.add(pairsToAdd[hash].pop());
+        running = true;
+      }
+    }
+  }
 
-  // shuffle is used to ensure that queries are distributed amognst different records
-  // due to timeouts, it is more likely that earlier queries will be completed
-  const results = await query(shuffle(queries));
+  const results = await query([...pairs].map(p => p.split('\n')));
 
   debug('Combos no UMLS ID: ', combosWithoutIDs);
   return results || {}; // in case results is undefined, avoid TypeErrors
