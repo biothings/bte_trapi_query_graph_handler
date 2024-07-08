@@ -26,6 +26,8 @@ export interface ScoreCombos {
 
 // create lookup table for ngd scores in the format: {inputUMLS-outputUMLS: ngd}
 async function query(queryPairs: string[][]): Promise<ScoreCombos> {
+  const NGD_TIMEOUT = process.env.NGD_TIMEOUT_MS ? parseInt(process.env.NGD_TIMEOUT_MS) : 20 * 1000;
+
   const url = {
     dev: 'https://biothings.ci.transltr.io/semmeddb/query/ngd',
     ci: 'https://biothings.ci.transltr.io/semmeddb/query/ngd',
@@ -33,13 +35,17 @@ async function query(queryPairs: string[][]): Promise<ScoreCombos> {
     prod: 'https://biothings.ncats.io/semmeddb/query/ngd',
   }[process.env.INSTANCE_ENV ?? 'prod'];
   const batchSize = 250;
-  const concurrency_limit = os.cpus().length * 2;
+  const concurrency_limit = 100; // server handles ~100 requests per second
 
   debug('Querying', queryPairs.length, 'combos.');
 
   const chunked_input = _.chunk(queryPairs, batchSize);
+  const start = Date.now();
+
   try {
     const response = await async.mapLimit(chunked_input, concurrency_limit, async (input) => {
+      if (Date.now() - start > NGD_TIMEOUT) return;
+
       const span = Telemetry.startSpan({ description: 'NGDScoreRequest' });
       const data = {
         umls: input,
@@ -59,12 +65,24 @@ async function query(queryPairs: string[][]): Promise<ScoreCombos> {
     });
     //convert res array into single object with all curies
     const result = response
+      .filter(r => r != undefined)
       .map((r): ngdScoreCombo[] => r.data.filter((combo: ngdScoreCombo) => Number.isFinite(combo.ngd)))
       .flat(); // get numerical scores and flatten array
     return result.reduce((acc, cur) => ({ ...acc, [`${cur.umls[0]}-${cur.umls[1]}`]: cur.ngd }), {});
   } catch (err) {
     debug('Failed to query for scores: ', err);
   }
+}
+
+// edits array in place
+function shuffle<T>(array: T[]): T[] {
+  for (let i = array.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1)); // random index from 0 to i
+    let t = array[i];
+    array[i] = array[j];
+    array[j] = t;
+  }
+  return array;
 }
 
 // retrieve all ngd scores at once
@@ -100,7 +118,9 @@ export async function getScores(recordsByQEdgeID: RecordsByQEdgeID): Promise<Sco
     })
     .flat();
 
-  const results = await query(queries);
+  // shuffle is used to ensure that queries are distributed amognst different records
+  // due to timeouts, it is more likely that earlier queries will be completed
+  const results = await query(shuffle(queries));
 
   debug('Combos no UMLS ID: ', combosWithoutIDs);
   return results || {}; // in case results is undefined, avoid TypeErrors
