@@ -61,9 +61,9 @@ export default class BatchEdgeQueryHandler {
   /**
    * @private
    */
-  async _queryAPIEdges(APIEdges: APIEdge[], unavailableAPIs: UnavailableAPITracker = {}): Promise<Record[]> {
+  async _queryAPIEdges(APIEdges: APIEdge[], unavailableAPIs: UnavailableAPITracker = {}, abortSignal?: AbortSignal): Promise<Record[]> {
     const executor = new call_api(APIEdges, this.options, redisClient);
-    const records: Record[] = await executor.query(this.resolveOutputIDs, unavailableAPIs);
+    const records: Record[] = await executor.query(this.resolveOutputIDs, unavailableAPIs, abortSignal);
     this.logs = [...this.logs, ...executor.logs];
     return records;
   }
@@ -123,18 +123,20 @@ export default class BatchEdgeQueryHandler {
     });
   }
 
-  async query(qEdges: QEdge | QEdge[], unavailableAPIs: UnavailableAPITracker = {}): Promise<Record[]> {
+  async query(qEdges: QEdge | QEdge[], unavailableAPIs: UnavailableAPITracker = {}, abortSignal?: AbortSignal): Promise<Record[]> {
     debug('Node Update Start');
     // it's now a single edge but convert to arr to simplify refactoring
     qEdges = Array.isArray(qEdges) ? qEdges : [qEdges];
     const nodeUpdate = new NodesUpdateHandler(qEdges);
     // difference is there is no previous edge info anymore
-    await nodeUpdate.setEquivalentIDs(qEdges);
+    await nodeUpdate.setEquivalentIDs(qEdges, abortSignal);
     await this._rmEquivalentDuplicates(qEdges);
     debug('Node Update Success');
 
+    if (abortSignal?.aborted) return [];
+
     const cacheHandler = new CacheHandler(this.caching, this.metaKG, this.options);
-    const { cachedRecords, nonCachedQEdges } = await cacheHandler.categorizeEdges(qEdges);
+    const { cachedRecords, nonCachedQEdges } = await cacheHandler.categorizeEdges(qEdges, abortSignal);
     this.logs = [...this.logs, ...cacheHandler.logs];
     let queryRecords: Record[];
 
@@ -154,8 +156,8 @@ export default class BatchEdgeQueryHandler {
       }
       const expanded_APIEdges = this._expandAPIEdges(APIEdges);
       debug('Start to query APIEdges....');
-      queryRecords = await this._queryAPIEdges(expanded_APIEdges, unavailableAPIs);
-      if (queryRecords === undefined) return;
+      queryRecords = await this._queryAPIEdges(expanded_APIEdges, unavailableAPIs, abortSignal);
+      if (queryRecords === undefined || abortSignal?.aborted) return;
       debug('APIEdges are successfully queried....');
       queryRecords = await this._postQueryFilter(queryRecords);
       debug(`Total number of records is (${queryRecords.length})`);

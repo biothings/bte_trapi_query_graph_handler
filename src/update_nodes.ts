@@ -39,17 +39,17 @@ export default class NodesUpdateHandler {
    * Resolve input ids
    * @param {object} curies - each key represents the category, e.g. gene, value is an array of curies.
    */
-  async _getEquivalentIDs(curies: ResolverInput): Promise<SRIResolverOutput> {
+  async _getEquivalentIDs(curies: ResolverInput, abortSignal?: AbortSignal): Promise<SRIResolverOutput> {
     // const resolver = new id_resolver.Resolver('biolink');
     // const equivalentIDs = await resolver.resolve(curies);
-    return await resolveSRI(curies);
+    return await resolveSRI(curies, abortSignal);
   }
 
-  async setEquivalentIDs(qEdges: QEdge[]): Promise<void> {
+  async setEquivalentIDs(qEdges: QEdge[], abortSignal?: AbortSignal): Promise<void> {
     debug(`Getting equivalent IDs...`);
     const curies = this._getCuries(this.qEdges);
     debug(`curies: ${JSON.stringify(curies)}`);
-    const equivalentIDs = await this._getEquivalentIDs(curies);
+    const equivalentIDs = await this._getEquivalentIDs(curies, abortSignal);
     qEdges.map((qEdge) => {
       const edgeEquivalentIDs = Object.keys(equivalentIDs)
         .filter((key) => qEdge.getInputCurie().includes(key))
