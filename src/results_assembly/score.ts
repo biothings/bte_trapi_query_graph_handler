@@ -112,6 +112,9 @@ export async function getScores(recordsByQEdgeID: RecordsByQEdgeID): Promise<Sco
         pairs.add(pairsToAdd[hash].pop());
         running = true;
       }
+      if (pairsToAdd[hash].length == 0) {
+        delete pairsToAdd[hash];
+      }
     }
   }
 
