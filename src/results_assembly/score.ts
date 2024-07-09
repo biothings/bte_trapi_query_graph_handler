@@ -44,7 +44,8 @@ async function query(queryPairs: string[][]): Promise<ScoreCombos> {
 
   try {
     const response = await async.mapLimit(chunked_input, concurrency_limit, async (input) => {
-      if (Date.now() - start > NGD_TIMEOUT) return;
+      const timeRemaining = NGD_TIMEOUT - (Date.now() - start);
+      if (timeRemaining <= 0) return;
 
       const span = Telemetry.startSpan({ description: 'NGDScoreRequest' });
       const data = {
@@ -54,7 +55,7 @@ async function query(queryPairs: string[][]): Promise<ScoreCombos> {
       span.setData('requestBody', data);
       try {
         // const start = performance.now();
-        const response = await axios.post(url, data);
+        const response = await axios.post(url, data, { timeout: timeRemaining });
         // const end = performance.now();
         span.finish();
         return response;
@@ -64,11 +65,15 @@ async function query(queryPairs: string[][]): Promise<ScoreCombos> {
       }
     });
     //convert res array into single object with all curies
-    const result = response
-      .filter(r => r != undefined)
-      .map((r): ngdScoreCombo[] => r.data.filter((combo: ngdScoreCombo) => Number.isFinite(combo.ngd)))
-      .flat(); // get numerical scores and flatten array
-    return result.reduce((acc, cur) => ({ ...acc, [`${cur.umls[0]}-${cur.umls[1]}`]: cur.ngd }), {});
+    const result = {};
+    for (const res of response) {
+      if (res == undefined) continue;
+      for (const combo of res.data) {
+        if (!Number.isFinite(combo.ngd)) continue;
+        result[`${combo.umls[0]}-${combo.umls[1]}`] = combo.ngd;
+      }
+    }
+    return result;
   } catch (err) {
     debug('Failed to query for scores: ', err);
   }
@@ -76,49 +81,52 @@ async function query(queryPairs: string[][]): Promise<ScoreCombos> {
 
 // retrieve all ngd scores at once
 export async function getScores(recordsByQEdgeID: RecordsByQEdgeID): Promise<ScoreCombos> {
-  const pairsToAdd: { [recordHash: string]: string[] } = {};
+  const pairSet = new Set<string>();
+  // organize pairs in layers
+  // first from each record is first layer, second from each record is second layer, etc.
+  // this makes it so more records are covered in earlier layers
+  const organizedPairs: string[][][] = [];
+  // this stores the "layer" number for each recordHash
+  const pairCounts: { [hash: string]: number } = {};
 
   let combosWithoutIDs = 0;
 
-  Object.values(recordsByQEdgeID).forEach(({ records }) => {
-    records.forEach((record) => {
+  for (const { records } of Object.values(recordsByQEdgeID)) {
+    for (const record of records) {
       const inputUMLS = record.subject.UMLS || [];
       const outputUMLS = record.object.UMLS || [];
       const hash = record.recordHash;
 
-      inputUMLS?.forEach((input_umls) => {
-        if (!(hash in pairsToAdd)) {
-          pairsToAdd[hash] = [];
-        }
-        outputUMLS?.forEach((output_umls) => {
-          pairsToAdd[hash].push(`${input_umls}\n${output_umls}`);
-        });
-      });
-
       if (inputUMLS.length == 0 || outputUMLS.length == 0) {
         // debug("NO RESULT", record.subject.curie, record.subject.UMLS, record.object.curie, record.object.UMLS)
         combosWithoutIDs++;
+        continue;
       }
-    });
-  });
 
-  // organize queries to be distributed among different records
-  const pairs = new Set<string>();
-  let running = true;
-  while (running) {
-    running = false;
-    for (const hash in pairsToAdd) {
-      if (pairsToAdd[hash].length > 0) {
-        pairs.add(pairsToAdd[hash].pop());
-        running = true;
-      }
-      if (pairsToAdd[hash].length == 0) {
-        delete pairsToAdd[hash];
-      }
+      for (const input_umls of inputUMLS) {
+        for (const output_umls of outputUMLS) {
+          const pairStr = `${input_umls}\n${output_umls}`;
+          if (pairSet.has(pairStr)) continue;
+          pairSet.add(pairStr);
+          if (pairCounts[hash] == undefined) pairCounts[hash] = 0;
+          if (organizedPairs.length <= pairCounts[hash]) organizedPairs.push([]);
+          organizedPairs[pairCounts[hash]].push([input_umls, output_umls]);
+          pairCounts[hash]++;
+        }
+      } 
     }
   }
 
-  const results = await query([...pairs].map(p => p.split('\n')));
+  const flatPairs = Array(pairSet.size).fill([]);
+  let i = 0;
+  for (const pairGroup of organizedPairs) {
+    for (const pair of pairGroup) {
+      flatPairs[i] = pair;
+      i++;
+    }
+  }
+
+  const results = await query(flatPairs);
 
   debug('Combos no UMLS ID: ', combosWithoutIDs);
   return results || {}; // in case results is undefined, avoid TypeErrors
