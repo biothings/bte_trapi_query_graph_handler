@@ -40,11 +40,13 @@ async function query(queryPairs: string[][]): Promise<ScoreCombos> {
 
   debug('Querying', queryPairs.length, 'combos.');
 
-  let successCount = 0;
-  let errCount = 0;
-
   const chunked_input = _.chunk(queryPairs, batchSize);
   const start = Date.now();
+
+  let successCount = 0;
+  let successPairCount = 0;
+  let errCount = 0;
+  let errPairCount = 0;
 
   try {
     const response = await async.mapLimit(chunked_input, concurrency_limit, async (input) => {
@@ -63,11 +65,13 @@ async function query(queryPairs: string[][]): Promise<ScoreCombos> {
         // const end = performance.now();
         span.finish();
         successCount++;
+        successPairCount += input.length;
         return response;
       } catch (err) {
         const timeoutError = err instanceof AxiosError && err.code === AxiosError.ECONNABORTED;
         if (!timeoutError) {
           errCount++;
+          errPairCount += input.length;
           debug(`NGD score query failed: ${err}`);
         }
         span.finish();
@@ -82,7 +86,7 @@ async function query(queryPairs: string[][]): Promise<ScoreCombos> {
         result[`${combo.umls[0]}-${combo.umls[1]}`] = combo.ngd;
       }
     }
-    debug(`${successCount} successful queries, ${errCount} errored queries, ${queryPairs.length - successCount - errCount} timed out queries.`);
+    debug(`${successCount} / ${errCount} / ${chunked_input.length - successCount - errCount} queries successful / errored / timed out, representing ${successPairCount} / ${errPairCount} / ${queryPairs.length - successPairCount - errPairCount} pairs`);
     return result;
   } catch (err) {
     debug('Failed to query for scores: ', err);
