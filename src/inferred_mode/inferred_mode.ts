@@ -13,6 +13,7 @@ import {
   TrapiKnowledgeGraph,
   TrapiQEdge,
   TrapiQNode,
+  TrapiQualifier,
   TrapiQueryGraph,
   TrapiResponse,
   TrapiResult,
@@ -214,7 +215,7 @@ export default class InferredQueryHandler {
   async createQueries(qEdge: TrapiQEdge, qSubject: TrapiQNode, qObject: TrapiQNode): Promise<FilledTemplate[]> {
     const templates = await this.findTemplates(qEdge, qSubject, qObject);
     // combine creative query with templates
-    const subQueries = templates.map(({ template, queryGraph }) => {
+    const subQueries = templates.map(({ template, queryGraph, qualifiers }) => {
       queryGraph.nodes.creativeQuerySubject.categories = [
         ...new Set([...queryGraph.nodes.creativeQuerySubject.categories, ...qSubject.categories]),
       ];
@@ -244,7 +245,7 @@ export default class InferredQueryHandler {
         delete queryGraph.nodes.creativeQueryObject.ids;
       }
 
-      return { template, queryGraph };
+      return { template, queryGraph, qualifiers };
     });
 
     return subQueries;
@@ -256,6 +257,7 @@ export default class InferredQueryHandler {
     qEdgeID: string,
     qEdge: TrapiQEdge,
     combinedResponse: CombinedResponse,
+    qualifers?: CompactQualifiers
   ): CombinedResponseReport {
     const span = Telemetry.startSpan({ description: 'creativeCombineResponse' });
     const newResponse = handler.getResponse();
@@ -339,6 +341,11 @@ export default class InferredQueryHandler {
             ],
           };
         }
+        // Add qualifiers to edge
+        if (typeof qualifers == 'object' && Object.keys(qualifers).length > 0 && !combinedResponse.message.knowledge_graph.edges[inferredEdgeID].qualifiers) {
+          combinedResponse.message.knowledge_graph.edges[inferredEdgeID].qualifiers = Object.entries(qualifers).map(([qualifierType, qualifierValue]) => ({ qualifier_type_id: qualifierType, qualifier_value: qualifierValue }));
+        }
+
         let auxGraphSuffix = 0;
         while (
           Object.keys(combinedResponse.message.auxiliary_graphs).includes(`${inferredEdgeID}-support${auxGraphSuffix}`)
@@ -523,7 +530,7 @@ export default class InferredQueryHandler {
       [resultID: string]: number;
     } = {};
 
-    await async.eachOfSeries(subQueries, async ({ template, queryGraph }, i) => {
+    await async.eachOfSeries(subQueries, async ({ template, queryGraph, qualifiers }, i) => {
       const span = Telemetry.startSpan({ description: 'creativeTemplate' });
       span.setData('template', (i as number) + 1);
       i = i as number;
@@ -546,6 +553,7 @@ export default class InferredQueryHandler {
           qEdgeID,
           qEdge,
           combinedResponse,
+          qualifiers
         );
         // update values used in logging
         successfulQueries += querySuccess;
