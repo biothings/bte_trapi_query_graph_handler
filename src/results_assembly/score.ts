@@ -8,7 +8,7 @@ import _ from 'lodash';
 import { ConsolidatedSolutionRecord, RecordsByQEdgeID } from './query_results';
 import { Telemetry } from '@biothings-explorer/utils';
 
-const tuning_param = 2.0;
+const tuning_param = 1.8;
 
 const record_weight = 1.0;
 const text_mined_record_weight = 0.5;
@@ -109,12 +109,11 @@ export async function getScores(recordsByQEdgeID: RecordsByQEdgeID): Promise<Sco
 // sigmoid function scaled from 0 to 1
 export function scaled_sigmoid(input: number): number {
   const tuned_input = Math.max(input, 0) / tuning_param;
-  const sigmoid = 1 / (1 + Math.exp(-tuned_input));
-  return sigmoid * 2 - 1;
+  return (2 / Math.PI) * Math.atan(tuned_input);
 }
 
 export function inverse_scaled_sigmoid(input: number): number {
-  return -tuning_param * Math.log(2 / (input + 1) - 1);
+  return tuning_param * Math.tan((Math.PI / 2) * Math.min(input, 1));
 }
 
 export function calculateScore(
