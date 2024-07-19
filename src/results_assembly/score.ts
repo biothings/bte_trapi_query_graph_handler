@@ -7,6 +7,7 @@ import async from 'async';
 import _ from 'lodash';
 import { ConsolidatedSolutionRecord, RecordsByQEdgeID } from './query_results';
 import { Telemetry } from '@biothings-explorer/utils';
+import { AxiosError } from 'axios';
 
 const tuning_param = 1.8;
 
@@ -26,6 +27,8 @@ export interface ScoreCombos {
 
 // create lookup table for ngd scores in the format: {inputUMLS-outputUMLS: ngd}
 async function query(queryPairs: string[][]): Promise<ScoreCombos> {
+  const NGD_TIMEOUT = process.env.NGD_TIMEOUT_MS ? parseInt(process.env.NGD_TIMEOUT_MS) : 10 * 1000;
+
   const url = {
     dev: 'https://biothings.ci.transltr.io/semmeddb/query/ngd',
     ci: 'https://biothings.ci.transltr.io/semmeddb/query/ngd',
@@ -33,13 +36,23 @@ async function query(queryPairs: string[][]): Promise<ScoreCombos> {
     prod: 'https://biothings.ncats.io/semmeddb/query/ngd',
   }[process.env.INSTANCE_ENV ?? 'prod'];
   const batchSize = 250;
-  const concurrency_limit = os.cpus().length * 2;
+  const concurrency_limit = 100; // server handles ~100 requests per second
 
   debug('Querying', queryPairs.length, 'combos.');
 
   const chunked_input = _.chunk(queryPairs, batchSize);
+  const start = Date.now();
+
+  let successCount = 0;
+  let successPairCount = 0;
+  let errCount = 0;
+  let errPairCount = 0;
+
   try {
     const response = await async.mapLimit(chunked_input, concurrency_limit, async (input) => {
+      const timeRemaining = NGD_TIMEOUT - (Date.now() - start);
+      if (timeRemaining <= 0) return;
+
       const span = Telemetry.startSpan({ description: 'NGDScoreRequest' });
       const data = {
         umls: input,
@@ -48,20 +61,33 @@ async function query(queryPairs: string[][]): Promise<ScoreCombos> {
       span.setData('requestBody', data);
       try {
         // const start = performance.now();
-        const response = await axios.post(url, data);
+        const response = await axios.post(url, data, { timeout: timeRemaining });
         // const end = performance.now();
         span.finish();
+        successCount++;
+        successPairCount += input.length;
         return response;
       } catch (err) {
-        debug(`NGD score query failed: ${err}`);
+        const timeoutError = err instanceof AxiosError && err.code === AxiosError.ECONNABORTED;
+        if (!timeoutError) {
+          errCount++;
+          errPairCount += input.length;
+          debug(`NGD score query failed: ${err}`);
+        }
         span.finish();
       }
     });
     //convert res array into single object with all curies
-    const result = response
-      .map((r): ngdScoreCombo[] => r.data.filter((combo: ngdScoreCombo) => Number.isFinite(combo.ngd)))
-      .flat(); // get numerical scores and flatten array
-    return result.reduce((acc, cur) => ({ ...acc, [`${cur.umls[0]}-${cur.umls[1]}`]: cur.ngd }), {});
+    const result = {};
+    for (const res of response) {
+      if (res == undefined) continue;
+      for (const combo of res.data) {
+        if (!Number.isFinite(combo.ngd)) continue;
+        result[`${combo.umls[0]}-${combo.umls[1]}`] = combo.ngd;
+      }
+    }
+    debug(`${successCount} / ${errCount} / ${chunked_input.length - successCount - errCount} queries successful / errored / timed out, representing ${successPairCount} / ${errPairCount} / ${queryPairs.length - successPairCount - errPairCount} pairs`);
+    return result;
   } catch (err) {
     debug('Failed to query for scores: ', err);
   }
@@ -69,38 +95,52 @@ async function query(queryPairs: string[][]): Promise<ScoreCombos> {
 
 // retrieve all ngd scores at once
 export async function getScores(recordsByQEdgeID: RecordsByQEdgeID): Promise<ScoreCombos> {
-  const pairs: { [input_umls: string]: Set<string> } = {};
+  const pairSet = new Set<string>();
+  // organize pairs in layers
+  // first from each record is first layer, second from each record is second layer, etc.
+  // this makes it so more records are covered in earlier layers
+  const organizedPairs: string[][][] = [];
+  // this stores the "layer" number for each recordHash
+  const pairCounts: { [hash: string]: number } = {};
 
   let combosWithoutIDs = 0;
 
-  Object.values(recordsByQEdgeID).forEach(({ records }) => {
-    records.forEach((record) => {
+  for (const { records } of Object.values(recordsByQEdgeID)) {
+    for (const record of records) {
       const inputUMLS = record.subject.UMLS || [];
       const outputUMLS = record.object.UMLS || [];
-
-      inputUMLS?.forEach((input_umls) => {
-        if (!(input_umls in pairs)) {
-          pairs[input_umls] = new Set();
-        }
-        outputUMLS?.forEach((output_umls) => {
-          pairs[input_umls].add(output_umls);
-        });
-      });
+      const hash = record.recordHash;
 
       if (inputUMLS.length == 0 || outputUMLS.length == 0) {
         // debug("NO RESULT", record.subject.curie, record.subject.UMLS, record.object.curie, record.object.UMLS)
         combosWithoutIDs++;
+        continue;
       }
-    });
-  });
 
-  const queries = Object.keys(pairs)
-    .map((inputUMLS) => {
-      return [...pairs[inputUMLS]].map((outputUMLS) => [inputUMLS, outputUMLS]);
-    })
-    .flat();
+      for (const input_umls of inputUMLS) {
+        for (const output_umls of outputUMLS) {
+          const pairStr = `${input_umls}\n${output_umls}`;
+          if (pairSet.has(pairStr)) continue;
+          pairSet.add(pairStr);
+          if (pairCounts[hash] == undefined) pairCounts[hash] = 0;
+          if (organizedPairs.length <= pairCounts[hash]) organizedPairs.push([]);
+          organizedPairs[pairCounts[hash]].push([input_umls, output_umls]);
+          pairCounts[hash]++;
+        }
+      } 
+    }
+  }
 
-  const results = await query(queries);
+  const flatPairs = Array(pairSet.size).fill([]);
+  let i = 0;
+  for (const pairGroup of organizedPairs) {
+    for (const pair of pairGroup) {
+      flatPairs[i] = pair;
+      i++;
+    }
+  }
+
+  const results = await query(flatPairs);
 
   debug('Combos no UMLS ID: ', combosWithoutIDs);
   return results || {}; // in case results is undefined, avoid TypeErrors
