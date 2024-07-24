@@ -44,7 +44,7 @@ async function loadTables() {
   tablesLoaded = true;
 }
 
-export default async function generateTemplates(sub: TrapiQNode, un: TrapiQNode, obj: TrapiQNode) {
+export default async function generateTemplates(sub: TrapiQNode, un: TrapiQNode, obj: TrapiQNode): Promise<TrapiQueryGraph[]> {
   // load tables
   if (!tablesLoaded) {
     if (!loadTablesPromise) {
@@ -53,94 +53,124 @@ export default async function generateTemplates(sub: TrapiQNode, un: TrapiQNode,
     await loadTablesPromise;
   }
 
-  const templateA: TrapiQueryGraph[] = [];
-  const templateB: TrapiQueryGraph[] = [];
-  const templateC: TrapiQueryGraph[] = [];
+  const templateA = {
+    nodes: {
+      creativeQuerySubject: sub,
+      creativeQueryObject: obj,
+      un: {...un, categories: new Set<string>() }
+    },
+    edges: {
+      sub_un: {
+        subject: 'creativeQuerySubject',
+        object: 'un',
+        predicates: new Set<string>(), 
+      },
+      un_obj: {
+        subject: 'un',
+        object: 'creativeQueryObject',
+        predicates: new Set<string>(),
+      }
+    }
+  };
+  const templateB = {
+    nodes: {
+      creativeQuerySubject: sub,
+      creativeQueryObject: obj,
+      un: {...un, categories: new Set<string>() },
+      nb: { categories: new Set<string>() }
+    },
+    edges: {
+      sub_un: {
+        subject: 'creativeQuerySubject',
+        object: 'un',
+        predicates: new Set<string>()
+      },
+      un_b: {
+        subject: 'un',
+        object: 'nb',
+        predicates: new Set<string>()
+      },
+      b_obj: {
+        subject: 'nb',
+        object: 'creativeQueryObject',
+        predicates: new Set<string>()
+      }
+    }
+  };
+  const templateC = {
+    nodes: {
+      creativeQuerySubject: sub,
+      creativeQueryObject: obj,
+      un: {...un, categories: new Set<string>()},
+      nc: { categories: new Set<string>() }
+    },
+    edges: {
+      sub_c: {
+        subject: 'creativeQuerySubject',
+        object: 'nc',
+        predicates: new Set<string>()
+      },
+      c_un: {
+        subject: 'nc',
+        object: 'un',
+        predicates: new Set<string>()
+      },
+      un_obj: {
+        subject: 'un',
+        object: 'creativeQueryObject',
+        predicates: new Set<string>()
+      }
+    }
+  };
   for (const subCat of sub.categories) {
     for (const objCat of obj.categories) {
-      const unCats = un.categories ? un.categories : (categoryTable[subCat]?.[objCat]?.map(x => 'biolink:'+x) ?? []);
+      const unCats = (un.categories && !un.categories.includes("biolink:NamedThing")) ? un.categories : (categoryTable[subCat]?.[objCat]?.map(x => 'biolink:'+x) ?? []);
       for (const unCat of unCats) {
         // template A
-        templateA.push({
-          nodes: {
-            creativeQuerySubject: {...sub, categories: [subCat]},
-            creativeQueryObject: {...obj, categories: [objCat]},
-            un: {...un, categories: [unCat]}
-          },
-          edges: {
-            sub_un: {
-              subject: 'creativeQuerySubject',
-              object: 'un',
-              predicates: predicateTable[subCat]?.[unCat]?.map(x => 'biolink:'+x.predicate) ?? []
-            },
-            un_obj: {
-              subject: 'un',
-              object: 'creativeQueryObject',
-              predicates: predicateTable[unCat]?.[objCat]?.map(x => 'biolink:'+x.predicate) ?? []
-            }
-          }
-        });
+        templateA.nodes.un.categories.add(unCat);
+        predicateTable[subCat]?.[unCat]?.forEach(x => templateA.edges.sub_un.predicates.add('biolink:'+x.predicate));
+        predicateTable[unCat]?.[objCat]?.forEach(x => templateA.edges.un_obj.predicates.add('biolink:'+x.predicate));
 
         // template B
-        for (const bCat of categoryTable[unCat]?.[objCat] ?? []) {
-          templateB.push({
-            nodes: {
-              creativeQuerySubject: {...sub, categories: [subCat]},
-              creativeQueryObject: {...obj, categories: [objCat]},
-              un: {...un, categories: [unCat]},
-              nb: { categories: [bCat] }
-            },
-            edges: {
-              sub_un: {
-                subject: 'creativeQuerySubject',
-                object: 'un',
-                predicates: predicateTable[subCat]?.[unCat]?.map(x => 'biolink:'+x.predicate) ?? []
-              },
-              un_b: {
-                subject: 'un',
-                object: 'nb',
-                predicates: predicateTable[unCat]?.[bCat]?.map(x => 'biolink:'+x.predicate) ?? []
-              },
-              b_obj: {
-                subject: 'nb',
-                object: 'creativeQueryObject',
-                predicates: predicateTable[bCat]?.[objCat]?.map(x => 'biolink:'+x.predicate) ?? []
-              }
-            }
-          });
+        templateB.nodes.un.categories.add(unCat);
+        for (let bCat of categoryTable[unCat]?.[objCat] ?? []) {
+          bCat = 'biolink:'+bCat;
+          templateB.nodes.nb.categories.add(bCat);
+          predicateTable[subCat]?.[unCat]?.forEach(x => templateB.edges.sub_un.predicates.add('biolink:'+x.predicate));
+          predicateTable[unCat]?.[bCat]?.forEach(x => templateB.edges.un_b.predicates.add('biolink:'+x.predicate));
+          predicateTable[bCat]?.[objCat]?.forEach(x => templateB.edges.b_obj.predicates.add('biolink:'+x.predicate));
         }
 
         // template C
-        for (const cCat of categoryTable[unCat]?.[objCat] ?? []) {
-          templateC.push({
-            nodes: {
-              creativeQuerySubject: {...sub, categories: [subCat]},
-              creativeQueryObject: {...obj, categories: [objCat]},
-              un: {...un, categories: [unCat]},
-              nc: { categories: [cCat] }
-            },
-            edges: {
-              sub_c: {
-                subject: 'creativeQuerySubject',
-                object: 'nc',
-                predicates: predicateTable[subCat]?.[cCat]?.map(x => 'biolink:'+x.predicate) ?? []
-              },
-              c_un: {
-                subject: 'nc',
-                object: 'un',
-                predicates: predicateTable[cCat]?.[unCat]?.map(x => 'biolink:'+x.predicate) ?? []
-              },
-              un_obj: {
-                subject: 'un',
-                object: 'creativeQueryObject',
-                predicates: predicateTable[unCat]?.[objCat]?.map(x => 'biolink:'+x.predicate) ?? []
-              }
-            }
-          });
+        templateC.nodes.un.categories.add(unCat);
+        for (let cCat of categoryTable[subCat]?.[unCat] ?? []) {
+          cCat = 'biolink:'+cCat;
+          templateC.nodes.nc.categories.add(cCat);
+          predicateTable[subCat]?.[cCat]?.forEach(x => templateC.edges.sub_c.predicates.add('biolink:'+x.predicate));
+          predicateTable[cCat]?.[unCat]?.forEach(x => templateC.edges.c_un.predicates.add('biolink:'+x.predicate));
+          predicateTable[unCat]?.[objCat]?.forEach(x => templateC.edges.un_obj.predicates.add('biolink:'+x.predicate));
         }
       }
     }
   }
 
-  return [...templateA, ...templateB, ...templateC];
+  const queryGraphs: TrapiQueryGraph[] = [];
+  for (const template of [templateA, templateB, templateC]) {
+    const queryGraph: TrapiQueryGraph = { nodes: {}, edges: {} };
+    for (const node in template.nodes) {
+      queryGraph.nodes[node] = {
+        ...template.nodes[node],
+        ...(template.nodes[node].categories && { categories: Array.from(template.nodes[node].categories) })
+      }
+    }
+    for (const edge in template.edges) {
+      queryGraph.edges[edge] = {
+        ...template.edges[edge],
+        ...(template.edges[edge].predicates && { predicates: Array.from(template.edges[edge].predicates) })
+      }
+    }
+    queryGraphs.push(queryGraph);
+  }
+  console.log(JSON.stringify(queryGraphs, undefined, 2))
+  return queryGraphs;
 }
