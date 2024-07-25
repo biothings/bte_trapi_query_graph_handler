@@ -168,9 +168,11 @@ export default async function generateTemplates(sub: TrapiQNode, un: TrapiQNode,
         ...template.edges[edge],
         ...(template.edges[edge].predicates && { predicates: Array.from(template.edges[edge].predicates) })
       }
+      if (!template.edges[edge].predicates) {
+        template.edges[edge].predicates = ['biolink:related_to'];
+      }
     }
     queryGraphs.push(queryGraph);
   }
-  console.log(JSON.stringify(queryGraphs, undefined, 2))
   return queryGraphs;
 }
