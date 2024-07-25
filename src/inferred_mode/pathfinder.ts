@@ -4,6 +4,7 @@ import InferredQueryHandler from './inferred_mode';
 import { scaled_sigmoid, inverse_scaled_sigmoid } from '../results_assembly/score';
 import { LogEntry, StampedLog, Telemetry } from '@biothings-explorer/utils';
 import Debug from 'debug';
+import generateTemplates from './pf_template_generator';
 const debug = Debug('bte:biothings-explorer-trapi:pathfinder');
 
 interface ResultAuxObject {
@@ -59,10 +60,18 @@ export default class PathfinderQueryHandler {
     const err = this.extractData();
 
     if (typeof err === 'string') {
-        debug(err);
-        this.logs.push(new LogEntry('WARNING', null, err).getLog());
-        return;
+      debug(err);
+      this.logs.push(new LogEntry('WARNING', null, err).getLog());
+      return;
     }
+
+    const templates = await generateTemplates(this.queryGraph.nodes[this.mainEdge.subject], this.unpinnedNode, this.queryGraph.nodes[this.mainEdge.object]);
+    console.log('templates')
+    console.log(JSON.stringify(templates, undefined, 2))
+
+    const logMessage = `Got ${templates.length} pathfinder query templates.`;
+    debug(logMessage);
+    this.logs.push(new LogEntry('INFO', null, logMessage).getLog());
 
     // remove unpinned node & all edges involving unpinned node for now
     delete this.queryGraph.nodes[this.unpinnedNodeId];
@@ -81,7 +90,7 @@ export default class PathfinderQueryHandler {
       this.parent.includeReasoner,
       true
     );
-    const creativeResponse = await this.inferredQueryHandler.query();
+    const creativeResponse = await this.inferredQueryHandler.query(templates.map((queryGraph, i) => ({ template: `Template ${i + 1}`, queryGraph })));
 
     // restore query graph
     this.queryGraph.nodes[this.unpinnedNodeId] = this.unpinnedNode;
@@ -119,16 +128,16 @@ export default class PathfinderQueryHandler {
 
   _pruneKg(creativeResponse: TrapiResponse) {
     if (!this.inferredQueryHandler) {
-        this.inferredQueryHandler = new InferredQueryHandler(
-            this.parent,
-            this.queryGraph,
-            this.logs,
-            this.options,
-            this.parent.path,
-            this.parent.predicatePath,
-            this.parent.includeReasoner,
-            true
-        );
+      this.inferredQueryHandler = new InferredQueryHandler(
+        this.parent,
+        this.queryGraph,
+        this.logs,
+        this.options,
+        this.parent.path,
+        this.parent.predicatePath,
+        this.parent.includeReasoner,
+        true
+      );
     }
     this.inferredQueryHandler.pruneKnowledgeGraph(creativeResponse);
   }

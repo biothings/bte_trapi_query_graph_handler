@@ -508,7 +508,7 @@ export default class InferredQueryHandler {
     );
   }
 
-  async query(): Promise<TrapiResponse> {
+  async query(subQueries?: FilledTemplate[]): Promise<TrapiResponse> {
     // TODO (eventually) check for flipped predicate cases
     // e.g. Drug -treats-> Disease OR Disease -treated_by-> Drug
     const logMessage = 'Query proceeding in Inferred Mode.';
@@ -520,7 +520,9 @@ export default class InferredQueryHandler {
     }
 
     const { qEdgeID, qEdge, qSubject, qObject } = this.getQueryParts();
-    const subQueries = await this.createQueries(qEdge, qSubject, qObject);
+    if (!subQueries) {
+      subQueries = await this.createQueries(qEdge, qSubject, qObject);
+    }
     const combinedResponse = {
       status: 'Success',
       description: '',
