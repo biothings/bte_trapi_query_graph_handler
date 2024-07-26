@@ -5,6 +5,8 @@ import { scaled_sigmoid, inverse_scaled_sigmoid } from '../results_assembly/scor
 import { LogEntry, StampedLog, Telemetry } from '@biothings-explorer/utils';
 import Debug from 'debug';
 import generateTemplates from './pf_template_generator';
+import biolink from '../biolink';
+import { removeBioLinkPrefix } from '../utils';
 const debug = Debug('bte:biothings-explorer-trapi:pathfinder');
 
 interface ResultAuxObject {
@@ -183,7 +185,18 @@ export default class PathfinderQueryHandler {
     debug(message1);
     this.logs.push(new LogEntry('INFO', null, message1).getLog());
 
-    const { results: newResultObject, graphs: newAuxGraphs } = this._searchForIntermediates(creativeResponse, supportGraphsPerNode, kgSrc, kgDst);
+    // check acceptable types
+    let acceptableTypes: Set<string> = undefined;
+    if (this.unpinnedNode.categories && !this.unpinnedNode.categories.includes('biolink:NamedThing')) {
+      acceptableTypes = new Set<string>();
+      for (const category of this.unpinnedNode.categories) {
+        for (const desc of biolink.getDescendantClasses(removeBioLinkPrefix(category))) {
+          acceptableTypes.add('biolink:'+desc);
+        }
+      }
+    }
+
+    const { results: newResultObject, graphs: newAuxGraphs } = this._searchForIntermediates(creativeResponse, supportGraphsPerNode, kgSrc, kgDst, acceptableTypes);
 
     creativeResponse.message.results = Object.values(newResultObject).sort((a, b) => (b.analyses[0].score ?? 0) - (a.analyses[0].score ?? 0)).slice(0, this.CREATIVE_LIMIT);
     creativeResponse.description = `Query processed successfully, retrieved ${creativeResponse.message.results.length} results.`
@@ -213,7 +226,7 @@ export default class PathfinderQueryHandler {
     return creativeResponse;
   }
 
-  _searchForIntermediates(creativeResponse: TrapiResponse, supportGraphsPerNode: { [node: string]: Set<string> }, kgSrc: string, kgDst: string): ResultAuxObject {
+  _searchForIntermediates(creativeResponse: TrapiResponse, supportGraphsPerNode: { [node: string]: Set<string> }, kgSrc: string, kgDst: string, acceptableTypes: Set<string> = undefined): ResultAuxObject {
     const span = Telemetry.startSpan({ description: 'pathfinderIntermediateSearch' });
 
     const newResultObject: ResultObject = {};
@@ -254,6 +267,13 @@ export default class PathfinderQueryHandler {
         // loop through all intermediate nodes in path to dest
         for (let i = 1; i < path.length - 1; i++) {
           const intermediateNode = path[i];
+
+          // check if the intermediate is of an appropriate type
+          if (acceptableTypes) {
+            if (!creativeResponse.message.knowledge_graph.nodes[intermediateNode].categories.find(x => acceptableTypes.has(x))) {
+              continue;
+            }
+          }
 
           if (!(`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}` in newResultObject)) {
             newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}-support`] = { edges: new Set() };
