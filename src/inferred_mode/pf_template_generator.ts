@@ -128,17 +128,17 @@ export default async function generateTemplates(sub: TrapiQNode, un: TrapiQNode,
       for (const unCat of unCats) {
         // template A
         templateA.nodes.un.categories.add(unCat);
-        predicateTable[subCat]?.[unCat]?.forEach(x => templateA.edges.sub_un.predicates.add('biolink:'+x.predicate));
-        predicateTable[unCat]?.[objCat]?.forEach(x => templateA.edges.un_obj.predicates.add('biolink:'+x.predicate));
+        predicateTable[subCat]?.[unCat]?.forEach(x => templateA.edges.sub_un.predicates.add('biolink:'+x));
+        predicateTable[unCat]?.[objCat]?.forEach(x => templateA.edges.un_obj.predicates.add('biolink:'+x));
 
         // template B
         templateB.nodes.un.categories.add(unCat);
         for (let bCat of categoryTable[unCat]?.[objCat] ?? []) {
           bCat = 'biolink:'+bCat;
           templateB.nodes.nb.categories.add(bCat);
-          predicateTable[subCat]?.[unCat]?.forEach(x => templateB.edges.sub_un.predicates.add('biolink:'+x.predicate));
-          predicateTable[unCat]?.[bCat]?.forEach(x => templateB.edges.un_b.predicates.add('biolink:'+x.predicate));
-          predicateTable[bCat]?.[objCat]?.forEach(x => templateB.edges.b_obj.predicates.add('biolink:'+x.predicate));
+          predicateTable[subCat]?.[unCat]?.forEach(x => templateB.edges.sub_un.predicates.add('biolink:'+x));
+          predicateTable[unCat]?.[bCat]?.forEach(x => templateB.edges.un_b.predicates.add('biolink:'+x));
+          predicateTable[bCat]?.[objCat]?.forEach(x => templateB.edges.b_obj.predicates.add('biolink:'+x));
         }
 
         // template C
@@ -146,9 +146,9 @@ export default async function generateTemplates(sub: TrapiQNode, un: TrapiQNode,
         for (let cCat of categoryTable[subCat]?.[unCat] ?? []) {
           cCat = 'biolink:'+cCat;
           templateC.nodes.nc.categories.add(cCat);
-          predicateTable[subCat]?.[cCat]?.forEach(x => templateC.edges.sub_c.predicates.add('biolink:'+x.predicate));
-          predicateTable[cCat]?.[unCat]?.forEach(x => templateC.edges.c_un.predicates.add('biolink:'+x.predicate));
-          predicateTable[unCat]?.[objCat]?.forEach(x => templateC.edges.un_obj.predicates.add('biolink:'+x.predicate));
+          predicateTable[subCat]?.[cCat]?.forEach(x => templateC.edges.sub_c.predicates.add('biolink:'+x));
+          predicateTable[cCat]?.[unCat]?.forEach(x => templateC.edges.c_un.predicates.add('biolink:'+x));
+          predicateTable[unCat]?.[objCat]?.forEach(x => templateC.edges.un_obj.predicates.add('biolink:'+x));
         }
       }
     }
