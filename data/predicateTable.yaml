@@ -1,47 +1,47 @@
 ChemicalEntity:
   Gene:
-    - predicate: regulates
-    - predicate: regulated_by
-    - predicate: affects
-    - predicate: affected_by
-    - predicate: interacts_with
-    - predicate: associated_with
+    - regulates
+    - regulated_by
+    - affects
+    - affected_by
+    - interacts_with
+    - associated_with
 Gene:
   DiseaseOrPhenotypicFeature:
-    - predicate: gene_associated_with_condition
-    - predicate: biomarker_for
-    - predicate: affects
-    - predicate: contributes_to
+    - gene_associated_with_condition
+    - biomarker_for
+    - affects
+    - contributes_to
   AnatomicalEntity:
-    - predicate: related_to_at_instance_level
+    - related_to_at_instance_level
   BiologicalProcessOrActivity:
-    - predicate: affects
-    - predicate: contributes_to
-    - predicate: participates_in
+    - affects
+    - contributes_to
+    - participates_in
   Gene:
-    - predicate: regulates
-    - predicate: regulated_by
-    - predicate: affects
-    - predicate: affected_by
-    - predicate: interacts_with
+    - regulates
+    - regulated_by
+    - affects
+    - affected_by
+    - interacts_with
   ChemicalEntity:
-    - predicate: regulates
-    - predicate: regulated_by
-    - predicate: affects
-    - predicate: affected_by
-    - predicate: interacts_with
-    - predicate: correlated_with
+    - regulates
+    - regulated_by
+    - affects
+    - affected_by
+    - interacts_with
+    - correlated_with
 AnatomicalEntity:
   DiseaseOrPhenotypicFeature:
-    - predicate: related_to_at_instance_level
+    - related_to_at_instance_level
 BiologicalProcessOrActivity:
   DiseaseOrPhenotypicFeature:
-    - predicate: affects
-    - predicate: affected_by
-    - predicate: occurs_in
+    - affects
+    - affected_by
+    - occurs_in
 DiseaseOrPhenotypicFeature:
   Gene:
-    - predicate: condition_associated_with_gene
-    - predicate: has_biomarker
-    - predicate: affected_by
-    - predicate: contribution_from
+    - condition_associated_with_gene
+    - has_biomarker
+    - affected_by
+    - contribution_from
