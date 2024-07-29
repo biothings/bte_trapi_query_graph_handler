@@ -102,17 +102,18 @@ export default class BatchEdgeQueryHandler {
         if (finishedCount >= queries.length) {
           debug(`Total number of records returned for qEdge ${qEdge.id} is ${completedRecords.length}`);
           resolve(completedRecords);
-          global.parentPort.off('message', listener); // Clean up
+          global.workerSide.off('message', listener); // Clean up
         }
       }
-      global.parentPort.on('message', listener);
-      global.parentPort.postMessage({
+      global.workerSide.on('message', listener);
+      global.workerSide.postMessage({
+        threadId,
         type: 'subqueryRequest',
         value: {
           queries: queries.map((query) => query.freeze()),
           options: this.options,
         },
-      });
+      } satisfies ThreadMessage);
     });
   }
 

@@ -21,15 +21,15 @@ describe('test TRAPIQueryHandler methods', () => {
 
   beforeAll(async () => {
     const subqueryRelay = new SubqueryRelay();
-    const { port1: toWorker, port2: fromWorker } = new MessageChannel();
-    global.parentPort = toWorker;
-    fromWorker.on("message", async (msg: any) => {
+    const { port1: workerSide, port2: parentSide } = new MessageChannel();
+    global.workerSide = workerSide;
+    parentSide.on("message", async (msg: any) => {
       const { queries, options } = msg.value
       subqueryRelay.subscribe(
         await Promise.all(queries.map(async query => await Subquery.unfreeze(query))),
         options,
         ({ hash, records, logs, apiUnavailable }) => {
-          fromWorker.postMessage({
+          parentSide.postMessage({
             threadId: 0,
             type: "subQueryResult",
             value: { hash, records, logs, apiUnavailable },
