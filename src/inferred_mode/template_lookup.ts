@@ -60,8 +60,9 @@ export async function getTemplates(lookups: TemplateLookup[]): Promise<MatchedTe
     await fs.readFile(path.resolve(__dirname, '../../data/templateGroups.json'), { encoding: 'utf8' }),
   );
   const matchingTemplatePaths: PathMatch[] = templateGroups.reduce((matches: PathMatch[], group: TemplateGroup) => {
+    let matchingQualifers: CompactQualifiers;
     const lookupMatch = lookups.some((lookup) => {
-      return (
+      const match = (
         group.subject.includes(lookup.subject) &&
         group.object.includes(lookup.object) &&
         group.predicate.includes(lookup.predicate) &&
@@ -69,12 +70,14 @@ export async function getTemplates(lookups: TemplateLookup[]): Promise<MatchedTe
           return (group.qualifiers || {})[qualifierType] && group.qualifiers[qualifierType] === qualifierValue;
         })
       );
+      if (match) matchingQualifers = lookup.qualifiers;
+      return match;
     });
 
     if (lookupMatch) {
       group.templates.forEach((template) => {
         if (!matches.find(t => t.path === templatePaths[template])) {
-          matches.push({ path: templatePaths[template], qualifiers: group.qualifiers });
+          matches.push({ path: templatePaths[template], qualifiers: matchingQualifers });
         }
       });
     }
