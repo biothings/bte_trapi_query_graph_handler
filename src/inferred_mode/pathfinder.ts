@@ -68,8 +68,6 @@ export default class PathfinderQueryHandler {
     }
 
     const templates = await generateTemplates(this.queryGraph.nodes[this.mainEdge.subject], this.unpinnedNode, this.queryGraph.nodes[this.mainEdge.object]);
-    console.log('templates')
-    console.log(JSON.stringify(templates, undefined, 2))
 
     const logMessage = `Got ${templates.length} pathfinder query templates.`;
     debug(logMessage);
