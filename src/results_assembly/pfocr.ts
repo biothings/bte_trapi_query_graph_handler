@@ -4,12 +4,16 @@ const debug = Debug('bte:biothings-explorer-trapi:pfocr');
 import { intersection } from '../utils';
 import _ from 'lodash';
 import { LogEntry, StampedLog } from '@biothings-explorer/utils';
-import { TrapiResult } from '@biothings-explorer/types';
+import { TrapiResult, TrapiKGNode, TrapiResponse, TrapiKGEdge } from '@biothings-explorer/types';
+import Graph from '../graph/graph';
 
 // the minimum acceptable intersection size between the CURIEs
 // in a TRAPI result and in a PFOCR figure.
 const MATCH_COUNT_MIN = 2;
 const FIGURE_COUNT_MAX = 20;
+const SUPPORTED_PREFIXES = {
+  NCBIGene: 'associatedWith.mentions.genes.ncbigene',
+};
 
 interface pfocrQueryBody {
   q: string[];
@@ -124,31 +128,32 @@ async function getPfocrFigures(qTerms: Set<string>): Promise<DeDupedFigureResult
   return Object.values(mergedFigureResults);
 }
 
-function getMatchableQNodeIDs(allTrapiResults: TrapiResult[]): Set<string> {
-  const matchableQNodeIDs: Set<string> = new Set();
+function traverseResultForNodes(result: TrapiResult, response: TrapiResponse): Set<TrapiKGNode> {
+  const kg = response.message.knowledge_graph;
+  const nodes: Set<TrapiKGNode> = new Set();
+  const edgeStack: TrapiKGEdge[] = [];
+  // TODO: get all nodes from a result, whether it be recursive or iterative.
+  // First get all bound nodes and edges
+  Object.values(result.node_bindings).forEach((bindings) =>
+    bindings.forEach((binding) => nodes.add(kg.nodes[binding.id])),
+  );
+  Object.values(result.analyses[0].edge_bindings).forEach((bindings) =>
+    bindings.forEach((binding) => edgeStack.push(kg.edges[binding.id])),
+  );
 
-  if (allTrapiResults.length === 0) {
-    return matchableQNodeIDs;
-  }
-
-  // TODO: this will need to be updated to handle non-NCBIGene CURIEs as well
-  // as non-gene CURIEs once we support querying for chemicals and diseases.
-
-  const supportedPrefixes = new Set(['NCBIGene']);
-  for (const trapiResult of allTrapiResults) {
-    for (const [qNodeID, nodeBindingValues] of Object.entries(trapiResult.node_bindings)) {
-      for (const nodeBindingValue of nodeBindingValues) {
-        const prefix = nodeBindingValue.id.split(':')[0];
-        if (supportedPrefixes.has(prefix)) {
-          matchableQNodeIDs.add(qNodeID);
-          break;
-        }
-      }
+  while (edgeStack.length > 0) {
+    const edge = edgeStack.pop();
+    nodes.add(kg.nodes[edge.object]);
+    nodes.add(kg.nodes[edge.subject]);
+    const supportGraphs = edge.attributes.find((attribute) => attribute.attribute_type_id == 'biolink:support_graphs');
+    if (supportGraphs) {
+      (supportGraphs.value as string[]).forEach((auxGraphID) =>
+        response.message.auxiliary_graphs[auxGraphID].edges.forEach((edgeID) => edgeStack.push(kg.edges[edgeID])),
+      );
     }
   }
 
-  debug(`QNode(s) having CURIEs that PFOCR could potentially match: ${[...matchableQNodeIDs]}`);
-  return matchableQNodeIDs;
+  return nodes;
 }
 
 /* time complexity: O(t*f)
@@ -156,53 +161,54 @@ function getMatchableQNodeIDs(allTrapiResults: TrapiResult[]): Set<string> {
  * t: trapiResults.length
  * f: figures.length
  */
-export async function enrichTrapiResultsWithPfocrFigures(allTrapiResults: TrapiResult[]): Promise<StampedLog[]> {
-  const matchableQNodeIDs = getMatchableQNodeIDs(allTrapiResults);
+export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse): Promise<StampedLog[]> {
+  // NOTE: This function operates on the actual TRAPI information that will be returned
+  // to the client. Don't mutate what shouldn't be mutated!
+  const supportedPrefixes = new Set(['NCBIGene']);
+  const results = response.message.results;
   const logs: StampedLog[] = [];
   let resultsWithTruncatedFigures = 0;
   const truncatedFigures: Set<string> = new Set();
 
-  if (matchableQNodeIDs.size < MATCH_COUNT_MIN) {
+  const curieCombosByResult: Map<TrapiResult, string> = new Map();
+  const curieCombos: Set<string> = results.reduce((combos: Set<string>, result: TrapiResult) => {
+    const nodes: Set<TrapiKGNode> = traverseResultForNodes(result, response);
+    const combo: Set<string> = new Set();
+    let matchedNodes = 0;
+    Object.entries(nodes).forEach(([primaryCurie, node]) => {
+      let nodeMatched = false;
+      const equivalentCuries = node.attributes?.find((attribute) => attribute.attribute_type_id === 'biolink:xref')
+        .value as string[];
+      [primaryCurie, ...equivalentCuries].forEach((curie) => {
+        if (supportedPrefixes.has(curie.split(':')[0])) {
+          combo.add(curie.split(':')[1]);
+          nodeMatched = true;
+        }
+      });
+      if (nodeMatched) matchedNodes += 1;
+    });
+    if (matchedNodes >= MATCH_COUNT_MIN) {
+      const comboString = [...combo].join(' ');
+      curieCombosByResult.set(result, comboString);
+      combos.add(comboString);
+    }
+    return combos;
+  }, new Set<string>());
+
+  if (curieCombos.size < 1) {
     // No TRAPI result can satisfy MATCH_COUNT_MIN
     logs.push(new LogEntry('DEBUG', null, 'Query does not match criteria, skipping PFOCR figure enrichment.').getLog());
     return logs;
   }
 
-  // TODO: currently just NCBIGene CURIEs. Expand to handle any CURIE in PFOCR.
-
   const trapiResultToCurieSet: Map<TrapiResult, string> = new Map();
 
-  const curieCombinations: Set<string> = new Set(
-    allTrapiResults.reduce((arr: string[], res) => {
-      const resultCuries: Set<string> = new Set();
-      const matchedQNodes: Set<string> = new Set();
-      [...matchableQNodeIDs].forEach((qNodeID) => {
-        res.node_bindings[qNodeID]
-          .map((node_binding) => node_binding.id)
-          .filter((curie) => curie.startsWith('NCBIGene:'))
-          .forEach((curie) => {
-            resultCuries.add(curie);
-            matchedQNodes.add(qNodeID);
-          });
-      });
-
-      const resultCuriesString = [...resultCuries].map((curie) => curie.replace('NCBIGene:', '')).join(' ');
-
-      if (resultCuries.size >= MATCH_COUNT_MIN && matchedQNodes.size >= MATCH_COUNT_MIN) {
-        trapiResultToCurieSet.set(res, resultCuriesString);
-        arr.push(resultCuriesString);
-      }
-
-      return arr;
-    }, []),
-  );
-
-  const figures = await getPfocrFigures(curieCombinations).catch((err) => {
+  const figures = await getPfocrFigures(curieCombos).catch((err) => {
     debug('Error getting PFOCR figures (enrichTrapiResultsWithPfocrFigures)', err);
     throw err;
   });
 
-  debug(`${figures.length} PFOCR figures match at least ${MATCH_COUNT_MIN} genes from any TRAPI result`);
+  debug(`${figures.length} PFOCR figures match at least ${MATCH_COUNT_MIN} nodes from any TRAPI result`);
 
   const figuresByCuries: { [queryCuries: string]: DeDupedFigureResult[] } = {};
   figures.forEach((figure) => {
@@ -220,22 +226,11 @@ export async function enrichTrapiResultsWithPfocrFigures(allTrapiResults: TrapiR
   //   return set;
   // }, new Set() as Set<string>);
 
-  for (const trapiResult of allTrapiResults) {
+  for (const trapiResult of results) {
     // No figures match this result
     if (!figuresByCuries[trapiResultToCurieSet.get(trapiResult)]) continue;
 
     const resultCuries: Set<string> = new Set();
-    const resultMatchableQNodeIDs: Set<string> = new Set();
-    [...matchableQNodeIDs].forEach((qNodeID) => {
-      trapiResult.node_bindings[qNodeID]
-        .map((node_binding) => node_binding.id)
-        .filter((curie) => curie.startsWith('NCBIGene:'))
-        .forEach((curie) => {
-          resultCuries.add(curie.replace('NCBIGene:', ''));
-          resultMatchableQNodeIDs.add(qNodeID);
-        });
-    });
-    if (resultMatchableQNodeIDs.size < 2) continue;
 
     (figuresByCuries[trapiResultToCurieSet.get(trapiResult)] ?? []).forEach((figure) => {
       if (!('pfocr' in trapiResult)) {
@@ -244,20 +239,6 @@ export async function enrichTrapiResultsWithPfocrFigures(allTrapiResults: TrapiR
 
       const figureCurieSet = new Set(figure.associatedWith.mentions.genes.ncbigene);
       const resultGenesInFigure = intersection(resultCuries, figureCurieSet);
-
-      const matchedQNodes = [...matchableQNodeIDs].filter((matchableQNodeID) => {
-        const currentQNodeCurieSet = new Set(
-          trapiResult.node_bindings[matchableQNodeID].map((node_binding) => node_binding.id),
-        );
-
-        return (
-          intersection(currentQNodeCurieSet, new Set([...resultGenesInFigure].map((geneID) => `NCBIGene:${geneID}`)))
-            .size > 0
-        );
-      });
-
-      // If we've matched on 2 curies, but we haven't actually matched on multiple nodes
-      if (matchedQNodes.length < 2) return;
 
       const otherGenesInFigure = figureCurieSet.size - resultGenesInFigure.size;
 
@@ -278,13 +259,6 @@ export async function enrichTrapiResultsWithPfocrFigures(allTrapiResults: TrapiR
         //title: figure.associatedWith.title,
         matchedCuries: [...resultGenesInFigure].map((geneID) => `NCBIGene:${geneID}`),
         score: 2 * ((precision * recall) / (precision + recall)),
-        // 1 -
-        // parseFloat(
-        //   Analyze([
-        //     [resultGenesInFigure.size, resultGenesInOtherFigures],
-        //     [otherGenesInFigure, otherGenesInOtherFigures],
-        //   ]).pValue,
-        // ),
       });
       matchedTrapiResults.add(trapiResult);
     });
@@ -311,7 +285,7 @@ export async function enrichTrapiResultsWithPfocrFigures(allTrapiResults: TrapiR
   debug(message);
   logs.push(new LogEntry('DEBUG', null, message).getLog());
   debug(
-    `${MATCH_COUNT_MIN}+ CURIE matches: ${matchedFigures.size} PFOCR figures and ${matchedTrapiResults.size} TRAPI results`,
+    `${MATCH_COUNT_MIN}+ node matches: ${matchedFigures.size} PFOCR figures across ${matchedTrapiResults.size} TRAPI results`,
   );
   logs.push(
     new LogEntry(
