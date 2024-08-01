@@ -132,8 +132,6 @@ function traverseResultForNodes(result: TrapiResult, response: TrapiResponse): S
   const kg = response.message.knowledge_graph;
   const nodes: Set<TrapiKGNode> = new Set();
   const edgeStack: TrapiKGEdge[] = [];
-  // TODO: get all nodes from a result, whether it be recursive or iterative.
-  // First get all bound nodes and edges
   Object.values(result.node_bindings).forEach((bindings) =>
     bindings.forEach((binding) => nodes.add(kg.nodes[binding.id])),
   );
@@ -164,7 +162,6 @@ function traverseResultForNodes(result: TrapiResult, response: TrapiResponse): S
 export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse): Promise<StampedLog[]> {
   // NOTE: This function operates on the actual TRAPI information that will be returned
   // to the client. Don't mutate what shouldn't be mutated!
-  const supportedPrefixes = new Set(['NCBIGene']);
   const results = response.message.results;
   const logs: StampedLog[] = [];
   let resultsWithTruncatedFigures = 0;
@@ -175,12 +172,12 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
     const nodes: Set<TrapiKGNode> = traverseResultForNodes(result, response);
     const combo: Set<string> = new Set();
     let matchedNodes = 0;
-    Object.entries(nodes).forEach(([primaryCurie, node]) => {
+    [...nodes].forEach((node) => {
       let nodeMatched = false;
       const equivalentCuries = node.attributes?.find((attribute) => attribute.attribute_type_id === 'biolink:xref')
         .value as string[];
-      [primaryCurie, ...equivalentCuries].forEach((curie) => {
-        if (supportedPrefixes.has(curie.split(':')[0])) {
+      equivalentCuries.forEach((curie) => {
+        if (Object.keys(SUPPORTED_PREFIXES).includes(curie.split(':')[0])) {
           combo.add(curie.split(':')[1]);
           nodeMatched = true;
         }
@@ -200,8 +197,6 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
     logs.push(new LogEntry('DEBUG', null, 'Query does not match criteria, skipping PFOCR figure enrichment.').getLog());
     return logs;
   }
-
-  const trapiResultToCurieSet: Map<TrapiResult, string> = new Map();
 
   const figures = await getPfocrFigures(curieCombos).catch((err) => {
     debug('Error getting PFOCR figures (enrichTrapiResultsWithPfocrFigures)', err);
@@ -228,11 +223,11 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
 
   for (const trapiResult of results) {
     // No figures match this result
-    if (!figuresByCuries[trapiResultToCurieSet.get(trapiResult)]) continue;
+    if (!figuresByCuries[curieCombosByResult.get(trapiResult)]) continue;
 
     const resultCuries: Set<string> = new Set();
 
-    (figuresByCuries[trapiResultToCurieSet.get(trapiResult)] ?? []).forEach((figure) => {
+    (figuresByCuries[curieCombosByResult.get(trapiResult)] ?? []).forEach((figure) => {
       if (!('pfocr' in trapiResult)) {
         trapiResult.pfocr = [];
       }
