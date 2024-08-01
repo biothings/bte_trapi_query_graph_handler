@@ -32,6 +32,7 @@ interface FigureResult {
   notfound?: boolean;
   associatedWith: {
     figureUrl: string;
+    pfocrUrl: string;
     pmc: string;
     mentions: {
       genes: {
@@ -93,7 +94,13 @@ async function getPfocrFigures(qTerms: Set<string>): Promise<DeDupedFigureResult
       const queryBody = {
         q: [...qTermBatch],
         scopes: 'associatedWith.mentions.genes.ncbigene', // TODO better system when we use more than NCBIGene
-        fields: ['_id', 'associatedWith.mentions.genes.ncbigene', 'associatedWith.pmc', 'associatedWith.figureUrl'],
+        fields: [
+          '_id',
+          'associatedWith.mentions.genes.ncbigene',
+          'associatedWith.pmc',
+          'associatedWith.figureUrl',
+          'associatedWith.pfocrUrl',
+        ],
         operator: 'OR',
         analyzer: 'whitespace',
         minimum_should_match: MATCH_COUNT_MIN,
@@ -168,6 +175,8 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
   const truncatedFigures: Set<string> = new Set();
 
   const curieCombosByResult: Map<TrapiResult, string> = new Map();
+  const curiesByResult: Map<TrapiResult, Set<string>> = new Map();
+
   const curieCombos: Set<string> = results.reduce((combos: Set<string>, result: TrapiResult) => {
     const nodes: Set<TrapiKGNode> = traverseResultForNodes(result, response);
     const combo: Set<string> = new Set();
@@ -177,8 +186,10 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
       const equivalentCuries = node.attributes?.find((attribute) => attribute.attribute_type_id === 'biolink:xref')
         .value as string[];
       equivalentCuries.forEach((curie) => {
-        if (Object.keys(SUPPORTED_PREFIXES).includes(curie.split(':')[0])) {
-          combo.add(curie.split(':')[1]);
+        const prefix = curie.split(':')[0];
+        const suffix = curie.replace(`${prefix}:`, '');
+        if (Object.keys(SUPPORTED_PREFIXES).includes(prefix)) {
+          combo.add(suffix);
           nodeMatched = true;
         }
       });
@@ -188,6 +199,7 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
       const comboString = [...combo].join(' ');
       curieCombosByResult.set(result, comboString);
       combos.add(comboString);
+      curiesByResult.set(result, combo);
     }
     return combos;
   }, new Set<string>());
@@ -225,7 +237,7 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
     // No figures match this result
     if (!figuresByCuries[curieCombosByResult.get(trapiResult)]) continue;
 
-    const resultCuries: Set<string> = new Set();
+    const resultCuries = curiesByResult.get(trapiResult);
 
     (figuresByCuries[curieCombosByResult.get(trapiResult)] ?? []).forEach((figure) => {
       if (!('pfocr' in trapiResult)) {
@@ -249,6 +261,7 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
 
       trapiResult.pfocr.push({
         figureUrl: figure.associatedWith.figureUrl,
+        pfocrUrl: figure.associatedWith.pfocrUrl,
         pmc: figure.associatedWith.pmc,
         // TODO: do we want to include figure title? Note: this would need to be added to queryBody.
         //title: figure.associatedWith.title,
