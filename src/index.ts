@@ -1,11 +1,9 @@
 import MetaKG, { SmartAPIQueryResult } from '@biothings-explorer/smartapi-kg';
 import path from 'path';
-import KnowledgeGraph from './graph/knowledge_graph';
 import TrapiResultsAssembler from './results_assembly/query_results';
-import { QueryGraph, InvalidQueryGraphError }  from '@biothings-explorer/types';
+import { QueryGraph, InvalidQueryGraphError, KGNode, KGEdge, BTEGraph, KnowledgeGraph }  from '@biothings-explorer/types';
 import Debug from 'debug';
 const debug = Debug('bte:biothings-explorer-trapi:main');
-import Graph from './graph/graph';
 import EdgeManager from './edge_manager';
 import _ from 'lodash';
 import QEdge2APIEdgeHandler from './qedge2apiedge';
@@ -14,8 +12,6 @@ import { promises as fs } from 'fs';
 import { getDescendants } from '@biothings-explorer/node-expansion';
 import { resolveSRI, SRINodeNormFailure } from 'biomedical_id_resolver';
 import InferredQueryHandler from './inferred_mode/inferred_mode';
-import KGNode from './graph/kg_node';
-import KGEdge from './graph/kg_edge';
 import {
   TrapiAuxGraphCollection,
   TrapiAuxiliaryGraph,
@@ -25,7 +21,6 @@ import {
   TrapiResult,
 } from '@biothings-explorer/types';
 import { QueryHandlerOptions, QEdge } from '@biothings-explorer/types';
-import BTEGraph from './graph/graph';
 import { Telemetry } from '@biothings-explorer/utils';
 
 // Exports for external availability
@@ -408,7 +403,7 @@ export default class TRAPIQueryHandler {
   _initializeResponse(): void {
     this.knowledgeGraph = new KnowledgeGraph(this.options?.apiList?.include);
     this.trapiResultsAssembler = new TrapiResultsAssembler(this.options);
-    this.bteGraph = new Graph();
+    this.bteGraph = new BTEGraph();
     this.bteGraph.subscribe(this.knowledgeGraph);
   }
 
