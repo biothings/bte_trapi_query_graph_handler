@@ -4,7 +4,6 @@ import QEdge2APIEdgeHandler from './qedge2apiedge';
 import NodesUpdateHandler from './update_nodes';
 import Debug from 'debug';
 const debug = Debug('bte:biothings-explorer-trapi:batch_edge_query');
-import CacheHandler from './cache_handler';
 import { threadId } from 'worker_threads';
 import MetaKG from '@biothings-explorer/smartapi-kg';
 import { StampedLog } from '@biothings-explorer/utils';
