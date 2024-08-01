@@ -1,11 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
-import { Record } from '@biothings-explorer/api-response-transform';
+import { Record, QEdge } from '@biothings-explorer/types';
 import RedisMock from 'ioredis-mock';
 import RealCacheHandler from '../../src/cache_handler';
 import MetaKG from '@biothings-explorer/smartapi-kg';
-import QEdge from '../../src/query_edge';
 
 const qEdges = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/qEdges.json'), { encoding: 'utf8' }));
 

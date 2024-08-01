@@ -1,15 +1,13 @@
 import _ from 'lodash';
 import { LogEntry, StampedLog } from '@biothings-explorer/utils';
-import BTEError from './exceptions/bte_error';
 import Debug from 'debug';
 const debug = Debug('bte:biothings-explorer-trapi:edge-manager');
 import * as config from './config';
 import BatchEdgeQueryHandler, { BatchEdgeQueryOptions } from './batch_edge_query';
 import { Telemetry } from '@biothings-explorer/utils';
-import QEdge from './query_edge';
 import MetaKG from '@biothings-explorer/smartapi-kg';
-import { QueryHandlerOptions } from '@biothings-explorer/types';
-import { Record } from '@biothings-explorer/api-response-transform';
+import { QueryHandlerOptions, QEdge, BTEError } from '@biothings-explorer/types';
+import { Record } from '@biothings-explorer/types';
 import { UnavailableAPITracker } from './types';
 import { RecordsByQEdgeID } from './results_assembly/query_results';
 import path from 'path';
@@ -354,7 +352,7 @@ export default class QueryEdgeManager {
   }
 
   _createBatchQueryHandler(qEdge: QEdge, metaKG: MetaKG): BatchEdgeQueryHandler {
-    const handler = new BatchEdgeQueryHandler(metaKG, this.options.resolveOutputIDs, {
+    const handler = new BatchEdgeQueryHandler(metaKG, {
       caching: this.options.caching,
       submitter: this.options.submitter,
       recordHashEdgeAttributes: config.EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,

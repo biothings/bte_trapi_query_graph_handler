@@ -1,11 +1,13 @@
-import { Record } from '@biothings-explorer/api-response-transform';
+import { Record, InvalidQueryGraphError } from '@biothings-explorer/types';
 import path from 'path';
 import fs from 'fs';
 import _ from 'lodash';
 const AxiosActual = jest.requireActual('axios');
 import InferredQueryHandler from '../../src/inferred_mode/inferred_mode';
-import TRAPIQueryHandler, { InvalidQueryGraphError } from '../../src/index';
+import TRAPIQueryHandler from '../../src/index';
 import axios from 'axios';
+import { MessageChannel } from 'worker_threads';
+import { Subquery, SubqueryRelay } from '@biothings-explorer/call-apis';
 
 jest.mock('../../src/inferred_mode/inferred_mode');
 jest.mock('axios');
@@ -16,6 +18,26 @@ const records = Record.unfreezeRecords(
 
 describe('test TRAPIQueryHandler methods', () => {
   const OLD_ENV = process.env;
+
+  beforeAll(async () => {
+    const subqueryRelay = new SubqueryRelay();
+    const { port1: workerSide, port2: parentSide } = new MessageChannel();
+    global.workerSide = workerSide;
+    parentSide.on("message", async (msg: any) => {
+      const { queries, options } = msg.value
+      subqueryRelay.subscribe(
+        await Promise.all(queries.map(async query => await Subquery.unfreeze(query))),
+        options,
+        ({ hash, records, logs, apiUnavailable }) => {
+          parentSide.postMessage({
+            threadId: 0,
+            type: "subQueryResult",
+            value: { hash, records, logs, apiUnavailable },
+          });
+        },
+      );
+    });
+  });
 
   beforeEach(() => {
     jest.resetAllMocks();

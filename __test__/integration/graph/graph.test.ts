@@ -1,5 +1,5 @@
 import graph from '../../../src/graph/graph';
-import { Record } from '@biothings-explorer/api-response-transform';
+import { Record } from '@biothings-explorer/types';
 
 describe('Test graph class', () => {
   const qNode1 = {

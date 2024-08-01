@@ -1,7 +1,7 @@
 import KGEdge from '../../src/graph/kg_edge';
 import KGNode from '../../src/graph/kg_node';
 import KnowledgeGraph from '../../src/graph/knowledge_graph';
-import { TrapiAttribute } from '../../src/types';
+import { TrapiAttribute } from '@biothings-explorer/types';
 
 describe('Testing KnowledgeGraph Module', () => {
   const nodeInput = new KGNode('PUBCHEM.COMPOUND:2662-n0', {

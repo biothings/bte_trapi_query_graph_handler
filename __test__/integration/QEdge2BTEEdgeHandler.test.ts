@@ -1,8 +1,7 @@
 jest.mock('axios');
 import axios from 'axios';
 
-import QNode from '../../src/query_node';
-import QEdge from '../../src/query_edge';
+import { QNode, QEdge } from '@biothings-explorer/types';
 import NodeUpdateHandler from '../../src/update_nodes';
 
 describe('Testing NodeUpdateHandler Module', () => {
