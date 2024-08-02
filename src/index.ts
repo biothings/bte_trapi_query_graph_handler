@@ -30,6 +30,7 @@ import { QueryHandlerOptions } from '@biothings-explorer/types';
 import BTEGraph from './graph/graph';
 import QEdge from './query_edge';
 import { Telemetry } from '@biothings-explorer/utils';
+import { enrichTrapiResultsWithPfocrFigures } from './results_assembly/pfocr';
 
 // Exports for external availability
 export * from './types';
@@ -727,6 +728,9 @@ export default class TRAPIQueryHandler {
     // prune bteGraph
     this.bteGraph.prune(this.finalizedResults, this.auxGraphs);
     this.bteGraph.notify();
+
+    // Attempt to enrich results with PFOCR figures
+    this.logs = [...this.logs, ...(await enrichTrapiResultsWithPfocrFigures(this.getResponse()))];
 
     span3?.finish();
 
