@@ -321,7 +321,11 @@ export default class PathfinderQueryHandler {
                 resource_role: 'primary_knowledge_source',
               },
             ],
-            attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${kgSrc}-${intermediateNode}-support`] }],
+            attributes: [
+              { attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${kgSrc}-${intermediateNode}-support`] },
+              { attribute_type_id: 'biolink:knowledge_level', value: "prediction" },
+              { attribute_type_id: 'biolink:agent_type', value: "computational_model" },
+            ],
           };
           creativeResponse.message.knowledge_graph.edges[`pathfinder-${intermediateNode}-${kgDst}`] = {
             predicate: 'biolink:related_to',
@@ -335,7 +339,11 @@ export default class PathfinderQueryHandler {
                 resource_role: 'primary_knowledge_source',
               },
             ],
-            attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${intermediateNode}-${kgDst}-support`] }],
+            attributes: [
+              { attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${intermediateNode}-${kgDst}-support`] },
+              { attribute_type_id: 'biolink:knowledge_level', value: "prediction" },
+              { attribute_type_id: 'biolink:agent_type', value: "computational_model" },
+            ],
           };
           creativeResponse.message.knowledge_graph.edges[`pathfinder-${intermediateNode}`] = {
             predicate: 'biolink:related_to',
@@ -349,7 +357,11 @@ export default class PathfinderQueryHandler {
                 resource_role: 'primary_knowledge_source',
               },
             ],
-            attributes: [{ attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${intermediateNode}-support`] }],
+            attributes: [
+              { attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${intermediateNode}-support`] },
+              { attribute_type_id: 'biolink:knowledge_level', value: "prediction" },
+              { attribute_type_id: 'biolink:agent_type', value: "computational_model" },
+            ],
           };
 
           // calculate score
