@@ -1,13 +1,22 @@
 [
   {
     "name": "Drug treats Disease",
-    "subject": ["Drug", "SmallMolecule", 
-                "ChemicalEntity", "ComplexMolecularMixture", "MolecularMixture"
-               ],
-    "predicate": ["treats", "ameliorates"],
-    "object": ["Disease", "PhenotypicFeature",
-               "DiseaseOrPhenotypicFeature"
-              ],
+    "subject": [
+      "Drug",
+      "SmallMolecule",
+      "ChemicalEntity",
+      "ComplexMolecularMixture",
+      "MolecularMixture"
+    ],
+    "predicate": [
+      "treats",
+      "ameliorates"
+    ],
+    "object": [
+      "Disease",
+      "PhenotypicFeature",
+      "DiseaseOrPhenotypicFeature"
+    ],
     "templates": [
       "Chem-treats-DoP.json",
       "Chem-treats-PhenoOfDisease.json",
@@ -16,16 +25,25 @@
   },
   {
     "name": "Chem increases Gene's activity or abundance",
-    "subject": ["Drug", "SmallMolecule", 
-                "ChemicalEntity", "ComplexMolecularMixture", "MolecularMixture"
-               ],
-    "predicate": ["affects"],
+    "subject": [
+      "Drug",
+      "SmallMolecule",
+      "ChemicalEntity",
+      "ComplexMolecularMixture",
+      "MolecularMixture"
+    ],
+    "predicate": [
+      "affects"
+    ],
     "qualifiers": {
       "qualified_predicate": "causes",
       "object_aspect_qualifier": "activity_or_abundance",
       "object_direction_qualifier": "increased"
-    }, 
-    "object": ["Gene", "Protein"],
+    },
+    "object": [
+      "Gene",
+      "Protein"
+    ],
     "templates": [
       "Chem-increasesGene.json",
       "Chem-IncreaseAnotherGeneThatUpregs-Gene.json",
@@ -36,16 +54,25 @@
   },
   {
     "name": "Chem decreases Gene's activity or abundance",
-    "subject": ["Drug", "SmallMolecule", 
-                "ChemicalEntity", "ComplexMolecularMixture", "MolecularMixture"
-               ],
-    "predicate": ["affects"],
+    "subject": [
+      "Drug",
+      "SmallMolecule",
+      "ChemicalEntity",
+      "ComplexMolecularMixture",
+      "MolecularMixture"
+    ],
+    "predicate": [
+      "affects"
+    ],
     "qualifiers": {
       "qualified_predicate": "causes",
       "object_aspect_qualifier": "activity_or_abundance",
       "object_direction_qualifier": "decreased"
-    }, 
-    "object": ["Gene", "Protein"],
+    },
+    "object": [
+      "Gene",
+      "Protein"
+    ],
     "templates": [
       "Chem-decreasesGene.json",
       "Chem-IncreaseAnotherGeneThatDownregs-Gene.json",
@@ -57,13 +84,21 @@
   {
     "name": "Pathfinder: Drug-Disease",
     "pathfinder": true,
-    "subject": ["Drug", "SmallMolecule", 
-                "ChemicalEntity", "ComplexMolecularMixture", "MolecularMixture"
-               ],
-    "predicate": ["related_to"],
-    "object": ["Disease", "PhenotypicFeature",
-               "DiseaseOrPhenotypicFeature"
-              ],
+    "subject": [
+      "Drug",
+      "SmallMolecule",
+      "ChemicalEntity",
+      "ComplexMolecularMixture",
+      "MolecularMixture"
+    ],
+    "predicate": [
+      "related_to"
+    ],
+    "object": [
+      "Disease",
+      "PhenotypicFeature",
+      "DiseaseOrPhenotypicFeature"
+    ],
     "templates": [
       "pf-drug-gene-disease.json",
       "pf-drug-gene-cell-disease.json",
@@ -73,25 +108,41 @@
   {
     "name": "Pathfinder: Chem-Gene",
     "pathfinder": true,
-    "subject": ["Drug", "SmallMolecule", 
-                "ChemicalEntity", "ComplexMolecularMixture", "MolecularMixture"
-               ],
-    "predicate": ["related_to"],
-    "object": ["Gene", "Protein"],
+    "subject": [
+      "Drug",
+      "SmallMolecule",
+      "ChemicalEntity",
+      "ComplexMolecularMixture",
+      "MolecularMixture"
+    ],
+    "predicate": [
+      "related_to"
+    ],
+    "object": [
+      "Gene",
+      "Protein"
+    ],
     "templates": [
-      "pf-chem-gene-gene.json"
+      "pf-chem-gene-gene.json",
+      "pf-chem-gene-gene-gene.json"
     ]
   },
   {
     "name": "Pathfinder: Disease-Disease",
     "pathfinder": true,
-    "subject": ["Disease", "PhenotypicFeature",
-               "DiseaseOrPhenotypicFeature"
-              ],
-    "predicate": ["related_to"],
-    "object": ["Disease", "PhenotypicFeature",
-               "DiseaseOrPhenotypicFeature"
-              ],
+    "subject": [
+      "Disease",
+      "PhenotypicFeature",
+      "DiseaseOrPhenotypicFeature"
+    ],
+    "predicate": [
+      "related_to"
+    ],
+    "object": [
+      "Disease",
+      "PhenotypicFeature",
+      "DiseaseOrPhenotypicFeature"
+    ],
     "templates": [
       "pf-disease-seqvar-disease.json",
       "pf-disease-gene-disease.json"
@@ -100,11 +151,18 @@
   {
     "name": "Pathfinder: Gene-Disease",
     "pathfinder": true,
-    "subject": ["Gene", "Protein"],
-    "predicate": ["related_to"],
-    "object": ["Disease", "PhenotypicFeature",
-               "DiseaseOrPhenotypicFeature"
-              ],
+    "subject": [
+      "Gene",
+      "Protein"
+    ],
+    "predicate": [
+      "related_to"
+    ],
+    "object": [
+      "Disease",
+      "PhenotypicFeature",
+      "DiseaseOrPhenotypicFeature"
+    ],
     "templates": [
       "pf-gene-anything-disease.json",
       "pf-gene-chem-gene-disease.json"
