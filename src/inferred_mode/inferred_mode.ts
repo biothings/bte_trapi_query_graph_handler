@@ -332,8 +332,28 @@ export default class InferredQueryHandler {
       const resultID = `${resultCreativeSubjectID}-${resultCreativeObjectID}`;
 
       // Direct edge answers stand on their own, not as an inferred edge.
-      if (Object.keys(result.node_bindings).length == 2) {
-        const boundEdgeID = Object.values(result.analyses[0].edge_bindings)[0][0].id;
+      const boundEdgeID = Object.values(result.analyses[0].edge_bindings)[0][0].id;
+      const boundEdge = combinedResponse.message.knowledge_graph.edges[boundEdgeID];
+      const specialHandling = [
+        Object.keys(result.node_bindings).length === 2, // Direct edge
+        // Predicate matches or is descendant
+        qEdge.predicates.some(
+          (predicate) =>
+            predicate === boundEdge.predicate ||
+            biolink.getDescendantPredicates(predicate).includes(boundEdge.predicate),
+        ),
+        // All query qualifiers (if any) are accounted for (more is fine)
+        qEdge.qualifier_constraints.some(({ qualifier_set }) => {
+          return qualifier_set.every((queryQualifier) =>
+            boundEdge.qualifiers.some(
+              (qualifier) =>
+                queryQualifier.qualifier_type_id === qualifier.qualifier_type_id &&
+                queryQualifier.qualifier_value === qualifier.qualifier_value,
+            ),
+          );
+        }),
+      ].every((test) => test);
+      if (specialHandling) {
         translatedResult.analyses[0].edge_bindings = { [qEdgeID]: [{ id: boundEdgeID, attributes: [] }] };
       } else {
         // Create an aux graph using the result and associate it with an inferred Edge
