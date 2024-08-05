@@ -320,7 +320,7 @@ export default class InferredQueryHandler {
             biolink.getDescendantPredicates(predicate).includes(boundEdge.predicate),
         ),
         // All query qualifiers (if any) are accounted for (more is fine)
-        qEdge.qualifier_constraints.every(({ qualifier_set }) => {
+        qEdge.qualifier_constraints.some(({ qualifier_set }) => {
           return qualifier_set.every((queryQualifier) =>
             boundEdge.qualifiers.some(
               (qualifier) =>
