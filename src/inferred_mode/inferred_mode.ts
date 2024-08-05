@@ -38,7 +38,6 @@ export interface CombinedResponseReport {
   querySuccess: number;
   queryHadResults: boolean;
   mergedResults: { [resultID: string]: number };
-  creativeLimitHit: boolean | number;
 }
 
 // MatchedTemplate, but with IDs, etc. filled in
@@ -214,7 +213,7 @@ export default class InferredQueryHandler {
   async createQueries(qEdge: TrapiQEdge, qSubject: TrapiQNode, qObject: TrapiQNode): Promise<FilledTemplate[]> {
     const templates = await this.findTemplates(qEdge, qSubject, qObject);
     // combine creative query with templates
-    const subQueries = templates.map(({ template, queryGraph }) => {
+    const subQueries = templates.map(({ template, queryGraph, durationMin }) => {
       queryGraph.nodes.creativeQuerySubject.categories = [
         ...new Set([...queryGraph.nodes.creativeQuerySubject.categories, ...qSubject.categories]),
       ];
@@ -244,7 +243,7 @@ export default class InferredQueryHandler {
         delete queryGraph.nodes.creativeQueryObject.ids;
       }
 
-      return { template, queryGraph };
+      return { template, queryGraph, durationMin };
     });
 
     return subQueries;
@@ -263,7 +262,6 @@ export default class InferredQueryHandler {
       querySuccess: 0,
       queryHadResults: false,
       mergedResults: {},
-      creativeLimitHit: false,
     };
     let mergedThisTemplate = 0;
     const resultIDsFromPrevious = new Set(Object.keys(combinedResponse.message.results));
@@ -428,9 +426,6 @@ export default class InferredQueryHandler {
     }
     report.querySuccess = 1;
 
-    if (Object.keys(combinedResponse.message.results).length >= this.CREATIVE_LIMIT && !report.creativeLimitHit) {
-      report.creativeLimitHit = Object.keys(newResponse.message.results).length;
-    }
     span.finish();
     return report;
   }
@@ -523,7 +518,17 @@ export default class InferredQueryHandler {
       [resultID: string]: number;
     } = {};
 
-    await async.eachOfSeries(subQueries, async ({ template, queryGraph }, i) => {
+    
+    const MAX_TIME = 4.5 * 60 * 1000; // 4 minutes
+    const DEFAULT_QUERY_TIME = 2.5 * 60 * 1000; // 2.5 minutes
+    const start = Date.now();
+
+    await async.eachOfSeries(subQueries, async ({ template, queryGraph, durationMin }, i) => {
+      const queryTime = (typeof durationMin == 'number') ? durationMin * 60 * 1000 : DEFAULT_QUERY_TIME;
+      if (Date.now() - start > MAX_TIME - queryTime) {
+        debug(`Skipping template because the query has been running for ${(Date.now() - start) / 1000} seconds, and this template is projected to take ${queryTime / 1000} seconds`);
+        return;
+      }
       const span = Telemetry.startSpan({ description: 'creativeTemplate' });
       span.setData('template', (i as number) + 1);
       i = i as number;
@@ -540,7 +545,7 @@ export default class InferredQueryHandler {
         // make query and combine results/kg/logs/etc
         handler.setQueryGraph(queryGraph);
         await handler.query();
-        const { querySuccess, queryHadResults, mergedResults, creativeLimitHit } = this.combineResponse(
+        const { querySuccess, queryHadResults, mergedResults } = this.combineResponse(
           i,
           handler,
           qEdgeID,
@@ -554,23 +559,6 @@ export default class InferredQueryHandler {
           mergedResultsCount[result] =
             result in mergedResultsCount ? mergedResultsCount[result] + countMerged : countMerged;
         });
-        // log to user if we should stop
-        if (creativeLimitHit) {
-          stop = true;
-          const message = [
-            `Addition of ${creativeLimitHit} results from Template ${i + 1}`,
-            Object.keys(combinedResponse.message.results).length === this.CREATIVE_LIMIT ? ' meets ' : ' exceeds ',
-            `creative result maximum of ${this.CREATIVE_LIMIT} (reaching ${
-              Object.keys(combinedResponse.message.results).length
-            } merged). `,
-            `Response will be truncated to top-scoring ${this.CREATIVE_LIMIT} results. Skipping remaining ${
-              subQueries.length - (i + 1)
-            } `,
-            subQueries.length - (i + 1) === 1 ? `template.` : `templates.`,
-          ].join('');
-          debug(message);
-          combinedResponse.logs.push(new LogEntry(`INFO`, null, message).getLog());
-        }
         span.finish();
       } catch (error) {
         handler.logs.forEach((log) => {
@@ -604,7 +592,7 @@ export default class InferredQueryHandler {
             `Final result count`,
             Object.keys(combinedResponse.message.results).length > this.CREATIVE_LIMIT ? ' (before truncation):' : ':',
             ` ${Object.keys(combinedResponse.message.results).length}`,
-          ].join(''),
+          ].join('')
         ).getLog(),
       );
     }
