@@ -319,15 +319,12 @@ export default class TRAPIQueryHandler {
 
   appendOriginalCuriesToResults(results: TrapiResult[]): void {
     results.forEach(result => {
-      Object.entries(result.node_bindings).map(([qNodeID, bindings]) => {
-        return [
-          qNodeID,
-          bindings.forEach((binding) => {
-            if (this.bteGraph.nodes[binding.id].originalCurie && this.bteGraph.nodes[binding.id].originalCurie !== binding.id) {
-              binding.query_id = this.bteGraph.nodes[binding.id].originalCurie;
-            }
-          })
-        ]
+      Object.entries(result.node_bindings).forEach(([_, bindings]) => {
+        bindings.forEach(binding => {
+          if (this.bteGraph.nodes[binding.id].originalCurie && this.bteGraph.nodes[binding.id].originalCurie !== binding.id) {
+            binding.query_id = this.bteGraph.nodes[binding.id].originalCurie;
+          }
+        })
       })
     })
   }
