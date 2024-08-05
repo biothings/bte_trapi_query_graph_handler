@@ -317,6 +317,21 @@ export default class TRAPIQueryHandler {
     this.finalizedResults = fixedResults;
   }
 
+  appendOriginalCuriesToResults(results: TrapiResult[]): void {
+    results.forEach(result => {
+      Object.entries(result.node_bindings).map(([qNodeID, bindings]) => {
+        return [
+          qNodeID,
+          bindings.forEach((binding) => {
+            if (this.bteGraph.nodes[binding.id].originalCurie && this.bteGraph.nodes[binding.id].originalCurie !== binding.id) {
+              binding.query_id = this.bteGraph.nodes[binding.id].originalCurie;
+            }
+          })
+        ]
+      })
+    })
+  }
+
   async addQueryNodes(): Promise<void> {
     const qNodeIDsByOriginalID: Map<string, TrapiQNode> = new Map();
     const curiesToResolve = [
@@ -338,6 +353,7 @@ export default class TRAPIQueryHandler {
         this.bteGraph.nodes[resolvedEntity.primaryID] = new KGNode(resolvedEntity.primaryID, {
           primaryCurie: resolvedEntity.primaryID,
           qNodeID: qNodeIDsByOriginalID[originalCurie],
+          originalCurie: originalCurie,
           curies: resolvedEntity.equivalentIDs,
           names: resolvedEntity.labelAliases,
           semanticType: category ? [category] : ['biolink:NamedThing'],
@@ -701,6 +717,8 @@ export default class TRAPIQueryHandler {
     this.createSubclassSupportGraphs();
     // prune bteGraph
     this.bteGraph.prune(this.finalizedResults, this.auxGraphs);
+    // add original curies to results
+    this.appendOriginalCuriesToResults(this.finalizedResults);
     this.bteGraph.notify();
 
     span3?.finish();
