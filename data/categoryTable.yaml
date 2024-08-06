@@ -1,0 +1,21 @@
+ChemicalEntity:
+  DiseaseOrPhenotypicFeature:
+    - Gene
+  AnatomicalEntity:
+    - Gene
+  BiologicalProcessOrActivity:
+    - Gene
+  Gene:
+    - Gene
+Gene:
+  DiseaseOrPhenotypicFeature:
+    - AnatomicalEntity
+    - BiologicalProcessOrActivity
+    - ChemicalEntity
+  Gene:
+    - Gene
+    - ChemicalEntity
+DiseaseOrPhenotypicFeature:
+  DiseaseOrPhenotypicFeature:
+    - SequenceVariant
+    - Gene

@@ -1,0 +1,57 @@
+{
+    "message": {
+        "query_graph": {
+            "nodes": {
+                "creativeQuerySubject": {
+                    "categories":["biolink:Gene", "biolink:Protein"]
+                },
+                "nA": {
+                    "categories":["biolink:ChemicalEntity"]
+                },
+                "nB": {
+                    "categories":["biolink:Gene", "biolink:Protein"]
+                },
+                "creativeQueryObject": {
+                    "categories":["biolink:DiseaseOrPhenotypicFeature"]
+               }
+            },
+            "edges": {
+                "eA": {
+                    "subject": "creativeQuerySubject",
+                    "object": "nA",
+                    "predicates": [
+                        "biolink:regulates",
+                        "biolink:regulated_by",
+                        "biolink:affects",
+                        "biolink:affected_by",
+                        "biolink:interacts_with",
+                        "biolink:correlated_with"
+                    ]
+                },
+                "eB": {
+                    "subject": "nA",
+                    "object": "nB",
+                    "predicates": [
+                        "biolink:regulates",
+                        "biolink:regulated_by",
+                        "biolink:affects",
+                        "biolink:affected_by",
+                        "biolink:interacts_with",
+                        "biolink:correlated_with"
+                    ]
+                },
+                "eC": {
+                    "subject": "nB",
+                    "object": "creativeQueryObject",
+                    "predicates": [
+                        "biolink:gene_associated_with_condition",
+                        "biolink:affects",
+                        "biolink:disrupts",
+                        "biolink:contributes_to",
+                        "biolink:biomarker_for"
+                    ]
+                }
+            }
+        }
+    }
+}

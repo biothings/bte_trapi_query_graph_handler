@@ -15,11 +15,13 @@ export default class QueryGraph {
   queryGraph: TrapiQueryGraph;
   schema: any;
   logs: StampedLog[];
+  skipCycleDetection: boolean;
   nodes: { [QNodeID: string]: QNode };
   edges: { [QEdgeID: string]: QEdge };
-  constructor(queryGraph: TrapiQueryGraph, schema: any) {
+  constructor(queryGraph: TrapiQueryGraph, schema: any, skipCycleDetection = false) {
     this.queryGraph = queryGraph;
     this.schema = schema;
+    this.skipCycleDetection = skipCycleDetection;
     this.logs = [];
   }
 
@@ -93,7 +95,7 @@ export default class QueryGraph {
     }
 
     for (const firstNode in nodes) {
-      if (nodes[firstNode].visited === true) continue;
+      if (nodes[firstNode].visited == true) continue;
       const stack: { curNode: string; parent: string | number }[] = [{ curNode: firstNode, parent: -1 }];
       nodes[firstNode].visited = true;
       while (stack.length !== 0) {
@@ -191,7 +193,7 @@ export default class QueryGraph {
     this._validateNodeProperties(queryGraph);
     this._validateEdgeProperties(queryGraph);
     this._validateBatchSize(queryGraph);
-    this._validateCycles(queryGraph);
+    !this.skipCycleDetection && this._validateCycles(queryGraph);
     this._validateNoDuplicateQualifierTypes(queryGraph);
   }
 
