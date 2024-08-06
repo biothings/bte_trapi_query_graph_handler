@@ -337,21 +337,21 @@ export default class InferredQueryHandler {
       const specialHandling = [
         Object.keys(result.node_bindings).length === 2, // Direct edge
         // Predicate matches or is descendant
-        qEdge.predicates.some(
+        qEdge.predicates?.some(
           (predicate) =>
             predicate === boundEdge.predicate ||
             biolink.getDescendantPredicates(predicate).includes(boundEdge.predicate),
-        ),
+        ) ?? false,
         // All query qualifiers (if any) are accounted for (more is fine)
-        qEdge.qualifier_constraints.some(({ qualifier_set }) => {
+        qEdge.qualifier_constraints?.some(({ qualifier_set }) => {
           return qualifier_set.every((queryQualifier) =>
-            boundEdge.qualifiers.some(
+            boundEdge.qualifiers?.some(
               (qualifier) =>
                 queryQualifier.qualifier_type_id === qualifier.qualifier_type_id &&
                 queryQualifier.qualifier_value === qualifier.qualifier_value,
-            ),
+            ) ?? false,
           );
-        }),
+        }) ?? false,
       ].every((test) => test);
       if (specialHandling) {
         translatedResult.analyses[0].edge_bindings = { [qEdgeID]: [{ id: boundEdgeID, attributes: [] }] };
