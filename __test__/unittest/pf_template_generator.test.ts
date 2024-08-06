@@ -12,10 +12,11 @@ describe('Test Pathfinder Template Generator', () => {
       categories: ['biolink:Disease']
     };
 
-    const templates = await generateTemplates(sub, un, obj);
+    const templatesWithUnCat = await generateTemplates(sub, un, obj);
+    const templatesWithoutUnCat = await generateTemplates(sub, {}, obj);
 
     // Template A
-    expect(templates[0]).toEqual({
+    expect(templatesWithUnCat[0]).toEqual({
       "nodes": {
         "creativeQuerySubject": {
           "categories": [
@@ -58,9 +59,10 @@ describe('Test Pathfinder Template Generator', () => {
         }
       }
     });
+    expect(templatesWithoutUnCat[0]).toEqual(templatesWithUnCat[0]);
 
     // Template B
-    expect(templates[1]).toEqual({
+    expect(templatesWithUnCat[1]).toEqual({
       "nodes": {
         "creativeQuerySubject": {
           "categories": [
@@ -125,9 +127,10 @@ describe('Test Pathfinder Template Generator', () => {
         }
       }
     });
+    expect(templatesWithoutUnCat[1]).toEqual(templatesWithUnCat[1]);
 
     // Template C
-    expect(templates[2]).toEqual({
+    expect(templatesWithUnCat[2]).toEqual({
       "nodes": {
         "creativeQuerySubject": {
           "categories": [
@@ -186,5 +189,22 @@ describe('Test Pathfinder Template Generator', () => {
         }
       }
     });
+    expect(templatesWithoutUnCat[2]).toEqual(templatesWithUnCat[2]);
+  });
+
+  test('template with no predicates should not have predicate property', async () => {
+    const sub = {
+      categories: ['biolink:Drug']
+    };
+    const un = {
+      categories: ['biolink:Dummy']
+    };
+    const obj = {
+      categories: ['biolink:Drug']
+    };
+
+    const templates = await generateTemplates(sub, un, obj);
+    expect(templates[0].edges.sub_un).not.toHaveProperty('predicates');
+    expect(templates[0].edges.un_obj).not.toHaveProperty('predicates');
   });
 });
