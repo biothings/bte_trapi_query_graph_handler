@@ -22,7 +22,7 @@ jobs:
         ref: ${{ steps.branch-name.outputs.current_branch }}
 
     - name: Checkout to main if above failed
-      if: steps.specific-checkout.outcome = 'failure'
+      if: steps.specific-checkout.outcome == 'failure'
       uses: actions/checkout@v3
       with:
         repository: biothings/biothings_explorer
