@@ -210,10 +210,14 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
     return logs;
   }
 
-  const figures = await getPfocrFigures(curieCombos).catch((err) => {
+  let figures: DeDupedFigureResult[];
+  try {
+    figures = await getPfocrFigures(curieCombos)
+  } catch (err) {
     debug('Error getting PFOCR figures (enrichTrapiResultsWithPfocrFigures)', err);
-    throw err;
-  });
+    logs.push(new LogEntry('ERROR', null, 'Error getting PFOCR figures, results will not be enriched.').getLog())
+  }
+  if (!figures) return logs;
 
   debug(`${figures.length} PFOCR figures match at least ${MATCH_COUNT_MIN} nodes from any TRAPI result`);
 
