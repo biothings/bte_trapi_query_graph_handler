@@ -169,10 +169,8 @@ export default class InferredQueryHandler {
     const qualifierConstraints = (qEdge.qualifier_constraints || []).map((qualifierSetObj) => {
       return Object.fromEntries(
         qualifierSetObj.qualifier_set.map(({ qualifier_type_id, qualifier_value }) => [
-          qualifier_type_id.replace('biolink:', ''),
-          Array.isArray(qualifier_value)
-            ? qualifier_value.map((string) => string.replace('biolink:', ''))
-            : qualifier_value.replace('biolink:', ''),
+          qualifier_type_id,
+          qualifier_value,
         ]),
       ) as CompactQualifiers;
     });
@@ -257,7 +255,7 @@ export default class InferredQueryHandler {
     qEdgeID: string,
     qEdge: TrapiQEdge,
     combinedResponse: CombinedResponse,
-    qualifers?: CompactQualifiers
+    qualifiers?: CompactQualifiers,
   ): CombinedResponseReport {
     const span = Telemetry.startSpan({ description: 'creativeCombineResponse' });
     const newResponse = handler.getResponse();
@@ -328,11 +326,17 @@ export default class InferredQueryHandler {
             return (
               boundEdge.qualifiers?.some((qualifier) => {
                 const typeMatch = queryQualifier.qualifier_type_id === qualifier.qualifier_type_id;
-                const valueMatch =
-                  queryQualifier.qualifier_value === qualifier.qualifier_value ||
-                  biolink
-                    .getDescendantQualifiers(queryQualifier.qualifier_value as string)
-                    .includes(qualifier.qualifier_value as string);
+                let valueMatch: boolean;
+                try {
+                  const descendants = queryQualifier.qualifier_value.includes('biolink:')
+                    ? biolink.getDescendantPredicates(queryQualifier.qualifier_value as string)
+                    : biolink.getDescendantQualifiers(queryQualifier.qualifier_value as string);
+                  const valueMatch =
+                    queryQualifier.qualifier_value === qualifier.qualifier_value ||
+                    descendants.includes(qualifier.qualifier_value as string);
+                } catch (err) {
+                  valueMatch = queryQualifier.qualifier_value === qualifier.qualifier_value;
+                }
                 return typeMatch && valueMatch;
               }) ?? false
             );
@@ -369,8 +373,17 @@ export default class InferredQueryHandler {
           };
         }
         // Add qualifiers to edge
-        if (typeof qualifers == 'object' && Object.keys(qualifers).length > 0 && !combinedResponse.message.knowledge_graph.edges[inferredEdgeID].qualifiers) {
-          combinedResponse.message.knowledge_graph.edges[inferredEdgeID].qualifiers = Object.entries(qualifers).map(([qualifierType, qualifierValue]) => ({ qualifier_type_id: qualifierType, qualifier_value: qualifierValue }));
+        if (
+          typeof qualifiers == 'object' &&
+          Object.keys(qualifiers).length > 0 &&
+          !combinedResponse.message.knowledge_graph.edges[inferredEdgeID].qualifiers
+        ) {
+          combinedResponse.message.knowledge_graph.edges[inferredEdgeID].qualifiers = Object.entries(qualifiers).map(
+            ([qualifierType, qualifierValue]) => ({
+              qualifier_type_id: qualifierType,
+              qualifier_value: qualifierValue,
+            }),
+          );
         }
 
         let auxGraphSuffix = 0;
@@ -580,7 +593,7 @@ export default class InferredQueryHandler {
           qEdgeID,
           qEdge,
           combinedResponse,
-          qualifiers
+          qualifiers,
         );
         // update values used in logging
         successfulQueries += querySuccess;
