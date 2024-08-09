@@ -169,10 +169,8 @@ export default class InferredQueryHandler {
     const qualifierConstraints = (qEdge.qualifier_constraints || []).map((qualifierSetObj) => {
       return Object.fromEntries(
         qualifierSetObj.qualifier_set.map(({ qualifier_type_id, qualifier_value }) => [
-          qualifier_type_id.replace('biolink:', ''),
-          Array.isArray(qualifier_value)
-            ? qualifier_value.map((string) => string.replace('biolink:', ''))
-            : qualifier_value.replace('biolink:', ''),
+          qualifier_type_id,
+          qualifier_value,
         ]),
       ) as CompactQualifiers;
     });
@@ -257,7 +255,7 @@ export default class InferredQueryHandler {
     qEdgeID: string,
     qEdge: TrapiQEdge,
     combinedResponse: CombinedResponse,
-    qualifers?: CompactQualifiers
+    qualifiers?: CompactQualifiers,
   ): CombinedResponseReport {
     const span = Telemetry.startSpan({ description: 'creativeCombineResponse' });
     const newResponse = handler.getResponse();
@@ -369,8 +367,17 @@ export default class InferredQueryHandler {
           };
         }
         // Add qualifiers to edge
-        if (typeof qualifers == 'object' && Object.keys(qualifers).length > 0 && !combinedResponse.message.knowledge_graph.edges[inferredEdgeID].qualifiers) {
-          combinedResponse.message.knowledge_graph.edges[inferredEdgeID].qualifiers = Object.entries(qualifers).map(([qualifierType, qualifierValue]) => ({ qualifier_type_id: qualifierType, qualifier_value: qualifierValue }));
+        if (
+          typeof qualifiers == 'object' &&
+          Object.keys(qualifiers).length > 0 &&
+          !combinedResponse.message.knowledge_graph.edges[inferredEdgeID].qualifiers
+        ) {
+          combinedResponse.message.knowledge_graph.edges[inferredEdgeID].qualifiers = Object.entries(qualifiers).map(
+            ([qualifierType, qualifierValue]) => ({
+              qualifier_type_id: qualifierType,
+              qualifier_value: qualifierValue,
+            }),
+          );
         }
 
         let auxGraphSuffix = 0;
@@ -424,9 +431,9 @@ export default class InferredQueryHandler {
         if (typeof combinedResponse.message.results[resultID].analyses[0].score !== 'undefined') {
           combinedResponse.message.results[resultID].analyses[0].score = resScore
             ? scaled_sigmoid(
-              inverse_scaled_sigmoid(combinedResponse.message.results[resultID].analyses[0].score) +
-              inverse_scaled_sigmoid(resScore),
-            )
+                inverse_scaled_sigmoid(combinedResponse.message.results[resultID].analyses[0].score) +
+                  inverse_scaled_sigmoid(resScore),
+              )
             : combinedResponse.message.results[resultID].analyses[0].score;
         } else {
           combinedResponse.message.results[resultID].analyses[0].score = resScore;
@@ -580,7 +587,7 @@ export default class InferredQueryHandler {
           qEdgeID,
           qEdge,
           combinedResponse,
-          qualifiers
+          qualifiers,
         );
         // update values used in logging
         successfulQueries += querySuccess;
@@ -595,9 +602,11 @@ export default class InferredQueryHandler {
           const message = [
             `Addition of ${creativeLimitHit} results from Template ${i + 1}`,
             Object.keys(combinedResponse.message.results).length === this.CREATIVE_LIMIT ? ' meets ' : ' exceeds ',
-            `creative result maximum of ${this.CREATIVE_LIMIT} (reaching ${Object.keys(combinedResponse.message.results).length
+            `creative result maximum of ${this.CREATIVE_LIMIT} (reaching ${
+              Object.keys(combinedResponse.message.results).length
             } merged). `,
-            `Response will be truncated to top-scoring ${this.CREATIVE_LIMIT} results. Skipping remaining ${subQueries.length - (i + 1)
+            `Response will be truncated to top-scoring ${this.CREATIVE_LIMIT} results. Skipping remaining ${
+              subQueries.length - (i + 1)
             } `,
             subQueries.length - (i + 1) === 1 ? `template.` : `templates.`,
           ].join('');
@@ -622,8 +631,9 @@ export default class InferredQueryHandler {
       const total =
         Object.values(mergedResultsCount).reduce((sum, count) => sum + count, 0) +
         Object.keys(mergedResultsCount).length;
-      const message = `Merging Summary: (${total}) inferred-template results were merged into (${Object.keys(mergedResultsCount).length
-        }) final results, reducing result count by (${total - Object.keys(mergedResultsCount).length})`;
+      const message = `Merging Summary: (${total}) inferred-template results were merged into (${
+        Object.keys(mergedResultsCount).length
+      }) final results, reducing result count by (${total - Object.keys(mergedResultsCount).length})`;
       debug(message);
       combinedResponse.logs.push(new LogEntry('INFO', null, message).getLog());
     }
