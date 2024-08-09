@@ -313,25 +313,32 @@ export default class InferredQueryHandler {
       // Direct edge answers stand on their own, not as an inferred edge.
       const boundEdgeID = Object.values(result.analyses[0].edge_bindings)[0][0].id;
       const boundEdge = combinedResponse.message.knowledge_graph.edges[boundEdgeID];
-      const specialHandling = [
-        Object.keys(result.node_bindings).length === 2, // Direct edge
-        // Predicate matches or is descendant
+      const oneHop = Object.keys(result.node_bindings).length === 2; // Direct edge
+      // Predicate matches or is descendant
+      const predicateMatch =
         qEdge.predicates?.some(
           (predicate) =>
             predicate === boundEdge.predicate ||
             biolink.getDescendantPredicates(predicate).includes(boundEdge.predicate),
-        ) ?? false,
-        // All query qualifiers (if any) are accounted for (more is fine)
+        ) ?? false;
+      // All query qualifiers (if any) are accounted for (more is fine)
+      const qualifierMatch =
         qEdge.qualifier_constraints?.some(({ qualifier_set }) => {
-          return qualifier_set.every((queryQualifier) =>
-            boundEdge.qualifiers?.some(
-              (qualifier) =>
-                queryQualifier.qualifier_type_id === qualifier.qualifier_type_id &&
-                queryQualifier.qualifier_value === qualifier.qualifier_value,
-            ) ?? false,
-          );
-        }) ?? false,
-      ].every((test) => test);
+          return qualifier_set.every((queryQualifier) => {
+            return (
+              boundEdge.qualifiers?.some((qualifier) => {
+                const typeMatch = queryQualifier.qualifier_type_id === qualifier.qualifier_type_id;
+                const valueMatch =
+                  queryQualifier.qualifier_value === qualifier.qualifier_value ||
+                  biolink
+                    .getDescendantQualifiers(queryQualifier.qualifier_value as string)
+                    .includes(qualifier.qualifier_value as string);
+                return typeMatch && valueMatch;
+              }) ?? false
+            );
+          });
+        }) ?? false;
+      const specialHandling = oneHop && predicateMatch && qualifierMatch;
       if (specialHandling) {
         translatedResult.analyses[0].edge_bindings = { [qEdgeID]: [{ id: boundEdgeID, attributes: [] }] };
       } else {

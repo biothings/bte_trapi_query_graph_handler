@@ -62,21 +62,23 @@ export async function getTemplates(lookups: TemplateLookup[]): Promise<MatchedTe
   const matchingTemplatePaths: PathMatch[] = templateGroups.reduce((matches: PathMatch[], group: TemplateGroup) => {
     let matchingQualifers: CompactQualifiers;
     const lookupMatch = lookups.some((lookup) => {
-      const match = (
+      const match =
         group.subject.includes(lookup.subject) &&
         group.object.includes(lookup.object) &&
         group.predicate.includes(lookup.predicate) &&
         Object.entries(lookup.qualifiers || {}).every(([qualifierType, qualifierValue]) => {
-          return (group.qualifiers || {})[qualifierType] && group.qualifiers[qualifierType] === qualifierValue;
-        })
-      );
+          return (
+            (group.qualifiers || {})[qualifierType.replace('biolink:', '')] &&
+            group.qualifiers[qualifierType.replace('biolink:', '')] === qualifierValue.replace('biolink:', '')
+          );
+        });
       if (match) matchingQualifers = lookup.qualifiers;
       return match;
     });
 
     if (lookupMatch) {
       group.templates.forEach((template) => {
-        if (!matches.find(t => t.path === templatePaths[template])) {
+        if (!matches.find((t) => t.path === templatePaths[template])) {
           matches.push({ path: templatePaths[template], qualifiers: matchingQualifers });
         }
       });
