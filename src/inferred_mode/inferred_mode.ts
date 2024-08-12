@@ -321,6 +321,8 @@ export default class InferredQueryHandler {
         ) ?? false;
       // All query qualifiers (if any) are accounted for (more is fine)
       const qualifierMatch =
+        !qEdge.qualifier_constraints ||
+        qEdge.qualifier_constraints.length === 0 ||
         qEdge.qualifier_constraints?.some(({ qualifier_set }) => {
           return qualifier_set.every((queryQualifier) => {
             return (
@@ -331,7 +333,7 @@ export default class InferredQueryHandler {
                   const descendants = queryQualifier.qualifier_value.includes('biolink:')
                     ? biolink.getDescendantPredicates(queryQualifier.qualifier_value as string)
                     : biolink.getDescendantQualifiers(queryQualifier.qualifier_value as string);
-                  const valueMatch =
+                  valueMatch =
                     queryQualifier.qualifier_value === qualifier.qualifier_value ||
                     descendants.includes(qualifier.qualifier_value as string);
                 } catch (err) {
@@ -341,7 +343,7 @@ export default class InferredQueryHandler {
               }) ?? false
             );
           });
-        }) ?? false;
+        });
       const specialHandling = oneHop && predicateMatch && qualifierMatch;
       if (specialHandling) {
         translatedResult.analyses[0].edge_bindings = { [qEdgeID]: [{ id: boundEdgeID, attributes: [] }] };
