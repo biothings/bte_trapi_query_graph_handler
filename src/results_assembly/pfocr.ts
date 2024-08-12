@@ -5,7 +5,6 @@ import { intersection } from '../utils';
 import _ from 'lodash';
 import { LogEntry, StampedLog } from '@biothings-explorer/utils';
 import { TrapiResult, TrapiKGNode, TrapiResponse, TrapiKGEdge } from '@biothings-explorer/types';
-import Graph from '../graph/graph';
 
 // the minimum acceptable intersection size between the CURIEs
 // in a TRAPI result and in a PFOCR figure.
