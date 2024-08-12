@@ -208,11 +208,8 @@ export default class QueryEdgeManager {
       const objectIDs = [record.object.original, record.object.curie, ...record.object.equivalentCuries];
 
       // there must be at least a minimal intersection
-      const subjectMatch =
-        subjectIDs.some((curie) => execSubjectCuries.includes(curie)) || execSubjectCuries.length === 0;
-      const objectMatch = objectIDs.some((curie) => execObjectCuries.includes(curie)) || execObjectCuries.length === 0;
-
-      //if both ends match then keep record
+      const subjectMatch = subjectIDs.some((curie) => execSubjectCuries.includes(curie));
+      const objectMatch = objectIDs.some((curie) => execObjectCuries.includes(curie));
 
       // Don't keep self-edges
       const selfEdge = [...subjectIDs].some((curie) => objectIDs.includes(curie));

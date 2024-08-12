@@ -13,6 +13,7 @@ import {
   TrapiKnowledgeGraph,
   TrapiQEdge,
   TrapiQNode,
+  TrapiQualifier,
   TrapiQueryGraph,
   TrapiResponse,
   TrapiResult,
@@ -168,10 +169,8 @@ export default class InferredQueryHandler {
     const qualifierConstraints = (qEdge.qualifier_constraints || []).map((qualifierSetObj) => {
       return Object.fromEntries(
         qualifierSetObj.qualifier_set.map(({ qualifier_type_id, qualifier_value }) => [
-          qualifier_type_id.replace('biolink:', ''),
-          Array.isArray(qualifier_value)
-            ? qualifier_value.map((string) => string.replace('biolink:', ''))
-            : qualifier_value.replace('biolink:', ''),
+          qualifier_type_id,
+          qualifier_value,
         ]),
       ) as CompactQualifiers;
     });
@@ -214,7 +213,7 @@ export default class InferredQueryHandler {
   async createQueries(qEdge: TrapiQEdge, qSubject: TrapiQNode, qObject: TrapiQNode): Promise<FilledTemplate[]> {
     const templates = await this.findTemplates(qEdge, qSubject, qObject);
     // combine creative query with templates
-    const subQueries = templates.map(({ template, queryGraph }) => {
+    const subQueries = templates.map(({ template, queryGraph, qualifiers }) => {
       queryGraph.nodes.creativeQuerySubject.categories = [
         ...new Set([...queryGraph.nodes.creativeQuerySubject.categories, ...qSubject.categories]),
       ];
@@ -244,7 +243,7 @@ export default class InferredQueryHandler {
         delete queryGraph.nodes.creativeQueryObject.ids;
       }
 
-      return { template, queryGraph };
+      return { template, queryGraph, qualifiers };
     });
 
     return subQueries;
@@ -256,6 +255,7 @@ export default class InferredQueryHandler {
     qEdgeID: string,
     qEdge: TrapiQEdge,
     combinedResponse: CombinedResponse,
+    qualifiers?: CompactQualifiers,
   ): CombinedResponseReport {
     const span = Telemetry.startSpan({ description: 'creativeCombineResponse' });
     const newResponse = handler.getResponse();
@@ -309,8 +309,43 @@ export default class InferredQueryHandler {
       const resultID = `${resultCreativeSubjectID}-${resultCreativeObjectID}`;
 
       // Direct edge answers stand on their own, not as an inferred edge.
-      if (Object.keys(result.node_bindings).length == 2) {
-        const boundEdgeID = Object.values(result.analyses[0].edge_bindings)[0][0].id;
+      const boundEdgeID = Object.values(result.analyses[0].edge_bindings)[0][0].id;
+      const boundEdge = combinedResponse.message.knowledge_graph.edges[boundEdgeID];
+      const oneHop = Object.keys(result.node_bindings).length === 2; // Direct edge
+      // Predicate matches or is descendant
+      const predicateMatch =
+        qEdge.predicates?.some(
+          (predicate) =>
+            predicate === boundEdge.predicate ||
+            biolink.getDescendantPredicates(predicate).includes(boundEdge.predicate),
+        ) ?? false;
+      // All query qualifiers (if any) are accounted for (more is fine)
+      const qualifierMatch =
+        !qEdge.qualifier_constraints ||
+        qEdge.qualifier_constraints.length === 0 ||
+        qEdge.qualifier_constraints?.some(({ qualifier_set }) => {
+          return qualifier_set.every((queryQualifier) => {
+            return (
+              boundEdge.qualifiers?.some((qualifier) => {
+                const typeMatch = queryQualifier.qualifier_type_id === qualifier.qualifier_type_id;
+                let valueMatch: boolean;
+                try {
+                  const descendants = queryQualifier.qualifier_value.includes('biolink:')
+                    ? biolink.getDescendantPredicates(queryQualifier.qualifier_value as string)
+                    : biolink.getDescendantQualifiers(queryQualifier.qualifier_value as string);
+                  valueMatch =
+                    queryQualifier.qualifier_value === qualifier.qualifier_value ||
+                    descendants.includes(qualifier.qualifier_value as string);
+                } catch (err) {
+                  valueMatch = queryQualifier.qualifier_value === qualifier.qualifier_value;
+                }
+                return typeMatch && valueMatch;
+              }) ?? false
+            );
+          });
+        });
+      const specialHandling = oneHop && predicateMatch && qualifierMatch;
+      if (specialHandling) {
         translatedResult.analyses[0].edge_bindings = { [qEdgeID]: [{ id: boundEdgeID, attributes: [] }] };
       } else {
         // Create an aux graph using the result and associate it with an inferred Edge
@@ -334,11 +369,25 @@ export default class InferredQueryHandler {
             ],
             attributes: [
               { attribute_type_id: 'biolink:support_graphs', value: [] },
-              { attribute_type_id: 'biolink:knowledge_level', value: "prediction" },
-              { attribute_type_id: 'biolink:agent_type', value: "computational_model" },
+              { attribute_type_id: 'biolink:knowledge_level', value: 'prediction' },
+              { attribute_type_id: 'biolink:agent_type', value: 'computational_model' },
             ],
           };
         }
+        // Add qualifiers to edge
+        if (
+          typeof qualifiers == 'object' &&
+          Object.keys(qualifiers).length > 0 &&
+          !combinedResponse.message.knowledge_graph.edges[inferredEdgeID].qualifiers
+        ) {
+          combinedResponse.message.knowledge_graph.edges[inferredEdgeID].qualifiers = Object.entries(qualifiers).map(
+            ([qualifierType, qualifierValue]) => ({
+              qualifier_type_id: qualifierType,
+              qualifier_value: qualifierValue,
+            }),
+          );
+        }
+
         let auxGraphSuffix = 0;
         while (
           Object.keys(combinedResponse.message.auxiliary_graphs).includes(`${inferredEdgeID}-support${auxGraphSuffix}`)
@@ -357,7 +406,7 @@ export default class InferredQueryHandler {
             },
             [] as string[],
           ),
-          attributes: []
+          attributes: [],
         };
       }
 
@@ -390,9 +439,9 @@ export default class InferredQueryHandler {
         if (typeof combinedResponse.message.results[resultID].analyses[0].score !== 'undefined') {
           combinedResponse.message.results[resultID].analyses[0].score = resScore
             ? scaled_sigmoid(
-                inverse_scaled_sigmoid(combinedResponse.message.results[resultID].analyses[0].score) +
-                  inverse_scaled_sigmoid(resScore),
-              )
+              inverse_scaled_sigmoid(combinedResponse.message.results[resultID].analyses[0].score) +
+              inverse_scaled_sigmoid(resScore),
+            )
             : combinedResponse.message.results[resultID].analyses[0].score;
         } else {
           combinedResponse.message.results[resultID].analyses[0].score = resScore;
@@ -523,7 +572,7 @@ export default class InferredQueryHandler {
       [resultID: string]: number;
     } = {};
 
-    await async.eachOfSeries(subQueries, async ({ template, queryGraph }, i) => {
+    await async.eachOfSeries(subQueries, async ({ template, queryGraph, qualifiers }, i) => {
       const span = Telemetry.startSpan({ description: 'creativeTemplate' });
       span.setData('template', (i as number) + 1);
       i = i as number;
@@ -546,6 +595,7 @@ export default class InferredQueryHandler {
           qEdgeID,
           qEdge,
           combinedResponse,
+          qualifiers,
         );
         // update values used in logging
         successfulQueries += querySuccess;
@@ -560,11 +610,9 @@ export default class InferredQueryHandler {
           const message = [
             `Addition of ${creativeLimitHit} results from Template ${i + 1}`,
             Object.keys(combinedResponse.message.results).length === this.CREATIVE_LIMIT ? ' meets ' : ' exceeds ',
-            `creative result maximum of ${this.CREATIVE_LIMIT} (reaching ${
-              Object.keys(combinedResponse.message.results).length
+            `creative result maximum of ${this.CREATIVE_LIMIT} (reaching ${Object.keys(combinedResponse.message.results).length
             } merged). `,
-            `Response will be truncated to top-scoring ${this.CREATIVE_LIMIT} results. Skipping remaining ${
-              subQueries.length - (i + 1)
+            `Response will be truncated to top-scoring ${this.CREATIVE_LIMIT} results. Skipping remaining ${subQueries.length - (i + 1)
             } `,
             subQueries.length - (i + 1) === 1 ? `template.` : `templates.`,
           ].join('');
@@ -589,9 +637,8 @@ export default class InferredQueryHandler {
       const total =
         Object.values(mergedResultsCount).reduce((sum, count) => sum + count, 0) +
         Object.keys(mergedResultsCount).length;
-      const message = `Merging Summary: (${total}) inferred-template results were merged into (${
-        Object.keys(mergedResultsCount).length
-      }) final results, reducing result count by (${total - Object.keys(mergedResultsCount).length})`;
+      const message = `Merging Summary: (${total}) inferred-template results were merged into (${Object.keys(mergedResultsCount).length
+        }) final results, reducing result count by (${total - Object.keys(mergedResultsCount).length})`;
       debug(message);
       combinedResponse.logs.push(new LogEntry('INFO', null, message).getLog());
     }

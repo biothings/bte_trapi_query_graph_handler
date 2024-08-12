@@ -4,7 +4,6 @@ import Debug from 'debug';
 import { zip } from 'lodash';
 const debug = Debug('bte:biothings-explorer-trapi:QueryResult');
 import { getScores, calculateScore, ScoreCombos } from './score';
-import { enrichTrapiResultsWithPfocrFigures } from './pfocr';
 import * as config from '../config';
 
 export interface RecordsByQEdgeID {
@@ -476,13 +475,13 @@ export default class TrapiResultsAssembler {
       .sort((result1, result2) => (result2.analyses[0].score ?? 0) - (result1.analyses[0].score ?? 0)); //sort by decreasing score
 
     if (shouldScore) {
-      try {
-        const pfocrEnrichmentLogs = await enrichTrapiResultsWithPfocrFigures(this._results);
-        this.logs.push(...pfocrEnrichmentLogs);
-      } catch (err) {
-        debug('Error enriching with PFOCR figures: ', err);
-        this.logs.push(new LogEntry('DEBUG', null, 'Error enriching with PFOCR figures: ', err).getLog());
-      }
+      // try {
+      //   const pfocrEnrichmentLogs = await enrichTrapiResultsWithPfocrFigures(this._results);
+      //   this.logs.push(...pfocrEnrichmentLogs);
+      // } catch (err) {
+      //   debug('Error enriching with PFOCR figures: ', err);
+      //   this.logs.push(new LogEntry('DEBUG', null, 'Error enriching with PFOCR figures: ', err).getLog());
+      // }
       debug(`Scored ${resultsWithScore} results with NGD score, scored ${resultsWithoutScore} results without NGD.`);
       this.logs.push(
         new LogEntry(
@@ -502,7 +501,7 @@ export default class TrapiResultsAssembler {
         new LogEntry(
           'DEBUG',
           null,
-          `Scoring/PFOCR figures disabled for KP endpoints; results not scored. Use ARA endpoints (/v1/query or /v1/asyncquery) for scoring/PFOCR figures.`,
+          `Scoring disabled for KP endpoints; results not scored. Use ARA endpoints (/v1/query or /v1/asyncquery) for scoring.`,
           {
             type: 'scoring',
             scored: resultsWithScore,
