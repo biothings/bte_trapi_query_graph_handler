@@ -317,7 +317,9 @@ export default class InferredQueryHandler {
         qEdge.predicates?.some(
           (predicate) =>
             predicate === boundEdge.predicate ||
-            biolink.getDescendantPredicates(predicate).includes(boundEdge.predicate),
+            biolink
+              .getDescendantPredicates(utils.removeBioLinkPrefix(predicate))
+              .includes(utils.removeBioLinkPrefix(boundEdge.predicate)),
         ) ?? false;
       // All query qualifiers (if any) are accounted for (more is fine)
       const qualifierMatch =
@@ -331,11 +333,11 @@ export default class InferredQueryHandler {
                 let valueMatch: boolean;
                 try {
                   const descendants = queryQualifier.qualifier_value.includes('biolink:')
-                    ? biolink.getDescendantPredicates(queryQualifier.qualifier_value as string)
-                    : biolink.getDescendantQualifiers(queryQualifier.qualifier_value as string);
+                    ? biolink.getDescendantPredicates(utils.removeBioLinkPrefix(queryQualifier.qualifier_value as string))
+                    : biolink.getDescendantQualifiers(utils.removeBioLinkPrefix(queryQualifier.qualifier_value as string));
                   valueMatch =
                     queryQualifier.qualifier_value === qualifier.qualifier_value ||
-                    descendants.includes(qualifier.qualifier_value as string);
+                    descendants.includes(utils.removeBioLinkPrefix(qualifier.qualifier_value as string));
                 } catch (err) {
                   valueMatch = queryQualifier.qualifier_value === qualifier.qualifier_value;
                 }
