@@ -1,4 +1,4 @@
-import MetaKG from '@biothings-explorer/smartapi-kg';
+import MetaKG, { SmartAPIQueryResult } from '@biothings-explorer/smartapi-kg';
 import path from 'path';
 import QueryGraph from './query_graph';
 import KnowledgeGraph from './graph/knowledge_graph';
@@ -30,6 +30,7 @@ import { QueryHandlerOptions } from '@biothings-explorer/types';
 import BTEGraph from './graph/graph';
 import QEdge from './query_edge';
 import { Telemetry } from '@biothings-explorer/utils';
+import { enrichTrapiResultsWithPfocrFigures } from './results_assembly/pfocr';
 
 // Exports for external availability
 export * from './types';
@@ -73,14 +74,21 @@ export default class TRAPIQueryHandler {
 
   async findUnregisteredAPIs() {
     const configListAPIs = this.options.apiList['include'];
-    const smartapiRegistry = await fs.readFile(this.path, { encoding: 'utf8' });
+
+    let smartapiRegistry: SmartAPIQueryResult;
+    if (this.options.smartapi) {
+      smartapiRegistry = this.options.smartapi;
+    } else {
+      const file = await fs.readFile(this.path, "utf-8");
+      smartapiRegistry = JSON.parse(file);
+    }
 
     const smartapiIds: string[] = [];
     const inforesIds: string[] = [];
     const unregisteredAPIs: string[] = [];
 
     // TODO typing for smartapiRegistration
-    JSON.parse(smartapiRegistry).hits.forEach((smartapiRegistration) => {
+    smartapiRegistry.hits.forEach((smartapiRegistration) => {
       smartapiIds.push(smartapiRegistration._id);
       inforesIds.push(smartapiRegistration.info?.['x-translator']?.infores);
     });
@@ -96,14 +104,23 @@ export default class TRAPIQueryHandler {
     return unregisteredAPIs;
   }
 
-  _loadMetaKG(): MetaKG {
-    const metaKG = new MetaKG(this.path, this.predicatePath);
+  async _loadMetaKG(): Promise<MetaKG> {
     debug(
       `Query options are: ${JSON.stringify({
         ...this.options,
         schema: this.options.schema ? this.options.schema.info.version : 'not included',
+        metakg: "",
+        smartapi: ""
       })}`,
     );
+
+    if (this.options.metakg) {
+      const metaKG = new MetaKG(undefined, undefined, (this.options as any).metakg);
+      metaKG.filterKG(this.options);
+      return metaKG;
+    }
+
+    const metaKG = new MetaKG(this.path, this.predicatePath);
     debug(`SmartAPI Specs read from path: ${this.path}`);
     metaKG.constructMetaKGSync(this.includeReasoner, this.options);
     return metaKG;
@@ -302,6 +319,18 @@ export default class TRAPIQueryHandler {
     this.finalizedResults = fixedResults;
   }
 
+  appendOriginalCuriesToResults(results: TrapiResult[]): void {
+    results.forEach(result => {
+      Object.entries(result.node_bindings).forEach(([_, bindings]) => {
+        bindings.forEach(binding => {
+          if (this.bteGraph.nodes[binding.id].originalCurie && this.bteGraph.nodes[binding.id].originalCurie !== binding.id) {
+            binding.query_id = this.bteGraph.nodes[binding.id].originalCurie;
+          }
+        })
+      })
+    })
+  }
+
   async addQueryNodes(): Promise<void> {
     const qNodeIDsByOriginalID: Map<string, TrapiQNode> = new Map();
     const curiesToResolve = [
@@ -323,6 +352,7 @@ export default class TRAPIQueryHandler {
         this.bteGraph.nodes[resolvedEntity.primaryID] = new KGNode(resolvedEntity.primaryID, {
           primaryCurie: resolvedEntity.primaryID,
           qNodeID: qNodeIDsByOriginalID[originalCurie],
+          originalCurie: originalCurie,
           curies: resolvedEntity.equivalentIDs,
           names: resolvedEntity.labelAliases,
           semanticType: category ? [category] : ['biolink:NamedThing'],
@@ -629,7 +659,7 @@ export default class TRAPIQueryHandler {
     const span1 = Telemetry.startSpan({ description: 'loadMetaKG' });
 
     debug('Start to load metakg.');
-    const metaKG = this._loadMetaKG();
+    const metaKG = await this._loadMetaKG();
     if (!metaKG.ops.length) {
       let error: string;
       if (this.options.smartAPIID) {
@@ -710,7 +740,12 @@ export default class TRAPIQueryHandler {
     this.createSubclassSupportGraphs();
     // prune bteGraph
     this.bteGraph.prune(this.finalizedResults, this.auxGraphs);
+    // add original curies to results
+    this.appendOriginalCuriesToResults(this.finalizedResults);
     this.bteGraph.notify();
+
+    // Attempt to enrich results with PFOCR figures
+    this.logs = [...this.logs, ...(await enrichTrapiResultsWithPfocrFigures(this.getResponse()))];
 
     span3?.finish();
 

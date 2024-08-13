@@ -21,6 +21,7 @@
                ],
     "predicate": ["affects"],
     "qualifiers": {
+      "qualified_predicate": "causes",
       "object_aspect_qualifier": "activity_or_abundance",
       "object_direction_qualifier": "increased"
     }, 
@@ -40,6 +41,7 @@
                ],
     "predicate": ["affects"],
     "qualifiers": {
+      "qualified_predicate": "causes",
       "object_aspect_qualifier": "activity_or_abundance",
       "object_direction_qualifier": "decreased"
     }, 
