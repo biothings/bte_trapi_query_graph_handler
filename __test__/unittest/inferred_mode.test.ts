@@ -202,6 +202,7 @@ describe('Test InferredQueryHandler', () => {
           },
         },
         template: 'Chem-treats-DoP.json',
+        qualifiers: {}
       },
     ];
 
