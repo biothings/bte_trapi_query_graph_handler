@@ -248,16 +248,17 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
   const matchedFigures: Set<string> = new Set();
   const matchedTrapiResults: Set<TrapiResult> = new Set();
 
-  // const allGenesInAllFigures = figures.reduce((set, fig) => {
-  //   fig.associatedWith.mentions.genes.ncbigene.forEach((gene) => set.add(gene));
-  //   return set;
-  // }, new Set() as Set<string>);
+  const allGenesInAllFigures = figures.reduce((set, fig) => {
+    fig.associatedWith.mentions.genes.ncbigene.forEach((gene) => set.add(gene));
+    return set;
+  }, new Set() as Set<string>);
 
   for (const trapiResult of results) {
     // No figures match this result
     if (!figuresByCuries[curieCombosByResult.get(trapiResult)]) continue;
 
     const resultCuries = curiesByResult.get(trapiResult);
+    const resultGenesInAllFigures = intersection(allGenesInAllFigures, resultCuries);
 
     (figuresByCuries[curieCombosByResult.get(trapiResult)] ?? []).forEach((figure) => {
       if (!('pfocr' in trapiResult)) {
@@ -267,17 +268,12 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
       const figureCurieSet = new Set(figure.associatedWith.mentions.genes.ncbigene);
       const resultGenesInFigure = intersection(resultCuries, figureCurieSet);
 
-      const otherGenesInFigure = figureCurieSet.size - resultGenesInFigure.size;
-
-      const resultGenesInOtherFigures = [...resultCuries].filter((gene) => {
-        return figures.some((fig) => fig.associatedWith.mentions.genes.ncbigene.includes(gene));
-      }).length;
       // let otherGenesInOtherFigures = [...allGenesInAllFigures].filter((gene) => {
       //   return !resultCuries.has(gene) && !figureCurieSet.has(gene);
       // }).length;
 
-      const precision = resultGenesInFigure.size / (resultGenesInFigure.size + otherGenesInFigure);
-      const recall = resultGenesInFigure.size / (resultGenesInFigure.size + resultGenesInOtherFigures);
+      const precision = resultGenesInFigure.size / figureCurieSet.size;
+      const recall = resultGenesInFigure.size / resultGenesInAllFigures.size;
 
       trapiResult.pfocr.push({
         figureUrl: figure.associatedWith.figureUrl,
