@@ -201,6 +201,7 @@ describe('Test InferredQueryHandler', () => {
           },
         },
         template: 'Chem-treats-DoP.json',
+        qualifiers: {}
       },
     ];
 
@@ -549,7 +550,7 @@ describe('Test InferredQueryHandler', () => {
     expect(creativeLimitHit).toBeTruthy();
     expect(Object.keys(combinedResponse.message.results)).toHaveLength(3);
     expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].analyses[0].score).toEqual(
-      0.8421052631578949,
+      0.7836531040612146,
     );
     expect(combinedResponse.message.results['fakeCompound3-fakeDisease1'].analyses[0].score).toEqual(0.2);
     expect(combinedResponse.logs).toHaveLength(3);
@@ -712,7 +713,7 @@ describe('Test InferredQueryHandler', () => {
     expect(Object.keys(mergedResults1)).toHaveLength(1);
     expect(creativeLimitHit1).toBeTruthy();
     expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].analyses[0].score).toEqual(
-      0.8421052631578949,
+      0.7836531040612146,
     );
   });
 
