@@ -7,3 +7,9 @@ export interface UnavailableAPITracker {
 export interface CompactQualifiers {
   [qualifier_type_id: string]: string;
 }
+
+export interface SubclassEdges {
+  [expandedID: string]: { 
+    [parentID: string]: string[] /* QNode IDs */ 
+  } 
+}
