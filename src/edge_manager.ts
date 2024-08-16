@@ -215,8 +215,8 @@ export default class QueryEdgeManager {
         });
         return set;
       }, new Set<string>())];
-      objectIDs = [...objectIDs, ...objectIDs.reduce((set, objectIDs) => {
-        Object.entries(this._subclassEdges[objectIDs] ?? {}).forEach(([id, qNodes]) => {
+      objectIDs = [...objectIDs, ...objectIDs.reduce((set, objectID) => {
+        Object.entries(this._subclassEdges[objectID] ?? {}).forEach(([id, qNodes]) => {
           if (qNodes.includes(qEdge.reverse ? qEdge.subject.id : qEdge.object.id)) set.add(id);
         });
         return set;
