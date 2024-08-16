@@ -37,6 +37,7 @@ export { getTemplates, supportedLookups } from './inferred_mode/template_lookup'
 export { default as QEdge } from './query_edge';
 export { default as QNode } from './query_node';
 export { default as InvalidQueryGraphError } from './exceptions/invalid_query_graph_error';
+export { default as QEdge2APIEdgeHandler } from './qedge2apiedge'
 export * from './qedge2apiedge';
 
 export default class TRAPIQueryHandler {
