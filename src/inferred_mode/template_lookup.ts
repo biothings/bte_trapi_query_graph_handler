@@ -61,25 +61,27 @@ export async function getTemplates(lookups: TemplateLookup[], pathfinder = false
     await fs.readFile(path.resolve(__dirname, '../../data/templateGroups.json'), { encoding: 'utf8' }),
   );
   const matchingTemplatePaths: PathMatch[] = templateGroups.reduce((matches: PathMatch[], group: TemplateGroup) => {
-    let matchingQualifers: CompactQualifiers;
+    let matchingQualifiers: CompactQualifiers;
     const lookupMatch = lookups.some((lookup) => {
-      const match = (
-        (!!group.pathfinder === pathfinder) &&
+      const match =
+        !!group.pathfinder === pathfinder &&
         group.subject.includes(lookup.subject) &&
         group.object.includes(lookup.object) &&
         group.predicate.includes(lookup.predicate) &&
         Object.entries(lookup.qualifiers || {}).every(([qualifierType, qualifierValue]) => {
-          return (group.qualifiers || {})[qualifierType] && group.qualifiers[qualifierType] === qualifierValue;
-        })
-      );
-      if (match) matchingQualifers = lookup.qualifiers;
+          return (
+            (group.qualifiers || {})[qualifierType.replace('biolink:', '')] &&
+            group.qualifiers[qualifierType.replace('biolink:', '')] === qualifierValue.replace('biolink:', '')
+          );
+        });
+      if (match) matchingQualifiers = lookup.qualifiers;
       return match;
     });
 
     if (lookupMatch) {
       group.templates.forEach((template) => {
-        if (!matches.find(t => t.path === templatePaths[template])) {
-          matches.push({ path: templatePaths[template], qualifiers: matchingQualifers });
+        if (!matches.find((t) => t.path === templatePaths[template])) {
+          matches.push({ path: templatePaths[template], qualifiers: matchingQualifiers });
         }
       });
     }

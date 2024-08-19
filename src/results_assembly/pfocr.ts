@@ -64,14 +64,19 @@ async function getAllByScrolling(
   hits: RawFigureResult[] = [],
 ): Promise<RawFigureResult[]> {
   queryBody.from = batchIndex;
-  const { data } = await axios.post(baseUrl, queryBody).catch((err) => {
-    debug('Error in scrolling request', err);
-    throw err;
-  });
+  let data: { hits: RawFigureResult[]; max_total: number };
+  try {
+    data = (await axios.post(baseUrl, queryBody, { timeout: 15000 })).data;
+  } catch (err) {
+    debug(`Error in scrolling request window ${batchIndex}-${batchIndex + 1000}, error is ${(err as Error).message}`);
+  }
 
-  hits.push(...data.hits);
-  debug(`Batch window ${batchIndex}-${batchIndex + 1000}: ${data.hits.length} hits retrieved for PFOCR figure data`);
-  if (batchIndex + 1000 < data.max_total) {
+  if (data) {
+    hits.push(...data.hits);
+    debug(`Batch window ${batchIndex}-${batchIndex + 1000}: ${data.hits.length} hits retrieved for PFOCR figure data`);
+  }
+
+  if (data && batchIndex + 1000 < data.max_total) {
     return await getAllByScrolling(baseUrl, queryBody, batchIndex + 1000, hits);
   } else {
     return hits;
@@ -82,7 +87,12 @@ async function getAllByScrolling(
  */
 async function getPfocrFigures(qTerms: Set<string>): Promise<DeDupedFigureResult[]> {
   debug(`Getting PFOCR figure data`);
-  const url = 'https://biothings.ncats.io/pfocr/query';
+  const url = {
+    dev: 'https://biothings.ci.transltr.io/pfocr/query',
+    ci: 'https://biothings.ci.transltr.io/pfocr/query',
+    test: 'https://biothings.test.transltr.io/pfocr/query',
+    prod: 'https://biothings.ncats.io/pfocr/query',
+  }[process.env.INSTANCE_ENV ?? 'prod'];
   /*
    * We can now POST using minimum_should_match to bypass most set logic on our side
    * detailed here: https://github.com/biothings/pending.api/issues/88
@@ -210,10 +220,20 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
     return logs;
   }
 
-  const figures = await getPfocrFigures(curieCombos).catch((err) => {
-    debug('Error getting PFOCR figures (enrichTrapiResultsWithPfocrFigures)', err);
-    throw err;
-  });
+  let figures: DeDupedFigureResult[];
+  try {
+    figures = await getPfocrFigures(curieCombos);
+  } catch (err) {
+    debug('Error getting PFOCR figures (enrichTrapiResultsWithPfocrFigures)', (err as Error).message);
+    logs.push(
+      new LogEntry(
+        'WARNING',
+        null,
+        `Error getting PFOCR figures, results will not be enriched. The error is ${err.message}`,
+      ).getLog(),
+    );
+  }
+  if (!figures) return logs;
 
   debug(`${figures.length} PFOCR figures match at least ${MATCH_COUNT_MIN} nodes from any TRAPI result`);
 
