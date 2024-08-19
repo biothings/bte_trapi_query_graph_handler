@@ -40,6 +40,7 @@ export { default as QEdge } from './query_edge';
 export { default as QNode } from './query_node';
 export { default as InvalidQueryGraphError } from './exceptions/invalid_query_graph_error';
 export * from './qedge2apiedge';
+export {TrapiQueryGraph, TrapiResponse, TrapiResult};  // better readability
 
 export default class TRAPIQueryHandler {
   logs: StampedLog[];
