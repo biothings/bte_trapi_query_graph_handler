@@ -9,7 +9,10 @@ export interface CompactQualifiers {
 }
 
 export interface SubclassEdges {
-  [expandedID: string]: { 
-    [parentID: string]: string[] /* QNode IDs */ 
-  } 
+  [expandedID: string]: {
+    [parentID: string]: {
+      source: string;
+      qNodes: string[];
+    };
+  };
 }

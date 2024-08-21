@@ -79,7 +79,7 @@ export default class TRAPIQueryHandler {
     if (this.options.smartapi) {
       smartapiRegistry = this.options.smartapi;
     } else {
-      const file = await fs.readFile(this.path, "utf-8");
+      const file = await fs.readFile(this.path, 'utf-8');
       smartapiRegistry = JSON.parse(file);
     }
 
@@ -109,8 +109,8 @@ export default class TRAPIQueryHandler {
       `Query options are: ${JSON.stringify({
         ...this.options,
         schema: this.options.schema ? this.options.schema.info.version : 'not included',
-        metakg: "",
-        smartapi: ""
+        metakg: '',
+        smartapi: '',
       })}`,
     );
 
@@ -172,9 +172,13 @@ export default class TRAPIQueryHandler {
     const nodesToRebind: { [nodeID: string]: { [qEdgeID: string]: { newNode: string; subclassEdgeID: string } } } = {};
     Object.keys(this.bteGraph.nodes).forEach((nodeID) => {
       const subclassCuries = [];
-      expandedIDsbyPrimaryID[nodeID]?.forEach((expandedID) => Object.keys(this.subclassEdges[expandedID]).forEach((parentID) => subclassCuries.push({ original: parentID, expanded: expandedID })));
+      expandedIDsbyPrimaryID[nodeID]?.forEach((expandedID) =>
+        Object.keys(this.subclassEdges[expandedID]).forEach((parentID) =>
+          subclassCuries.push({ original: parentID, expanded: expandedID }),
+        ),
+      );
       if (!subclassCuries.length) return; // Nothing to rebind
-      subclassCuries.forEach(({original, expanded}) => {
+      subclassCuries.forEach(({ original, expanded }) => {
         const subject = nodeID;
         const object = primaryIDsByOriginalID[original];
         // Don't keep self-subclass
@@ -186,11 +190,9 @@ export default class TRAPIQueryHandler {
           subject,
           object,
         });
-        const source = Object.entries(ontologyKnowledgeSourceMapping).find(([prefix]) => {
-          return expanded.includes(prefix);
-        })[1];
-        subclassEdge.addAdditionalAttributes('biolink:knowledge_level', 'knowledge_assertion')
-        subclassEdge.addAdditionalAttributes('biolink:agent_type', 'manual_agent')
+        const source = ontologyKnowledgeSourceMapping[this.subclassEdges[expanded][original].source] ?? 'error-not-provided';
+        subclassEdge.addAdditionalAttributes('biolink:knowledge_level', 'knowledge_assertion');
+        subclassEdge.addAdditionalAttributes('biolink:agent_type', 'manual_agent');
         subclassEdge.addSource([
           { resource_id: source, resource_role: 'primary_knowledge_source' },
           {
@@ -202,39 +204,47 @@ export default class TRAPIQueryHandler {
         ]);
         this.bteGraph.edges[subclassEdgeID] = subclassEdge;
         if (!nodesToRebind[subject]) nodesToRebind[subject] = {};
-        this.subclassEdges[expanded][original].forEach((qNodeID) => nodesToRebind[subject][qNodeID] = { newNode: object, subclassEdgeID });
+        this.subclassEdges[expanded][original].qNodes.forEach(
+          (qNodeID) => (nodesToRebind[subject][qNodeID] = { newNode: object, subclassEdgeID }),
+        );
       });
     });
 
     // Create new constructed edges and aux graphs for edges that used subclass edges
     let auxGraphs: { [supportGraphID: string]: TrapiAuxiliaryGraph } = {};
-    const edgesToRebind: { [edgeID: string]: { [originalSubject: string]: { [originalObject: string]: string /* re-bound edge ID */ } } } = {};
+    const edgesToRebind: {
+      [edgeID: string]: { [originalSubject: string]: { [originalObject: string]: string /* re-bound edge ID */ } };
+    } = {};
     const edgesIDsByAuxGraphID = {};
     Object.entries(this.bteGraph.edges).forEach(([edgeID, bteEdge]) => {
       if (edgeID.includes('expanded')) return;
-      const combos: {subject: string, object: string, supportGraph: string[]}[] = [];
-      const subjectToSupportGraphs: {[sbj: string]: Set<string>} = {
-        [bteEdge.subject]: new Set(), 
+      const combos: { subject: string; object: string; supportGraph: string[] }[] = [];
+      const subjectToSupportGraphs: { [sbj: string]: Set<string> } = {
+        [bteEdge.subject]: new Set(),
         ...Object.values(nodesToRebind[bteEdge.subject] ?? {}).reduce((acc, x) => {
-          x.newNode in acc ? acc[x.newNode].add(x.subclassEdgeID) : acc[x.newNode] = new Set([x.subclassEdgeID])
+          x.newNode in acc ? acc[x.newNode].add(x.subclassEdgeID) : (acc[x.newNode] = new Set([x.subclassEdgeID]));
           return acc;
-        }, {})
+        }, {}),
       };
-      const objectToSupportGraphs: {[obj: string]: Set<string>} = {
-        [bteEdge.object]: new Set(), 
+      const objectToSupportGraphs: { [obj: string]: Set<string> } = {
+        [bteEdge.object]: new Set(),
         ...Object.values(nodesToRebind[bteEdge.object] ?? {}).reduce((acc, x) => {
-          x.newNode in acc ? acc[x.newNode].add(x.subclassEdgeID) : acc[x.newNode] = new Set([x.subclassEdgeID]);
+          x.newNode in acc ? acc[x.newNode].add(x.subclassEdgeID) : (acc[x.newNode] = new Set([x.subclassEdgeID]));
           return acc;
-        }, {})
+        }, {}),
       };
       for (const subject in subjectToSupportGraphs) {
         for (const object in objectToSupportGraphs) {
           if (subject == bteEdge.subject && object == bteEdge.object) continue; // no nodes are rebound
-          combos.push({ subject, object, supportGraph: [...subjectToSupportGraphs[subject], ...objectToSupportGraphs[object], edgeID] });
+          combos.push({
+            subject,
+            object,
+            supportGraph: [...subjectToSupportGraphs[subject], ...objectToSupportGraphs[object], edgeID],
+          });
         }
       }
 
-      combos.forEach(({subject, object, supportGraph}) => {
+      combos.forEach(({ subject, object, supportGraph }) => {
         const boundEdgeID = `${subject}-${bteEdge.predicate.replace('biolink:', '')}-${object}-via_subclass`;
         let suffix = 0;
         while (Object.keys(auxGraphs).includes(`support${suffix}-${boundEdgeID}`)) {
@@ -253,8 +263,8 @@ export default class TRAPIQueryHandler {
             object: object,
           });
           boundEdge.addAdditionalAttributes('biolink:support_graphs', [supportGraphID]);
-          boundEdge.addAdditionalAttributes('biolink:knowledge_level', 'logical_entailment')
-          boundEdge.addAdditionalAttributes('biolink:agent_type', 'automated_agent')
+          boundEdge.addAdditionalAttributes('biolink:knowledge_level', 'logical_entailment');
+          boundEdge.addAdditionalAttributes('biolink:agent_type', 'automated_agent');
           boundEdge.addSource([
             {
               resource_id: this.options.provenanceUsesServiceProvider
@@ -270,7 +280,7 @@ export default class TRAPIQueryHandler {
         if (!edgesToRebind[edgeID]) edgesToRebind[edgeID] = {};
         if (!edgesToRebind[edgeID][subject]) edgesToRebind[edgeID][subject] = {};
         edgesToRebind[edgeID][subject][object] = boundEdgeID;
-      })
+      });
     });
 
     const resultBoundEdgesWithAuxGraphs = new Set();
@@ -343,15 +353,18 @@ export default class TRAPIQueryHandler {
   }
 
   appendOriginalCuriesToResults(results: TrapiResult[]): void {
-    results.forEach(result => {
+    results.forEach((result) => {
       Object.entries(result.node_bindings).forEach(([_, bindings]) => {
-        bindings.forEach(binding => {
-          if (this.bteGraph.nodes[binding.id].originalCurie && this.bteGraph.nodes[binding.id].originalCurie !== binding.id) {
+        bindings.forEach((binding) => {
+          if (
+            this.bteGraph.nodes[binding.id].originalCurie &&
+            this.bteGraph.nodes[binding.id].originalCurie !== binding.id
+          ) {
             binding.query_id = this.bteGraph.nodes[binding.id].originalCurie;
           }
-        })
-      })
-    })
+        });
+      });
+    });
   }
 
   async addQueryNodes(): Promise<void> {
@@ -412,8 +425,10 @@ export default class TRAPIQueryHandler {
     for (const nodeId in queryGraph.nodes) {
       // perform node expansion
       if (queryGraph.nodes[nodeId].ids && !this._queryUsesInferredMode()) {
-        const descendantsByCurie: { [curie: string]: string[] } = getDescendants(queryGraph.nodes[nodeId].ids);
-        let expanded = Object.values(descendantsByCurie).flat();
+        const descendantsByCurie: { [curie: string]: { [descendants: string]: string } } = getDescendants(
+          queryGraph.nodes[nodeId].ids,
+        );
+        let expanded = Object.values(descendantsByCurie).map(descendants => Object.keys(descendants)).flat()
 
         expanded = _.uniq([...queryGraph.nodes[nodeId].ids, ...expanded]);
 
@@ -425,11 +440,11 @@ export default class TRAPIQueryHandler {
 
         if (foundExpandedIds) {
           Object.entries(descendantsByCurie).forEach(([curie, descendants]) => {
-            descendants.forEach((descendant) => {
+            Object.entries(descendants).forEach(([ descendant, source ]) => {
               if (queryGraph.nodes[nodeId].ids.includes(descendant)) return;
               if (!this.subclassEdges[descendant]) this.subclassEdges[descendant] = {};
-              if (!this.subclassEdges[descendant][curie]) this.subclassEdges[descendant][curie] = [];
-              this.subclassEdges[descendant][curie].push(nodeId);
+              if (!this.subclassEdges[descendant][curie]) this.subclassEdges[descendant][curie] = { source, qNodes: [] };
+              this.subclassEdges[descendant][curie].qNodes.push(nodeId);
             });
           });
         }
@@ -492,11 +507,13 @@ export default class TRAPIQueryHandler {
 
         let log_msg: string;
         if (currentQEdge.reverse) {
-          log_msg = `qEdge ${currentQEdge.id} (reversed): ${currentQEdge.object.categories} > ${currentQEdge.predicate ? `${currentQEdge.predicate} > ` : ''
-            }${currentQEdge.subject.categories}`;
+          log_msg = `qEdge ${currentQEdge.id} (reversed): ${currentQEdge.object.categories} > ${
+            currentQEdge.predicate ? `${currentQEdge.predicate} > ` : ''
+          }${currentQEdge.subject.categories}`;
         } else {
-          log_msg = `qEdge ${currentQEdge.id}: ${currentQEdge.subject.categories} > ${currentQEdge.predicate ? `${currentQEdge.predicate} > ` : ''
-            }${currentQEdge.object.categories}`;
+          log_msg = `qEdge ${currentQEdge.id}: ${currentQEdge.subject.categories} > ${
+            currentQEdge.predicate ? `${currentQEdge.predicate} > ` : ''
+          }${currentQEdge.object.categories}`;
         }
         this.logs.push(new LogEntry('INFO', null, log_msg).getLog());
 
@@ -537,8 +554,9 @@ export default class TRAPIQueryHandler {
     });
     const qEdgesLogStr = qEdgesToLog.length > 1 ? `[${qEdgesToLog.join(', ')}]` : `${qEdgesToLog.join(', ')}`;
     if (len > 0) {
-      const terminateLog = `Query Edge${len !== 1 ? 's' : ''} ${qEdgesLogStr} ${len !== 1 ? 'have' : 'has'
-        } no MetaKG edges. Your query terminates.`;
+      const terminateLog = `Query Edge${len !== 1 ? 's' : ''} ${qEdgesLogStr} ${
+        len !== 1 ? 'have' : 'has'
+      } no MetaKG edges. Your query terminates.`;
       debug(terminateLog);
       this.logs.push(new LogEntry('WARNING', null, terminateLog).getLog());
       return false;
@@ -652,7 +670,8 @@ export default class TRAPIQueryHandler {
       new LogEntry(
         'INFO',
         null,
-        `Execution Summary: (${KGNodes}) nodes / (${kgEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${cached ? ` (${cached} cached qEdges)` : ''
+        `Execution Summary: (${KGNodes}) nodes / (${kgEdges}) edges / (${results}) results; (${resultQueries}/${queries}) queries${
+          cached ? ` (${cached} cached qEdges)` : ''
         } returned results from(${sources.length}) unique API${sources.length === 1 ? 's' : ''}`,
       ).getLog(),
       new LogEntry('INFO', null, `APIs: ${sources.join(', ')} `).getLog(),
