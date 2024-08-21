@@ -188,13 +188,16 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
   const curiesByResult: Map<TrapiResult, Set<string>> = new Map();
 
   const curieCombos: Set<string> = results.reduce((combos: Set<string>, result: TrapiResult) => {
-    const nodes: Set<TrapiKGNode> = traverseResultForNodes(result, response);
+    const nodes: Set<TrapiKGNode> = new Set();
+    Object.values(result.node_bindings).forEach((bindings) =>
+      bindings.forEach((binding) => nodes.add(response.message.knowledge_graph.nodes[binding.id])),
+    );
     const combo: Set<string> = new Set();
     let matchedNodes = 0;
     [...nodes].forEach((node) => {
       let nodeMatched = false;
-      const equivalentCuries = node.attributes?.find((attribute) => attribute.attribute_type_id === 'biolink:xref')
-        .value as string[];
+      const equivalentCuries =
+        (node.attributes?.find((attribute) => attribute.attribute_type_id === 'biolink:xref')?.value as string[]) ?? [];
       equivalentCuries.forEach((curie) => {
         const prefix = curie.split(':')[0];
         const suffix = curie.replace(`${prefix}:`, '');
@@ -257,7 +260,14 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
     // No figures match this result
     if (!figuresByCuries[curieCombosByResult.get(trapiResult)]) continue;
 
-    const resultCuries = curiesByResult.get(trapiResult);
+    const resultNodes = traverseResultForNodes(trapiResult, response);
+    const resultCuries: Set<string> = [...resultNodes].reduce((curies, node) => {
+      const equivalentCuries =
+        (node.attributes?.find((attribute) => attribute.attribute_type_id === 'biolink:xref')?.value as string[]) ?? [];
+      equivalentCuries.forEach((curie) => curies.add(curie.split(':').slice(1).join('')));
+      return curies;
+    }, new Set<string>());
+
     const resultGenesInAllFigures = intersection(allGenesInAllFigures, resultCuries);
 
     (figuresByCuries[curieCombosByResult.get(trapiResult)] ?? []).forEach((figure) => {
