@@ -264,7 +264,11 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
     const resultCuries: Set<string> = [...resultNodes].reduce((curies, node) => {
       const equivalentCuries =
         (node.attributes?.find((attribute) => attribute.attribute_type_id === 'biolink:xref')?.value as string[]) ?? [];
-      equivalentCuries.forEach((curie) => curies.add(curie.split(':').slice(1).join('')));
+      equivalentCuries.forEach((curie) => {
+        const prefix = curie.split(':')[0];
+        const suffix = curie.replace(`${prefix}:`, '');
+        if (Object.keys(SUPPORTED_PREFIXES).includes(prefix)) curies.add(suffix);
+      });
       return curies;
     }, new Set<string>());
 
