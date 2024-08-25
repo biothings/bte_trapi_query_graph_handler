@@ -57,7 +57,7 @@ export default class BatchEdgeQueryHandler {
   /**
    * @private
    */
-  _queryAPIEdges(APIEdges: APIEdge[], unavailableAPIs: UnavailableAPITracker = {}): Promise<Record[]> {
+  _queryAPIEdges(APIEdges: APIEdge[], unavailableAPIs: UnavailableAPITracker = {}, abortSignal?: AbortSignal): Promise<Record[]> {
     // Skip queueing queries to unavailable APIs
     const queries = constructQueries(APIEdges, this.options).filter((query) => {
       if (unavailableAPIs[query.APIEdge.query_operation.server]?.skip === true) {
@@ -74,6 +74,7 @@ export default class BatchEdgeQueryHandler {
     debug(message);
     this.logs.push(new LogEntry('INFO', null, message).getLog());
     let finishedCount = 0;
+    let processedHashes = new Set<string>();
     const completedLogs = this.logs;
     const completedRecords: Record[] = [];
     return new Promise<Record[]>((resolve) => {
@@ -85,6 +86,13 @@ export default class BatchEdgeQueryHandler {
           logs: SerializableLog[];
           apiUnavailable: boolean;
         };
+
+        // check if this query is applicable
+        if (!queriesByHash[hash] || processedHashes.has(hash)) {
+          return;
+        }
+        processedHashes.add(hash);
+
         completedLogs.push(...LogEntry.deserialize(logs));
         completedRecords.push(...Record.unpackRecords(records, qEdge));
 
@@ -101,10 +109,17 @@ export default class BatchEdgeQueryHandler {
         if (finishedCount >= queries.length) {
           debug(`Total number of records returned for qEdge ${qEdge.id} is ${completedRecords.length}`);
           resolve(completedRecords);
-          global.workerSide.off('message', listener); // Clean up
+          global.workerSide.off('message', listener);
+          abortSignal?.removeEventListener('abort', abort); // Clean up
         }
       }
+      function abort() {
+        global.workerSide.off('message', listener);
+        abortSignal?.removeEventListener('abort', abort); // Clean up
+        resolve([]);
+      }
       global.workerSide.on('message', listener);
+      abortSignal?.addEventListener('abort', abort);
       global.workerSide.postMessage({
         threadId,
         type: 'subqueryRequest',
@@ -171,13 +186,13 @@ export default class BatchEdgeQueryHandler {
     });
   }
 
-  async query(qEdges: QEdge | QEdge[], unavailableAPIs: UnavailableAPITracker = {}): Promise<Record[]> {
+  async query(qEdges: QEdge | QEdge[], unavailableAPIs: UnavailableAPITracker = {}, abortSignal?: AbortSignal): Promise<Record[]> {
     debug('Node Update Start');
     // it's now a single edge but convert to arr to simplify refactoring
     qEdges = Array.isArray(qEdges) ? qEdges : [qEdges];
     const nodeUpdate = new NodesUpdateHandler(qEdges);
     // difference is there is no previous edge info anymore
-    await nodeUpdate.setEquivalentIDs(qEdges);
+    await nodeUpdate.setEquivalentIDs(qEdges, abortSignal);
     await this._rmEquivalentDuplicates(qEdges);
     debug('Node Update Success');
 
@@ -194,7 +209,7 @@ export default class BatchEdgeQueryHandler {
 
     const expanded_APIEdges = this._expandAPIEdges(APIEdges);
     debug('Start to query APIEdges....');
-    queryRecords = await this._queryAPIEdges(expanded_APIEdges, unavailableAPIs);
+    queryRecords = await this._queryAPIEdges(expanded_APIEdges, unavailableAPIs, abortSignal);
     if (queryRecords === undefined) return;
     debug('APIEdges are successfully queried....');
     queryRecords = await this._postQueryFilter(queryRecords);
