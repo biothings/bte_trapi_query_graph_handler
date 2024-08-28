@@ -39,6 +39,7 @@ export { getTemplates, supportedLookups } from './inferred_mode/template_lookup'
 export { default as QEdge } from './query_edge';
 export { default as QNode } from './query_node';
 export { default as InvalidQueryGraphError } from './exceptions/invalid_query_graph_error';
+export { default as NotImplementedError } from './exceptions/not_implemented_error';
 export * from './qedge2apiedge';
 
 export default class TRAPIQueryHandler {
@@ -473,18 +474,10 @@ export default class TRAPIQueryHandler {
   }
 
   async _processQueryGraph(queryGraph: TrapiQueryGraph): Promise<QEdge[]> {
-    try {
-      const queryGraphHandler = new QueryGraph(queryGraph, this.options.schema, this._queryIsPathfinder());
-      const queryEdges = await queryGraphHandler.calculateEdges();
-      this.logs = [...this.logs, ...queryGraphHandler.logs];
-      return queryEdges;
-    } catch (err) {
-      if (err instanceof InvalidQueryGraphError || err instanceof SRINodeNormFailure) {
-        throw err;
-      } else {
-        throw new InvalidQueryGraphError();
-      }
-    }
+    const queryGraphHandler = new QueryGraph(queryGraph, this.options.schema, this._queryIsPathfinder());
+    const queryEdges = await queryGraphHandler.calculateEdges();
+    this.logs = [...this.logs, ...queryGraphHandler.logs];
+    return queryEdges;
   }
 
   async _edgesSupported(qEdges: QEdge[], metaKG: MetaKG): Promise<boolean> {
