@@ -183,9 +183,9 @@ export default class QueryGraph {
     });
   }
 
-  _validateQueryNoSetInterpretation(queryGraph: TrapiQueryGraph): boolean {
+  _validateNoMCQ(queryGraph: TrapiQueryGraph): boolean {
     return Object.values(queryGraph.nodes).some((node) => {
-      if (node.set_interpretation) {
+      if (node.set_interpretation && node.set_interpretation.toLowerCase() === 'many') {
         throw new NotImplementedError('NotImplementedError', 'Set interpretation is not yet implemented.')
       }
     })
@@ -202,7 +202,7 @@ export default class QueryGraph {
     this._validateBatchSize(queryGraph);
     this._validateCycles(queryGraph);
     this._validateNoDuplicateQualifierTypes(queryGraph);
-    this._validateQueryNoSetInterpretation(queryGraph);
+    this._validateNoMCQ(queryGraph);
   }
 
   private async _findNodeCategories(curies: string[]): Promise<string[]> {
