@@ -1,4 +1,5 @@
-import TRAPIQueryHandler, { TrapiQueryGraph, TrapiResponse, TrapiResult } from '../../src/index';
+import TRAPIQueryHandler from '../../src/index';
+import { TrapiQueryGraph, TrapiResponse, TrapiResult } from '@biothings-explorer/types';
 import path from 'path';
 import fs from 'fs';
 const smartAPIPAth = path.resolve(__dirname, '../../../bte-trapi/data/smartapi_specs.json');
