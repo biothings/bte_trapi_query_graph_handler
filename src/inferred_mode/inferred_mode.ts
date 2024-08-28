@@ -372,11 +372,11 @@ export default class InferredQueryHandler {
                       try {
                         const descendants = queryQualifier.qualifier_value.includes('biolink:')
                           ? biolink.getDescendantPredicates(
-                              utils.removeBioLinkPrefix(queryQualifier.qualifier_value as string),
-                            )
+                            utils.removeBioLinkPrefix(queryQualifier.qualifier_value as string),
+                          )
                           : biolink.getDescendantQualifiers(
-                              utils.removeBioLinkPrefix(queryQualifier.qualifier_value as string),
-                            );
+                            utils.removeBioLinkPrefix(queryQualifier.qualifier_value as string),
+                          );
                         valueMatch =
                           queryQualifier.qualifier_value === qualifier.qualifier_value ||
                           descendants.includes(utils.removeBioLinkPrefix(qualifier.qualifier_value as string));
@@ -507,9 +507,9 @@ export default class InferredQueryHandler {
         if (typeof combinedResponse.message.results[resultID].analyses[0].score !== 'undefined') {
           combinedResponse.message.results[resultID].analyses[0].score = resScore
             ? scaled_sigmoid(
-                inverse_scaled_sigmoid(combinedResponse.message.results[resultID].analyses[0].score) +
-                  inverse_scaled_sigmoid(resScore),
-              )
+              inverse_scaled_sigmoid(combinedResponse.message.results[resultID].analyses[0].score) +
+              inverse_scaled_sigmoid(resScore),
+            )
             : combinedResponse.message.results[resultID].analyses[0].score;
         } else {
           combinedResponse.message.results[resultID].analyses[0].score = resScore;
@@ -518,9 +518,10 @@ export default class InferredQueryHandler {
         combinedResponse.message.results[resultID] = translatedResult;
       }
     });
-    const mergedWithinTemplate = Object.entries(report.mergedResults).reduce((count, [resultID, merged]) => {
-      return !resultIDsFromPrevious.has(resultID) ? count + merged : count;
-    }, 0);
+    // Should always be 0?
+    // const mergedWithinTemplate = Object.entries(report.mergedResults).reduce((count, [resultID, merged]) => {
+    //   return !resultIDsFromPrevious.has(resultID) ? count + merged : count;
+    // }, 0);
 
     // fix/combine logs
     handler.logs.forEach((log) => {
@@ -530,13 +531,13 @@ export default class InferredQueryHandler {
     });
 
     const mergeMessage = [
-      `(${mergedWithinTemplate}) results from Template-${queryNum + 1} `,
-      `were merged with other results from the template. `,
-      `(${mergedThisTemplate - mergedWithinTemplate}) results `,
-      `were merged with existing results from previous templates. `,
-      `Current result count is ${Object.keys(combinedResponse.message.results).length} `,
-      `(+${newResponse.message.results.length - mergedThisTemplate})`,
+      `Template Summary: Template-${queryNum + 1} `,
+      `returned (${newResponse.message.results.length}) results. `,
+      queryNum === 0 ? '' : `(${mergedThisTemplate}) of these were merged with results from previous templates. `,
+      `Total result count is ${Object.keys(combinedResponse.message.results).length} `,
+      `(increased by ${newResponse.message.results.length - mergedThisTemplate})`,
     ].join('');
+
     debug(mergeMessage);
     combinedResponse.logs.push(new LogEntry('INFO', null, mergeMessage).getLog());
 
@@ -682,11 +683,9 @@ export default class InferredQueryHandler {
           const message = [
             `Addition of ${creativeLimitHit} results from Template ${i + 1}`,
             Object.keys(combinedResponse.message.results).length === this.CREATIVE_LIMIT ? ' meets ' : ' exceeds ',
-            `creative result maximum of ${this.CREATIVE_LIMIT} (reaching ${
-              Object.keys(combinedResponse.message.results).length
+            `creative result maximum of ${this.CREATIVE_LIMIT} (reaching ${Object.keys(combinedResponse.message.results).length
             } merged). `,
-            `Response will be truncated to top-scoring ${this.CREATIVE_LIMIT} results. Skipping remaining ${
-              subQueries.length - (i + 1)
+            `Response will be truncated to top-scoring ${this.CREATIVE_LIMIT} results. Skipping remaining ${subQueries.length - (i + 1)
             } `,
             subQueries.length - (i + 1) === 1 ? `template.` : `templates.`,
           ].join('');
@@ -711,9 +710,8 @@ export default class InferredQueryHandler {
       const total =
         Object.values(mergedResultsCount).reduce((sum, count) => sum + count, 0) +
         Object.keys(mergedResultsCount).length;
-      const message = `Merging Summary: (${total}) inferred-template results were merged into (${
-        Object.keys(mergedResultsCount).length
-      }) final results, reducing result count by (${total - Object.keys(mergedResultsCount).length})`;
+      const message = `Result Merging Summary: (${total}) inferred-template results were merged into (${Object.keys(mergedResultsCount).length
+        }) final results, reducing result count by (${total - Object.keys(mergedResultsCount).length})`;
       debug(message);
       combinedResponse.logs.push(new LogEntry('INFO', null, message).getLog());
     }
