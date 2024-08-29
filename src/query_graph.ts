@@ -8,6 +8,7 @@ import { resolveSRI } from 'biomedical_id_resolver';
 import _ from 'lodash';
 import * as utils from './utils';
 import { TrapiQueryGraph } from '@biothings-explorer/types';
+import NotImplementedError from './exceptions/not_implemented_error';
 
 const debug = Debug('bte:biothings-explorer-trapi:query_graph');
 
@@ -182,6 +183,14 @@ export default class QueryGraph {
     });
   }
 
+  _validateNoMCQ(queryGraph: TrapiQueryGraph): boolean {
+    return Object.values(queryGraph.nodes).some((node) => {
+      if (node.set_interpretation && node.set_interpretation.toLowerCase() === 'many') {
+        throw new NotImplementedError('NotImplementedError', 'Set interpretation is not yet implemented.')
+      }
+    })
+  }
+
   _validate(queryGraph: TrapiQueryGraph): void {
     this._validateEmptyEdges(queryGraph);
     this._validateEmptyNodes(queryGraph);
@@ -193,6 +202,7 @@ export default class QueryGraph {
     this._validateBatchSize(queryGraph);
     this._validateCycles(queryGraph);
     this._validateNoDuplicateQualifierTypes(queryGraph);
+    this._validateNoMCQ(queryGraph);
   }
 
   private async _findNodeCategories(curies: string[]): Promise<string[]> {
