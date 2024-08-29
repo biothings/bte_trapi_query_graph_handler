@@ -1,5 +1,13 @@
 import TRAPIQueryHandler from '../index';
-import { TrapiResponse, TrapiQEdge, TrapiResult, TrapiQueryGraph, TrapiQNode, TrapiAnalysis, QueryHandlerOptions } from '@biothings-explorer/types';
+import {
+  TrapiResponse,
+  TrapiQEdge,
+  TrapiResult,
+  TrapiQueryGraph,
+  TrapiQNode,
+  TrapiAnalysis,
+  QueryHandlerOptions,
+} from '@biothings-explorer/types';
 import InferredQueryHandler from './inferred_mode';
 import { scaled_sigmoid, inverse_scaled_sigmoid } from '../results_assembly/score';
 import { LogEntry, StampedLog, Telemetry } from '@biothings-explorer/utils';
@@ -15,15 +23,15 @@ interface ResultAuxObject {
 }
 
 interface ResultObject {
-  [id: string]: TrapiResult
+  [id: string]: TrapiResult;
 }
 
 interface AuxGraphObject {
-  [id: string]: { edges: Set<string> }
+  [id: string]: { edges: Set<string> };
 }
 
 interface FullGraph {
-  [node: string]: { [dst: string]: Set<string> }
+  [node: string]: { [dst: string]: Set<string> };
 }
 
 interface DfsGraph {
@@ -67,7 +75,11 @@ export default class PathfinderQueryHandler {
       return;
     }
 
-    const templates = await generateTemplates(this.queryGraph.nodes[this.mainEdge.subject], this.unpinnedNode, this.queryGraph.nodes[this.mainEdge.object]);
+    const templates = await generateTemplates(
+      this.queryGraph.nodes[this.mainEdge.subject],
+      this.unpinnedNode,
+      this.queryGraph.nodes[this.mainEdge.object],
+    );
 
     const logMessage = `Got ${templates.length} pathfinder query templates.`;
     debug(logMessage);
@@ -88,20 +100,22 @@ export default class PathfinderQueryHandler {
       this.parent.path,
       this.parent.predicatePath,
       this.parent.includeReasoner,
-      true
+      true,
     );
-    const creativeResponse = await this.inferredQueryHandler.query(templates.map((queryGraph, i) => ({ template: `Template ${i + 1}`, queryGraph })));
+    const creativeResponse = await this.inferredQueryHandler.query(
+      templates.map((queryGraph, i) => ({ template: `Template ${i + 1}`, queryGraph, qualifiers: undefined })),
+    );
 
     // restore query graph
     this.queryGraph.nodes[this.unpinnedNodeId] = this.unpinnedNode;
-    this.intermediateEdges.forEach(([edgeId, edge]) => this.queryGraph.edges[edgeId] = edge);
+    this.intermediateEdges.forEach(([edgeId, edge]) => (this.queryGraph.edges[edgeId] = edge));
     creativeResponse.message.query_graph = this.queryGraph;
 
     this.parse(creativeResponse);
     this._pruneKg(creativeResponse);
 
     // logs
-    creativeResponse.logs = this.logs.map(log => log.toJSON());
+    creativeResponse.logs = this.logs.map((log) => log.toJSON());
 
     return creativeResponse;
   }
@@ -111,8 +125,12 @@ export default class PathfinderQueryHandler {
   extractData(): undefined | string {
     [this.unpinnedNodeId, this.unpinnedNode] = Object.entries(this.queryGraph.nodes).find(([_, node]) => !node.ids);
 
-    this.intermediateEdges = Object.entries(this.queryGraph.edges).filter(([_, edge]) => edge.subject === this.unpinnedNodeId || edge.object === this.unpinnedNodeId);
-    [this.mainEdgeId, this.mainEdge] = Object.entries(this.queryGraph.edges).find(([_, edge]) => edge.subject !== this.unpinnedNodeId && edge.object !== this.unpinnedNodeId);
+    this.intermediateEdges = Object.entries(this.queryGraph.edges).filter(
+      ([_, edge]) => edge.subject === this.unpinnedNodeId || edge.object === this.unpinnedNodeId,
+    );
+    [this.mainEdgeId, this.mainEdge] = Object.entries(this.queryGraph.edges).find(
+      ([_, edge]) => edge.subject !== this.unpinnedNodeId && edge.object !== this.unpinnedNodeId,
+    );
 
     // intermediateEdges should be in order of n0 -> un & un -> n1
     if (this.intermediateEdges[0][1].subject === this.unpinnedNodeId) {
@@ -120,8 +138,13 @@ export default class PathfinderQueryHandler {
       this.intermediateEdges[0] = this.intermediateEdges[1];
       this.intermediateEdges[1] = temp;
     }
-  
-    if (this.intermediateEdges[0][1].subject !== this.mainEdge.subject || this.intermediateEdges[1][1].object !== this.mainEdge.object || this.intermediateEdges[0][1].object !== this.unpinnedNodeId || this.intermediateEdges[1][1].subject !== this.unpinnedNodeId) {
+
+    if (
+      this.intermediateEdges[0][1].subject !== this.mainEdge.subject ||
+      this.intermediateEdges[1][1].object !== this.mainEdge.object ||
+      this.intermediateEdges[0][1].object !== this.unpinnedNodeId ||
+      this.intermediateEdges[1][1].subject !== this.unpinnedNodeId
+    ) {
       return 'Intermediate edges for Pathfinder are incorrect. Should follow pinned node -> unpinned node -> pinned node. Your query terminates.';
     }
   }
@@ -136,7 +159,7 @@ export default class PathfinderQueryHandler {
         this.parent.path,
         this.parent.predicatePath,
         this.parent.includeReasoner,
-        true
+        true,
       );
     }
     this.inferredQueryHandler.pruneKnowledgeGraph(creativeResponse);
@@ -159,7 +182,9 @@ export default class PathfinderQueryHandler {
     const kgDst = creativeResponse.message.results[0].node_bindings[this.mainEdge.object][0].id;
     const fullGraph: FullGraph = {};
     const supportGraphsPerNode: { [node: string]: Set<string> } = {};
-    const supportGraphs = (creativeResponse.message.knowledge_graph.edges[kgEdge]?.attributes?.find(attr => attr.attribute_type_id === 'biolink:support_graphs')?.value ?? []) as string[];
+    const supportGraphs = (creativeResponse.message.knowledge_graph.edges[kgEdge]?.attributes?.find(
+      (attr) => attr.attribute_type_id === 'biolink:support_graphs',
+    )?.value ?? []) as string[];
     for (const supportGraph of supportGraphs) {
       const auxGraph = (creativeResponse.message.auxiliary_graphs ?? {})[supportGraph];
       for (const subEdge of auxGraph.edges) {
@@ -189,25 +214,38 @@ export default class PathfinderQueryHandler {
       acceptableTypes = new Set<string>();
       for (const category of this.unpinnedNode.categories) {
         for (const desc of biolink.getDescendantClasses(removeBioLinkPrefix(category))) {
-          acceptableTypes.add('biolink:'+desc);
+          acceptableTypes.add('biolink:' + desc);
         }
       }
     }
 
-    const { results: newResultObject, graphs: newAuxGraphs } = this._searchForIntermediates(creativeResponse, supportGraphsPerNode, kgSrc, kgDst, acceptableTypes);
+    const { results: newResultObject, graphs: newAuxGraphs } = this._searchForIntermediates(
+      creativeResponse,
+      supportGraphsPerNode,
+      kgSrc,
+      kgDst,
+      acceptableTypes,
+    );
 
-    creativeResponse.message.results = Object.values(newResultObject).sort((a, b) => (b.analyses[0].score ?? 0) - (a.analyses[0].score ?? 0)).slice(0, this.CREATIVE_LIMIT);
-    creativeResponse.description = `Query processed successfully, retrieved ${creativeResponse.message.results.length} results.`
+    creativeResponse.message.results = Object.values(newResultObject)
+      .sort((a, b) => (b.analyses[0].score ?? 0) - (a.analyses[0].score ?? 0))
+      .slice(0, this.CREATIVE_LIMIT);
+    creativeResponse.description = `Query processed successfully, retrieved ${creativeResponse.message.results.length} results.`;
 
     const finalNewAuxGraphs: { [id: string]: { edges: string[] } } = {};
     for (const res in creativeResponse.message.results) {
       for (const eb of Object.values(creativeResponse.message.results[res].analyses[0].edge_bindings)) {
         for (const edge of eb) {
-          const auxGraph = creativeResponse.message.knowledge_graph.edges[edge.id].attributes.find(attr => attr.attribute_type_id === 'biolink:support_graphs')?.value[0];
+          const auxGraph = creativeResponse.message.knowledge_graph.edges[edge.id].attributes.find(
+            (attr) => attr.attribute_type_id === 'biolink:support_graphs',
+          )?.value[0];
           finalNewAuxGraphs[auxGraph] = { edges: [] };
           for (const ed of newAuxGraphs[auxGraph].edges) {
             const [st, en] = ed.split('\n');
-            finalNewAuxGraphs[auxGraph].edges.push.apply(finalNewAuxGraphs[auxGraph].edges, Array.from(fullGraph[st][en]));
+            finalNewAuxGraphs[auxGraph].edges.push.apply(
+              finalNewAuxGraphs[auxGraph].edges,
+              Array.from(fullGraph[st][en]),
+            );
           }
         }
       }
@@ -224,14 +262,20 @@ export default class PathfinderQueryHandler {
     return creativeResponse;
   }
 
-  _searchForIntermediates(creativeResponse: TrapiResponse, supportGraphsPerNode: { [node: string]: Set<string> }, kgSrc: string, kgDst: string, acceptableTypes: Set<string> = undefined): ResultAuxObject {
+  _searchForIntermediates(
+    creativeResponse: TrapiResponse,
+    supportGraphsPerNode: { [node: string]: Set<string> },
+    kgSrc: string,
+    kgDst: string,
+    acceptableTypes: Set<string> = undefined,
+  ): ResultAuxObject {
     const span = Telemetry.startSpan({ description: 'pathfinderIntermediateSearch' });
 
     const newResultObject: ResultObject = {};
     const newAuxGraphs: AuxGraphObject = {};
     for (let analysis of Object.values(this.originalAnalyses)) {
       const dfsGraph: DfsGraph = {};
-      for (const subEdge of Object.values(analysis.edge_bindings).map(eb => eb[0].id)) {
+      for (const subEdge of Object.values(analysis.edge_bindings).map((eb) => eb[0].id)) {
         const kgSubEdge = creativeResponse.message.knowledge_graph.edges[subEdge];
         if (!dfsGraph[kgSubEdge.subject]) {
           dfsGraph[kgSubEdge.subject] = {};
@@ -246,7 +290,7 @@ export default class PathfinderQueryHandler {
 
       while (stack.length !== 0) {
         const { node, path } = stack.pop()!;
-  
+
         // continue creating path if we haven't reached end yet
         if (node !== kgDst) {
           for (const neighbor in dfsGraph[node]) {
@@ -256,7 +300,7 @@ export default class PathfinderQueryHandler {
           }
           continue;
         }
-  
+
         // path to dest too short
         if (path.length <= 2) {
           continue;
@@ -268,7 +312,11 @@ export default class PathfinderQueryHandler {
 
           // check if the intermediate is of an appropriate type
           if (acceptableTypes) {
-            if (!creativeResponse.message.knowledge_graph.nodes[intermediateNode].categories.find(x => acceptableTypes.has(x))) {
+            if (
+              !creativeResponse.message.knowledge_graph.nodes[intermediateNode].categories.find((x) =>
+                acceptableTypes.has(x),
+              )
+            ) {
               continue;
             }
           }
@@ -281,13 +329,13 @@ export default class PathfinderQueryHandler {
 
           // add "edges" to aux graphs (kg edges will be added later)
           for (let j = 0; j < i; j++) {
-            newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}-support`].edges.add(`${path[j]}\n${path[j+1]}`);
-            newAuxGraphs[`pathfinder-${intermediateNode}-support`].edges.add(`${path[j]}\n${path[j+1]}`);
+            newAuxGraphs[`pathfinder-${kgSrc}-${intermediateNode}-support`].edges.add(`${path[j]}\n${path[j + 1]}`);
+            newAuxGraphs[`pathfinder-${intermediateNode}-support`].edges.add(`${path[j]}\n${path[j + 1]}`);
           }
           for (let j = i; j < path.length - 1; j++) {
-            newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}-support`].edges.add(`${path[j]}\n${path[j+1]}`);
-            newAuxGraphs[`pathfinder-${intermediateNode}-support`].edges.add(`${path[j]}\n${path[j+1]}`);
-          } 
+            newAuxGraphs[`pathfinder-${intermediateNode}-${kgDst}-support`].edges.add(`${path[j]}\n${path[j + 1]}`);
+            newAuxGraphs[`pathfinder-${intermediateNode}-support`].edges.add(`${path[j]}\n${path[j + 1]}`);
+          }
 
           // code below is only for new results
           if (`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}` in newResultObject) continue;
@@ -297,17 +345,19 @@ export default class PathfinderQueryHandler {
             node_bindings: {
               [this.mainEdge.subject]: [{ id: kgSrc }],
               [this.mainEdge.object]: [{ id: kgDst }],
-              [this.unpinnedNodeId]: [{ id: intermediateNode }]
+              [this.unpinnedNodeId]: [{ id: intermediateNode }],
             },
-            analyses: [{
-              resource_id: "infores:biothings-explorer",
-              edge_bindings: {
-                [this.mainEdgeId]: [{ id: `pathfinder-${intermediateNode}` }],
-                [this.intermediateEdges[0][0]]: [{ id: `pathfinder-${kgSrc}-${intermediateNode}` }],
-                [this.intermediateEdges[1][0]]: [{ id: `pathfinder-${intermediateNode}-${kgDst}` }],
+            analyses: [
+              {
+                resource_id: 'infores:biothings-explorer',
+                edge_bindings: {
+                  [this.mainEdgeId]: [{ id: `pathfinder-${intermediateNode}` }],
+                  [this.intermediateEdges[0][0]]: [{ id: `pathfinder-${kgSrc}-${intermediateNode}` }],
+                  [this.intermediateEdges[1][0]]: [{ id: `pathfinder-${intermediateNode}-${kgDst}` }],
+                },
+                score: undefined,
               },
-              score: undefined
-            }],
+            ],
           };
           creativeResponse.message.knowledge_graph.edges[`pathfinder-${kgSrc}-${intermediateNode}`] = {
             predicate: 'biolink:related_to',
@@ -322,9 +372,12 @@ export default class PathfinderQueryHandler {
               },
             ],
             attributes: [
-              { attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${kgSrc}-${intermediateNode}-support`] },
-              { attribute_type_id: 'biolink:knowledge_level', value: "prediction" },
-              { attribute_type_id: 'biolink:agent_type', value: "computational_model" },
+              {
+                attribute_type_id: 'biolink:support_graphs',
+                value: [`pathfinder-${kgSrc}-${intermediateNode}-support`],
+              },
+              { attribute_type_id: 'biolink:knowledge_level', value: 'prediction' },
+              { attribute_type_id: 'biolink:agent_type', value: 'computational_model' },
             ],
           };
           creativeResponse.message.knowledge_graph.edges[`pathfinder-${intermediateNode}-${kgDst}`] = {
@@ -340,9 +393,12 @@ export default class PathfinderQueryHandler {
               },
             ],
             attributes: [
-              { attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${intermediateNode}-${kgDst}-support`] },
-              { attribute_type_id: 'biolink:knowledge_level', value: "prediction" },
-              { attribute_type_id: 'biolink:agent_type', value: "computational_model" },
+              {
+                attribute_type_id: 'biolink:support_graphs',
+                value: [`pathfinder-${intermediateNode}-${kgDst}-support`],
+              },
+              { attribute_type_id: 'biolink:knowledge_level', value: 'prediction' },
+              { attribute_type_id: 'biolink:agent_type', value: 'computational_model' },
             ],
           };
           creativeResponse.message.knowledge_graph.edges[`pathfinder-${intermediateNode}`] = {
@@ -359,8 +415,8 @@ export default class PathfinderQueryHandler {
             ],
             attributes: [
               { attribute_type_id: 'biolink:support_graphs', value: [`pathfinder-${intermediateNode}-support`] },
-              { attribute_type_id: 'biolink:knowledge_level', value: "prediction" },
-              { attribute_type_id: 'biolink:agent_type', value: "computational_model" },
+              { attribute_type_id: 'biolink:knowledge_level', value: 'prediction' },
+              { attribute_type_id: 'biolink:agent_type', value: 'computational_model' },
             ],
           };
 
@@ -369,8 +425,7 @@ export default class PathfinderQueryHandler {
             let score: number | undefined = undefined;
             for (const supportGraph of supportGraphsPerNode[intermediateNode]) {
               score = scaled_sigmoid(
-                inverse_scaled_sigmoid(score ?? 0) +
-                inverse_scaled_sigmoid(this.originalAnalyses[supportGraph].score),
+                inverse_scaled_sigmoid(score ?? 0) + inverse_scaled_sigmoid(this.originalAnalyses[supportGraph].score),
               );
             }
             newResultObject[`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}`].analyses[0].score = score;
