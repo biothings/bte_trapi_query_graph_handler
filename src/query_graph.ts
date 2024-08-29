@@ -373,6 +373,8 @@ export default class QueryGraph {
         ) {
           nodes[qNodeID].categories.push('biolink:Protein');
         }
+        // Ensure categories are rolled into expandedCategories
+        nodes[qNodeID].expandCategories()
       }
     }
     this.logs.push(
