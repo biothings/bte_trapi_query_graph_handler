@@ -149,6 +149,27 @@ export default class PathfinderQueryHandler {
     }
   }
 
+  fixCategories() {
+    const FALLBACK_ANCESTORS = ['ChemicalEntity'];
+    [
+      this.queryGraph.nodes[this.mainEdge.subject],
+      this.unpinnedNode,
+      this.queryGraph.nodes[this.mainEdge.object],
+    ].forEach((node) => {
+      const ancestorsToInject = new Set();
+      node.categories.forEach((category) => {
+        const ancestors = biolink.getAncestorClasses(removeBioLinkPrefix(category));
+        if (!Array.isArray(ancestors)) return;
+        ancestors.forEach((ancestor) => {
+          if (FALLBACK_ANCESTORS.includes(ancestor)) {
+            ancestorsToInject.add(ancestor);
+          }
+        });
+      });
+      [...ancestorsToInject].forEach((category) => node.categories.push(`biolink:${category}`));
+    });
+  }
+
   _pruneKg(creativeResponse: TrapiResponse) {
     if (!this.inferredQueryHandler) {
       this.inferredQueryHandler = new InferredQueryHandler(
