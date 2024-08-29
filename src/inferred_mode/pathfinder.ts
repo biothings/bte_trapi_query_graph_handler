@@ -75,6 +75,8 @@ export default class PathfinderQueryHandler {
       return;
     }
 
+    this.fixCategories();
+
     const templates = await generateTemplates(
       this.queryGraph.nodes[this.mainEdge.subject],
       this.unpinnedNode,
@@ -151,11 +153,13 @@ export default class PathfinderQueryHandler {
 
   fixCategories() {
     const FALLBACK_ANCESTORS = ['ChemicalEntity'];
+    debug('Checking for categories which should have fallback ancestors added...');
     [
       this.queryGraph.nodes[this.mainEdge.subject],
       this.unpinnedNode,
       this.queryGraph.nodes[this.mainEdge.object],
-    ].forEach((node) => {
+    ].forEach((node, i) => {
+      const label = [this.mainEdge.subject, this.unpinnedNodeId, this.mainEdge.object];
       const ancestorsToInject = new Set();
       node.categories.forEach((category) => {
         const ancestors = biolink.getAncestorClasses(removeBioLinkPrefix(category));
@@ -167,6 +171,9 @@ export default class PathfinderQueryHandler {
         });
       });
       [...ancestorsToInject].forEach((category) => node.categories.push(`biolink:${category}`));
+      if (ancestorsToInject.size > 0) {
+      debug(`Added ancestors (${[...ancestorsToInject].join(', ')}) to ${label[i]}.`);
+      }
     });
   }
 
