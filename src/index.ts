@@ -15,6 +15,7 @@ import { promises as fs } from 'fs';
 import { getDescendants } from '@biothings-explorer/node-expansion';
 import { resolveSRI, SRINodeNormFailure } from 'biomedical_id_resolver';
 import InferredQueryHandler from './inferred_mode/inferred_mode';
+import PathfinderQueryHandler from './inferred_mode/pathfinder';
 import KGNode from './graph/kg_node';
 import KGEdge from './graph/kg_edge';
 import {
@@ -473,10 +474,10 @@ export default class TRAPIQueryHandler {
   }
 
   async _processQueryGraph(queryGraph: TrapiQueryGraph): Promise<QEdge[]> {
-    const queryGraphHandler = new QueryGraph(queryGraph, this.options.schema);
-    const queryEdges = await queryGraphHandler.calculateEdges();
-    this.logs = [...this.logs, ...queryGraphHandler.logs];
-    return queryEdges;
+const queryGraphHandler = new QueryGraph(queryGraph, this.options.schema, this._queryIsPathfinder());
+const queryEdges = await queryGraphHandler.calculateEdges();
+this.logs = [...this.logs, ...queryGraphHandler.logs];
+return queryEdges;
   }
 
   async _edgesSupported(qEdges: QEdge[], metaKG: MetaKG): Promise<boolean> {
@@ -561,6 +562,12 @@ export default class TRAPIQueryHandler {
     }
   }
 
+  _queryIsPathfinder(): boolean {
+    const inferredEdgeCount = Object.values(this.queryGraph.edges).reduce((i, edge) => i + (edge.knowledge_type === 'inferred' ? 1 : 0), 0);
+    const pinnedNodes = Object.values(this.queryGraph.nodes).reduce((i, node) => i + (node.ids?.length > 0 ? 1 : 0), 0);
+    return inferredEdgeCount === 3 && pinnedNodes == 2 && Object.keys(this.queryGraph.edges).length === 3 && Object.keys(this.queryGraph.nodes).length === 3;
+  }
+
   _queryUsesInferredMode(): boolean {
     const inferredEdge = Object.values(this.queryGraph.edges).some((edge) => edge.knowledge_type === 'inferred');
     return inferredEdge;
@@ -569,6 +576,17 @@ export default class TRAPIQueryHandler {
   _queryIsOneHop(): boolean {
     const oneHop = Object.keys(this.queryGraph.edges).length === 1;
     return oneHop;
+  }
+
+  async _handlePathfinder(): Promise<void> {
+    // TODO: make unit tests
+    // TODO: add spans in the class
+    const pathfinderHandler = new PathfinderQueryHandler(this.logs, this.queryGraph, this);
+    const pathfinderResponse = await pathfinderHandler.query();
+
+    if (pathfinderResponse) {
+        this.getResponse = () => pathfinderResponse;
+    }
   }
 
   async _handleInferredEdges(): Promise<void> {
@@ -585,7 +603,7 @@ export default class TRAPIQueryHandler {
       this.options,
       this.path,
       this.predicatePath,
-      this.includeReasoner,
+      this.includeReasoner
     );
     const inferredQueryResponse = await inferredQueryHandler.query();
     if (inferredQueryResponse) {
@@ -719,6 +737,13 @@ export default class TRAPIQueryHandler {
       return;
     }
     debug(`(3) All edges created ${JSON.stringify(queryEdges)} `);
+
+    if (this._queryIsPathfinder()) {
+      const span2 = Telemetry.startSpan({ description: 'pathfinderExecution' });
+      await this._handlePathfinder();
+      span2?.finish();
+      return;
+    }
 
     if (this._queryUsesInferredMode()) {
       const span2 = Telemetry.startSpan({ description: 'creativeExecution' });

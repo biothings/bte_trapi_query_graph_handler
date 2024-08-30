@@ -1,0 +1,47 @@
+ChemicalEntity:
+  Gene:
+    - regulates
+    - regulated_by
+    - affects
+    - affected_by
+    - interacts_with
+    - associated_with
+Gene:
+  DiseaseOrPhenotypicFeature:
+    - gene_associated_with_condition
+    - biomarker_for
+    - affects
+    - contributes_to
+  AnatomicalEntity:
+    - related_to_at_instance_level
+  BiologicalProcessOrActivity:
+    - affects
+    - contributes_to
+    - participates_in
+  Gene:
+    - regulates
+    - regulated_by
+    - affects
+    - affected_by
+    - interacts_with
+  ChemicalEntity:
+    - regulates
+    - regulated_by
+    - affects
+    - affected_by
+    - interacts_with
+    - correlated_with
+AnatomicalEntity:
+  DiseaseOrPhenotypicFeature:
+    - related_to_at_instance_level
+BiologicalProcessOrActivity:
+  DiseaseOrPhenotypicFeature:
+    - affects
+    - affected_by
+    - occurs_in
+DiseaseOrPhenotypicFeature:
+  Gene:
+    - condition_associated_with_gene
+    - has_biomarker
+    - affected_by
+    - contribution_from
