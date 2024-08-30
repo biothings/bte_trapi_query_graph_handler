@@ -64,7 +64,7 @@ export async function getTemplates(lookups: TemplateLookup[], pathfinder = false
     let matchingQualifiers: CompactQualifiers;
     const lookupMatch = lookups.some((lookup) => {
       const match =
-        !!group.pathfinder === pathfinder &&
+        (!!group.pathfinder === pathfinder) &&
         group.subject.includes(lookup.subject) &&
         group.object.includes(lookup.object) &&
         group.predicate.includes(lookup.predicate) &&

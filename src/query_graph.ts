@@ -331,12 +331,11 @@ export default class QueryGraph {
                 `Node ${qNodeID} `,
                 `with id${this.queryGraph.nodes[qNodeID].ids.length > 1 ? 's' : ''} `,
                 `[${this.queryGraph.nodes[qNodeID].ids.join(', ')}] `,
-                `${
-                  userAssignedCategories && userAssignedCategories.length
-                    ? `and categor${userAssignedCategories.length === 1 ? 'y' : 'ies'} [${userAssignedCategories.join(
-                        ', ',
-                      )}] augmented with`
-                    : `assigned`
+                `${userAssignedCategories && userAssignedCategories.length
+                  ? `and categor${userAssignedCategories.length === 1 ? 'y' : 'ies'} [${userAssignedCategories.join(
+                    ', ',
+                  )}] augmented with`
+                  : `assigned`
                 } `,
                 `categor${categories.length > 1 ? 'ies' : 'y'} `,
                 `[${categories.join(', ')}] inferred from `,
@@ -352,6 +351,7 @@ export default class QueryGraph {
       }
 
       if (nodes[qNodeID].categories !== undefined) {
+        // Do some type cleanup/conflation
         if (
           nodes[qNodeID].categories.includes('biolink:Disease') ||
           nodes[qNodeID].categories.includes('biolink:PhenotypicFeature')
@@ -367,6 +367,14 @@ export default class QueryGraph {
         ) {
           nodes[qNodeID].categories.push('biolink:Gene');
         }
+        if (
+          nodes[qNodeID].categories.includes('biolink:Gene') &&
+          !nodes[qNodeID].categories.includes('biolink:Protein')
+        ) {
+          nodes[qNodeID].categories.push('biolink:Protein');
+        }
+        // Ensure categories are rolled into expandedCategories
+        nodes[qNodeID].expandCategories()
       }
     }
     this.logs.push(
