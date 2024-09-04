@@ -642,7 +642,8 @@ export default class InferredQueryHandler {
         global.queryInformation.isCreativeMode = true;
         global.queryInformation.creativeTemplate = template;
       }
-      global.queryInformation.totalRecords = 0; // Reset between templates
+      if (global.queryInformation != null) global.queryInformation.totalRecords = 0; // Reset between templates
+      
       const handler = new TRAPIQueryHandler(this.options, this.path, this.predicatePath, this.includeReasoner);
       try {
         // make query and combine results/kg/logs/etc
