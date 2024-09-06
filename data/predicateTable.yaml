@@ -32,7 +32,8 @@ Gene:
     - affects
     - affected_by
     - interacts_with
-    - correlated_with
+    - occurs_together_in_literature_with
+    - produces
 AnatomicalEntity:
   DiseaseOrPhenotypicFeature:
     - location_of

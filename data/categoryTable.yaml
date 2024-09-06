@@ -20,6 +20,8 @@ Protein:
   DiseaseOrPhenotypicFeature:
     - Gene
     - BiologicalProcess
+  ChemicalEntity:
+    - Gene
 BiologicalProcessOrActivity:
   DiseaseOrPhenotypicFeature:
     - Gene
