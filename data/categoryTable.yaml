@@ -9,9 +9,7 @@ ChemicalEntity:
     - Gene
 Gene:
   DiseaseOrPhenotypicFeature:
-    - AnatomicalEntity
-    - BiologicalProcessOrActivity
-    - ChemicalEntity
+    - Cell
   Gene:
     - Gene
     - ChemicalEntity
