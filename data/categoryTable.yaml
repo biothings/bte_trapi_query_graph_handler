@@ -12,6 +12,9 @@ Gene:
     - Cell
   Gene:
     - BiologicalProcessOrActivity
+  BiologicalProcessOrActivity:
+    - ChemicalEntity
+    - Gene
 DiseaseOrPhenotypicFeature:
   DiseaseOrPhenotypicFeature:
     - SequenceVariant
@@ -24,4 +27,7 @@ Protein:
     - Gene
 BiologicalProcessOrActivity:
   DiseaseOrPhenotypicFeature:
+    - Gene
+  Gene:
+    - ChemicalEntity
     - Gene
