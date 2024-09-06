@@ -11,8 +11,7 @@ Gene:
   DiseaseOrPhenotypicFeature:
     - Cell
   Gene:
-    - Gene
-    - ChemicalEntity
+    - BiologicalProcessOrActivity
 DiseaseOrPhenotypicFeature:
   DiseaseOrPhenotypicFeature:
     - SequenceVariant
