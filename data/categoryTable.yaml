@@ -16,3 +16,10 @@ DiseaseOrPhenotypicFeature:
   DiseaseOrPhenotypicFeature:
     - SequenceVariant
     - Gene
+Protein:
+  DiseaseOrPhenotypicFeature:
+    - Gene
+    - BiologicalProcess
+BiologicalProcessOrActivity:
+  DiseaseOrPhenotypicFeature:
+    - Gene
