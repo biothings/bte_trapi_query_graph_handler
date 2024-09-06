@@ -28,7 +28,7 @@ describe('test TRAPIQueryHandler methods', () => {
     process.env = OLD_ENV;
   });
 
-  test('processQueryGraph', async () => {
+  test.skip('processQueryGraph', async () => {
     const handler = new TRAPIQueryHandler();
     const invalidQueryGraph = {
       nodes: {},

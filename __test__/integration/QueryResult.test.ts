@@ -43,6 +43,11 @@ describe('Testing QueryResults Module', () => {
           predicate: 'biolink:physically_interacts_with',
           source: 'DGIdb',
           api_name: 'BioThings DGIDB API',
+          "x-translator": {
+            infores: "infores:biothings-dgidb",
+            component: "KP",
+            team: ["Service Provider"]
+          }
         },
         edge1,
       );
@@ -98,6 +103,11 @@ describe('Testing QueryResults Module', () => {
           {
             predicate: 'biolink:gene_associated_with_condition',
             api_name: 'Automat Pharos',
+            "x-translator": {
+              infores: "infores:automat-pharos",
+              component: "KP",
+              team: ["Ranking Agent"]
+            }
           },
           edge1,
         );
@@ -197,6 +207,11 @@ describe('Testing QueryResults Module', () => {
           {
             predicate: 'biolink:gene_associated_with_condition',
             api_name: 'Automat Pharos',
+            "x-translator": {
+              infores: "infores:automat-pharos",
+              component: "KP",
+              team: ["Ranking Agent"]
+            }
           },
           edge1,
         );
@@ -295,6 +310,11 @@ describe('Testing QueryResults Module', () => {
           {
             predicate: 'biolink:gene_associated_with_condition',
             api_name: 'Automat Pharos',
+            "x-translator": {
+              infores: "infores:automat-pharos",
+              component: "KP",
+              team: ["Ranking Agent"]
+            }
           },
           edge1,
         );
@@ -393,6 +413,11 @@ describe('Testing QueryResults Module', () => {
           {
             predicate: 'biolink:gene_associated_with_condition',
             api_name: 'Automat Pharos',
+            "x-translator": {
+              infores: "infores:automat-pharos",
+              component: "KP",
+              team: ["Ranking Agent"]
+            }
           },
           edge1,
         );
@@ -493,6 +518,11 @@ describe('Testing QueryResults Module', () => {
           {
             predicate: 'biolink:gene_associated_with_condition',
             api_name: 'Automat Pharos',
+            "x-translator": {
+              infores: "infores:automat-pharos",
+              component: "KP",
+              team: ["Ranking Agent"]
+            }
           },
           edge1,
         );
@@ -594,6 +624,11 @@ describe('Testing QueryResults Module', () => {
         {
           predicate: 'biolink:gene_associated_with_condition',
           api_name: 'Automat Pharos',
+          "x-translator": {
+            infores: "infores:automat-pharos",
+            component: "KP",
+            team: ["Ranking Agent"]
+          }
         },
         edge1,
       );

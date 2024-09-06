@@ -9,14 +9,13 @@ export interface TemplateLookup {
   subject: string;
   object: string;
   predicate: string;
-  qualifiers: {
-    [qualifierType: string]: string;
-  };
+  qualifiers: CompactQualifiers;
 }
 
 export interface MatchedTemplate {
   template: string;
   queryGraph: TrapiQueryGraph;
+  qualifiers: CompactQualifiers;
 }
 
 export interface TemplateGroup {
@@ -26,6 +25,7 @@ export interface TemplateGroup {
   object: string[];
   qualifiers?: CompactQualifiers;
   templates: string[];
+  pathfinder: boolean;
 }
 
 export interface CompactEdge {
@@ -35,7 +35,12 @@ export interface CompactEdge {
   qualifiers: CompactQualifiers;
 }
 
-export async function getTemplates(lookups: TemplateLookup[]): Promise<MatchedTemplate[]> {
+interface PathMatch {
+  path: string;
+  qualifiers: CompactQualifiers;
+}
+
+export async function getTemplates(lookups: TemplateLookup[], pathfinder = false): Promise<MatchedTemplate[]> {
   async function getFiles(dir: string): Promise<string[]> {
     const rootFiles = await fs.readdir(path.resolve(dir));
     return await async.reduce(rootFiles, [] as string[], async (arr, fname: string) => {
@@ -55,31 +60,38 @@ export async function getTemplates(lookups: TemplateLookup[]): Promise<MatchedTe
   const templateGroups = JSON.parse(
     await fs.readFile(path.resolve(__dirname, '../../data/templateGroups.json'), { encoding: 'utf8' }),
   );
-  const matchingTemplatePaths: string[] = templateGroups.reduce((matches: string[], group: TemplateGroup) => {
+  const matchingTemplatePaths: PathMatch[] = templateGroups.reduce((matches: PathMatch[], group: TemplateGroup) => {
+    let matchingQualifers: CompactQualifiers;
     const lookupMatch = lookups.some((lookup) => {
-      return (
+      const match =
+        (!!group.pathfinder === pathfinder) &&
         group.subject.includes(lookup.subject) &&
         group.object.includes(lookup.object) &&
         group.predicate.includes(lookup.predicate) &&
         Object.entries(lookup.qualifiers || {}).every(([qualifierType, qualifierValue]) => {
-          return (group.qualifiers || {})[qualifierType] && group.qualifiers[qualifierType] === qualifierValue;
-        })
-      );
+          return (
+            (group.qualifiers || {})[qualifierType.replace('biolink:', '')] &&
+            group.qualifiers[qualifierType.replace('biolink:', '')] === qualifierValue.replace('biolink:', '')
+          );
+        });
+      if (match) matchingQualifers = lookup.qualifiers;
+      return match;
     });
 
     if (lookupMatch) {
       group.templates.forEach((template) => {
-        if (!matches.includes(templatePaths[template])) {
-          matches.push(templatePaths[template]);
+        if (!matches.find((t) => t.path === templatePaths[template])) {
+          matches.push({ path: templatePaths[template], qualifiers: matchingQualifers });
         }
       });
     }
     return matches;
   }, [] as string[]);
-  return await async.map(matchingTemplatePaths, async (templatePath: string) => {
+  return await async.map(matchingTemplatePaths, async (templatePathObj: PathMatch) => {
     return {
-      template: templatePath.substring(templatePath.lastIndexOf('/') + 1),
-      queryGraph: JSON.parse(await fs.readFile(templatePath, { encoding: 'utf8' })).message.query_graph,
+      template: templatePathObj.path.substring(templatePathObj.path.lastIndexOf('/') + 1),
+      queryGraph: JSON.parse(await fs.readFile(templatePathObj.path, { encoding: 'utf8' })).message.query_graph,
+      qualifiers: templatePathObj.qualifiers,
     };
   });
 }
