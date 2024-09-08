@@ -12,6 +12,10 @@ interface PredicateTable {
   [category1: string]: { [category2: string]: { predicate: string }[] };
 }
 
+interface AnnotatedQueryGraph extends TrapiQueryGraph {
+  log: string;
+}
+
 let categoryTable: CategoryTable;
 let predicateTable: PredicateTable;
 let loadTablesPromise: Promise<void>;
@@ -44,7 +48,7 @@ async function loadTables() {
   tablesLoaded = true;
 }
 
-export default async function generateTemplates(sub: TrapiQNode, un: TrapiQNode, obj: TrapiQNode): Promise<TrapiQueryGraph[]> {
+export default async function generateTemplates(sub: TrapiQNode, un: TrapiQNode, obj: TrapiQNode): Promise<(AnnotatedQueryGraph & {log: string})[]> {
   // load tables
   if (!tablesLoaded) {
     if (!loadTablesPromise) {
@@ -70,6 +74,9 @@ export default async function generateTemplates(sub: TrapiQNode, un: TrapiQNode,
         object: 'creativeQueryObject',
         predicates: new Set<string>(),
       }
+    },
+    generateLog: function() {
+      return `Sub (${sub.categories.join(',')}) --${[...this.edges.sub_un.predicates].join(',')}--> Un (${Array.from(this.nodes.un.categories).join(',')}) --${[...this.edges.un_obj.predicates].join(',')}--> Obj (${obj.categories.join(',')})`.replace(/biolink:/g, '');
     }
   };
   const templateB = {
@@ -95,6 +102,9 @@ export default async function generateTemplates(sub: TrapiQNode, un: TrapiQNode,
         object: 'creativeQueryObject',
         predicates: new Set<string>()
       }
+    },
+    generateLog: function() {
+      return `Sub (${sub.categories.join(',')}) --${[...this.edges.sub_un.predicates].join(',')}--> Un (${Array.from(this.nodes.un.categories).join(',')}) --${[...this.edges.un_b.predicates].join(',')}--> Nb (${Array.from(this.nodes.nb.categories).join(',')}) --${[...this.edges.b_obj.predicates].join(',')}--> Obj (${obj.categories.join(',')})`.replace(/biolink:/g, '');
     }
   };
   const templateC = {
@@ -120,6 +130,9 @@ export default async function generateTemplates(sub: TrapiQNode, un: TrapiQNode,
         object: 'creativeQueryObject',
         predicates: new Set<string>()
       }
+    },
+    generateLog: function() {
+      return `Sub (${sub.categories.join(',')}) --${[...this.edges.sub_c.predicates].join(',')}--> Nc (${Array.from(this.nodes.nc.categories).join(',')}) --${[...this.edges.c_un.predicates].join(',')}--> Un (${Array.from(this.nodes.un.categories).join(',')}) --${[...this.edges.un_obj.predicates].join(',')}--> Obj (${obj.categories.join(',')})`.replace(/biolink:/g, '');
     }
   };
   for (const subCat of sub.categories) {
@@ -154,9 +167,9 @@ export default async function generateTemplates(sub: TrapiQNode, un: TrapiQNode,
     }
   }
 
-  const queryGraphs: TrapiQueryGraph[] = [];
+  const queryGraphs: AnnotatedQueryGraph[] = [];
   for (const template of [templateA, templateB, templateC]) {
-    const queryGraph: TrapiQueryGraph = { nodes: {}, edges: {} };
+    const queryGraph: AnnotatedQueryGraph = { nodes: {}, edges: {}, log: template.generateLog()};
     for (const node in template.nodes) {
       queryGraph.nodes[node] = {
         ...template.nodes[node],
