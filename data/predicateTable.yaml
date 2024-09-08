@@ -1,11 +1,8 @@
 ChemicalEntity:
   Gene:
-    - regulates
-    - regulated_by
     - affects
-    - affected_by
     - interacts_with
-    - associated_with
+    - occurs_together_in_literature_with
 Gene:
   DiseaseOrPhenotypicFeature:
     - gene_associated_with_condition
@@ -13,7 +10,11 @@ Gene:
     - affects
     - contributes_to
   AnatomicalEntity:
-    - related_to_at_instance_level
+    - affects
+    - produced_by
+    - located_in
+    - part_of
+    - interacts_with
   BiologicalProcessOrActivity:
     - affects
     - contributes_to
@@ -24,17 +25,25 @@ Gene:
     - affects
     - affected_by
     - interacts_with
+    - occurs_together_in_literature_with
   ChemicalEntity:
     - regulates
     - regulated_by
     - affects
     - affected_by
     - interacts_with
-    - correlated_with
+    - occurs_together_in_literature_with
+    - produces
 AnatomicalEntity:
   DiseaseOrPhenotypicFeature:
-    - related_to_at_instance_level
+    - location_of
+    - affected_by
+    - interacts_with
 BiologicalProcessOrActivity:
+  Gene:
+    - affected_by
+    - contribution_from
+    - has_participant
   DiseaseOrPhenotypicFeature:
     - affects
     - affected_by
