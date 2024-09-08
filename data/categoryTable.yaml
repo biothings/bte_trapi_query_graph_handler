@@ -9,13 +9,25 @@ ChemicalEntity:
     - Gene
 Gene:
   DiseaseOrPhenotypicFeature:
-    - AnatomicalEntity
-    - BiologicalProcessOrActivity
-    - ChemicalEntity
+    - Cell
   Gene:
-    - Gene
+    - BiologicalProcessOrActivity
+  BiologicalProcessOrActivity:
     - ChemicalEntity
+    - Gene
 DiseaseOrPhenotypicFeature:
   DiseaseOrPhenotypicFeature:
     - SequenceVariant
+    - Gene
+Protein:
+  DiseaseOrPhenotypicFeature:
+    - Gene
+    - BiologicalProcess
+  ChemicalEntity:
+    - Gene
+BiologicalProcessOrActivity:
+  DiseaseOrPhenotypicFeature:
+    - Gene
+  Gene:
+    - ChemicalEntity
     - Gene
