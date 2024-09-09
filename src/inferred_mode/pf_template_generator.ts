@@ -76,7 +76,7 @@ export default async function generateTemplates(sub: TrapiQNode, un: TrapiQNode,
       }
     },
     generateLog: function() {
-      return `Sub (${sub.categories.join(',')}) --${[...this.edges.sub_un.predicates].join(',')}--> Un (${Array.from(this.nodes.un.categories).join(',')}) --${[...this.edges.un_obj.predicates].join(',')}--> Obj (${obj.categories.join(',')})`.replace(/biolink:/g, '');
+      return `(${sub.ids.join(',')}) -(${[...this.edges.sub_un.predicates].join(',')})-> (${Array.from(this.nodes.un.categories).join(',')}) -(${[...this.edges.un_obj.predicates].join(',')})-> (${obj.ids.join(',')})`.replace(/biolink:/g, '');
     }
   };
   const templateB = {
@@ -104,7 +104,7 @@ export default async function generateTemplates(sub: TrapiQNode, un: TrapiQNode,
       }
     },
     generateLog: function() {
-      return `Sub (${sub.categories.join(',')}) --${[...this.edges.sub_un.predicates].join(',')}--> Un (${Array.from(this.nodes.un.categories).join(',')}) --${[...this.edges.un_b.predicates].join(',')}--> Nb (${Array.from(this.nodes.nb.categories).join(',')}) --${[...this.edges.b_obj.predicates].join(',')}--> Obj (${obj.categories.join(',')})`.replace(/biolink:/g, '');
+      return `(${sub.ids.join(',')}) -(${[...this.edges.sub_un.predicates].join(',')})-> (${Array.from(this.nodes.un.categories).join(',')}) -(${[...this.edges.un_b.predicates].join(',')})-> (${Array.from(this.nodes.nb.categories).join(',')}) -(${[...this.edges.b_obj.predicates].join(',')})-> (${obj.ids.join(',')})`.replace(/biolink:/g, '');
     }
   };
   const templateC = {
@@ -132,7 +132,7 @@ export default async function generateTemplates(sub: TrapiQNode, un: TrapiQNode,
       }
     },
     generateLog: function() {
-      return `Sub (${sub.categories.join(',')}) --${[...this.edges.sub_c.predicates].join(',')}--> Nc (${Array.from(this.nodes.nc.categories).join(',')}) --${[...this.edges.c_un.predicates].join(',')}--> Un (${Array.from(this.nodes.un.categories).join(',')}) --${[...this.edges.un_obj.predicates].join(',')}--> Obj (${obj.categories.join(',')})`.replace(/biolink:/g, '');
+      return `(${sub.ids.join(',')}) -(${[...this.edges.sub_c.predicates].join(',')})-> (${Array.from(this.nodes.nc.categories).join(',')}) -(${[...this.edges.c_un.predicates].join(',')})-> (${Array.from(this.nodes.un.categories).join(',')}) -(${[...this.edges.un_obj.predicates].join(',')})-> (${obj.ids.join(',')})`.replace(/biolink:/g, '');
     }
   };
   for (const subCat of sub.categories) {
