@@ -371,17 +371,17 @@ export default class PathfinderQueryHandler {
           // create new edges & aux graph
           newResultObject[`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}`] = {
             node_bindings: {
-              [this.mainEdge.subject]: [{ id: kgSrc }],
-              [this.mainEdge.object]: [{ id: kgDst }],
-              [this.unpinnedNodeId]: [{ id: intermediateNode }],
+              [this.mainEdge.subject]: [{ id: kgSrc, attributes: [] }],
+              [this.mainEdge.object]: [{ id: kgDst, attributes: [] }],
+              [this.unpinnedNodeId]: [{ id: intermediateNode, attributes: [] }],
             },
             analyses: [
               {
                 resource_id: 'infores:biothings-explorer',
                 edge_bindings: {
-                  [this.mainEdgeId]: [{ id: `pathfinder-${intermediateNode}` }],
-                  [this.intermediateEdges[0][0]]: [{ id: `pathfinder-${kgSrc}-${intermediateNode}` }],
-                  [this.intermediateEdges[1][0]]: [{ id: `pathfinder-${intermediateNode}-${kgDst}` }],
+                  [this.mainEdgeId]: [{ id: `pathfinder-${intermediateNode}`, attributes: [] }],
+                  [this.intermediateEdges[0][0]]: [{ id: `pathfinder-${kgSrc}-${intermediateNode}`, attributes: [] }],
+                  [this.intermediateEdges[1][0]]: [{ id: `pathfinder-${intermediateNode}-${kgDst}`, attributes: [] }],
                 },
                 score: undefined,
               },
