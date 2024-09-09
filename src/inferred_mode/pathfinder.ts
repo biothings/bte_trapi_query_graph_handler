@@ -7,6 +7,7 @@ import {
   TrapiQNode,
   TrapiAnalysis,
   QueryHandlerOptions,
+  TrapiAuxGraphCollection,
 } from '@biothings-explorer/types';
 import InferredQueryHandler from './inferred_mode';
 import { scaled_sigmoid, inverse_scaled_sigmoid } from '../results_assembly/score';
@@ -260,14 +261,14 @@ export default class PathfinderQueryHandler {
       .slice(0, this.CREATIVE_LIMIT);
     creativeResponse.description = `Query processed successfully, retrieved ${creativeResponse.message.results.length} results.`;
 
-    const finalNewAuxGraphs: { [id: string]: { edges: string[] } } = {};
+    const finalNewAuxGraphs: TrapiAuxGraphCollection = {};
     for (const res in creativeResponse.message.results) {
       for (const eb of Object.values(creativeResponse.message.results[res].analyses[0].edge_bindings)) {
         for (const edge of eb) {
           const auxGraph = creativeResponse.message.knowledge_graph.edges[edge.id].attributes.find(
             (attr) => attr.attribute_type_id === 'biolink:support_graphs',
           )?.value[0];
-          finalNewAuxGraphs[auxGraph] = { edges: [] };
+          finalNewAuxGraphs[auxGraph] = { edges: [], attributes: [] };
           for (const ed of newAuxGraphs[auxGraph].edges) {
             const [st, en] = ed.split('\n');
             finalNewAuxGraphs[auxGraph].edges.push.apply(
