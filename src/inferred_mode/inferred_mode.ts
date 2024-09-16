@@ -713,7 +713,9 @@ export default class InferredQueryHandler {
     this.pruneKnowledgeGraph(response);
 
     // add pfocr figures
-    this.logs = [...this.logs, ...(await enrichTrapiResultsWithPfocrFigures(response, true))];
+    if (!this.pathfinder) {
+      this.logs = [...this.logs, ...(await enrichTrapiResultsWithPfocrFigures(response, true))];
+    }
 
     // get the final summary log
     if (successfulQueries) {
