@@ -20,6 +20,7 @@ import {
   TrapiAnalysis
 } from '@biothings-explorer/types';
 import { CompactQualifiers } from '../index';
+import { enrichTrapiResultsWithPfocrFigures } from '../results_assembly/pfocr';
 const debug = Debug('bte:biothings-explorer-trapi:inferred-mode');
 
 export interface CombinedResponse {
@@ -301,7 +302,6 @@ export default class InferredQueryHandler {
           [qEdge.subject]: [{ id: result.node_bindings.creativeQuerySubject[0].id, attributes: [] }],
           [qEdge.object]: [{ id: result.node_bindings.creativeQueryObject[0].id, attributes: [] }],
         },
-        pfocr: result.pfocr?.length ? result.pfocr : undefined,
         analyses: [
           {
             resource_id: result.analyses[0].resource_id,
@@ -473,20 +473,6 @@ export default class InferredQueryHandler {
           });
         });
 
-        // Combine, re-sort, and truncate to 20 any pfocr figures
-        if (combinedResponse.message.results[resultID].pfocr || translatedResult.pfocr) {
-          let reSort = false;
-          if (combinedResponse.message.results[resultID].pfocr && translatedResult.pfocr) reSort = true;
-          let newFigures = [
-            ...(combinedResponse.message.results[resultID].pfocr ?? []),
-            ...(translatedResult.pfocr ?? []),
-          ];
-          if (reSort) {
-            newFigures = newFigures.sort((figA, figB) => figB.score - figA.score).slice(0, 20);
-          }
-          combinedResponse.message.results[resultID].pfocr = newFigures;
-        }
-
         const resScore = translatedResult.analyses[0].score;
         if (typeof combinedResponse.message.results[resultID].analyses[0].score !== 'undefined') {
           combinedResponse.message.results[resultID].analyses[0].score = resScore
@@ -644,7 +630,7 @@ export default class InferredQueryHandler {
       }
       if (global.queryInformation != null) global.queryInformation.totalRecords = 0; // Reset between templates
       
-      const handler = new TRAPIQueryHandler(this.options, this.path, this.predicatePath, this.includeReasoner);
+      const handler = new TRAPIQueryHandler({ ...this.options, skipPfocr: true }, this.path, this.predicatePath, this.includeReasoner);
       try {
         // make query and combine results/kg/logs/etc
         handler.setQueryGraph(queryGraph);
@@ -725,6 +711,10 @@ export default class InferredQueryHandler {
     response.message.results = response.message.results.slice(0, this.CREATIVE_LIMIT);
     response.description = `Query processed successfully, retrieved ${response.message.results.length} results.`;
     this.pruneKnowledgeGraph(response);
+
+    // add pfocr figures
+    this.logs = [...this.logs, ...(await enrichTrapiResultsWithPfocrFigures(response, true))];
+
     // get the final summary log
     if (successfulQueries) {
       this.parent
