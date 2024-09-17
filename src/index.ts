@@ -782,9 +782,7 @@ export default class TRAPIQueryHandler {
     this.bteGraph.notify();
 
     // Attempt to enrich results with PFOCR figures
-    if (!this.options.skipPfocr) {
-      this.logs = [...this.logs, ...(await enrichTrapiResultsWithPfocrFigures(this.getResponse()))];
-    }
+    this.logs = [...this.logs, ...(await enrichTrapiResultsWithPfocrFigures(this.getResponse()))];
 
     span3?.finish();
 
