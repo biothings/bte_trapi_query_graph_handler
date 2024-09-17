@@ -89,6 +89,31 @@ export default class PathfinderQueryHandler {
     debug(logMessage);
     this.logs.push(new LogEntry('INFO', null, logMessage).getLog());
 
+    // log all the templates
+    const templateNames = ['A', 'B', 'C'];
+    for (let i = 0; i < 3; i++) {
+      let logMessage = `Pathfinder Template ${templateNames[i]}: ${templates[i].log}`;
+      debug(logMessage);
+      this.logs.push(new LogEntry('INFO', null, logMessage).getLog());
+    }
+
+    // handle dry run scenario
+    if (this.options.dryrun_pathfinder) {
+      return {
+        description: `Pathfinder Dry Run completed successfully. No results received. ${templates.length} templates generated.`,
+        schema_version: global.SCHEMA_VERSION,
+        biolink_version: global.BIOLINK_VERSION,
+        workflow: [{ id: this.options.smartAPIID || this.options.teamName ? 'lookup' : 'lookup_and_score' }],
+        message: {
+          query_graph: this.parent.originalQueryGraph,
+          knowledge_graph: this.parent.knowledgeGraph.kg,
+          auxiliary_graphs: {},
+          results: [],
+        },
+        logs: this.logs.map((log) => log.toJSON()),
+      };
+    }
+
     // remove unpinned node & all edges involving unpinned node for now
     delete this.queryGraph.nodes[this.unpinnedNodeId];
 
