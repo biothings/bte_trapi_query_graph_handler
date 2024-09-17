@@ -16,6 +16,7 @@ import Debug from 'debug';
 import generateTemplates from './pf_template_generator';
 import biolink from '../biolink';
 import { removeBioLinkPrefix } from '../utils';
+import { enrichTrapiResultsWithPfocrFigures } from '../results_assembly/pfocr';
 const debug = Debug('bte:biothings-explorer-trapi:pathfinder');
 
 interface ResultAuxObject {
@@ -116,6 +117,9 @@ export default class PathfinderQueryHandler {
 
     this.parse(creativeResponse);
     this._pruneKg(creativeResponse);
+
+    // pfocr
+    this.logs = [...this.logs, ...(await enrichTrapiResultsWithPfocrFigures(creativeResponse, true))];
 
     // logs
     creativeResponse.logs = this.logs.map((log) => log.toJSON());
