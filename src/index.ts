@@ -689,7 +689,7 @@ return queryEdges;
     ];
   };
 
-  async query(): Promise<void> {
+  async query(abortSignal?: AbortSignal): Promise<void> {
     this._initializeResponse();
     await this.addQueryNodes();
 
@@ -757,11 +757,13 @@ return queryEdges;
     }
     const manager = new EdgeManager(queryEdges, metaKG, this.subclassEdges, this.options);
 
-    const executionSuccess = await manager.executeEdges();
+    const executionSuccess = await manager.executeEdges(abortSignal);
     this.logs = [...this.logs, ...manager.logs];
     if (!executionSuccess) {
       return;
     }
+
+    if (abortSignal?.aborted) return;
 
     const span3 = Telemetry.startSpan({ description: 'resultsAssembly' });
 

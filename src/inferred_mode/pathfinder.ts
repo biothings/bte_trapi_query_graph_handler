@@ -162,7 +162,7 @@ export default class PathfinderQueryHandler {
     ].forEach((node, i) => {
       const label = [this.mainEdge.subject, this.unpinnedNodeId, this.mainEdge.object];
       const ancestorsToInject = new Set();
-      node.categories.forEach((category) => {
+      node.categories?.forEach((category) => {
         const ancestors = biolink.getAncestorClasses(removeBioLinkPrefix(category));
         if (!Array.isArray(ancestors)) return;
         ancestors.forEach((ancestor) => {
