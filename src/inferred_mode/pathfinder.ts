@@ -7,6 +7,7 @@ import {
   TrapiQNode,
   TrapiAnalysis,
   QueryHandlerOptions,
+  TrapiAuxGraphCollection,
 } from '@biothings-explorer/types';
 import InferredQueryHandler from './inferred_mode';
 import { scaled_sigmoid, inverse_scaled_sigmoid } from '../results_assembly/score';
@@ -260,14 +261,14 @@ export default class PathfinderQueryHandler {
       .slice(0, this.CREATIVE_LIMIT);
     creativeResponse.description = `Query processed successfully, retrieved ${creativeResponse.message.results.length} results.`;
 
-    const finalNewAuxGraphs: { [id: string]: { edges: string[] } } = {};
+    const finalNewAuxGraphs: TrapiAuxGraphCollection = {};
     for (const res in creativeResponse.message.results) {
       for (const eb of Object.values(creativeResponse.message.results[res].analyses[0].edge_bindings)) {
         for (const edge of eb) {
           const auxGraph = creativeResponse.message.knowledge_graph.edges[edge.id].attributes.find(
             (attr) => attr.attribute_type_id === 'biolink:support_graphs',
           )?.value[0];
-          finalNewAuxGraphs[auxGraph] = { edges: [] };
+          finalNewAuxGraphs[auxGraph] = { edges: [], attributes: [] };
           for (const ed of newAuxGraphs[auxGraph].edges) {
             const [st, en] = ed.split('\n');
             finalNewAuxGraphs[auxGraph].edges.push.apply(
@@ -371,17 +372,17 @@ export default class PathfinderQueryHandler {
           // create new edges & aux graph
           newResultObject[`pathfinder-${kgSrc}-${intermediateNode}-${kgDst}`] = {
             node_bindings: {
-              [this.mainEdge.subject]: [{ id: kgSrc }],
-              [this.mainEdge.object]: [{ id: kgDst }],
-              [this.unpinnedNodeId]: [{ id: intermediateNode }],
+              [this.mainEdge.subject]: [{ id: kgSrc, attributes: [] }],
+              [this.mainEdge.object]: [{ id: kgDst, attributes: [] }],
+              [this.unpinnedNodeId]: [{ id: intermediateNode, attributes: [] }],
             },
             analyses: [
               {
                 resource_id: 'infores:biothings-explorer',
                 edge_bindings: {
-                  [this.mainEdgeId]: [{ id: `pathfinder-${intermediateNode}` }],
-                  [this.intermediateEdges[0][0]]: [{ id: `pathfinder-${kgSrc}-${intermediateNode}` }],
-                  [this.intermediateEdges[1][0]]: [{ id: `pathfinder-${intermediateNode}-${kgDst}` }],
+                  [this.mainEdgeId]: [{ id: `pathfinder-${intermediateNode}`, attributes: [] }],
+                  [this.intermediateEdges[0][0]]: [{ id: `pathfinder-${kgSrc}-${intermediateNode}`, attributes: [] }],
+                  [this.intermediateEdges[1][0]]: [{ id: `pathfinder-${intermediateNode}-${kgDst}`, attributes: [] }],
                 },
                 score: undefined,
               },

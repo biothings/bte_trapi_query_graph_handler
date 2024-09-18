@@ -11,6 +11,7 @@ import {
   TrapiAuxGraphCollection,
   TrapiEdgeBinding,
   TrapiKnowledgeGraph,
+  TrapiNodeBinding,
   TrapiQEdge,
   TrapiQNode,
   TrapiQualifier,
@@ -296,10 +297,20 @@ export default class InferredQueryHandler {
 
     // add results
     newResponse.message.results.forEach((result) => {
+      // get query_ids populated by TRAPIQueryHandler.appendOriginalCuriesToResults
+      const subjectBinding: TrapiNodeBinding = { id: result.node_bindings.creativeQuerySubject[0].id, attributes: [] };
+      const objectBinding: TrapiNodeBinding = { id: result.node_bindings.creativeQueryObject[0].id, attributes: [] };
+      if (result.node_bindings.creativeQuerySubject[0].query_id !== undefined) {
+        subjectBinding.query_id = result.node_bindings.creativeQuerySubject[0].query_id;
+      }
+      if (result.node_bindings.creativeQueryObject[0].query_id !== undefined) {
+        objectBinding.query_id = result.node_bindings.creativeQueryObject[0].query_id;
+      }
+
       const translatedResult: TrapiResult = {
         node_bindings: {
-          [qEdge.subject]: [{ id: result.node_bindings.creativeQuerySubject[0].id, attributes: [] }],
-          [qEdge.object]: [{ id: result.node_bindings.creativeQueryObject[0].id, attributes: [] }],
+          [qEdge.subject]: [subjectBinding],
+          [qEdge.object]: [objectBinding],
         },
         pfocr: result.pfocr?.length ? result.pfocr : undefined,
         analyses: [
