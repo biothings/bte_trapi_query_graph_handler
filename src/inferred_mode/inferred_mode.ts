@@ -11,12 +11,14 @@ import {
   TrapiAuxGraphCollection,
   TrapiEdgeBinding,
   TrapiKnowledgeGraph,
+  TrapiNodeBinding,
   TrapiQEdge,
   TrapiQNode,
   TrapiQualifier,
   TrapiQueryGraph,
   TrapiResponse,
   TrapiResult,
+  TrapiAnalysis
 } from '@biothings-explorer/types';
 import { CompactQualifiers } from '../index';
 const debug = Debug('bte:biothings-explorer-trapi:inferred-mode');
@@ -33,6 +35,9 @@ export interface CombinedResponse {
     };
   };
   logs: StampedLog[];
+  original_analyses?: {
+    [graphId: string]: TrapiAnalysis;
+  }
 }
 
 export interface CombinedResponseReport {
@@ -52,6 +57,7 @@ export default class InferredQueryHandler {
   path: string;
   predicatePath: string;
   includeReasoner: boolean;
+  pathfinder: boolean;
   CREATIVE_LIMIT: number;
   CREATIVE_TIMEOUT: number;
   constructor(
@@ -62,6 +68,7 @@ export default class InferredQueryHandler {
     path: string,
     predicatePath: string,
     includeReasoner: boolean,
+    pathfinder = false
   ) {
     this.parent = parent;
     this.queryGraph = queryGraph;
@@ -70,6 +77,7 @@ export default class InferredQueryHandler {
     this.path = path;
     this.predicatePath = predicatePath;
     this.includeReasoner = includeReasoner;
+    this.pathfinder = pathfinder;
     this.CREATIVE_LIMIT = process.env.CREATIVE_LIMIT ? parseInt(process.env.CREATIVE_LIMIT) : 500;
     this.CREATIVE_TIMEOUT = process.env.CREATIVE_TIMEOUT_S ? parseInt(process.env.CREATIVE_TIMEOUT) * 1000 : 4.75 * 60 * 1000;
   }
@@ -105,12 +113,10 @@ export default class InferredQueryHandler {
       return false;
     }
 
-    const tooManyIDs =
-      1 <
-      Object.values(this.queryGraph.nodes).reduce((sum, node) => {
-        return typeof node.ids !== 'undefined' ? sum + node.ids.length : sum;
-      }, 0);
-    if (tooManyIDs) {
+    const tooManyIDs = Object.values(this.queryGraph.nodes).some((node) => {
+      return typeof node.ids !== 'undefined' && node.ids.length > 1;
+    });
+    if (tooManyIDs && !this.pathfinder) {
       const message = 'Inferred Mode queries with multiple IDs are not supported. Your query terminates.';
       this.logs.push(new LogEntry('WARNING', null, message).getLog());
       debug(message);
@@ -196,7 +202,7 @@ export default class InferredQueryHandler {
       }, []);
       return [...arr, ...objectCombos];
     }, []);
-    const templates = await getTemplates(lookupObjects);
+    const templates = await getTemplates(lookupObjects, this.pathfinder);
 
     const logMessage = `Got ${templates.length} inferred query templates.`;
     debug(logMessage);
@@ -256,6 +262,7 @@ export default class InferredQueryHandler {
     qEdgeID: string,
     qEdge: TrapiQEdge,
     combinedResponse: CombinedResponse,
+    auxGraphSuffixes: {[inferredEdgeID: string]: number},
     qualifiers?: CompactQualifiers,
   ): CombinedResponseReport {
     const span = Telemetry.startSpan({ description: 'creativeCombineResponse' });
@@ -284,12 +291,26 @@ export default class InferredQueryHandler {
         combinedResponse.message.auxiliary_graphs[auxGraphID] = auxGraph;
       }
     });
+
+    // modified count used for pathfinder
+    const pfIntermediateSet = new Set();
+
     // add results
     newResponse.message.results.forEach((result) => {
+      // get query_ids populated by TRAPIQueryHandler.appendOriginalCuriesToResults
+      const subjectBinding: TrapiNodeBinding = { id: result.node_bindings.creativeQuerySubject[0].id, attributes: [] };
+      const objectBinding: TrapiNodeBinding = { id: result.node_bindings.creativeQueryObject[0].id, attributes: [] };
+      if (result.node_bindings.creativeQuerySubject[0].query_id !== undefined) {
+        subjectBinding.query_id = result.node_bindings.creativeQuerySubject[0].query_id;
+      }
+      if (result.node_bindings.creativeQueryObject[0].query_id !== undefined) {
+        objectBinding.query_id = result.node_bindings.creativeQueryObject[0].query_id;
+      }
+
       const translatedResult: TrapiResult = {
         node_bindings: {
-          [qEdge.subject]: [{ id: result.node_bindings.creativeQuerySubject[0].id, attributes: [] }],
-          [qEdge.object]: [{ id: result.node_bindings.creativeQueryObject[0].id, attributes: [] }],
+          [qEdge.subject]: [subjectBinding],
+          [qEdge.object]: [objectBinding],
         },
         pfocr: result.pfocr?.length ? result.pfocr : undefined,
         analyses: [
@@ -300,6 +321,18 @@ export default class InferredQueryHandler {
           },
         ],
       };
+
+      if (this.pathfinder) {
+        for (let [nodeID, bindings] of Object.entries(result.node_bindings)) {
+          if (nodeID === "creativeQuerySubject" || nodeID === "creativeQueryObject") {
+            continue;
+          }
+          for (const binding of bindings) {
+            pfIntermediateSet.add(binding.id);
+          }
+        }
+      }
+
       const resultCreativeSubjectID = translatedResult.node_bindings[qEdge.subject]
         .map((binding) => binding.id)
         .join(',');
@@ -308,52 +341,82 @@ export default class InferredQueryHandler {
         .join(',');
       const resultID = `${resultCreativeSubjectID}-${resultCreativeObjectID}`;
 
-      // Direct edge answers stand on their own, not as an inferred edge.
-      const boundEdgeID = Object.values(result.analyses[0].edge_bindings)[0][0].id;
-      const boundEdge = combinedResponse.message.knowledge_graph.edges[boundEdgeID];
-      const oneHop = Object.keys(result.node_bindings).length === 2; // Direct edge
-      // Predicate matches or is descendant
-      const predicateMatch =
-        qEdge.predicates?.some(
-          (predicate) =>
-            predicate === boundEdge.predicate ||
-            biolink.getDescendantPredicates(predicate).includes(boundEdge.predicate),
-        ) ?? false;
-      // All query qualifiers (if any) are accounted for (more is fine)
-      const qualifierMatch =
-        !qEdge.qualifier_constraints ||
-        qEdge.qualifier_constraints.length === 0 ||
-        qEdge.qualifier_constraints?.some(({ qualifier_set }) => {
-          return qualifier_set.every((queryQualifier) => {
-            return (
-              boundEdge.qualifiers?.some((qualifier) => {
-                const typeMatch = queryQualifier.qualifier_type_id === qualifier.qualifier_type_id;
-                let valueMatch: boolean;
-                try {
-                  const descendants = queryQualifier.qualifier_value.includes('biolink:')
-                    ? biolink.getDescendantPredicates(queryQualifier.qualifier_value as string)
-                    : biolink.getDescendantQualifiers(queryQualifier.qualifier_value as string);
-                  valueMatch =
-                    queryQualifier.qualifier_value === qualifier.qualifier_value ||
-                    descendants.includes(qualifier.qualifier_value as string);
-                } catch (err) {
-                  valueMatch = queryQualifier.qualifier_value === qualifier.qualifier_value;
-                }
-                return typeMatch && valueMatch;
-              }) ?? false
-            );
-          });
-        });
-      const specialHandling = oneHop && predicateMatch && qualifierMatch;
-      if (specialHandling) {
-        translatedResult.analyses[0].edge_bindings = { [qEdgeID]: [{ id: boundEdgeID, attributes: [] }] };
-      } else {
+      // Direct edge answers stand on their own (assuming some match criteria), not as an inferred edge.
+      // A given one-hop result may bind both matching and non-matching edges
+      const oneHop = Object.keys(result.node_bindings).length === 2;
+      const resultEdgeID = Object.keys(result.analyses[0].edge_bindings)[0]; // Only useful if direct edge
+      const nonMatchingEdges = [];
+      let useInferredEdge =
+        !oneHop ||
+        result.analyses[0].edge_bindings[resultEdgeID]
+          .map(({ id }) => {
+            // If an edge doesn't match, add it to nonMatchingEdges and return false
+            const boundEdge = combinedResponse.message.knowledge_graph.edges[id];
+            // Predicate matches or is descendant
+            const predicateMatch =
+              qEdge.predicates?.some((predicate) => {
+                const descendantMatch = biolink
+                  .getDescendantPredicates(utils.removeBioLinkPrefix(predicate))
+                  .includes(utils.removeBioLinkPrefix(boundEdge.predicate));
+                return predicate === boundEdge.predicate || descendantMatch;
+              }) ?? false;
+            // All query qualifiers (if any) are accounted for (more is fine)
+            const qualifierMatch =
+              !qEdge.qualifier_constraints ||
+              qEdge.qualifier_constraints.length === 0 ||
+              qEdge.qualifier_constraints?.some(({ qualifier_set }) => {
+                return qualifier_set.every((queryQualifier) => {
+                  return (
+                    boundEdge.qualifiers?.some((qualifier) => {
+                      const typeMatch = queryQualifier.qualifier_type_id === qualifier.qualifier_type_id;
+                      let valueMatch: boolean;
+                      try {
+                        const descendants = queryQualifier.qualifier_value.includes('biolink:')
+                          ? biolink.getDescendantPredicates(
+                            utils.removeBioLinkPrefix(queryQualifier.qualifier_value as string),
+                          )
+                          : biolink.getDescendantQualifiers(
+                            utils.removeBioLinkPrefix(queryQualifier.qualifier_value as string),
+                          );
+                        valueMatch =
+                          queryQualifier.qualifier_value === qualifier.qualifier_value ||
+                          descendants.includes(utils.removeBioLinkPrefix(qualifier.qualifier_value as string));
+                      } catch (err) {
+                        valueMatch = queryQualifier.qualifier_value === qualifier.qualifier_value;
+                      }
+                      return typeMatch && valueMatch;
+                    }) ?? false
+                  );
+                });
+              });
+            if (!(predicateMatch && qualifierMatch)) {
+              nonMatchingEdges.push(id);
+              return false;
+            }
+            if (!translatedResult.analyses[0].edge_bindings[qEdgeID]) {
+              translatedResult.analyses[0].edge_bindings[qEdgeID] = [];
+            }
+            translatedResult.analyses[0].edge_bindings[qEdgeID].push({ id, attributes: [] });
+            return true;
+          })
+          .includes(false);
+
+      // If result was one-hop and some edges didn't match, pull them out to put in an inferred edge
+      if (oneHop && nonMatchingEdges.length > 0) {
+        result.analyses[0].edge_bindings[resultEdgeID] = result.analyses[0].edge_bindings[resultEdgeID].filter(
+          ({ id }) => nonMatchingEdges.includes(id),
+        );
+      }
+      if (useInferredEdge) {
         // Create an aux graph using the result and associate it with an inferred Edge
         const inferredEdgeID = `inferred-${resultCreativeSubjectID}-${qEdge.predicates[0].replace(
           'biolink:',
           '',
         )}-${resultCreativeObjectID}`;
-        translatedResult.analyses[0].edge_bindings = { [qEdgeID]: [{ id: inferredEdgeID, attributes: [] }] };
+        if (!translatedResult.analyses[0].edge_bindings[qEdgeID]) {
+          translatedResult.analyses[0].edge_bindings[qEdgeID] = [];
+        }
+        translatedResult.analyses[0].edge_bindings[qEdgeID].push({ id: inferredEdgeID, attributes: [] });
         if (!combinedResponse.message.knowledge_graph.edges[inferredEdgeID]) {
           combinedResponse.message.knowledge_graph.edges[inferredEdgeID] = {
             subject: resultCreativeSubjectID,
@@ -374,6 +437,9 @@ export default class InferredQueryHandler {
             ],
           };
         }
+        if (!auxGraphSuffixes[inferredEdgeID]) auxGraphSuffixes[inferredEdgeID] = 0;
+        const auxGraphID = `${inferredEdgeID}-support${auxGraphSuffixes[inferredEdgeID]}`;
+        auxGraphSuffixes[inferredEdgeID]++;
         // Add qualifiers to edge
         if (
           typeof qualifiers == 'object' &&
@@ -388,13 +454,6 @@ export default class InferredQueryHandler {
           );
         }
 
-        let auxGraphSuffix = 0;
-        while (
-          Object.keys(combinedResponse.message.auxiliary_graphs).includes(`${inferredEdgeID}-support${auxGraphSuffix}`)
-        ) {
-          auxGraphSuffix += 1;
-        }
-        const auxGraphID = `${inferredEdgeID}-support${auxGraphSuffix}`;
         (combinedResponse.message.knowledge_graph.edges[inferredEdgeID].attributes[0].value as string[]).push(
           auxGraphID,
         );
@@ -408,6 +467,10 @@ export default class InferredQueryHandler {
           ),
           attributes: [],
         };
+
+        if (this.pathfinder) {
+            combinedResponse.original_analyses[auxGraphID] = result.analyses[0];
+        }
       }
 
       if (resultID in combinedResponse.message.results) {
@@ -450,9 +513,10 @@ export default class InferredQueryHandler {
         combinedResponse.message.results[resultID] = translatedResult;
       }
     });
-    const mergedWithinTemplate = Object.entries(report.mergedResults).reduce((count, [resultID, merged]) => {
-      return !resultIDsFromPrevious.has(resultID) ? count + merged : count;
-    }, 0);
+    // Should always be 0?
+    // const mergedWithinTemplate = Object.entries(report.mergedResults).reduce((count, [resultID, merged]) => {
+    //   return !resultIDsFromPrevious.has(resultID) ? count + merged : count;
+    // }, 0);
 
     // fix/combine logs
     handler.logs.forEach((log) => {
@@ -462,13 +526,13 @@ export default class InferredQueryHandler {
     });
 
     const mergeMessage = [
-      `(${mergedWithinTemplate}) results from Template-${queryNum + 1} `,
-      `were merged with other results from the template. `,
-      `(${mergedThisTemplate - mergedWithinTemplate}) results `,
-      `were merged with existing results from previous templates. `,
-      `Current result count is ${Object.keys(combinedResponse.message.results).length} `,
-      `(+${newResponse.message.results.length - mergedThisTemplate})`,
+      `Template Summary: Template-${queryNum + 1} `,
+      `returned (${newResponse.message.results.length}) results. `,
+      queryNum === 0 ? '' : `(${mergedThisTemplate}) of these were merged with results from previous templates. `,
+      `Total result count is ${Object.keys(combinedResponse.message.results).length} `,
+      `(increased by ${newResponse.message.results.length - mergedThisTemplate})`,
     ].join('');
+
     debug(mergeMessage);
     combinedResponse.logs.push(new LogEntry('INFO', null, mergeMessage).getLog());
 
@@ -531,7 +595,7 @@ export default class InferredQueryHandler {
     );
   }
 
-  async query(): Promise<TrapiResponse> {
+  async query(subQueries?: FilledTemplate[]): Promise<TrapiResponse> {
     // TODO (eventually) check for flipped predicate cases
     // e.g. Drug -treats-> Disease OR Disease -treated_by-> Drug
     const logMessage = 'Query proceeding in Inferred Mode.';
@@ -543,7 +607,9 @@ export default class InferredQueryHandler {
     }
 
     const { qEdgeID, qEdge, qSubject, qObject } = this.getQueryParts();
-    const subQueries = await this.createQueries(qEdge, qSubject, qObject);
+    if (!subQueries) {
+      subQueries = await this.createQueries(qEdge, qSubject, qObject);
+    }
     const combinedResponse = {
       status: 'Success',
       description: '',
@@ -560,6 +626,7 @@ export default class InferredQueryHandler {
         results: {},
       },
       logs: this.logs,
+      ...(this.pathfinder && { original_analyses: {} })
     } as CombinedResponse;
     // add/combine nodes
     const resultQueries = [];
@@ -568,6 +635,7 @@ export default class InferredQueryHandler {
     const mergedResultsCount: {
       [resultID: string]: number;
     } = {};
+    const auxGraphSuffixes: {[inferredEdgeID: string]: number} = {};
 
     // perf debugging
     const startUsage = process.cpuUsage();
@@ -627,7 +695,7 @@ export default class InferredQueryHandler {
       const total =
         Object.values(mergedResultsCount).reduce((sum, count) => sum + count, 0) +
         Object.keys(mergedResultsCount).length;
-      const message = `Merging Summary: (${total}) inferred-template results were merged into (${Object.keys(mergedResultsCount).length
+      const message = `Result Merging Summary: (${total}) inferred-template results were merged into (${Object.keys(mergedResultsCount).length
         }) final results, reducing result count by (${total - Object.keys(mergedResultsCount).length})`;
       debug(message);
       combinedResponse.logs.push(new LogEntry('INFO', null, message).getLog());
@@ -674,7 +742,9 @@ export default class InferredQueryHandler {
         .getSummaryLog(response, response.logs as StampedLog[], resultQueries)
         .forEach((log) => response.logs.push(log));
     }
-    response.logs = (response.logs as StampedLog[]).map((log) => log.toJSON());
+    if (!this.pathfinder) {
+        response.logs = (response.logs as StampedLog[]).map((log) => log.toJSON());
+    }
 
     return response;
   }

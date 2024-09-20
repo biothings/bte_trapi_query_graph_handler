@@ -187,13 +187,16 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
   const curiesByResult: Map<TrapiResult, Set<string>> = new Map();
 
   const curieCombos: Set<string> = results.reduce((combos: Set<string>, result: TrapiResult) => {
-    const nodes: Set<TrapiKGNode> = traverseResultForNodes(result, response);
+    const nodes: Set<TrapiKGNode> = new Set();
+    Object.values(result.node_bindings).forEach((bindings) =>
+      bindings.forEach((binding) => nodes.add(response.message.knowledge_graph.nodes[binding.id])),
+    );
     const combo: Set<string> = new Set();
     let matchedNodes = 0;
     [...nodes].forEach((node) => {
       let nodeMatched = false;
-      const equivalentCuries = node.attributes?.find((attribute) => attribute.attribute_type_id === 'biolink:xref')
-        .value as string[];
+      const equivalentCuries =
+        (node.attributes?.find((attribute) => attribute.attribute_type_id === 'biolink:xref')?.value as string[]) ?? [];
       equivalentCuries.forEach((curie) => {
         const prefix = curie.split(':')[0];
         const suffix = curie.replace(`${prefix}:`, '');
@@ -247,16 +250,28 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
   const matchedFigures: Set<string> = new Set();
   const matchedTrapiResults: Set<TrapiResult> = new Set();
 
-  // const allGenesInAllFigures = figures.reduce((set, fig) => {
-  //   fig.associatedWith.mentions.genes.ncbigene.forEach((gene) => set.add(gene));
-  //   return set;
-  // }, new Set() as Set<string>);
+  const allGenesInAllFigures = figures.reduce((set, fig) => {
+    fig.associatedWith.mentions.genes.ncbigene.forEach((gene) => set.add(gene));
+    return set;
+  }, new Set() as Set<string>);
 
   for (const trapiResult of results) {
     // No figures match this result
     if (!figuresByCuries[curieCombosByResult.get(trapiResult)]) continue;
 
-    const resultCuries = curiesByResult.get(trapiResult);
+    const resultNodes = traverseResultForNodes(trapiResult, response);
+    const resultCuries: Set<string> = [...resultNodes].reduce((curies, node) => {
+      const equivalentCuries =
+        (node.attributes?.find((attribute) => attribute.attribute_type_id === 'biolink:xref')?.value as string[]) ?? [];
+      equivalentCuries.forEach((curie) => {
+        const prefix = curie.split(':')[0];
+        const suffix = curie.replace(`${prefix}:`, '');
+        if (Object.keys(SUPPORTED_PREFIXES).includes(prefix)) curies.add(suffix);
+      });
+      return curies;
+    }, new Set<string>());
+
+    const resultGenesInAllFigures = intersection(allGenesInAllFigures, resultCuries);
 
     (figuresByCuries[curieCombosByResult.get(trapiResult)] ?? []).forEach((figure) => {
       if (!('pfocr' in trapiResult)) {
@@ -266,17 +281,12 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
       const figureCurieSet = new Set(figure.associatedWith.mentions.genes.ncbigene);
       const resultGenesInFigure = intersection(resultCuries, figureCurieSet);
 
-      const otherGenesInFigure = figureCurieSet.size - resultGenesInFigure.size;
-
-      const resultGenesInOtherFigures = [...resultCuries].filter((gene) => {
-        return figures.some((fig) => fig.associatedWith.mentions.genes.ncbigene.includes(gene));
-      }).length;
       // let otherGenesInOtherFigures = [...allGenesInAllFigures].filter((gene) => {
       //   return !resultCuries.has(gene) && !figureCurieSet.has(gene);
       // }).length;
 
-      const precision = resultGenesInFigure.size / (resultGenesInFigure.size + otherGenesInFigure);
-      const recall = resultGenesInFigure.size / (resultGenesInFigure.size + resultGenesInOtherFigures);
+      const precision = resultGenesInFigure.size / figureCurieSet.size;
+      const recall = resultGenesInFigure.size / resultGenesInAllFigures.size;
 
       trapiResult.pfocr.push({
         figureUrl: figure.associatedWith.figureUrl,

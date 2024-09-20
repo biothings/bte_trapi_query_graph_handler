@@ -536,7 +536,8 @@ describe('Test InferredQueryHandler', () => {
 
     const { qEdgeID, qEdge, qSubject, qObject } = inferredQueryHandler.getQueryParts();
 
-    const report = inferredQueryHandler.combineResponse(1, trapiQueryHandler0, qEdgeID, qEdge, combinedResponse);
+    const auxGraphSuffixes = {};
+    const report = inferredQueryHandler.combineResponse(1, trapiQueryHandler0, qEdgeID, qEdge, combinedResponse, auxGraphSuffixes);
 
     expect(report).toHaveProperty('querySuccess');
     expect(report).toHaveProperty('queryHadResults');
@@ -551,7 +552,7 @@ describe('Test InferredQueryHandler', () => {
     expect(creativeLimitHit).toBeTruthy();
     expect(Object.keys(combinedResponse.message.results)).toHaveLength(3);
     expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].analyses[0].score).toEqual(
-      0.8421052631578949,
+      0.7836531040612146,
     );
     expect(combinedResponse.message.results['fakeCompound3-fakeDisease1'].analyses[0].score).toEqual(0.2);
     expect(combinedResponse.logs).toHaveLength(3);
@@ -707,14 +708,14 @@ describe('Test InferredQueryHandler', () => {
       queryHadResults: queryHadResults1,
       mergedResults: mergedResults1,
       creativeLimitHit: creativeLimitHit1,
-    } = inferredQueryHandler.combineResponse(2, trapiQueryHandler1, qEdgeID, qEdge, combinedResponse);
+    } = inferredQueryHandler.combineResponse(2, trapiQueryHandler1, qEdgeID, qEdge, combinedResponse, auxGraphSuffixes);
 
     expect(querySuccess1).toBeTruthy();
     expect(queryHadResults1).toBeTruthy();
     expect(Object.keys(mergedResults1)).toHaveLength(1);
     expect(creativeLimitHit1).toBeTruthy();
     expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].analyses[0].score).toEqual(
-      0.8421052631578949,
+      0.7836531040612146,
     );
   });
 
