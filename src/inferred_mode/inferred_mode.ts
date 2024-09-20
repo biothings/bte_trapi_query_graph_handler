@@ -680,6 +680,7 @@ export default class InferredQueryHandler {
         qEdgeID,
         qEdge,
         combinedResponse,
+        auxGraphSuffixes
       );
       successfulQueries += querySuccess;
       if (queryHadResults) resultQueries.push(i);

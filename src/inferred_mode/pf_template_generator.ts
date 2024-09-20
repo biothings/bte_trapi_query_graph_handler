@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs/promises";
 import yaml2json from "js-yaml";
-import biolink from "../biolink";
+import { biolink } from '@biothings-explorer/utils';
 import { TrapiQNode, TrapiQueryGraph } from "@biothings-explorer/types";
 
 interface CategoryTable {
