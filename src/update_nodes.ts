@@ -1,9 +1,6 @@
-import { resolveSRI } from 'biomedical_id_resolver';
 import Debug from 'debug';
-import { ResolverInput, SRIResolverOutput } from 'biomedical_id_resolver';
-import { Record } from '@biothings-explorer/api-response-transform';
-import QEdge from './query_edge';
-import { NodeNormalizerResultObj } from '@biothings-explorer/api-response-transform';
+import { ResolverInput, SRIResolverOutput, SRIBioEntity, resolveSRI } from 'biomedical_id_resolver';
+import { Record, QEdge } from "@biothings-explorer/types";
 const debug = Debug('bte:biothings-explorer-trapi:nodeUpdateHandler');
 
 export interface CuriesByCategory {
@@ -39,17 +36,17 @@ export default class NodesUpdateHandler {
    * Resolve input ids
    * @param {object} curies - each key represents the category, e.g. gene, value is an array of curies.
    */
-  async _getEquivalentIDs(curies: ResolverInput): Promise<SRIResolverOutput> {
+  async _getEquivalentIDs(curies: ResolverInput, abortSignal?: AbortSignal): Promise<SRIResolverOutput> {
     // const resolver = new id_resolver.Resolver('biolink');
     // const equivalentIDs = await resolver.resolve(curies);
-    return await resolveSRI(curies);
+    return await resolveSRI(curies, abortSignal);
   }
 
-  async setEquivalentIDs(qEdges: QEdge[]): Promise<void> {
+  async setEquivalentIDs(qEdges: QEdge[], abortSignal?: AbortSignal): Promise<void> {
     debug(`Getting equivalent IDs...`);
     const curies = this._getCuries(this.qEdges);
     debug(`curies: ${JSON.stringify(curies)}`);
-    const equivalentIDs = await this._getEquivalentIDs(curies);
+    const equivalentIDs = await this._getEquivalentIDs(curies, abortSignal);
     qEdges.map((qEdge) => {
       const edgeEquivalentIDs = Object.keys(equivalentIDs)
         .filter((key) => qEdge.getInputCurie().includes(key))
@@ -64,7 +61,7 @@ export default class NodesUpdateHandler {
     return;
   }
 
-  _createEquivalentIDsObject(record: Record): { [curie: string]: NodeNormalizerResultObj } {
+  _createEquivalentIDsObject(record: Record): { [curie: string]: SRIBioEntity } {
     if (record.object.normalizedInfo !== undefined) {
       return {
         [record.object.curie]: record.object.normalizedInfo,

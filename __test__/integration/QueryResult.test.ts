@@ -1,8 +1,7 @@
 import { cloneDeep, range } from 'lodash';
-import QNode from '../../src/query_node';
-import QEdge from '../../src/query_edge';
+import { QNode, QEdge } from '@biothings-explorer/types';
 import QueryResult from '../../src/results_assembly/query_results';
-import { Record } from '@biothings-explorer/api-response-transform';
+import { Record } from '@biothings-explorer/types';
 import { EDGE_ATTRIBUTES_USED_IN_RECORD_HASH } from '../../src/config';
 
 describe('Testing QueryResults Module', () => {
@@ -41,7 +40,6 @@ describe('Testing QueryResults Module', () => {
         EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,
         {
           predicate: 'biolink:physically_interacts_with',
-          source: 'DGIdb',
           api_name: 'BioThings DGIDB API',
           "x-translator": {
             infores: "infores:biothings-dgidb",
@@ -138,6 +136,10 @@ describe('Testing QueryResults Module', () => {
           {
             predicate: 'biolink:condition_associated_with_gene',
             api_name: 'Automat Hetio',
+            source: 'Automat Hetio',
+            "x-translator": {
+              infores: "infores:automat",
+            },
           },
           edge2,
         );
@@ -242,6 +244,10 @@ describe('Testing QueryResults Module', () => {
           {
             predicate: 'biolink:condition_associated_with_gene',
             api_name: 'Automat Hetio',
+            source: 'Automat Hetio',
+            "x-translator": {
+              infores: "infores:automat",
+            },
           },
           edge2,
         );
@@ -345,6 +351,10 @@ describe('Testing QueryResults Module', () => {
           {
             predicate: 'biolink:condition_associated_with_gene',
             api_name: 'Automat Hetio',
+            source: 'Automat Hetio',
+            "x-translator": {
+              infores: "infores:automat",
+            },
           },
           edge2,
         );
@@ -450,6 +460,10 @@ describe('Testing QueryResults Module', () => {
           {
             predicate: 'biolink:condition_associated_with_gene',
             api_name: 'Automat Hetio',
+            source: 'Automat Hetio',
+            "x-translator": {
+              infores: "infores:automat",
+            },
           },
           edge2,
         );
@@ -555,6 +569,10 @@ describe('Testing QueryResults Module', () => {
           {
             predicate: 'biolink:condition_associated_with_gene',
             api_name: 'Automat Hetio',
+            source: 'Automat Hetio',
+            "x-translator": {
+              infores: "infores:automat",
+            },
           },
           edge2,
         );
@@ -659,6 +677,10 @@ describe('Testing QueryResults Module', () => {
         {
           predicate: 'biolink:condition_associated_with_gene',
           api_name: 'Automat Hetio',
+          source: 'Automat Hetio',
+          "x-translator": {
+            infores: "infores:automat",
+          },
         },
         edge2,
       );
@@ -689,6 +711,10 @@ describe('Testing QueryResults Module', () => {
         {
           predicate: 'biolink:condition_associated_with_gene',
           api_name: 'Automat Hetio',
+          source: 'Automat Hetio',
+          "x-translator": {
+            infores: "infores:automat",
+          },
         },
         edge2,
       );
@@ -759,7 +785,7 @@ describe('Testing QueryResults Module', () => {
     const [source0, source1] = Array(2)
       .fill(0)
       .map((s, i) => {
-        return { source: `source${i}` };
+        return { metaEdgeSource: `source${i}`, apiInforesCurie: `infores:source${i}` };
       });
     const [api0, api1] = Array(2)
       .fill(0)
@@ -1903,6 +1929,7 @@ describe('Testing QueryResults Module', () => {
                 predicate: 'biolink:record0_pred0',
                 source: 'source0',
                 api_name: 'api0',
+            source: 'api0',
               },
               // n0
               subject: {
@@ -1929,6 +1956,7 @@ describe('Testing QueryResults Module', () => {
                   predicate: 'biolink:record1_pred0',
                   source: 'source1',
                   api_name: 'api1',
+            source: 'api1',
                 },
                 // n1
                 subject: {
@@ -2011,6 +2039,7 @@ describe('Testing QueryResults Module', () => {
                 predicate: 'biolink:record0_pred0',
                 source: 'source0',
                 api_name: 'api0',
+            source: 'api0',
               },
               // n0
               subject: {
@@ -2037,6 +2066,7 @@ describe('Testing QueryResults Module', () => {
                   predicate: 'biolink:record1_pred0',
                   source: 'source1',
                   api_name: 'api1',
+            source: 'api1',
                 },
                 // n1
                 subject: {
@@ -2066,6 +2096,7 @@ describe('Testing QueryResults Module', () => {
                 predicate: 'biolink:record0_pred0',
                 source: 'source0',
                 api_name: 'api0',
+            source: 'api0',
               },
               // n0
               subject: {
@@ -2092,6 +2123,7 @@ describe('Testing QueryResults Module', () => {
                   predicate: 'biolink:record1_pred0',
                   source: 'source1',
                   api_name: 'api1',
+            source: 'api1',
                 },
                 // n1
                 subject: {
@@ -2173,6 +2205,7 @@ describe('Testing QueryResults Module', () => {
                 predicate: 'biolink:record0_pred0',
                 source: 'source0',
                 api_name: 'api0',
+            source: 'api0',
               },
               // n0
               subject: {
@@ -2199,6 +2232,7 @@ describe('Testing QueryResults Module', () => {
                   predicate: 'biolink:record1_pred0',
                   source: 'source1',
                   api_name: 'api1',
+            source: 'api1',
                 },
                 // n1
                 subject: {
@@ -3010,6 +3044,8 @@ describe('Testing QueryResults Module', () => {
           ],
           gene_symbol: 'HRAS',
         },
+        metaEdgeSource: 'bioplanet',
+        apiInforesCurie: 'infores:bioplanet'
       });
       const record2 = new Record({
         subject: {
@@ -3044,6 +3080,8 @@ describe('Testing QueryResults Module', () => {
           ],
           gene_symbol: 'HRAS',
         },
+        metaEdgeSource: 'bioplanet',
+        apiInforesCurie: 'infores:bioplanet'
       });
       const queryResult = new QueryResult({ provenanceUsesServiceProvider: false });
       await queryResult.update({

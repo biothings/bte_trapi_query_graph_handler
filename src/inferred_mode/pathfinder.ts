@@ -14,7 +14,7 @@ import { scaled_sigmoid, inverse_scaled_sigmoid } from '../results_assembly/scor
 import { LogEntry, StampedLog, Telemetry } from '@biothings-explorer/utils';
 import Debug from 'debug';
 import generateTemplates from './pf_template_generator';
-import biolink from '../biolink';
+import { biolink } from '@biothings-explorer/utils';
 import { removeBioLinkPrefix } from '../utils';
 const debug = Debug('bte:biothings-explorer-trapi:pathfinder');
 

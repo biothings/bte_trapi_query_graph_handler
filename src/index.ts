@@ -1,12 +1,9 @@
 import MetaKG, { SmartAPIQueryResult } from '@biothings-explorer/smartapi-kg';
 import path from 'path';
-import QueryGraph from './query_graph';
-import KnowledgeGraph from './graph/knowledge_graph';
 import TrapiResultsAssembler from './results_assembly/query_results';
-import InvalidQueryGraphError from './exceptions/invalid_query_graph_error';
+import { QueryGraph, InvalidQueryGraphError, KGNode, KGEdge, BTEGraph, KnowledgeGraph }  from '@biothings-explorer/types';
 import Debug from 'debug';
 const debug = Debug('bte:biothings-explorer-trapi:main');
-import Graph from './graph/graph';
 import EdgeManager from './edge_manager';
 import _ from 'lodash';
 import QEdge2APIEdgeHandler from './qedge2apiedge';
@@ -16,8 +13,6 @@ import { getDescendants } from '@biothings-explorer/node-expansion';
 import { resolveSRI, SRINodeNormFailure } from 'biomedical_id_resolver';
 import InferredQueryHandler from './inferred_mode/inferred_mode';
 import PathfinderQueryHandler from './inferred_mode/pathfinder';
-import KGNode from './graph/kg_node';
-import KGEdge from './graph/kg_edge';
 import {
   TrapiAuxGraphCollection,
   TrapiAuxiliaryGraph,
@@ -26,9 +21,7 @@ import {
   TrapiResponse,
   TrapiResult,
 } from '@biothings-explorer/types';
-import { QueryHandlerOptions } from '@biothings-explorer/types';
-import BTEGraph from './graph/graph';
-import QEdge from './query_edge';
+import { QueryHandlerOptions, QEdge } from '@biothings-explorer/types';
 import { Telemetry } from '@biothings-explorer/utils';
 import { enrichTrapiResultsWithPfocrFigures } from './results_assembly/pfocr';
 import { SubclassEdges } from './types';
@@ -36,10 +29,6 @@ import { SubclassEdges } from './types';
 // Exports for external availability
 export * from './types';
 export { getTemplates, supportedLookups } from './inferred_mode/template_lookup';
-export { default as QEdge } from './query_edge';
-export { default as QNode } from './query_node';
-export { default as InvalidQueryGraphError } from './exceptions/invalid_query_graph_error';
-export { default as NotImplementedError } from './exceptions/not_implemented_error';
 export * from './qedge2apiedge';
 
 export default class TRAPIQueryHandler {
@@ -111,8 +100,9 @@ export default class TRAPIQueryHandler {
       `Query options are: ${JSON.stringify({
         ...this.options,
         schema: this.options.schema ? this.options.schema.info.version : 'not included',
-        metakg: '',
-        smartapi: '',
+        metakg: "",
+        smartapi: "",
+        apiList: "[omitted]"
       })}`,
     );
 
@@ -469,7 +459,7 @@ export default class TRAPIQueryHandler {
   _initializeResponse(): void {
     this.knowledgeGraph = new KnowledgeGraph(this.options?.apiList?.include);
     this.trapiResultsAssembler = new TrapiResultsAssembler(this.options);
-    this.bteGraph = new Graph();
+    this.bteGraph = new BTEGraph();
     this.bteGraph.subscribe(this.knowledgeGraph);
   }
 
@@ -689,7 +679,7 @@ return queryEdges;
     ];
   };
 
-  async query(): Promise<void> {
+  async query(abortSignal?: AbortSignal): Promise<void> {
     this._initializeResponse();
     await this.addQueryNodes();
 
@@ -757,11 +747,13 @@ return queryEdges;
     }
     const manager = new EdgeManager(queryEdges, metaKG, this.subclassEdges, this.options);
 
-    const executionSuccess = await manager.executeEdges();
+    const executionSuccess = await manager.executeEdges(abortSignal);
     this.logs = [...this.logs, ...manager.logs];
     if (!executionSuccess) {
       return;
     }
+
+    if (abortSignal?.aborted) return;
 
     const span3 = Telemetry.startSpan({ description: 'resultsAssembly' });
 
