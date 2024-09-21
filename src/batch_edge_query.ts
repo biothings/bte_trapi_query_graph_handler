@@ -68,9 +68,10 @@ export default class BatchEdgeQueryHandler {
     });
 
     const queriesByHash = Object.fromEntries(queries.map((query) => [query.hash, query]));
+    const queryCount = Object.keys(queriesByHash).length; // some duplicates may have been removed
 
     const qEdge = APIEdges[0].reasoner_edge;
-    const message = `${queries.length} planned queries for edge ${qEdge.id}`;
+    const message = `${queryCount} planned queries for edge ${qEdge.id}`;
     debug(message);
     this.logs.push(new LogEntry('INFO', null, message).getLog());
     let finishedCount = 0;
@@ -106,7 +107,7 @@ export default class BatchEdgeQueryHandler {
         }
 
         finishedCount += 1;
-        if (finishedCount >= queries.length) {
+        if (finishedCount >= queryCount) {
           debug(`Total number of records returned for qEdge ${qEdge.id} is ${completedRecords.length}`);
           resolve(completedRecords);
           global.workerSide.off('message', listener);
@@ -124,7 +125,7 @@ export default class BatchEdgeQueryHandler {
         threadId,
         type: 'subqueryRequest',
         value: {
-          queries: queries.map((query) => query.freeze()),
+          queries: Object.values(queriesByHash).map((query) => query.freeze()), // queriesByHash prevents duplicates
           options: this.options,
         },
       } satisfies ThreadMessage);
