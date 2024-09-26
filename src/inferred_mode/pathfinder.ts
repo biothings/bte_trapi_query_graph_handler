@@ -144,7 +144,7 @@ export default class PathfinderQueryHandler {
     this._pruneKg(creativeResponse);
 
     // pfocr
-    this.logs = [...this.logs, ...(await enrichTrapiResultsWithPfocrFigures(creativeResponse, true))];
+    this.logs = [...this.logs, ...(await enrichTrapiResultsWithPfocrFigures(creativeResponse))];
 
     // logs
     creativeResponse.logs = this.logs.map((log) => log.toJSON());
