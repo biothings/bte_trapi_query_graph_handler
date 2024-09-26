@@ -176,7 +176,7 @@ function traverseResultForNodes(result: TrapiResult, response: TrapiResponse): S
  * t: trapiResults.length
  * f: figures.length
  */
-export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse): Promise<StampedLog[]> {
+export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse, checkAuxGraphs = false): Promise<StampedLog[]> {
   // NOTE: This function operates on the actual TRAPI information that will be returned
   // to the client. Don't mutate what shouldn't be mutated!
   const results = response.message.results;
@@ -192,6 +192,25 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
     Object.values(result.node_bindings).forEach((bindings) =>
       bindings.forEach((binding) => nodes.add(response.message.knowledge_graph.nodes[binding.id])),
     );
+    // check aux graphs if applicable
+    if (checkAuxGraphs) {
+      for (const edgeId in result.analyses[0].edge_bindings) {
+        for (const eb of result.analyses[0].edge_bindings[edgeId]) {
+          const edge = response.message.knowledge_graph.edges[eb.id];
+          const supportGraphs = edge.attributes.find((attribute) => attribute.attribute_type_id == 'biolink:support_graphs');
+          if (supportGraphs) {
+            (supportGraphs.value as string[]).forEach((auxGraphID) =>
+              response.message.auxiliary_graphs[auxGraphID].edges.forEach((edgeID) => {
+                const edge = response.message.knowledge_graph.edges[edgeID];
+                nodes.add(response.message.knowledge_graph.nodes[edge.subject]);
+                nodes.add(response.message.knowledge_graph.nodes[edge.object]);
+              }),
+            );
+          }
+        }
+      }
+    }
+
     const combo: Set<string> = new Set();
     let matchedNodes = 0;
     [...nodes].forEach((node) => {

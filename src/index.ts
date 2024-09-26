@@ -474,10 +474,10 @@ export default class TRAPIQueryHandler {
   }
 
   async _processQueryGraph(queryGraph: TrapiQueryGraph): Promise<QEdge[]> {
-const queryGraphHandler = new QueryGraph(queryGraph, this.options.schema, this._queryIsPathfinder());
-const queryEdges = await queryGraphHandler.calculateEdges();
-this.logs = [...this.logs, ...queryGraphHandler.logs];
-return queryEdges;
+    const queryGraphHandler = new QueryGraph(queryGraph, this.options.schema, this._queryIsPathfinder());
+    const queryEdges = await queryGraphHandler.calculateEdges();
+    this.logs = [...this.logs, ...queryGraphHandler.logs];
+    return queryEdges;
   }
 
   async _edgesSupported(qEdges: QEdge[], metaKG: MetaKG): Promise<boolean> {
@@ -782,7 +782,9 @@ return queryEdges;
     this.bteGraph.notify();
 
     // Attempt to enrich results with PFOCR figures
-    this.logs = [...this.logs, ...(await enrichTrapiResultsWithPfocrFigures(this.getResponse()))];
+    if (!this.options.skipPfocr) {
+      this.logs = [...this.logs, ...(await enrichTrapiResultsWithPfocrFigures(this.getResponse()))];
+    }
 
     span3?.finish();
 
