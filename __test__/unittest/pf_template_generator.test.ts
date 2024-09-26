@@ -3,13 +3,15 @@ import generateTemplates from '../../src/inferred_mode/pf_template_generator';
 describe('Test Pathfinder Template Generator', () => {
   test('Should generate correct templates', async () => {
     const sub = {
-      categories: ['biolink:Drug']
+      categories: ['biolink:Drug'],
+      ids: ['subject']
     };
     const un = {
       categories: ['biolink:Gene']
     };
     const obj = {
-      categories: ['biolink:Disease']
+      categories: ['biolink:Disease'],
+      ids: ['object']
     };
 
     const templatesWithUnCat = await generateTemplates(sub, un, obj);
@@ -21,12 +23,14 @@ describe('Test Pathfinder Template Generator', () => {
         "creativeQuerySubject": {
           "categories": [
             "biolink:Drug"
-          ]
+          ],
+          "ids": ["subject"]
         },
         "creativeQueryObject": {
           "categories": [
             "biolink:Disease"
-          ]
+          ],
+          "ids": ["object"]
         },
         "un": {
           "categories": [
@@ -57,7 +61,8 @@ describe('Test Pathfinder Template Generator', () => {
             "biolink:contributes_to"
           ]
         }
-      }
+      },
+      "log": "(subject) -(regulates,regulated_by,affects,affected_by,interacts_with,associated_with)-> (Gene) -(gene_associated_with_condition,biomarker_for,affects,contributes_to)-> (object)",
     });
     expect(templatesWithoutUnCat[0]).toEqual(templatesWithUnCat[0]);
 
@@ -67,12 +72,14 @@ describe('Test Pathfinder Template Generator', () => {
         "creativeQuerySubject": {
           "categories": [
             "biolink:Drug"
-          ]
+          ],
+          "ids": ["subject"]
         },
         "creativeQueryObject": {
           "categories": [
             "biolink:Disease"
-          ]
+          ],
+          "ids": ["object"]
         },
         "un": {
           "categories": [
@@ -125,7 +132,8 @@ describe('Test Pathfinder Template Generator', () => {
             "biolink:occurs_in"
           ]
         }
-      }
+      },
+      "log": "(subject) -(regulates,regulated_by,affects,affected_by,interacts_with,associated_with)-> (Gene) -(related_to_at_instance_level,affects,contributes_to,participates_in,regulates,regulated_by,affected_by,interacts_with,correlated_with)-> (AnatomicalEntity,BiologicalProcessOrActivity,ChemicalEntity) -(related_to_at_instance_level,affects,affected_by,occurs_in)-> (object)"
     });
     expect(templatesWithoutUnCat[1]).toEqual(templatesWithUnCat[1]);
 
@@ -135,12 +143,14 @@ describe('Test Pathfinder Template Generator', () => {
         "creativeQuerySubject": {
           "categories": [
             "biolink:Drug"
-          ]
+          ],
+          "ids": ["subject"]
         },
         "creativeQueryObject": {
           "categories": [
             "biolink:Disease"
-          ]
+          ],
+          "ids": ["object"]
         },
         "un": {
           "categories": [
@@ -187,20 +197,23 @@ describe('Test Pathfinder Template Generator', () => {
             "biolink:contributes_to"
           ]
         }
-      }
+      },
+      "log": "(subject) -(regulates,regulated_by,affects,affected_by,interacts_with,associated_with)-> (Gene) -(regulates,regulated_by,affects,affected_by,interacts_with)-> (Gene) -(gene_associated_with_condition,biomarker_for,affects,contributes_to)-> (object)"
     });
     expect(templatesWithoutUnCat[2]).toEqual(templatesWithUnCat[2]);
   });
 
   test('template with no predicates should not have predicate property', async () => {
     const sub = {
-      categories: ['biolink:Drug']
+      categories: ['biolink:Drug'],
+      ids: ['subject']
     };
     const un = {
       categories: ['biolink:Dummy']
     };
     const obj = {
-      categories: ['biolink:Drug']
+      categories: ['biolink:Drug'],
+      ids: ['object']
     };
 
     const templates = await generateTemplates(sub, un, obj);
