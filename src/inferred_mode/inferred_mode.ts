@@ -1,8 +1,7 @@
 import Debug from 'debug';
+import * as utils from '@biothings-explorer/utils';
 import { LogEntry, StampedLog, Telemetry } from '@biothings-explorer/utils';
-import * as utils from '../utils';
 import async from 'async';
-import biolink from '../biolink';
 import { getTemplates, MatchedTemplate, TemplateLookup } from './template_lookup';
 import { scaled_sigmoid, inverse_scaled_sigmoid } from '../results_assembly/score';
 import TRAPIQueryHandler from '../index';
@@ -164,13 +163,13 @@ export default class InferredQueryHandler {
   async findTemplates(qEdge: TrapiQEdge, qSubject: TrapiQNode, qObject: TrapiQNode): Promise<MatchedTemplate[]> {
     debug('Looking up query Templates');
     const expandedSubject = qSubject.categories.reduce((arr: string[], subjectCategory: string) => {
-      return utils.getUnique([...arr, ...biolink.getDescendantClasses(utils.removeBioLinkPrefix(subjectCategory))]);
+      return utils.getUnique([...arr, ...utils.biolink.getDescendantClasses(utils.removeBioLinkPrefix(subjectCategory))]);
     }, [] as string[]);
     const expandedPredicates = qEdge.predicates.reduce((arr: string[], predicate: string) => {
-      return utils.getUnique([...arr, ...biolink.getDescendantPredicates(utils.removeBioLinkPrefix(predicate))]);
+      return utils.getUnique([...arr, ...utils.biolink.getDescendantPredicates(utils.removeBioLinkPrefix(predicate))]);
     }, [] as string[]);
     const expandedObject = qObject.categories.reduce((arr: string[], objectCategory: string) => {
-      return utils.getUnique([...arr, ...biolink.getDescendantClasses(utils.removeBioLinkPrefix(objectCategory))]);
+      return utils.getUnique([...arr, ...utils.biolink.getDescendantClasses(utils.removeBioLinkPrefix(objectCategory))]);
     }, [] as string[]);
     const qualifierConstraints = (qEdge.qualifier_constraints || []).map((qualifierSetObj) => {
       return Object.fromEntries(
@@ -355,7 +354,7 @@ export default class InferredQueryHandler {
             // Predicate matches or is descendant
             const predicateMatch =
               qEdge.predicates?.some((predicate) => {
-                const descendantMatch = biolink
+                const descendantMatch = utils.biolink
                   .getDescendantPredicates(utils.removeBioLinkPrefix(predicate))
                   .includes(utils.removeBioLinkPrefix(boundEdge.predicate));
                 return predicate === boundEdge.predicate || descendantMatch;
@@ -372,10 +371,10 @@ export default class InferredQueryHandler {
                       let valueMatch: boolean;
                       try {
                         const descendants = queryQualifier.qualifier_value.includes('biolink:')
-                          ? biolink.getDescendantPredicates(
+                          ? utils.biolink.getDescendantPredicates(
                             utils.removeBioLinkPrefix(queryQualifier.qualifier_value as string),
                           )
-                          : biolink.getDescendantQualifiers(
+                          : utils.biolink.getDescendantQualifiers(
                             utils.removeBioLinkPrefix(queryQualifier.qualifier_value as string),
                           );
                         valueMatch =

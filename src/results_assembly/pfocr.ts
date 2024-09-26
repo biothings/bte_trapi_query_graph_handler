@@ -1,9 +1,8 @@
 import axios from 'axios';
 import Debug from 'debug';
 const debug = Debug('bte:biothings-explorer-trapi:pfocr');
-import { intersection } from '../utils';
 import _ from 'lodash';
-import { LogEntry, StampedLog } from '@biothings-explorer/utils';
+import { LogEntry, StampedLog, intersection } from '@biothings-explorer/utils';
 import { TrapiResult, TrapiKGNode, TrapiResponse, TrapiKGEdge } from '@biothings-explorer/types';
 import Graph from '../graph/graph';
 
