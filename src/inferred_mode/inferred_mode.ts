@@ -725,7 +725,7 @@ export default class InferredQueryHandler {
 
     // add pfocr figures
     if (!this.pathfinder) {
-      this.logs = [...this.logs, ...(await enrichTrapiResultsWithPfocrFigures(response, true))];
+      this.logs = [...this.logs, ...(await enrichTrapiResultsWithPfocrFigures(response))];
     }
 
     // get the final summary log
