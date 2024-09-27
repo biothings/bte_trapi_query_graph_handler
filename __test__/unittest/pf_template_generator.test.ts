@@ -59,7 +59,7 @@ describe('Test Pathfinder Template Generator', () => {
           ]
         }
       },
-      "log": "(subject) -(regulates,regulated_by,affects,affected_by,interacts_with,associated_with)-> (Gene) -(gene_associated_with_condition,biomarker_for,affects,contributes_to)-> (object)",
+      "log": "(subject) -(affects,interacts_with,occurs_together_in_literature_with)-> (Gene) -(gene_associated_with_condition,biomarker_for,affects,contributes_to)-> (object)",
     });
     expect(templatesWithoutUnCat[0]).toEqual(templatesWithUnCat[0]);
 
@@ -120,7 +120,7 @@ describe('Test Pathfinder Template Generator', () => {
           ]
         }
       },
-      "log": "(subject) -(regulates,regulated_by,affects,affected_by,interacts_with,associated_with)-> (Gene) -(related_to_at_instance_level,affects,contributes_to,participates_in,regulates,regulated_by,affected_by,interacts_with,correlated_with)-> (AnatomicalEntity,BiologicalProcessOrActivity,ChemicalEntity) -(related_to_at_instance_level,affects,affected_by,occurs_in)-> (object)"
+      "log": "(subject) -(affects,interacts_with,occurs_together_in_literature_with)-> (Gene) -(affects,produced_by,located_in,part_of,interacts_with)-> (Cell) -(location_of,affected_by,interacts_with)-> (object)"
     });
     expect(templatesWithoutUnCat[1]).toEqual(templatesWithUnCat[1]);
 
@@ -183,7 +183,7 @@ describe('Test Pathfinder Template Generator', () => {
           ]
         }
       },
-      "log": "(subject) -(regulates,regulated_by,affects,affected_by,interacts_with,associated_with)-> (Gene) -(regulates,regulated_by,affects,affected_by,interacts_with)-> (Gene) -(gene_associated_with_condition,biomarker_for,affects,contributes_to)-> (object)"
+      "log": "(subject) -(affects,interacts_with,occurs_together_in_literature_with)-> (Gene) -(regulates,regulated_by,affects,affected_by,interacts_with,occurs_together_in_literature_with)-> (Gene) -(gene_associated_with_condition,biomarker_for,affects,contributes_to)-> (object)"
     });
     expect(templatesWithoutUnCat[2]).toEqual(templatesWithUnCat[2]);
   });
