@@ -11,11 +11,10 @@ import {
 } from '@biothings-explorer/types';
 import InferredQueryHandler from './inferred_mode';
 import { scaled_sigmoid, inverse_scaled_sigmoid } from '../results_assembly/score';
-import { LogEntry, StampedLog, Telemetry } from '@biothings-explorer/utils';
+import * as utils from '@biothings-explorer/utils';
+import { LogEntry, StampedLog, Telemetry, removeBioLinkPrefix } from '@biothings-explorer/utils';
 import Debug from 'debug';
 import generateTemplates from './pf_template_generator';
-import biolink from '../biolink';
-import { removeBioLinkPrefix } from '../utils';
 import { enrichTrapiResultsWithPfocrFigures } from '../results_assembly/pfocr';
 const debug = Debug('bte:biothings-explorer-trapi:pathfinder');
 
@@ -192,7 +191,7 @@ export default class PathfinderQueryHandler {
       const label = [this.mainEdge.subject, this.unpinnedNodeId, this.mainEdge.object];
       const ancestorsToInject = new Set();
       node.categories.forEach((category) => {
-        const ancestors = biolink.getAncestorClasses(removeBioLinkPrefix(category));
+        const ancestors = utils.biolink.getAncestorClasses(removeBioLinkPrefix(category));
         if (!Array.isArray(ancestors)) return;
         ancestors.forEach((ancestor) => {
           if (FALLBACK_ANCESTORS.includes(ancestor)) {
@@ -271,7 +270,7 @@ export default class PathfinderQueryHandler {
     if (this.unpinnedNode.categories && !this.unpinnedNode.categories.includes('biolink:NamedThing')) {
       acceptableTypes = new Set<string>();
       for (const category of this.unpinnedNode.categories) {
-        for (const desc of biolink.getDescendantClasses(removeBioLinkPrefix(category))) {
+        for (const desc of utils.biolink.getDescendantClasses(removeBioLinkPrefix(category))) {
           acceptableTypes.add('biolink:' + desc);
         }
       }
