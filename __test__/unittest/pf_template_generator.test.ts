@@ -39,12 +39,9 @@ describe('Test Pathfinder Template Generator', () => {
           "subject": "creativeQuerySubject",
           "object": "un",
           "predicates": [
-            "biolink:regulates",
-            "biolink:regulated_by",
             "biolink:affects",
-            "biolink:affected_by",
             "biolink:interacts_with",
-            "biolink:associated_with"
+            "biolink:occurs_together_in_literature_with"
           ]
         },
         "un_obj": {
@@ -81,9 +78,7 @@ describe('Test Pathfinder Template Generator', () => {
         },
         "nb": {
           "categories": [
-            "biolink:AnatomicalEntity",
-            "biolink:BiologicalProcessOrActivity",
-            "biolink:ChemicalEntity"
+            "biolink:Cell"
           ]
         }
       },
@@ -92,37 +87,29 @@ describe('Test Pathfinder Template Generator', () => {
           "subject": "creativeQuerySubject",
           "object": "un",
           "predicates": [
-            "biolink:regulates",
-            "biolink:regulated_by",
             "biolink:affects",
-            "biolink:affected_by",
             "biolink:interacts_with",
-            "biolink:associated_with"
+            "biolink:occurs_together_in_literature_with"
           ]
         },
         "un_b": {
           "subject": "un",
           "object": "nb",
           "predicates": [
-            "biolink:related_to_at_instance_level",
             "biolink:affects",
-            "biolink:contributes_to",
-            "biolink:participates_in",
-            "biolink:regulates",
-            "biolink:regulated_by",
-            "biolink:affected_by",
-            "biolink:interacts_with",
-            "biolink:correlated_with"
+            "biolink:produced_by",
+            "biolink:located_in",
+            "biolink:part_of",
+            "biolink:interacts_with"
           ]
         },
         "b_obj": {
           "subject": "nb",
           "object": "creativeQueryObject",
           "predicates": [
-            "biolink:related_to_at_instance_level",
-            "biolink:affects",
+            "biolink:location_of",
             "biolink:affected_by",
-            "biolink:occurs_in"
+            "biolink:interacts_with"
           ]
         }
       }
@@ -158,12 +145,9 @@ describe('Test Pathfinder Template Generator', () => {
           "subject": "creativeQuerySubject",
           "object": "nc",
           "predicates": [
-            "biolink:regulates",
-            "biolink:regulated_by",
             "biolink:affects",
-            "biolink:affected_by",
             "biolink:interacts_with",
-            "biolink:associated_with"
+            "biolink:occurs_together_in_literature_with"
           ]
         },
         "c_un": {
@@ -174,7 +158,8 @@ describe('Test Pathfinder Template Generator', () => {
             "biolink:regulated_by",
             "biolink:affects",
             "biolink:affected_by",
-            "biolink:interacts_with"
+            "biolink:interacts_with",
+            "biolink:occurs_together_in_literature_with"
           ]
         },
         "un_obj": {
