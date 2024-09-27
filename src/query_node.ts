@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import _ from 'lodash';
-import * as utils from './utils';
-import biolink from './biolink';
+import * as utils from '@biothings-explorer/utils';
 import Debug from 'debug';
 import InvalidQueryGraphError from './exceptions/invalid_query_graph_error';
 import { SRIBioEntity } from 'biomedical_id_resolver';
@@ -245,7 +244,7 @@ export default class QNode {
       categories.map((category) => {
         expanded_categories = [
           ...expanded_categories,
-          ...(biolink.getDescendantClasses(utils.removeBioLinkPrefix(category)) || []),
+          ...(utils.biolink.getDescendantClasses(utils.removeBioLinkPrefix(category)) || []),
         ];
       });
       this.expandedCategories = utils.getUnique(expanded_categories);
@@ -255,7 +254,7 @@ export default class QNode {
     //   utils
     //     .toArray(this.category)
     //     .map((category) => utils.removeBioLinkPrefix(category))
-    //     .reduce((arr, category) => [...arr, ...biolink.getAncestorClasses(category)], [])
+    //     .reduce((arr, category) => [...arr, ...utils.getAncestorClasses(category)], [])
     //     .filter((category) => !utils.toArray(this.category).includes(`biolink:${category}`)),
     // );
     let categories = utils.toArray(this.categories).map((category) => utils.removeBioLinkPrefix(category));
@@ -265,7 +264,7 @@ export default class QNode {
     this.expandedCategories = utils.getUnique(
       utils
         .getUnique(categories)
-        .reduce((arr, category) => [...arr, ...(biolink.getDescendantClasses(category) || [])], []),
+        .reduce((arr, category) => [...arr, ...(utils.biolink.getDescendantClasses(category) || [])], []),
     );
     // .filter(category => !ancestors.has(category));
   }

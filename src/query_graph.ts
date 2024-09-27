@@ -1,12 +1,11 @@
 import QEdge from './query_edge';
 import InvalidQueryGraphError from './exceptions/invalid_query_graph_error';
+import * as utils from '@biothings-explorer/utils';
 import { LogEntry, StampedLog } from '@biothings-explorer/utils';
 import Debug from 'debug';
 import QNode from './query_node';
-import biolink from './biolink';
 import { resolveSRI } from 'biomedical_id_resolver';
 import _ from 'lodash';
-import * as utils from './utils';
 import { TrapiQueryGraph } from '@biothings-explorer/types';
 import NotImplementedError from './exceptions/not_implemented_error';
 
@@ -226,7 +225,7 @@ export default class QueryGraph {
     } else {
       try {
         let finalCategories: string[] = [];
-        const tree = biolink.biolink.classTree.objects;
+        const tree = utils.biolink.biolink.classTree.objects;
 
         // get array of all unique categories for all curies
         const allCategories = [

@@ -351,11 +351,13 @@ describe('Test InferredQueryHandler', () => {
               creativeQuerySubject: [
                 {
                   id: 'fakeCompound2',
+                  attributes: []
                 },
               ],
               creativeQueryObject: [
                 {
                   id: 'fakeDisease1',
+                  attributes: []
                 },
               ],
             },
@@ -366,6 +368,7 @@ describe('Test InferredQueryHandler', () => {
                   e0: [
                     {
                       id: 'edgeHash1',
+                      attributes: []
                     },
                   ],
                 },
@@ -378,11 +381,13 @@ describe('Test InferredQueryHandler', () => {
               creativeQuerySubject: [
                 {
                   id: 'fakeCompound1',
+                  attributes: []
                 },
               ],
               creativeQueryObject: [
                 {
                   id: 'fakeDisease1',
+                  attributes: []
                 },
               ],
             },
@@ -393,6 +398,7 @@ describe('Test InferredQueryHandler', () => {
                   e0: [
                     {
                       id: 'edgeHash2',
+                      attributes: []
                     },
                   ],
                 },
@@ -405,11 +411,13 @@ describe('Test InferredQueryHandler', () => {
               creativeQuerySubject: [
                 {
                   id: 'fakeCompound3',
+                  attributes: []
                 },
               ],
               creativeQueryObject: [
                 {
                   id: 'fakeDisease1',
+                  attributes: []
                 },
               ],
             },
@@ -420,6 +428,7 @@ describe('Test InferredQueryHandler', () => {
                   e0: [
                     {
                       id: 'edgeHash3',
+                      attributes: []
                     },
                   ],
                 },
@@ -477,11 +486,13 @@ describe('Test InferredQueryHandler', () => {
               n01: [
                 {
                   id: 'fakeCompound1',
+                  attributes: []
                 },
               ],
               n02: [
                 {
                   id: 'fakeDisease1',
+                  attributes: []
                 },
               ],
             },
@@ -492,6 +503,7 @@ describe('Test InferredQueryHandler', () => {
                   e01: [
                     {
                       id: 'edgeHash1',
+                      attributes: []
                     },
                   ],
                 },
@@ -504,11 +516,13 @@ describe('Test InferredQueryHandler', () => {
               n01: [
                 {
                   id: 'fakeCompound3',
+                  attributes: []
                 },
               ],
               n02: [
                 {
                   id: 'fakeDisease1',
+                  attributes: []
                 },
               ],
             },
@@ -518,6 +532,7 @@ describe('Test InferredQueryHandler', () => {
                   e01: [
                     {
                       id: 'edgeHash2',
+                      attributes: []
                     },
                   ],
                 },
@@ -635,16 +650,19 @@ describe('Test InferredQueryHandler', () => {
               creativeQuerySubject: [
                 {
                   id: 'fakeCompound4',
+                  attributes: []
                 },
               ],
               creativeQueryObject: [
                 {
                   id: 'fakeDisease1',
+                  attributes: []
                 },
               ],
               n01: [
                 {
                   id: 'fakeGene1',
+                  attributes: []
                 },
               ],
             },
@@ -655,11 +673,13 @@ describe('Test InferredQueryHandler', () => {
                   e0: [
                     {
                       id: 'edgeHash1',
+                      attributes: []
                     },
                   ],
                   e01: [
                     {
                       id: 'edgeHash2',
+                      attributes: []
                     },
                   ],
                 },
@@ -672,11 +692,13 @@ describe('Test InferredQueryHandler', () => {
               creativeQuerySubject: [
                 {
                   id: 'fakeCompound1',
+                  attributes: []
                 },
               ],
               creativeQueryObject: [
                 {
                   id: 'fakeDisease1',
+                  attributes: []
                 },
               ],
             },
@@ -687,6 +709,7 @@ describe('Test InferredQueryHandler', () => {
                   e0: [
                     {
                       id: 'edgeHash3',
+                      attributes: []
                     },
                   ],
                 },
@@ -783,11 +806,13 @@ describe('Test InferredQueryHandler', () => {
               n01: [
                 {
                   id: 'fakeCompound1',
+                  attributes: []
                 },
               ],
               n02: [
                 {
                   id: 'fakeDisease1',
+                  attributes: []
                 },
               ],
             },
@@ -798,6 +823,7 @@ describe('Test InferredQueryHandler', () => {
                   e01: [
                     {
                       id: 'edgeHash1',
+                      attributes: []
                     },
                   ],
                 },
@@ -878,11 +904,13 @@ describe('Test InferredQueryHandler', () => {
                 creativeQuerySubject: [
                   {
                     id: 'creativeQuerySubject',
+                    attributes: []
                   },
                 ],
                 creativeQueryObject: [
                   {
                     id: 'creativeQueryObject',
+                    attributes: []
                   },
                 ],
               },
@@ -892,6 +920,7 @@ describe('Test InferredQueryHandler', () => {
                     e01: [
                       {
                         id: 'edgeHash1',
+                        attributes: []
                       },
                     ],
                   },
