@@ -191,6 +191,7 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
     Object.values(result.node_bindings).forEach((bindings) =>
       bindings.forEach((binding) => nodes.add(response.message.knowledge_graph.nodes[binding.id])),
     );
+
     const combo: Set<string> = new Set();
     let matchedNodes = 0;
     [...nodes].forEach((node) => {
