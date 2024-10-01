@@ -167,7 +167,14 @@ export default class KnowledgeGraph {
     });
 
     //handle TRAPI APIs (Situation A of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208) and APIs that define 'edge-atributes' in x-bte
+    const seenPmids = new Set();
     kgEdge.attributes['edge-attributes']?.forEach((attribute) => {
+      // Merge SemmedDB sentences
+      if (attribute.attribute_type_id === "biolink:has_supporting_study_result" && attribute?.attributes?.find((attr) => attr.attribute_type_id === "biolink:publications")) {
+        const publication = attribute.attributes.find((attr) => attr.attribute_type_id === "biolink:publications").value;
+        if (seenPmids.has(publication) || seenPmids.size > 50) return; // do not include duplicate publications
+        seenPmids.add(publication);
+      }
       attributes.push(attribute);
     });
     return attributes;
