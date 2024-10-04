@@ -29,7 +29,7 @@ export default class KGEdge {
     [qualifier_type_id: string]: string | string[];
   };
   attributes: {
-    [attribute_type_id: string]: Set<string> | TrapiAttribute[];
+    [attribute_type_id: string]: string[] | TrapiAttribute[];
     'edge-attributes'?: TrapiAttribute[];
   };
   constructor(id: string, info: KGEdgeInfo) {
@@ -125,13 +125,11 @@ export default class KGEdge {
     }
 
     if (!(name in this.attributes)) {
-      this.attributes[name] = new Set();
+      this.attributes[name] = [];
     }
     if (!Array.isArray(value)) {
       value = [value];
     }
-    (value as string[]).map((item) => {
-      (this.attributes[name] as Set<string>).add(item);
-    });
+    (this.attributes[name] as string[]).push(...(value as string[]));
   }
 }
