@@ -120,7 +120,8 @@ export default class KGEdge {
   addAdditionalAttributes(name: string, value: string | string[] | TrapiAttribute[]): void {
     // special handling for full edge attributes
     if (name === 'edge-attributes') {
-      this.attributes[name] = value as TrapiAttribute[];
+      if (this.attributes[name]) this.attributes[name] = [...this.attributes[name], ...value as TrapiAttribute[]];
+      else this.attributes[name] = value as TrapiAttribute[];
       return;
     }
 
