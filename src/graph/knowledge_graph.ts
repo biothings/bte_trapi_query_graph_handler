@@ -172,7 +172,7 @@ export default class KnowledgeGraph {
       // Merge SemmedDB sentences
       if (attribute.attribute_type_id === "biolink:has_supporting_study_result" && attribute?.attributes?.find((attr) => attr.attribute_type_id === "biolink:publications")) {
         const publication = attribute.attributes.find((attr) => attr.attribute_type_id === "biolink:publications").value;
-        if (seenPmids.has(publication) || seenPmids.size > 50) return; // do not include duplicate publications
+        if (seenPmids.has(publication) || seenPmids.size >= 50) return; // do not include duplicate publications
         seenPmids.add(publication);
       }
       attributes.push(attribute);
