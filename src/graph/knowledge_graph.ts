@@ -177,6 +177,19 @@ export default class KnowledgeGraph {
       }
       attributes.push(attribute);
     });
+
+    if (seenPmids.size != 0) {
+      const evidenceAttr = attributes.find(attr => attr.attribute_type_id === 'biolink:evidence_count');
+      if (evidenceAttr) {
+        evidenceAttr.value = seenPmids.size;
+      } else {
+        attributes.push({
+          attribute_type_id: 'biolink:evidence_count',
+          value: seenPmids.size,
+        });
+      }
+    }
+
     return attributes;
   }
 
