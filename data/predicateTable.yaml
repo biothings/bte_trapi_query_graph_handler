@@ -1,0 +1,56 @@
+ChemicalEntity:
+  Gene:
+    - affects
+    - interacts_with
+    - occurs_together_in_literature_with
+Gene:
+  DiseaseOrPhenotypicFeature:
+    - gene_associated_with_condition
+    - biomarker_for
+    - affects
+    - contributes_to
+  AnatomicalEntity:
+    - affects
+    - produced_by
+    - located_in
+    - part_of
+    - interacts_with
+  BiologicalProcessOrActivity:
+    - affects
+    - contributes_to
+    - participates_in
+  Gene:
+    - regulates
+    - regulated_by
+    - affects
+    - affected_by
+    - interacts_with
+    - occurs_together_in_literature_with
+  ChemicalEntity:
+    - regulates
+    - regulated_by
+    - affects
+    - affected_by
+    - interacts_with
+    - occurs_together_in_literature_with
+    - produces
+AnatomicalEntity:
+  DiseaseOrPhenotypicFeature:
+    - location_of
+    - affected_by
+    - interacts_with
+BiologicalProcessOrActivity:
+  Gene:
+    - affected_by
+    - contribution_from
+    - has_participant
+  DiseaseOrPhenotypicFeature:
+    - affects
+    - affected_by
+    - occurs_in
+DiseaseOrPhenotypicFeature:
+  Gene:
+    - condition_associated_with_gene
+    - has_biomarker
+    - affected_by
+    - contribution_from

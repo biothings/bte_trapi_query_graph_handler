@@ -1,13 +1,13 @@
 import QEdge from './query_edge';
 import InvalidQueryGraphError from './exceptions/invalid_query_graph_error';
+import * as utils from '@biothings-explorer/utils';
 import { LogEntry, StampedLog } from '@biothings-explorer/utils';
 import Debug from 'debug';
 import QNode from './query_node';
-import biolink from './biolink';
 import { resolveSRI } from 'biomedical_id_resolver';
 import _ from 'lodash';
-import * as utils from './utils';
 import { TrapiQueryGraph } from '@biothings-explorer/types';
+import NotImplementedError from './exceptions/not_implemented_error';
 
 const debug = Debug('bte:biothings-explorer-trapi:query_graph');
 
@@ -15,11 +15,13 @@ export default class QueryGraph {
   queryGraph: TrapiQueryGraph;
   schema: any;
   logs: StampedLog[];
+  skipCycleDetection: boolean;
   nodes: { [QNodeID: string]: QNode };
   edges: { [QEdgeID: string]: QEdge };
-  constructor(queryGraph: TrapiQueryGraph, schema: any) {
+  constructor(queryGraph: TrapiQueryGraph, schema: any, skipCycleDetection = false) {
     this.queryGraph = queryGraph;
     this.schema = schema;
+    this.skipCycleDetection = skipCycleDetection;
     this.logs = [];
   }
 
@@ -93,7 +95,7 @@ export default class QueryGraph {
     }
 
     for (const firstNode in nodes) {
-      if (nodes[firstNode].visited === true) continue;
+      if (nodes[firstNode].visited == true) continue;
       const stack: { curNode: string; parent: string | number }[] = [{ curNode: firstNode, parent: -1 }];
       nodes[firstNode].visited = true;
       while (stack.length !== 0) {
@@ -182,6 +184,14 @@ export default class QueryGraph {
     });
   }
 
+  _validateNoMCQ(queryGraph: TrapiQueryGraph): boolean {
+    return Object.values(queryGraph.nodes).some((node) => {
+      if (node.set_interpretation && node.set_interpretation.toLowerCase() === 'many') {
+        throw new NotImplementedError('NotImplementedError', 'Set interpretation is not yet implemented.')
+      }
+    })
+  }
+
   _validate(queryGraph: TrapiQueryGraph): void {
     this._validateEmptyEdges(queryGraph);
     this._validateEmptyNodes(queryGraph);
@@ -191,8 +201,9 @@ export default class QueryGraph {
     this._validateNodeProperties(queryGraph);
     this._validateEdgeProperties(queryGraph);
     this._validateBatchSize(queryGraph);
-    this._validateCycles(queryGraph);
+    !this.skipCycleDetection && this._validateCycles(queryGraph);
     this._validateNoDuplicateQualifierTypes(queryGraph);
+    this._validateNoMCQ(queryGraph);
   }
 
   private async _findNodeCategories(curies: string[]): Promise<string[]> {
@@ -214,7 +225,7 @@ export default class QueryGraph {
     } else {
       try {
         let finalCategories: string[] = [];
-        const tree = biolink.biolink.classTree.objects;
+        const tree = utils.biolink.biolink.classTree.objects;
 
         // get array of all unique categories for all curies
         const allCategories = [
@@ -319,12 +330,11 @@ export default class QueryGraph {
                 `Node ${qNodeID} `,
                 `with id${this.queryGraph.nodes[qNodeID].ids.length > 1 ? 's' : ''} `,
                 `[${this.queryGraph.nodes[qNodeID].ids.join(', ')}] `,
-                `${
-                  userAssignedCategories && userAssignedCategories.length
-                    ? `and categor${userAssignedCategories.length === 1 ? 'y' : 'ies'} [${userAssignedCategories.join(
-                        ', ',
-                      )}] augmented with`
-                    : `assigned`
+                `${userAssignedCategories && userAssignedCategories.length
+                  ? `and categor${userAssignedCategories.length === 1 ? 'y' : 'ies'} [${userAssignedCategories.join(
+                    ', ',
+                  )}] augmented with`
+                  : `assigned`
                 } `,
                 `categor${categories.length > 1 ? 'ies' : 'y'} `,
                 `[${categories.join(', ')}] inferred from `,
@@ -340,6 +350,7 @@ export default class QueryGraph {
       }
 
       if (nodes[qNodeID].categories !== undefined) {
+        // Do some type cleanup/conflation
         if (
           nodes[qNodeID].categories.includes('biolink:Disease') ||
           nodes[qNodeID].categories.includes('biolink:PhenotypicFeature')
@@ -355,6 +366,14 @@ export default class QueryGraph {
         ) {
           nodes[qNodeID].categories.push('biolink:Gene');
         }
+        if (
+          nodes[qNodeID].categories.includes('biolink:Gene') &&
+          !nodes[qNodeID].categories.includes('biolink:Protein')
+        ) {
+          nodes[qNodeID].categories.push('biolink:Protein');
+        }
+        // Ensure categories are rolled into expandedCategories
+        nodes[qNodeID].expandCategories()
       }
     }
     this.logs.push(

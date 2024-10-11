@@ -10,7 +10,7 @@ import QEdge from './query_edge';
 import MetaKG from '@biothings-explorer/smartapi-kg';
 import { QueryHandlerOptions } from '@biothings-explorer/types';
 import { Record } from '@biothings-explorer/api-response-transform';
-import { UnavailableAPITracker } from './types';
+import { SubclassEdges, UnavailableAPITracker } from './types';
 import { RecordsByQEdgeID } from './results_assembly/query_results';
 import path from 'path';
 import { promises as fs } from 'fs';
@@ -24,7 +24,8 @@ export default class QueryEdgeManager {
   private _records: Record[];
   options: QueryHandlerOptions;
   private _organizedRecords: RecordsByQEdgeID;
-  constructor(edges: QEdge[], metaKG: MetaKG, options: QueryHandlerOptions) {
+  private _subclassEdges: SubclassEdges;
+  constructor(edges: QEdge[], metaKG: MetaKG, subclassEdges: SubclassEdges, options: QueryHandlerOptions) {
     // flatten list of all edges available
     this._qEdges = _.flatten(edges);
     this._metaKG = metaKG;
@@ -33,6 +34,7 @@ export default class QueryEdgeManager {
     //organized by edge with refs to connected edges
     this._organizedRecords = {};
     this.options = options;
+    this._subclassEdges = subclassEdges;
     this.init();
   }
 
@@ -110,7 +112,7 @@ export default class QueryEdgeManager {
     }
     debug(
       `(5) Sending next edge '${nextQEdge.getID()}' ` +
-      `WITH entity count...(${nextQEdge.subject.entity_count || nextQEdge.object.entity_count})`,
+        `WITH entity count...(${nextQEdge.subject.entity_count || nextQEdge.object.entity_count})`,
     );
     return this.preSendOffCheck(nextQEdge);
   }
@@ -119,9 +121,9 @@ export default class QueryEdgeManager {
     this._qEdges.forEach((qEdge) => {
       debug(
         `'${qEdge.getID()}'` +
-        ` : (${qEdge.subject.entity_count || 0}) ` +
-        `${qEdge.reverse ? '<--' : '-->'}` +
-        ` (${qEdge.object.entity_count || 0})`,
+          ` : (${qEdge.subject.entity_count || 0}) ` +
+          `${qEdge.reverse ? '<--' : '-->'}` +
+          ` (${qEdge.object.entity_count || 0})`,
       );
     });
   }
@@ -129,8 +131,9 @@ export default class QueryEdgeManager {
   _logSkippedQueries(unavailableAPIs: UnavailableAPITracker): void {
     Object.entries(unavailableAPIs).forEach(([api, { skippedQueries }]) => {
       if (skippedQueries > 0) {
-        const skipMessage = `${skippedQueries} additional quer${skippedQueries > 1 ? 'ies' : 'y'} to ${api} ${skippedQueries > 1 ? 'were' : 'was'
-          } skipped as the API was unavailable.`;
+        const skipMessage = `${skippedQueries} additional quer${skippedQueries > 1 ? 'ies' : 'y'} to ${api} ${
+          skippedQueries > 1 ? 'were' : 'was'
+        } skipped as the API was unavailable.`;
         debug(skipMessage);
         this.logs.push(new LogEntry('WARNING', null, skipMessage).getLog());
       }
@@ -196,7 +199,7 @@ export default class QueryEdgeManager {
     const objectCuries = qEdge.object.curie;
     debug(
       `'${qEdge.getID()}' Reversed[${qEdge.reverse}] (${JSON.stringify(subjectCuries.length || 0)})` +
-      `--(${JSON.stringify(objectCuries.length || 0)}) entities / (${records.length}) records.`,
+        `--(${JSON.stringify(objectCuries.length || 0)}) entities / (${records.length}) records.`,
     );
     // debug(`IDS SUB ${JSON.stringify(sub_count)}`)
     // debug(`IDS OBJ ${JSON.stringify(obj_count)}`)
@@ -205,15 +208,32 @@ export default class QueryEdgeManager {
 
     records.forEach((record) => {
       // check against original, primaryID, and equivalent ids
-      const subjectIDs = [record.subject.original, record.subject.curie, ...record.subject.equivalentCuries];
-      const objectIDs = [record.object.original, record.object.curie, ...record.object.equivalentCuries];
+      let subjectIDs = [record.subject.original, record.subject.curie, ...record.subject.equivalentCuries];
+      let objectIDs = [record.object.original, record.object.curie, ...record.object.equivalentCuries];
+
+      // check if IDs will be resolved to a parent
+      subjectIDs = [
+        ...subjectIDs,
+        ...subjectIDs.reduce((set, subjectID) => {
+          Object.entries(this._subclassEdges[subjectID] ?? {}).forEach(([id, { qNodes }]) => {
+            if (qNodes.includes(qEdge.reverse ? qEdge.object.id : qEdge.subject.id)) set.add(id);
+          });
+          return set;
+        }, new Set<string>()),
+      ];
+      objectIDs = [
+        ...objectIDs,
+        ...objectIDs.reduce((set, objectID) => {
+          Object.entries(this._subclassEdges[objectID] ?? {}).forEach(([id, { qNodes }]) => {
+            if (qNodes.includes(qEdge.reverse ? qEdge.subject.id : qEdge.object.id)) set.add(id);
+          });
+          return set;
+        }, new Set<string>()),
+      ];
 
       // there must be at least a minimal intersection
-      const subjectMatch =
-        subjectIDs.some((curie) => execSubjectCuries.includes(curie)) || execSubjectCuries.length === 0;
-      const objectMatch = objectIDs.some((curie) => execObjectCuries.includes(curie)) || execObjectCuries.length === 0;
-
-      // if both ends match then keep record
+      const subjectMatch = subjectIDs.some((curie) => execSubjectCuries.includes(curie));
+      const objectMatch = objectIDs.some((curie) => execObjectCuries.includes(curie));
 
       // Don't keep self-edges
       const selfEdge = [...subjectIDs].some((curie) => objectIDs.includes(curie));
@@ -426,7 +446,8 @@ export default class QueryEdgeManager {
         new LogEntry(
           'INFO',
           null,
-          `Executing ${currentQEdge.getID()}${currentQEdge.isReversed() ? ' (reversed)' : ''}: ${currentQEdge.subject.id
+          `Executing ${currentQEdge.getID()}${currentQEdge.isReversed() ? ' (reversed)' : ''}: ${
+            currentQEdge.subject.id
           } ${currentQEdge.isReversed() ? '<--' : '-->'} ${currentQEdge.object.id}`,
         ).getLog(),
       );

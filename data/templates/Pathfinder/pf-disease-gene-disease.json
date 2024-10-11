@@ -1,0 +1,27 @@
+{
+    "message": {
+        "query_graph": {
+            "nodes": {
+                "creativeQuerySubject": {
+                    "categories":["biolink:DiseaseOrPhenotypicFeature"]
+                },
+                "nA": {
+                    "categories":["biolink:Gene", "biolink:Protein"]
+                },
+                "creativeQueryObject": {
+                    "categories":["biolink:DiseaseOrPhenotypicFeature"]
+               }
+            },
+            "edges": {
+                "eA": {
+                    "subject": "creativeQuerySubject",
+                    "object": "nA"
+                },
+                "eB": {
+                    "subject": "nA",
+                    "object": "creativeQueryObject"
+                }
+            }
+        }
+    }
+}

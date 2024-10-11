@@ -1,4 +1,5 @@
-import TRAPIQueryHandler, { TrapiQueryGraph, TrapiResponse, TrapiResult } from '../../src/index';
+import TRAPIQueryHandler from '../../src/index';
+import { TrapiQueryGraph, TrapiResponse, TrapiResult } from '@biothings-explorer/types';
 import path from 'path';
 import fs from 'fs';
 const smartAPIPAth = path.resolve(__dirname, '../../../bte-trapi/data/smartapi_specs.json');
@@ -201,6 +202,7 @@ describe('Test InferredQueryHandler', () => {
           },
         },
         template: 'Chem-treats-DoP.json',
+        qualifiers: {}
       },
     ];
 
@@ -349,11 +351,13 @@ describe('Test InferredQueryHandler', () => {
               creativeQuerySubject: [
                 {
                   id: 'fakeCompound2',
+                  attributes: []
                 },
               ],
               creativeQueryObject: [
                 {
                   id: 'fakeDisease1',
+                  attributes: []
                 },
               ],
             },
@@ -364,6 +368,7 @@ describe('Test InferredQueryHandler', () => {
                   e0: [
                     {
                       id: 'edgeHash1',
+                      attributes: []
                     },
                   ],
                 },
@@ -376,11 +381,13 @@ describe('Test InferredQueryHandler', () => {
               creativeQuerySubject: [
                 {
                   id: 'fakeCompound1',
+                  attributes: []
                 },
               ],
               creativeQueryObject: [
                 {
                   id: 'fakeDisease1',
+                  attributes: []
                 },
               ],
             },
@@ -391,6 +398,7 @@ describe('Test InferredQueryHandler', () => {
                   e0: [
                     {
                       id: 'edgeHash2',
+                      attributes: []
                     },
                   ],
                 },
@@ -403,11 +411,13 @@ describe('Test InferredQueryHandler', () => {
               creativeQuerySubject: [
                 {
                   id: 'fakeCompound3',
+                  attributes: []
                 },
               ],
               creativeQueryObject: [
                 {
                   id: 'fakeDisease1',
+                  attributes: []
                 },
               ],
             },
@@ -418,6 +428,7 @@ describe('Test InferredQueryHandler', () => {
                   e0: [
                     {
                       id: 'edgeHash3',
+                      attributes: []
                     },
                   ],
                 },
@@ -475,11 +486,13 @@ describe('Test InferredQueryHandler', () => {
               n01: [
                 {
                   id: 'fakeCompound1',
+                  attributes: []
                 },
               ],
               n02: [
                 {
                   id: 'fakeDisease1',
+                  attributes: []
                 },
               ],
             },
@@ -490,6 +503,7 @@ describe('Test InferredQueryHandler', () => {
                   e01: [
                     {
                       id: 'edgeHash1',
+                      attributes: []
                     },
                   ],
                 },
@@ -502,11 +516,13 @@ describe('Test InferredQueryHandler', () => {
               n01: [
                 {
                   id: 'fakeCompound3',
+                  attributes: []
                 },
               ],
               n02: [
                 {
                   id: 'fakeDisease1',
+                  attributes: []
                 },
               ],
             },
@@ -516,6 +532,7 @@ describe('Test InferredQueryHandler', () => {
                   e01: [
                     {
                       id: 'edgeHash2',
+                      attributes: []
                     },
                   ],
                 },
@@ -534,7 +551,8 @@ describe('Test InferredQueryHandler', () => {
 
     const { qEdgeID, qEdge, qSubject, qObject } = inferredQueryHandler.getQueryParts();
 
-    const report = inferredQueryHandler.combineResponse(1, trapiQueryHandler0, qEdgeID, qEdge, combinedResponse);
+    const auxGraphSuffixes = {};
+    const report = inferredQueryHandler.combineResponse(1, trapiQueryHandler0, qEdgeID, qEdge, combinedResponse, auxGraphSuffixes);
 
     expect(report).toHaveProperty('querySuccess');
     expect(report).toHaveProperty('queryHadResults');
@@ -549,7 +567,7 @@ describe('Test InferredQueryHandler', () => {
     expect(creativeLimitHit).toBeTruthy();
     expect(Object.keys(combinedResponse.message.results)).toHaveLength(3);
     expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].analyses[0].score).toEqual(
-      0.8421052631578949,
+      0.7836531040612146,
     );
     expect(combinedResponse.message.results['fakeCompound3-fakeDisease1'].analyses[0].score).toEqual(0.2);
     expect(combinedResponse.logs).toHaveLength(3);
@@ -632,16 +650,19 @@ describe('Test InferredQueryHandler', () => {
               creativeQuerySubject: [
                 {
                   id: 'fakeCompound4',
+                  attributes: []
                 },
               ],
               creativeQueryObject: [
                 {
                   id: 'fakeDisease1',
+                  attributes: []
                 },
               ],
               n01: [
                 {
                   id: 'fakeGene1',
+                  attributes: []
                 },
               ],
             },
@@ -652,11 +673,13 @@ describe('Test InferredQueryHandler', () => {
                   e0: [
                     {
                       id: 'edgeHash1',
+                      attributes: []
                     },
                   ],
                   e01: [
                     {
                       id: 'edgeHash2',
+                      attributes: []
                     },
                   ],
                 },
@@ -669,11 +692,13 @@ describe('Test InferredQueryHandler', () => {
               creativeQuerySubject: [
                 {
                   id: 'fakeCompound1',
+                  attributes: []
                 },
               ],
               creativeQueryObject: [
                 {
                   id: 'fakeDisease1',
+                  attributes: []
                 },
               ],
             },
@@ -684,6 +709,7 @@ describe('Test InferredQueryHandler', () => {
                   e0: [
                     {
                       id: 'edgeHash3',
+                      attributes: []
                     },
                   ],
                 },
@@ -705,14 +731,14 @@ describe('Test InferredQueryHandler', () => {
       queryHadResults: queryHadResults1,
       mergedResults: mergedResults1,
       creativeLimitHit: creativeLimitHit1,
-    } = inferredQueryHandler.combineResponse(2, trapiQueryHandler1, qEdgeID, qEdge, combinedResponse);
+    } = inferredQueryHandler.combineResponse(2, trapiQueryHandler1, qEdgeID, qEdge, combinedResponse, auxGraphSuffixes);
 
     expect(querySuccess1).toBeTruthy();
     expect(queryHadResults1).toBeTruthy();
     expect(Object.keys(mergedResults1)).toHaveLength(1);
     expect(creativeLimitHit1).toBeTruthy();
     expect(combinedResponse.message.results['fakeCompound1-fakeDisease1'].analyses[0].score).toEqual(
-      0.8421052631578949,
+      0.7836531040612146,
     );
   });
 
@@ -780,11 +806,13 @@ describe('Test InferredQueryHandler', () => {
               n01: [
                 {
                   id: 'fakeCompound1',
+                  attributes: []
                 },
               ],
               n02: [
                 {
                   id: 'fakeDisease1',
+                  attributes: []
                 },
               ],
             },
@@ -795,6 +823,7 @@ describe('Test InferredQueryHandler', () => {
                   e01: [
                     {
                       id: 'edgeHash1',
+                      attributes: []
                     },
                   ],
                 },
@@ -875,11 +904,13 @@ describe('Test InferredQueryHandler', () => {
                 creativeQuerySubject: [
                   {
                     id: 'creativeQuerySubject',
+                    attributes: []
                   },
                 ],
                 creativeQueryObject: [
                   {
                     id: 'creativeQueryObject',
+                    attributes: []
                   },
                 ],
               },
@@ -889,6 +920,7 @@ describe('Test InferredQueryHandler', () => {
                     e01: [
                       {
                         id: 'edgeHash1',
+                        attributes: []
                       },
                     ],
                   },

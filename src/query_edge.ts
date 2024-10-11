@@ -1,10 +1,9 @@
 import helper from './helper';
 import Debug from 'debug';
-import * as utils from './utils';
-import biolink from './biolink';
 import { Record, RecordNode, FrozenRecord } from '@biothings-explorer/api-response-transform';
 import QNode from './query_node';
 import { QNodeInfo } from './query_node';
+import * as utils from '@biothings-explorer/utils';
 import { LogEntry, StampedLog } from '@biothings-explorer/utils';
 import { TrapiAttribute, TrapiAttributeConstraint, TrapiKGEdge, TrapiKGNode, TrapiQualifierConstraint } from '@biothings-explorer/types';
 
@@ -132,7 +131,7 @@ export default class QEdge {
   }
 
   expandPredicates(predicates: string[]): string[] {
-    return Array.from(new Set(predicates.reduce((acc, cur) => [...acc, ...biolink.getDescendantPredicates(cur)], [])));
+    return Array.from(new Set(predicates.reduce((acc, cur) => [...acc, ...utils.biolink.getDescendantPredicates(cur)], [])));
   }
 
   getPredicate(): string[] {
@@ -144,7 +143,7 @@ export default class QEdge {
     debug(`Expanded edges: ${expandedPredicates}`);
     return expandedPredicates
       .map((predicate) => {
-        return this.isReversed() === true ? biolink.reverse(predicate) : predicate;
+        return this.isReversed() === true ? utils.biolink.reverse(predicate) : predicate;
       })
       .filter((item) => !(typeof item === 'undefined'));
   }
@@ -157,7 +156,7 @@ export default class QEdge {
             ? Array.isArray(qualifier_value)
               ? Array.from(
                   qualifier_value.reduce((set: Set<string>, predicate: string) => {
-                    biolink
+                    utils.biolink
                       .getDescendantPredicates(utils.removeBioLinkPrefix(predicate))
                       .forEach((item) => set.add(`biolink:${utils.removeBioLinkPrefix(item)}`));
                     return set;
@@ -165,13 +164,13 @@ export default class QEdge {
                 )
               : Array.from(
                   new Set(
-                    biolink
+                    utils.biolink
                       .getDescendantPredicates(utils.removeBioLinkPrefix(qualifier_value))
                       .map((item) => `biolink:${utils.removeBioLinkPrefix(item)}`),
                   ),
                 )
             : Array.from(
-                new Set(biolink.getDescendantQualifiers(utils.removeBioLinkPrefix(qualifier_value as string))),
+                new Set(utils.biolink.getDescendantQualifiers(utils.removeBioLinkPrefix(qualifier_value as string))),
               );
 
           return {
@@ -402,7 +401,7 @@ export default class QEdge {
   }
 
   getReversedPredicate(predicate: string): string {
-    return predicate ? biolink.reverse(predicate) : undefined;
+    return predicate ? utils.biolink.reverse(predicate) : undefined;
   }
 
   meetsConstraints(kgEdge: TrapiKGEdge, kgSub: TrapiKGNode, kgObj: TrapiKGNode): boolean {

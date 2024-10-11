@@ -146,7 +146,6 @@ describe('Testing QueryEdge Module', () => {
       expect(res).toContain('contributes_to');
       expect(res).toContain('causes');
       expect(res).toContain('ameliorates');
-      // expect(res).toContain('treats');
     });
 
     test('Predicates not in biolink model should return itself', () => {

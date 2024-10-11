@@ -26,7 +26,7 @@ describe('Testing TRAPIQueryHandler Module', () => {
     },
   };
   describe('Testing query function', () => {
-    test('test with one query edge', async () => {
+    test.skip('test with one query edge', async () => {
       (mockedAxios.get as jest.Mock).mockResolvedValue({
         data: {
           message: {

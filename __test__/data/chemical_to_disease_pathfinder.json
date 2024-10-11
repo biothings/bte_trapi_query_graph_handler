@@ -1,0 +1,50 @@
+{
+    "message": {
+        "query_graph": {
+            "nodes": {
+                "n0": {
+                    "ids": [
+                        "PUBCHEM.COMPOUND:5291"
+                    ],
+                    "categories": ["biolink:Drug"]
+                },
+                "un": {
+                    "categories": [
+                        "biolink:NamedThing"
+                    ]
+                },
+                "n2": {
+                    "ids": [
+                        "MONDO:0004979"
+                    ]
+                }
+            },
+            "edges": {
+                "e0": {
+                    "subject": "n0",
+                    "object": "un",
+                    "predicates": [
+                        "biolink:related_to"
+                    ],
+                    "knowledge_type": "inferred"
+                },
+                "e1": {
+                    "subject": "un",
+                    "object": "n2",
+                    "predicates": [
+                        "biolink:related_to"
+                    ],
+                    "knowledge_type": "inferred"
+                },
+                "e2": {
+                    "subject": "n0",
+                    "object": "n2",
+                    "predicates": [
+                        "biolink:related_to"
+                    ],
+                    "knowledge_type": "inferred"
+                }
+            }
+        }
+    }
+}
