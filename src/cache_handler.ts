@@ -112,7 +112,7 @@ export default class CacheHandler {
     );
   }
 
-  async categorizeEdges(qEdges: QEdge[]): Promise<{ cachedRecords: Record[]; nonCachedQEdges: QEdge[] }> {
+  async categorizeEdges(qEdges: QEdge[], abortSignal?: AbortSignal): Promise<{ cachedRecords: Record[]; nonCachedQEdges: QEdge[] }> {
     if (this.cacheEnabled === false || process.env.INTERNAL_DISABLE_REDIS === 'true') {
       return {
         cachedRecords: [],
@@ -123,12 +123,15 @@ export default class CacheHandler {
     let cachedRecords: Record[] = [];
     debug('Begin edge cache lookup...');
     await async.eachSeries(qEdges, async (qEdge) => {
+      if (abortSignal?.aborted) return;
       const qEdgeMetaKGHash = this._hashEdgeByMetaKG(qEdge.getHashedEdgeRepresentation());
       const unpackedRecords: Record[] = await new Promise((resolve) => {
         const redisID = 'bte:edgeCache:' + qEdgeMetaKGHash;
         redisClient.client.usingLock([`redisLock:${redisID}`], 600000, async () => {
           try {
             const compressedRecordPack = await redisClient.client.hgetallTimeout(redisID);
+
+            if (abortSignal?.aborted) resolve([]);
 
             if (compressedRecordPack && Object.keys(compressedRecordPack).length) {
               const recordPack = [];
