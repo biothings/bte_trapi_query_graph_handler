@@ -1,9 +1,8 @@
 import axios from 'axios';
 import Debug from 'debug';
 const debug = Debug('bte:biothings-explorer-trapi:pfocr');
-import { intersection } from '../utils';
 import _ from 'lodash';
-import { LogEntry, StampedLog } from '@biothings-explorer/utils';
+import { LogEntry, StampedLog, intersection } from '@biothings-explorer/utils';
 import { TrapiResult, TrapiKGNode, TrapiResponse, TrapiKGEdge } from '@biothings-explorer/types';
 import Graph from '../graph/graph';
 
@@ -192,6 +191,7 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
     Object.values(result.node_bindings).forEach((bindings) =>
       bindings.forEach((binding) => nodes.add(response.message.knowledge_graph.nodes[binding.id])),
     );
+
     const combo: Set<string> = new Set();
     let matchedNodes = 0;
     [...nodes].forEach((node) => {

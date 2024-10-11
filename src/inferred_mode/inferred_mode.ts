@@ -1,8 +1,14 @@
 import Debug from 'debug';
-import { LogEntry, StampedLog, Telemetry, timeoutPromise } from '@biothings-explorer/utils';
-import * as utils from '../utils';
+import {
+  biolink,
+  getUnique,
+  removeBioLinkPrefix,
+  LogEntry,
+  StampedLog,
+  Telemetry,
+  timeoutPromise,
+} from '@biothings-explorer/utils';
 import async from 'async';
-import biolink from '../biolink';
 import { getTemplates, MatchedTemplate, TemplateLookup } from './template_lookup';
 import { scaled_sigmoid, inverse_scaled_sigmoid } from '../results_assembly/score';
 import TRAPIQueryHandler from '../index';
@@ -18,9 +24,10 @@ import {
   TrapiQueryGraph,
   TrapiResponse,
   TrapiResult,
-  TrapiAnalysis
+  TrapiAnalysis,
 } from '@biothings-explorer/types';
 import { CompactQualifiers } from '../index';
+import { enrichTrapiResultsWithPfocrFigures } from '../results_assembly/pfocr';
 const debug = Debug('bte:biothings-explorer-trapi:inferred-mode');
 
 export interface CombinedResponse {
@@ -37,7 +44,7 @@ export interface CombinedResponse {
   logs: StampedLog[];
   original_analyses?: {
     [graphId: string]: TrapiAnalysis;
-  }
+  };
 }
 
 export interface CombinedResponseReport {
@@ -68,7 +75,7 @@ export default class InferredQueryHandler {
     path: string,
     predicatePath: string,
     includeReasoner: boolean,
-    pathfinder = false
+    pathfinder = false,
   ) {
     this.parent = parent;
     this.queryGraph = queryGraph;
@@ -79,7 +86,9 @@ export default class InferredQueryHandler {
     this.includeReasoner = includeReasoner;
     this.pathfinder = pathfinder;
     this.CREATIVE_LIMIT = process.env.CREATIVE_LIMIT ? parseInt(process.env.CREATIVE_LIMIT) : 500;
-    this.CREATIVE_TIMEOUT = process.env.CREATIVE_TIMEOUT_S ? parseInt(process.env.CREATIVE_TIMEOUT) * 1000 : 4.75 * 60 * 1000;
+    this.CREATIVE_TIMEOUT = process.env.CREATIVE_TIMEOUT_S
+      ? parseInt(process.env.CREATIVE_TIMEOUT) * 1000
+      : 4.75 * 60 * 1000;
   }
 
   get queryIsValid(): boolean {
@@ -165,13 +174,13 @@ export default class InferredQueryHandler {
   async findTemplates(qEdge: TrapiQEdge, qSubject: TrapiQNode, qObject: TrapiQNode): Promise<MatchedTemplate[]> {
     debug('Looking up query Templates');
     const expandedSubject = qSubject.categories.reduce((arr: string[], subjectCategory: string) => {
-      return utils.getUnique([...arr, ...biolink.getDescendantClasses(utils.removeBioLinkPrefix(subjectCategory))]);
+      return getUnique([...arr, ...biolink.getDescendantClasses(removeBioLinkPrefix(subjectCategory))]);
     }, [] as string[]);
     const expandedPredicates = qEdge.predicates.reduce((arr: string[], predicate: string) => {
-      return utils.getUnique([...arr, ...biolink.getDescendantPredicates(utils.removeBioLinkPrefix(predicate))]);
+      return getUnique([...arr, ...biolink.getDescendantPredicates(removeBioLinkPrefix(predicate))]);
     }, [] as string[]);
     const expandedObject = qObject.categories.reduce((arr: string[], objectCategory: string) => {
-      return utils.getUnique([...arr, ...biolink.getDescendantClasses(utils.removeBioLinkPrefix(objectCategory))]);
+      return getUnique([...arr, ...biolink.getDescendantClasses(removeBioLinkPrefix(objectCategory))]);
     }, [] as string[]);
     const qualifierConstraints = (qEdge.qualifier_constraints || []).map((qualifierSetObj) => {
       return Object.fromEntries(
@@ -189,9 +198,9 @@ export default class InferredQueryHandler {
             ...arr3,
             ...expandedPredicates.map((predicate) => {
               return {
-                subject: utils.removeBioLinkPrefix(subjectCategory),
-                object: utils.removeBioLinkPrefix(objectCategory),
-                predicate: utils.removeBioLinkPrefix(predicate),
+                subject: removeBioLinkPrefix(subjectCategory),
+                object: removeBioLinkPrefix(objectCategory),
+                predicate: removeBioLinkPrefix(predicate),
                 qualifiers: qualifierSet,
               };
             }),
@@ -262,7 +271,7 @@ export default class InferredQueryHandler {
     qEdgeID: string,
     qEdge: TrapiQEdge,
     combinedResponse: CombinedResponse,
-    auxGraphSuffixes: {[inferredEdgeID: string]: number},
+    auxGraphSuffixes: { [inferredEdgeID: string]: number },
     qualifiers?: CompactQualifiers,
   ): CombinedResponseReport {
     const span = Telemetry.startSpan({ description: 'creativeCombineResponse' });
@@ -312,7 +321,6 @@ export default class InferredQueryHandler {
           [qEdge.subject]: [subjectBinding],
           [qEdge.object]: [objectBinding],
         },
-        pfocr: result.pfocr?.length ? result.pfocr : undefined,
         analyses: [
           {
             resource_id: result.analyses[0].resource_id,
@@ -324,7 +332,7 @@ export default class InferredQueryHandler {
 
       if (this.pathfinder) {
         for (let [nodeID, bindings] of Object.entries(result.node_bindings)) {
-          if (nodeID === "creativeQuerySubject" || nodeID === "creativeQueryObject") {
+          if (nodeID === 'creativeQuerySubject' || nodeID === 'creativeQueryObject') {
             continue;
           }
           for (const binding of bindings) {
@@ -356,8 +364,8 @@ export default class InferredQueryHandler {
             const predicateMatch =
               qEdge.predicates?.some((predicate) => {
                 const descendantMatch = biolink
-                  .getDescendantPredicates(utils.removeBioLinkPrefix(predicate))
-                  .includes(utils.removeBioLinkPrefix(boundEdge.predicate));
+                  .getDescendantPredicates(removeBioLinkPrefix(predicate))
+                  .includes(removeBioLinkPrefix(boundEdge.predicate));
                 return predicate === boundEdge.predicate || descendantMatch;
               }) ?? false;
             // All query qualifiers (if any) are accounted for (more is fine)
@@ -373,14 +381,14 @@ export default class InferredQueryHandler {
                       try {
                         const descendants = queryQualifier.qualifier_value.includes('biolink:')
                           ? biolink.getDescendantPredicates(
-                            utils.removeBioLinkPrefix(queryQualifier.qualifier_value as string),
+                            removeBioLinkPrefix(queryQualifier.qualifier_value as string),
                           )
                           : biolink.getDescendantQualifiers(
-                            utils.removeBioLinkPrefix(queryQualifier.qualifier_value as string),
+                            removeBioLinkPrefix(queryQualifier.qualifier_value as string),
                           );
                         valueMatch =
                           queryQualifier.qualifier_value === qualifier.qualifier_value ||
-                          descendants.includes(utils.removeBioLinkPrefix(qualifier.qualifier_value as string));
+                          descendants.includes(removeBioLinkPrefix(qualifier.qualifier_value as string));
                       } catch (err) {
                         valueMatch = queryQualifier.qualifier_value === qualifier.qualifier_value;
                       }
@@ -469,7 +477,7 @@ export default class InferredQueryHandler {
         };
 
         if (this.pathfinder) {
-            combinedResponse.original_analyses[auxGraphID] = result.analyses[0];
+          combinedResponse.original_analyses[auxGraphID] = result.analyses[0];
         }
       }
 
@@ -483,20 +491,6 @@ export default class InferredQueryHandler {
             combinedResponse.message.results[resultID].analyses[0].edge_bindings[edgeID].push(binding);
           });
         });
-
-        // Combine, re-sort, and truncate to 20 any pfocr figures
-        if (combinedResponse.message.results[resultID].pfocr || translatedResult.pfocr) {
-          let reSort = false;
-          if (combinedResponse.message.results[resultID].pfocr && translatedResult.pfocr) reSort = true;
-          let newFigures = [
-            ...(combinedResponse.message.results[resultID].pfocr ?? []),
-            ...(translatedResult.pfocr ?? []),
-          ];
-          if (reSort) {
-            newFigures = newFigures.sort((figA, figB) => figB.score - figA.score).slice(0, 20);
-          }
-          combinedResponse.message.results[resultID].pfocr = newFigures;
-        }
 
         const resScore = translatedResult.analyses[0].score;
         if (typeof combinedResponse.message.results[resultID].analyses[0].score !== 'undefined') {
@@ -626,7 +620,7 @@ export default class InferredQueryHandler {
         results: {},
       },
       logs: this.logs,
-      ...(this.pathfinder && { original_analyses: {} })
+      ...(this.pathfinder && { original_analyses: {} }),
     } as CombinedResponse;
     // add/combine nodes
     const resultQueries = [];
@@ -635,18 +629,22 @@ export default class InferredQueryHandler {
     const mergedResultsCount: {
       [resultID: string]: number;
     } = {};
-    const auxGraphSuffixes: {[inferredEdgeID: string]: number} = {};
-
-    // perf debugging
-    const startUsage = process.cpuUsage();
-    const startTime = new Date().getTime();
-    const ncpu = require('os').cpus().length;
+    const auxGraphSuffixes: { [inferredEdgeID: string]: number } = {};
 
     const completedHandlers = await Promise.all(
       subQueries.map(async ({ template, queryGraph, qualifiers }, i) => {
         const span = Telemetry.startSpan({ description: 'creativeTemplate' });
         span.setData('template', i + 1);
-        const handler = new TRAPIQueryHandler(this.options, this.path, this.predicatePath, this.includeReasoner);
+        const handler = new TRAPIQueryHandler(
+          { ...this.options, skipPfocr: true, handlerIndex: i },
+          this.path,
+          this.predicatePath,
+          this.includeReasoner,
+        );
+        if (global.queryInformation != null) {
+          global.queryInformation.totalRecords = {};
+          global.queryInformation.totalRecords[i] = 0; // Ensure 0 starting for each template
+        }
         handler.setQueryGraph(queryGraph);
         try {
           await timeoutPromise(handler.query(AbortSignal.timeout(this.CREATIVE_TIMEOUT)), this.CREATIVE_TIMEOUT);
@@ -662,14 +660,8 @@ export default class InferredQueryHandler {
         }
         span.finish();
         return { i, handler, qualifiers };
-      })
+      }),
     );
-
-    // perf debugging
-    const endTime = new Date().getTime();
-    const timeDelta = (endTime - startTime) * 10 * ncpu;
-    const { user, system } = process.cpuUsage(startUsage);
-    debug(`Average CPU Usage: ${(system + user) / timeDelta}%`);
 
     for (const handlerInfo of completedHandlers) {
       if (handlerInfo === undefined) continue;
@@ -681,7 +673,7 @@ export default class InferredQueryHandler {
         qEdge,
         combinedResponse,
         auxGraphSuffixes,
-        qualifiers
+        qualifiers,
       );
       successfulQueries += querySuccess;
       if (queryHadResults) resultQueries.push(i);
@@ -725,10 +717,9 @@ export default class InferredQueryHandler {
     if (response.message.results.length > this.CREATIVE_LIMIT) {
       const message = [
         `Number of results exceeds`,
-        `creative result maximum of ${this.CREATIVE_LIMIT} (reaching ${
-          Object.keys(response.message.results).length
+        `creative result maximum of ${this.CREATIVE_LIMIT} (reaching ${Object.keys(response.message.results).length
         } merged). `,
-        `Response will be truncated to top-scoring ${this.CREATIVE_LIMIT} results.`
+        `Response will be truncated to top-scoring ${this.CREATIVE_LIMIT} results.`,
       ].join('');
       debug(message);
       combinedResponse.logs.push(new LogEntry(`INFO`, null, message).getLog());
@@ -738,6 +729,12 @@ export default class InferredQueryHandler {
     response.message.results = response.message.results.slice(0, this.CREATIVE_LIMIT);
     response.description = `Query processed successfully, retrieved ${response.message.results.length} results.`;
     this.pruneKnowledgeGraph(response);
+
+    // add pfocr figures
+    if (!this.pathfinder) {
+      this.logs = [...this.logs, ...(await enrichTrapiResultsWithPfocrFigures(response))];
+    }
+
     // get the final summary log
     if (successfulQueries) {
       this.parent
@@ -745,7 +742,7 @@ export default class InferredQueryHandler {
         .forEach((log) => response.logs.push(log));
     }
     if (!this.pathfinder) {
-        response.logs = (response.logs as StampedLog[]).map((log) => log.toJSON());
+      response.logs = (response.logs as StampedLog[]).map((log) => log.toJSON());
     }
 
     return response;
