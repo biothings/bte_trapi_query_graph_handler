@@ -337,7 +337,7 @@ export default class TRAPIQueryHandler {
                     newBindings.push({...binding, id: newBoundEdge });
                     resultBoundEdgesWithAuxGraphs.add(newBoundEdge);
                   }
-                  (this.bteGraph.edges[newBoundEdge].attributes['biolink:support_graphs'] as Set<string>).add(supportGraphsByEdgeID[binding.id]);
+                  (this.bteGraph.edges[newBoundEdge].attributes['biolink:support_graphs'] as Set<string>).add(supportGraphsByEdgeID[binding.id][subId][objId]);
                   edgesIDsByAuxGraphID[supportGraphsByEdgeID[binding.id][subId][objId]].add(newBoundEdge);
                 }
                 else if (!boundIDs.has(edgesToRebind[binding.id]?.[subId]?.[objId])) {
