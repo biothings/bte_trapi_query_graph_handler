@@ -258,6 +258,7 @@ export default class TRAPIQueryHandler {
           suffix += 1;
         }
         const supportGraphID = `support${suffix}-${boundEdgeID}`;
+        if (!supportGraphsByEdgeID[edgeID]) supportGraphsByEdgeID[edgeID] = {};
         if (!supportGraphsByEdgeID[edgeID][subject]) supportGraphsByEdgeID[edgeID][subject] = {};
         supportGraphsByEdgeID[edgeID][subject][object] = supportGraphID;
 
@@ -313,9 +314,14 @@ export default class TRAPIQueryHandler {
                     boundIDs.add(binding.id);
                   }
                 }
-                else if (this.queryGraph.edges[qEdgeID].attribute_constraints) {
+                // we only want to include support graphs that meet constraints (in case there is another QEdge using this same KGEdge)
+                else if (
+                  this.queryGraph.edges[qEdgeID].attribute_constraints || 
+                  this.queryGraph.nodes[this.queryGraph.edges[qEdgeID].subject].constraints || 
+                  this.queryGraph.nodes[this.queryGraph.edges[qEdgeID].object].constraints
+                ) {
                   const oldBoundEdge = this.bteGraph.edges[edgesToRebind[binding.id]?.[subId]?.[objId]];
-                  const newBoundEdge = `${edgesToRebind[binding.id]}-constrained_by_${qEdgeID}`;
+                  const newBoundEdge = `${edgesToRebind[binding.id][subId][objId]}-constrained_by_${qEdgeID}`;
                   if (!boundIDs.has(newBoundEdge)) {
                     this.bteGraph.edges[newBoundEdge] = new KGEdge(newBoundEdge, {
                       predicate: oldBoundEdge.predicate,
