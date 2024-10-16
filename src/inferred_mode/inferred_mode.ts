@@ -655,7 +655,7 @@ export default class InferredQueryHandler {
           failedHandlerLogs[i] = handler.logs;
           const message = `ERROR:  Template-${i + 1} failed due to error ${error}`;
           debug(message);
-          combinedResponse.logs.push(new LogEntry(`ERROR`, null, message).getLog());
+          handler.logs.push(new LogEntry(`ERROR`, null, message).getLog());
           span.finish();
           return { i, handler, qualifiers, failed: true };
         }
