@@ -769,7 +769,14 @@ export default class TRAPIQueryHandler {
     }
     const manager = new EdgeManager(queryEdges, metaKG, this.subclassEdges, this.options);
 
-    const executionSuccess = await manager.executeEdges(abortSignal);
+    let executionSuccess: boolean;
+    try {
+      executionSuccess = await manager.executeEdges(abortSignal);
+    } catch (error) {
+      // Make sure we preserve the logs we can
+      this.logs = [...this.logs, ...manager.logs]
+      throw error;
+    }
     this.logs = [...this.logs, ...manager.logs];
     if (!executionSuccess) {
       return;

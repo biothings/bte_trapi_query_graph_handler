@@ -635,7 +635,7 @@ export default class InferredQueryHandler {
         const span = Telemetry.startSpan({ description: 'creativeTemplate' });
         span.setData('template', i + 1);
         const handler = new TRAPIQueryHandler(
-          { ...this.options, skipPfocr: true, handlerIndex: i },
+          { ...this.options, skipPfocr: true, handlerIndex: this.options.handlerIndex ?? i },
           this.path,
           this.predicatePath,
           this.includeReasoner,
@@ -645,17 +645,19 @@ export default class InferredQueryHandler {
           global.queryInformation.totalRecords[i] = 0; // Ensure 0 starting for each template
         }
         handler.setQueryGraph(queryGraph);
+        const failedHandlerLogs: { [index: number]: StampedLog[] } = {};
         try {
           await timeoutPromise(handler.query(AbortSignal.timeout(this.CREATIVE_TIMEOUT)), this.CREATIVE_TIMEOUT);
         } catch (error) {
           handler.logs.forEach((log) => {
-            combinedResponse.logs.push(log);
+            log.message = `[Template-${i + 1}]: ${log.message}`;
           });
+          failedHandlerLogs[i] = handler.logs;
           const message = `ERROR:  Template-${i + 1} failed due to error ${error}`;
           debug(message);
           combinedResponse.logs.push(new LogEntry(`ERROR`, null, message).getLog());
           span.finish();
-          return undefined;
+          return { i, handler, qualifiers, failed: true };
         }
         span.finish();
         return { i, handler, qualifiers };
@@ -663,8 +665,11 @@ export default class InferredQueryHandler {
     );
 
     for (const handlerInfo of completedHandlers) {
-      if (handlerInfo === undefined) continue;
-      const { i, handler, qualifiers } = handlerInfo;
+      const { i, handler, qualifiers, failed } = handlerInfo;
+      if (failed) {
+        handler.logs.forEach(log => combinedResponse.logs.push(log));
+        continue;
+      }
       const { querySuccess, queryHadResults, mergedResults } = this.combineResponse(
         i,
         handler,

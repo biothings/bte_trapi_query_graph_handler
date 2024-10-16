@@ -375,6 +375,7 @@ export default class QueryEdgeManager {
 
   _createBatchQueryHandler(qEdge: QEdge, metaKG: MetaKG): BatchEdgeQueryHandler {
     const handler = new BatchEdgeQueryHandler(metaKG, this.options.resolveOutputIDs, {
+      ...this.options,
       caching: this.options.caching,
       submitter: this.options.submitter,
       recordHashEdgeAttributes: config.EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,
