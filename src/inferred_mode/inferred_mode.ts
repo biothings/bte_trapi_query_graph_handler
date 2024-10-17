@@ -629,7 +629,7 @@ export default class InferredQueryHandler {
       [resultID: string]: number;
     } = {};
     const auxGraphSuffixes: { [inferredEdgeID: string]: number } = {};
-    if (global.queryInformation != null) {
+    if (global.queryInformation !== null) {
       global.queryInformation.totalRecords = {};
     }
 

@@ -971,6 +971,8 @@ describe('Test InferredQueryHandler', () => {
     );
     handler.CREATIVE_LIMIT = 1;
 
+    // @ts-expect-error don't need the whole thing
+    global.queryInformation = {};
     const response = await handler.query();
 
     expect(queryIsValid).toHaveBeenCalled();
