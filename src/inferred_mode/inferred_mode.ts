@@ -630,6 +630,9 @@ export default class InferredQueryHandler {
       [resultID: string]: number;
     } = {};
     const auxGraphSuffixes: { [inferredEdgeID: string]: number } = {};
+    if (global.queryInformation != null) {
+      global.queryInformation.totalRecords = {};
+    }
 
     const completedHandlers = await Promise.all(
       subQueries.map(async ({ template, queryGraph, qualifiers }, i) => {
@@ -641,10 +644,7 @@ export default class InferredQueryHandler {
           this.predicatePath,
           this.includeReasoner,
         );
-        if (global.queryInformation != null) {
-          global.queryInformation.totalRecords = {};
-          global.queryInformation.totalRecords[i] = 0; // Ensure 0 starting for each template
-        }
+        global.queryInformation.totalRecords[i] = 0; // Ensure 0 starting for each template
         handler.setQueryGraph(queryGraph);
         const failedHandlerLogs: { [index: number]: StampedLog[] } = {};
         try {
