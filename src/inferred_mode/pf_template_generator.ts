@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs/promises";
 import yaml2json from "js-yaml";
-import biolink from "../biolink";
+import * as utils from "@biothings-explorer/utils";
 import { TrapiQNode, TrapiQueryGraph } from "@biothings-explorer/types";
 
 interface CategoryTable {
@@ -31,8 +31,8 @@ async function loadTables() {
   for (const table of [categoryTable, predicateTable]) {
     for (const category1 in table) {
       for (const category2 in table[category1]) {
-        for (const descendant1 of biolink.getDescendantClasses(category1)) {
-          for (const descendant2 of biolink.getDescendantClasses(category2)) {
+        for (const descendant1 of utils.biolink.getDescendantClasses(category1)) {
+          for (const descendant2 of utils.biolink.getDescendantClasses(category2)) {
             if (table?.['biolink:'+descendant1]?.['biolink:'+descendant2] !== undefined) continue;
 
             if (!('biolink:'+descendant1 in table)) {
