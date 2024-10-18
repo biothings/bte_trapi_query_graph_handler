@@ -2,51 +2,62 @@ import axios from 'axios';
 import Debug from 'debug';
 const debug = Debug('bte:biothings-explorer-trapi:pfocr');
 import _ from 'lodash';
-import { LogEntry, StampedLog, intersection } from '@biothings-explorer/utils';
+import { LogEntry, StampedLog, intersection, biolink, toArray, removeBioLinkPrefix } from '@biothings-explorer/utils';
 import { TrapiResult, TrapiKGNode, TrapiResponse, TrapiKGEdge } from '@biothings-explorer/types';
 import Graph from '../graph/graph';
 
-// the minimum acceptable intersection size between the CURIEs
+// The minimum acceptable number of nodes for a figure to match
 // in a TRAPI result and in a PFOCR figure.
-const MATCH_COUNT_MIN = 2;
+const MATCHABLE_NODE_MIN = 2;
+
+// Max number of figures per result
 const FIGURE_COUNT_MAX = 20;
+
+// Prefixes that can be searched against PFOCR
+// Map supported prefixes as they appear in PFOCR to 'proper' form
 const SUPPORTED_PREFIXES = {
-  NCBIGene: 'associatedWith.mentions.genes.ncbigene',
+  ncbigene: 'NCBIGene',
+  doid: 'DOID',
+  mesh: 'MESH',
+  chebi: 'CHEBI',
+};
+
+// Supported top-level types and their mappings to PFOCR fields
+// Must be top-level possible for biolink ancestry comparison
+const SUPPORTED_TYPES = {
+  Gene: 'genes',
+  ChemicalEntity: 'chemicals',
+  DiseaseOrPhenotypicFeature: 'diseases',
 };
 
 interface pfocrQueryBody {
   q: string[];
-  scopes: string;
+  scopes: string[];
   fields: string[];
-  operator: string;
-  analyzer: string;
-  minimum_should_match: number;
   size: number;
   with_total: boolean;
   from?: number;
 }
 
 interface FigureResult {
+  query: string;
   _id: string;
+  _score: number;
   notfound?: boolean;
   associatedWith: {
     figureUrl: string;
     pfocrUrl: string;
     pmc: string;
     mentions: {
-      genes: {
-        ncbigene: string[];
+      [type: string]: {
+        [prefix: string]: string[]; // list of IDs
       };
     };
   };
 }
 
-interface RawFigureResult extends FigureResult {
-  query: string;
-}
-
-interface DeDupedFigureResult extends FigureResult {
-  query: Set<string>;
+interface FiguresByQuery {
+  [query: string]: FigureResult[];
 }
 
 /* Get all results by using a scrolling query
@@ -60,10 +71,10 @@ async function getAllByScrolling(
   baseUrl: string,
   queryBody: pfocrQueryBody,
   batchIndex: number,
-  hits: RawFigureResult[] = [],
-): Promise<RawFigureResult[]> {
+  hits: FigureResult[] = [],
+): Promise<FigureResult[]> {
   queryBody.from = batchIndex;
-  let data: { hits: RawFigureResult[]; max_total: number };
+  let data: { hits: FigureResult[]; max_total: number };
   try {
     data = (await axios.post(baseUrl, queryBody, { timeout: 15000 })).data;
   } catch (err) {
@@ -72,7 +83,7 @@ async function getAllByScrolling(
 
   if (data) {
     hits.push(...data.hits);
-    debug(`Batch window ${batchIndex}-${batchIndex + 1000}: ${data.hits.length} hits retrieved for PFOCR figure data`);
+    debug(`Batch window ${batchIndex}-${batchIndex + 1000}: ${data.hits.filter(hit => !hit.notfound).length} hits retrieved for PFOCR figure data`);
   }
 
   if (data && batchIndex + 1000 < data.max_total) {
@@ -82,9 +93,9 @@ async function getAllByScrolling(
   }
 }
 
-/* qTerms are the CURIEs that go with the 'q' query parameter.
- */
-async function getPfocrFigures(qTerms: Set<string>): Promise<DeDupedFigureResult[]> {
+// Combine query terms in acceptable batch sizes
+// Then sort figure results by query term
+async function getPfocrFigures(qTerms: string[]): Promise<FiguresByQuery> {
   debug(`Getting PFOCR figure data`);
   const url = {
     dev: 'https://biothings.ci.transltr.io/pfocr/query',
@@ -92,27 +103,20 @@ async function getPfocrFigures(qTerms: Set<string>): Promise<DeDupedFigureResult
     test: 'https://biothings.test.transltr.io/pfocr/query',
     prod: 'https://biothings.ncats.io/pfocr/query',
   }[process.env.INSTANCE_ENV ?? 'prod'];
-  /*
-   * We can now POST using minimum_should_match to bypass most set logic on our side
-   * detailed here: https://github.com/biothings/pending.api/issues/88
-   */
 
-  const figureResults: RawFigureResult[] = [];
+  const figureResults: FigureResult[] = [];
   await Promise.all(
-    _.chunk([...qTerms], 1000).map(async (qTermBatch) => {
+    _.chunk(qTerms, 100).map(async (qTermBatch) => {
       const queryBody = {
-        q: [...qTermBatch],
-        scopes: 'associatedWith.mentions.genes.ncbigene', // TODO better system when we use more than NCBIGene
+        q: qTermBatch,
+        scopes: [],
         fields: [
           '_id',
-          'associatedWith.mentions.genes.ncbigene',
           'associatedWith.pmc',
           'associatedWith.figureUrl',
           'associatedWith.pfocrUrl',
+          'associatedWith.mentions',
         ],
-        operator: 'OR',
-        analyzer: 'whitespace',
-        minimum_should_match: MATCH_COUNT_MIN,
         size: 1000,
         with_total: true,
       };
@@ -124,26 +128,15 @@ async function getPfocrFigures(qTerms: Set<string>): Promise<DeDupedFigureResult
     throw err;
   });
 
-  /*
-   * When we make separate queries for different CURIEs, we can get
-   * duplicate figures, so we need to de-duplicate.
-   */
-  const mergedFigureResults: { [figureID: string]: DeDupedFigureResult } = {};
-  const figuresAdded = new Set();
-  figureResults.map((figure) => {
-    const figureId = figure._id;
-    if (!figure.notfound && !figuresAdded.has(figureId)) {
-      figuresAdded.add(figureId);
-      mergedFigureResults[figureId] = { ...figure, query: new Set([figure.query]) };
-    } else if (!figure.notfound && figuresAdded.has(figureId)) {
-      mergedFigureResults[figureId].query.add(figure.query);
-    }
-  });
-
-  debug(`${Object.values(mergedFigureResults).length} total PFOCR figure hits retrieved`);
-  return Object.values(mergedFigureResults);
+  return figureResults.reduce((figuresByQuery: FiguresByQuery, figureResult) => {
+    if (!figuresByQuery[figureResult.query]) figuresByQuery[figureResult.query] = [];
+    if (!figureResult.notfound) figuresByQuery[figureResult.query].push(figureResult);
+    return figuresByQuery;
+  }, {});
 }
 
+// Results bind nodes, but bound edges may recursively use support graphs which reference other nodes
+// Traverse result recursively (using stack) and return all related nodes
 function traverseResultForNodes(result: TrapiResult, response: TrapiResponse): Set<TrapiKGNode> {
   const kg = response.message.knowledge_graph;
   const nodes: Set<TrapiKGNode> = new Set();
@@ -170,62 +163,92 @@ function traverseResultForNodes(result: TrapiResult, response: TrapiResponse): S
   return nodes;
 }
 
-/* time complexity: O(t*f)
- * where
- * t: trapiResults.length
- * f: figures.length
- */
-export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse): Promise<StampedLog[]> {
-  // NOTE: This function operates on the actual TRAPI information that will be returned
-  // to the client. Don't mutate what shouldn't be mutated!
+function generateQterms(response: TrapiResponse): { qTerms: string[]; qTermByResults: Map<TrapiResult, string> } {
   const results = response.message.results;
-  const logs: StampedLog[] = [];
-  let resultsWithTruncatedFigures = 0;
-  const truncatedFigures: Set<string> = new Set();
 
-  const curieCombosByResult: Map<TrapiResult, string> = new Map();
-  const curiesByResult: Map<TrapiResult, Set<string>> = new Map();
-
-  const curieCombos: Set<string> = results.reduce((combos: Set<string>, result: TrapiResult) => {
+  const qTermByResults: Map<TrapiResult, string> = new Map();
+  const qTerms = results.reduce((qTerms: string[], result: TrapiResult) => {
     const nodes: Set<TrapiKGNode> = new Set();
     Object.values(result.node_bindings).forEach((bindings) =>
       bindings.forEach((binding) => nodes.add(response.message.knowledge_graph.nodes[binding.id])),
     );
 
-    const combo: Set<string> = new Set();
-    let matchedNodes = 0;
+    // Generate sets per supported node of supported curies
+    const nodeSets: Set<string>[] = [];
+    const nodeTypes: string[] = [];
     [...nodes].forEach((node) => {
-      let nodeMatched = false;
+      let supportedCategory = toArray(biolink.getAncestorClasses(removeBioLinkPrefix(node.categories[0]))).find(
+        (category) => typeof SUPPORTED_TYPES[category] !== 'undefined',
+      );
+      if (!supportedCategory) return;
+
+      const supportedEquivalents: Set<string> = new Set();
       const equivalentCuries =
         (node.attributes?.find((attribute) => attribute.attribute_type_id === 'biolink:xref')?.value as string[]) ?? [];
       equivalentCuries.forEach((curie) => {
         const prefix = curie.split(':')[0];
-        const suffix = curie.replace(`${prefix}:`, '');
-        if (Object.keys(SUPPORTED_PREFIXES).includes(prefix)) {
-          combo.add(suffix);
-          nodeMatched = true;
+        if (supportedCategory && Object.keys(SUPPORTED_PREFIXES).includes(prefix.toLowerCase())) {
+          supportedEquivalents.add(curie);
         }
       });
-      if (nodeMatched) matchedNodes += 1;
-    });
-    if (matchedNodes >= MATCH_COUNT_MIN) {
-      const comboString = [...combo].join(' ');
-      curieCombosByResult.set(result, comboString);
-      combos.add(comboString);
-      curiesByResult.set(result, combo);
-    }
-    return combos;
-  }, new Set<string>());
+      if (supportedEquivalents.size === 0) return; // Node has no supported curies
 
-  if (curieCombos.size < 1) {
+      nodeSets.push(supportedEquivalents);
+      nodeTypes.push(SUPPORTED_TYPES[supportedCategory]);
+    });
+
+    if (nodeSets.length < MATCHABLE_NODE_MIN) return qTerms; // Result doesn't have enough matchable nodes
+
+    // Generate qTerm for result
+    const qTermParts: string[] = [];
+    nodeSets.forEach((nodeSet, i) => {
+      // Separate by prefix for minimal formatting
+      const idsByPrefix: { [prefix: string]: string[] } = {};
+      const nodeType = nodeTypes[i];
+      nodeSet.forEach((curie) => {
+        const prefix = curie.split(':')[0];
+        const suffix = curie.replace(`${prefix}:`, '');
+        if (!idsByPrefix[prefix]) idsByPrefix[prefix] = [];
+        idsByPrefix[prefix].push(suffix);
+      });
+
+      const orClause: string[] = [];
+
+      Object.entries(idsByPrefix).forEach(([prefix, ids]) => {
+        orClause.push(`associatedWith.mentions.${nodeType}.${[prefix.toLowerCase()]}:(${ids.join(' OR ')})`);
+      });
+
+      qTermParts.push(`(${orClause.join(' OR ')})`);
+    });
+
+    const qTerm = qTermParts.join(' AND ');
+    qTerms.push(qTerm);
+    qTermByResults.set(result, qTerm);
+
+    return qTerms;
+  }, []);
+
+  return { qTerms, qTermByResults };
+}
+
+export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse): Promise<StampedLog[]> {
+  // NOTE: This function operates on the actual TRAPI information that will be returned
+  // to the client. Don't mutate what shouldn't be mutated!
+
+  const results = response.message.results;
+  const logs: StampedLog[] = [];
+
+  const { qTerms, qTermByResults } = generateQterms(response);
+
+  if (qTerms.length < 1) {
     // No TRAPI result can satisfy MATCH_COUNT_MIN
-    logs.push(new LogEntry('DEBUG', null, 'Query does not match criteria, skipping PFOCR figure enrichment.').getLog());
+    logs.push(new LogEntry('DEBUG', null, 'No result matches criteria, skipping PFOCR figure enrichment.').getLog());
     return logs;
   }
 
-  let figures: DeDupedFigureResult[];
+  let figures: FiguresByQuery;
   try {
-    figures = await getPfocrFigures(curieCombos);
+    figures = await getPfocrFigures(qTerms);
   } catch (err) {
     debug('Error getting PFOCR figures (enrichTrapiResultsWithPfocrFigures)', (err as Error).message);
     logs.push(
@@ -238,102 +261,105 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
   }
   if (!figures) return logs;
 
-  debug(`${figures.length} PFOCR figures match at least ${MATCH_COUNT_MIN} nodes from any TRAPI result`);
-
-  const figuresByCuries: { [queryCuries: string]: DeDupedFigureResult[] } = {};
-  figures.forEach((figure) => {
-    [...figure.query].forEach((queryCuries) => {
-      figuresByCuries[queryCuries] =
-        queryCuries in figuresByCuries ? [...figuresByCuries[queryCuries], figure] : [figure];
-    });
-  });
-
+  // Metrics
+  const dedupedFigures: { [figureUrl: string]: FigureResult } = {};
   const matchedFigures: Set<string> = new Set();
-  const matchedTrapiResults: Set<TrapiResult> = new Set();
+  const matchedResults: Set<TrapiResult> = new Set();
+  let resultsWithTruncatedFigures = 0;
+  const truncatedFigures: Set<string> = new Set();
 
-  const allGenesInAllFigures = figures.reduce((set, fig) => {
-    fig.associatedWith.mentions.genes.ncbigene.forEach((gene) => set.add(gene));
+  // Get all supported curies from every figure. Store as curies to avoid collisions/other issues
+  const curiesByFigure: { [figureUrl: string]: Set<string> } = {};
+  const allCuriesInAllFigures = Object.values(figures).reduce((set, figureSet) => {
+    figureSet.forEach((figure) => {
+      if (dedupedFigures[figure.associatedWith.figureUrl]) return; // Already handled
+
+      dedupedFigures[figure.associatedWith.figureUrl] = figure;
+      const figureCuries = new Set<string>();
+      Object.entries(figure.associatedWith.mentions).forEach(([type, prefixes]) => {
+        if (!Object.values(SUPPORTED_TYPES).includes(type)) return;
+
+        Object.entries(prefixes).forEach(([prefix, ids]) => {
+          prefix = SUPPORTED_PREFIXES[prefix];
+          if (!prefix) return;
+          ids.forEach((id) => figureCuries.add(`${prefix}:${id}`));
+        });
+      });
+      figureCuries.forEach((curie) => set.add(curie));
+      curiesByFigure[figure.associatedWith.figureUrl] = figureCuries;
+    });
     return set;
-  }, new Set() as Set<string>);
+  }, new Set<string>());
 
-  for (const trapiResult of results) {
-    // No figures match this result
-    if (!figuresByCuries[curieCombosByResult.get(trapiResult)]) continue;
+  debug(
+    `${Object.keys(dedupedFigures).length} PFOCR figures match at least ${MATCHABLE_NODE_MIN} nodes from any TRAPI result`,
+  );
 
-    const resultNodes = traverseResultForNodes(trapiResult, response);
+  // Iterate over results and grab figures, scoring figures and then truncating
+  results.forEach((result) => {
+    const resultFigures = figures[qTermByResults.get(result)];
+    if (!resultFigures) return;
+
+    const resultNodes = traverseResultForNodes(result, response);
     const resultCuries: Set<string> = [...resultNodes].reduce((curies, node) => {
       const equivalentCuries =
         (node.attributes?.find((attribute) => attribute.attribute_type_id === 'biolink:xref')?.value as string[]) ?? [];
       equivalentCuries.forEach((curie) => {
         const prefix = curie.split(':')[0];
         const suffix = curie.replace(`${prefix}:`, '');
-        if (Object.keys(SUPPORTED_PREFIXES).includes(prefix)) curies.add(suffix);
+        if (Object.keys(SUPPORTED_PREFIXES).includes(prefix.toLowerCase())) curies.add(curie);
       });
       return curies;
     }, new Set<string>());
+    const resultCuriesInAllFigures = intersection(allCuriesInAllFigures, resultCuries);
 
-    const resultGenesInAllFigures = intersection(allGenesInAllFigures, resultCuries);
+    resultFigures.forEach((figure) => {
+      const figureCuries = curiesByFigure[figure.associatedWith.figureUrl];
+      const resultCuriesInFigure = intersection(resultCuries, figureCuries);
 
-    (figuresByCuries[curieCombosByResult.get(trapiResult)] ?? []).forEach((figure) => {
-      if (!('pfocr' in trapiResult)) {
-        trapiResult.pfocr = [];
-      }
+      const precision = resultCuriesInFigure.size / figureCuries.size;
+      const recall = resultCuriesInFigure.size / resultCuriesInAllFigures.size;
 
-      const figureCurieSet = new Set(figure.associatedWith.mentions.genes.ncbigene);
-      const resultGenesInFigure = intersection(resultCuries, figureCurieSet);
+      if (!('pfocr' in result)) result.pfocr = [];
 
-      // let otherGenesInOtherFigures = [...allGenesInAllFigures].filter((gene) => {
-      //   return !resultCuries.has(gene) && !figureCurieSet.has(gene);
-      // }).length;
-
-      const precision = resultGenesInFigure.size / figureCurieSet.size;
-      const recall = resultGenesInFigure.size / resultGenesInAllFigures.size;
-
-      trapiResult.pfocr.push({
+      result.pfocr.push({
+        // TODO: do we want to include figure title? Note: this would need to be added to queryBody.
+        //title: figure.associatedWith.title,
         figureUrl: figure.associatedWith.figureUrl,
         pfocrUrl: figure.associatedWith.pfocrUrl,
         pmc: figure.associatedWith.pmc,
-        // TODO: do we want to include figure title? Note: this would need to be added to queryBody.
-        //title: figure.associatedWith.title,
-        matchedCuries: [...resultGenesInFigure].map((geneID) => `NCBIGene:${geneID}`),
+        matchedCuries: [...resultCuriesInFigure],
         score: 2 * ((precision * recall) / (precision + recall)),
       });
-      matchedTrapiResults.add(trapiResult);
+      matchedResults.add(result);
     });
 
+    if (!result.pfocr) return logs; // Result had no figures
+
     // Sort by score and cut down to top 20
-    const sortedFigures = trapiResult.pfocr.sort((figA, figB) => {
+    const sortedFigures = result.pfocr.sort((figA, figB) => {
       return figB.score - figA.score;
     });
 
     if (sortedFigures.length > FIGURE_COUNT_MAX) {
       resultsWithTruncatedFigures += 1;
       sortedFigures.slice(0, 20).forEach((figure) => truncatedFigures.add(figure.figureUrl));
-      // debug(`Truncating ${sortedFigures.length} PFOCR figures to ${FIGURE_COUNT_MAX} for TRAPI result w/ curies ${trapiResultToCurieSet.get(trapiResult).split(' ').map((ID) => `NCBIGene:${ID}`).join(', ')}`)
+      result.pfocr = sortedFigures.slice(0, 20);
     }
 
-    trapiResult.pfocr = sortedFigures.slice(0, 20);
-    trapiResult.pfocr.map((figure) => matchedFigures.add(figure.figureUrl));
-  }
+    result.pfocr.map((figure) => matchedFigures.add(figure.figureUrl));
+  });
 
-  // Each of the matched figures has at least one TRAPI result with an overlap of 2+ genes.
-  // Each of the matched TRAPI results has at least one figure with an overlap of 2+ genes.
+  // Each of the matched figures has at least one TRAPI result with a 2+ node overlap of curies with the figure.
+  // Each of the matched TRAPI results has at least one figure with curies from 2+ of its bound nodes.
   const unusedFigures = [...truncatedFigures].filter((figureUrl) => !matchedFigures.has(figureUrl)).length;
-  const message = `${resultsWithTruncatedFigures} results had pfocr figures truncated to max of 20 (${truncatedFigures.size} unique figures removed, ${unusedFigures} not appearing elsewhere in results).`;
+  let message = `${resultsWithTruncatedFigures} results had pfocr figures truncated to max of 20 (${truncatedFigures.size} unique figures removed, ${unusedFigures} not appearing elsewhere in results).`;
   debug(message);
   logs.push(new LogEntry('DEBUG', null, message).getLog());
-  debug(
-    `${MATCH_COUNT_MIN}+ node matches: ${matchedFigures.size} PFOCR figures across ${matchedTrapiResults.size} TRAPI results`,
-  );
-  logs.push(
-    new LogEntry(
-      'INFO',
-      null,
-      `${matchedTrapiResults.size} results successfully enriched with ${matchedFigures.size} unique PFOCR figures.`,
-    ).getLog(),
-  );
+
+  message = `${matchedResults.size} results successfully enriched with ${matchedFigures.size} unique PFOCR figures.`;
+  debug(message);
+  logs.push(new LogEntry('INFO', null, message).getLog());
 
   return logs;
 }
-
-module.exports.enrichTrapiResultsWithPfocrFigures = enrichTrapiResultsWithPfocrFigures;
