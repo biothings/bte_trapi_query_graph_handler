@@ -1,6 +1,13 @@
 import Debug from 'debug';
-import * as utils from '@biothings-explorer/utils';
-import { LogEntry, StampedLog, Telemetry } from '@biothings-explorer/utils';
+import {
+  biolink,
+  getUnique,
+  removeBioLinkPrefix,
+  LogEntry,
+  StampedLog,
+  Telemetry,
+  timeoutPromise,
+} from '@biothings-explorer/utils';
 import async from 'async';
 import { getTemplates, MatchedTemplate, TemplateLookup } from './template_lookup';
 import { scaled_sigmoid, inverse_scaled_sigmoid } from '../results_assembly/score';
@@ -17,7 +24,7 @@ import {
   TrapiQueryGraph,
   TrapiResponse,
   TrapiResult,
-  TrapiAnalysis
+  TrapiAnalysis,
 } from '@biothings-explorer/types';
 import { CompactQualifiers } from '../index';
 import { enrichTrapiResultsWithPfocrFigures } from '../results_assembly/pfocr';
@@ -37,14 +44,13 @@ export interface CombinedResponse {
   logs: StampedLog[];
   original_analyses?: {
     [graphId: string]: TrapiAnalysis;
-  }
+  };
 }
 
 export interface CombinedResponseReport {
   querySuccess: number;
   queryHadResults: boolean;
   mergedResults: { [resultID: string]: number };
-  creativeLimitHit: boolean | number;
 }
 
 // MatchedTemplate, but with IDs, etc. filled in
@@ -60,6 +66,7 @@ export default class InferredQueryHandler {
   includeReasoner: boolean;
   pathfinder: boolean;
   CREATIVE_LIMIT: number;
+  CREATIVE_TIMEOUT: number;
   constructor(
     parent: TRAPIQueryHandler,
     queryGraph: TrapiQueryGraph,
@@ -68,7 +75,7 @@ export default class InferredQueryHandler {
     path: string,
     predicatePath: string,
     includeReasoner: boolean,
-    pathfinder = false
+    pathfinder = false,
   ) {
     this.parent = parent;
     this.queryGraph = queryGraph;
@@ -79,6 +86,9 @@ export default class InferredQueryHandler {
     this.includeReasoner = includeReasoner;
     this.pathfinder = pathfinder;
     this.CREATIVE_LIMIT = process.env.CREATIVE_LIMIT ? parseInt(process.env.CREATIVE_LIMIT) : 500;
+    this.CREATIVE_TIMEOUT = process.env.CREATIVE_TIMEOUT_S
+      ? parseInt(process.env.CREATIVE_TIMEOUT) * 1000
+      : 4.75 * 60 * 1000;
   }
 
   get queryIsValid(): boolean {
@@ -164,13 +174,13 @@ export default class InferredQueryHandler {
   async findTemplates(qEdge: TrapiQEdge, qSubject: TrapiQNode, qObject: TrapiQNode): Promise<MatchedTemplate[]> {
     debug('Looking up query Templates');
     const expandedSubject = qSubject.categories.reduce((arr: string[], subjectCategory: string) => {
-      return utils.getUnique([...arr, ...utils.biolink.getDescendantClasses(utils.removeBioLinkPrefix(subjectCategory))]);
+      return getUnique([...arr, ...biolink.getDescendantClasses(removeBioLinkPrefix(subjectCategory))]);
     }, [] as string[]);
     const expandedPredicates = qEdge.predicates.reduce((arr: string[], predicate: string) => {
-      return utils.getUnique([...arr, ...utils.biolink.getDescendantPredicates(utils.removeBioLinkPrefix(predicate))]);
+      return getUnique([...arr, ...biolink.getDescendantPredicates(removeBioLinkPrefix(predicate))]);
     }, [] as string[]);
     const expandedObject = qObject.categories.reduce((arr: string[], objectCategory: string) => {
-      return utils.getUnique([...arr, ...utils.biolink.getDescendantClasses(utils.removeBioLinkPrefix(objectCategory))]);
+      return getUnique([...arr, ...biolink.getDescendantClasses(removeBioLinkPrefix(objectCategory))]);
     }, [] as string[]);
     const qualifierConstraints = (qEdge.qualifier_constraints || []).map((qualifierSetObj) => {
       return Object.fromEntries(
@@ -188,9 +198,9 @@ export default class InferredQueryHandler {
             ...arr3,
             ...expandedPredicates.map((predicate) => {
               return {
-                subject: utils.removeBioLinkPrefix(subjectCategory),
-                object: utils.removeBioLinkPrefix(objectCategory),
-                predicate: utils.removeBioLinkPrefix(predicate),
+                subject: removeBioLinkPrefix(subjectCategory),
+                object: removeBioLinkPrefix(objectCategory),
+                predicate: removeBioLinkPrefix(predicate),
                 qualifiers: qualifierSet,
               };
             }),
@@ -261,7 +271,7 @@ export default class InferredQueryHandler {
     qEdgeID: string,
     qEdge: TrapiQEdge,
     combinedResponse: CombinedResponse,
-    auxGraphSuffixes: {[inferredEdgeID: string]: number},
+    auxGraphSuffixes: { [inferredEdgeID: string]: number },
     qualifiers?: CompactQualifiers,
   ): CombinedResponseReport {
     const span = Telemetry.startSpan({ description: 'creativeCombineResponse' });
@@ -270,7 +280,6 @@ export default class InferredQueryHandler {
       querySuccess: 0,
       queryHadResults: false,
       mergedResults: {},
-      creativeLimitHit: false,
     };
     let mergedThisTemplate = 0;
     const resultIDsFromPrevious = new Set(Object.keys(combinedResponse.message.results));
@@ -323,7 +332,7 @@ export default class InferredQueryHandler {
 
       if (this.pathfinder) {
         for (let [nodeID, bindings] of Object.entries(result.node_bindings)) {
-          if (nodeID === "creativeQuerySubject" || nodeID === "creativeQueryObject") {
+          if (nodeID === 'creativeQuerySubject' || nodeID === 'creativeQueryObject') {
             continue;
           }
           for (const binding of bindings) {
@@ -354,9 +363,9 @@ export default class InferredQueryHandler {
             // Predicate matches or is descendant
             const predicateMatch =
               qEdge.predicates?.some((predicate) => {
-                const descendantMatch = utils.biolink
-                  .getDescendantPredicates(utils.removeBioLinkPrefix(predicate))
-                  .includes(utils.removeBioLinkPrefix(boundEdge.predicate));
+                const descendantMatch = biolink
+                  .getDescendantPredicates(removeBioLinkPrefix(predicate))
+                  .includes(removeBioLinkPrefix(boundEdge.predicate));
                 return predicate === boundEdge.predicate || descendantMatch;
               }) ?? false;
             // All query qualifiers (if any) are accounted for (more is fine)
@@ -371,15 +380,15 @@ export default class InferredQueryHandler {
                       let valueMatch: boolean;
                       try {
                         const descendants = queryQualifier.qualifier_value.includes('biolink:')
-                          ? utils.biolink.getDescendantPredicates(
-                            utils.removeBioLinkPrefix(queryQualifier.qualifier_value as string),
+                          ? biolink.getDescendantPredicates(
+                            removeBioLinkPrefix(queryQualifier.qualifier_value as string),
                           )
-                          : utils.biolink.getDescendantQualifiers(
-                            utils.removeBioLinkPrefix(queryQualifier.qualifier_value as string),
+                          : biolink.getDescendantQualifiers(
+                            removeBioLinkPrefix(queryQualifier.qualifier_value as string),
                           );
                         valueMatch =
                           queryQualifier.qualifier_value === qualifier.qualifier_value ||
-                          descendants.includes(utils.removeBioLinkPrefix(qualifier.qualifier_value as string));
+                          descendants.includes(removeBioLinkPrefix(qualifier.qualifier_value as string));
                       } catch (err) {
                         valueMatch = queryQualifier.qualifier_value === qualifier.qualifier_value;
                       }
@@ -468,7 +477,7 @@ export default class InferredQueryHandler {
         };
 
         if (this.pathfinder) {
-            combinedResponse.original_analyses[auxGraphID] = result.analyses[0];
+          combinedResponse.original_analyses[auxGraphID] = result.analyses[0];
         }
       }
 
@@ -526,10 +535,6 @@ export default class InferredQueryHandler {
     }
     report.querySuccess = 1;
 
-    const resSize = this.pathfinder ? pfIntermediateSet.size : Object.keys(combinedResponse.message.results).length;
-    if (resSize >= this.CREATIVE_LIMIT && !report.creativeLimitHit) {
-      report.creativeLimitHit = resSize;
-    }
     span.finish();
     return report;
   }
@@ -615,7 +620,7 @@ export default class InferredQueryHandler {
         results: {},
       },
       logs: this.logs,
-      ...(this.pathfinder && { original_analyses: {} })
+      ...(this.pathfinder && { original_analyses: {} }),
     } as CombinedResponse;
     // add/combine nodes
     const resultQueries = [];
@@ -624,70 +629,65 @@ export default class InferredQueryHandler {
     const mergedResultsCount: {
       [resultID: string]: number;
     } = {};
-    const auxGraphSuffixes: {[inferredEdgeID: string]: number} = {};
+    const auxGraphSuffixes: { [inferredEdgeID: string]: number } = {};
+    if (global.queryInformation !== null) {
+      global.queryInformation.totalRecords = {};
+    }
 
-    await async.eachOfSeries(subQueries, async ({ template, queryGraph, qualifiers }, i) => {
-      const span = Telemetry.startSpan({ description: 'creativeTemplate' });
-      span.setData('template', (i as number) + 1);
-      i = i as number;
-      if (stop) {
-        span.finish();
-        return;
-      }
-      if (global.queryInformation?.queryGraph) {
-        global.queryInformation.isCreativeMode = true;
-        global.queryInformation.creativeTemplate = template;
-      }
-      if (global.queryInformation != null) global.queryInformation.totalRecords = 0; // Reset between templates
-      
-      const handler = new TRAPIQueryHandler({ ...this.options, skipPfocr: true }, this.path, this.predicatePath, this.includeReasoner);
-      try {
-        // make query and combine results/kg/logs/etc
-        handler.setQueryGraph(queryGraph);
-        await handler.query();
-        const { querySuccess, queryHadResults, mergedResults, creativeLimitHit } = this.combineResponse(
-          i,
-          handler,
-          qEdgeID,
-          qEdge,
-          combinedResponse,
-          auxGraphSuffixes,
-          qualifiers,
+    const completedHandlers = await Promise.all(
+      subQueries.map(async ({ template, queryGraph, qualifiers }, i) => {
+        const span = Telemetry.startSpan({ description: 'creativeTemplate' });
+        span.setData('template', i + 1);
+        const handler = new TRAPIQueryHandler(
+          { ...this.options, skipPfocr: true, handlerIndex: this.options.handlerIndex ?? i },
+          this.path,
+          this.predicatePath,
+          this.includeReasoner,
         );
-        // update values used in logging
-        successfulQueries += querySuccess;
-        if (queryHadResults) resultQueries.push(i);
-        Object.entries(mergedResults).forEach(([result, countMerged]) => {
-          mergedResultsCount[result] =
-            result in mergedResultsCount ? mergedResultsCount[result] + countMerged : countMerged;
-        });
-        // log to user if we should stop
-        if (creativeLimitHit) {
-          stop = true;
-          const message = [
-            `Addition of ${creativeLimitHit} results from Template ${i + 1}`,
-            Object.keys(combinedResponse.message.results).length === this.CREATIVE_LIMIT ? ' meets ' : ' exceeds ',
-            `creative result maximum of ${this.CREATIVE_LIMIT} (reaching ${Object.keys(combinedResponse.message.results).length
-            } merged). `,
-            `Response will be truncated to top-scoring ${this.CREATIVE_LIMIT} results. Skipping remaining ${subQueries.length - (i + 1)
-            } `,
-            subQueries.length - (i + 1) === 1 ? `template.` : `templates.`,
-          ].join('');
+        global.queryInformation.totalRecords[i] = 0; // Ensure 0 starting for each template
+        handler.setQueryGraph(queryGraph);
+        const failedHandlerLogs: { [index: number]: StampedLog[] } = {};
+        try {
+          await timeoutPromise(handler.query(AbortSignal.timeout(this.CREATIVE_TIMEOUT)), this.CREATIVE_TIMEOUT);
+        } catch (error) {
+          handler.logs.forEach((log) => {
+            log.message = `[Template-${i + 1}]: ${log.message}`;
+          });
+          failedHandlerLogs[i] = handler.logs;
+          const message = `ERROR:  Template-${i + 1} failed due to error ${error}`;
           debug(message);
-          combinedResponse.logs.push(new LogEntry(`INFO`, null, message).getLog());
+          handler.logs.push(new LogEntry(`ERROR`, null, message).getLog());
+          span.finish();
+          return { i, handler, qualifiers, failed: true };
         }
         span.finish();
-      } catch (error) {
-        handler.logs.forEach((log) => {
-          combinedResponse.logs.push(log);
-        });
-        const message = `ERROR:  Template-${i + 1} failed due to error ${error}`;
-        debug(message);
-        combinedResponse.logs.push(new LogEntry(`ERROR`, null, message).getLog());
-        span.finish();
-        return;
+        return { i, handler, qualifiers };
+      }),
+    );
+
+    for (const handlerInfo of completedHandlers) {
+      const { i, handler, qualifiers, failed } = handlerInfo;
+      if (failed) {
+        handler.logs.forEach(log => combinedResponse.logs.push(log));
+        continue;
       }
-    });
+      const { querySuccess, queryHadResults, mergedResults } = this.combineResponse(
+        i,
+        handler,
+        qEdgeID,
+        qEdge,
+        combinedResponse,
+        auxGraphSuffixes,
+        qualifiers,
+      );
+      successfulQueries += querySuccess;
+      if (queryHadResults) resultQueries.push(i);
+      Object.entries(mergedResults).forEach(([result, countMerged]) => {
+        mergedResultsCount[result] =
+          result in mergedResultsCount ? mergedResultsCount[result] + countMerged : countMerged;
+      });
+    }
+
     // log about merged Results
     if (Object.keys(mergedResultsCount).length) {
       // Add 1 for first instance of result (not counted during merging)
@@ -717,6 +717,19 @@ export default class InferredQueryHandler {
     response.message.results = Object.values(combinedResponse.message.results).sort((a, b) => {
       return b.analyses[0].score - a.analyses[0].score ? b.analyses[0].score - a.analyses[0].score : 0;
     });
+
+    // log about trimming results
+    if (response.message.results.length > this.CREATIVE_LIMIT) {
+      const message = [
+        `Number of results exceeds`,
+        `creative result maximum of ${this.CREATIVE_LIMIT} (reaching ${Object.keys(response.message.results).length
+        } merged). `,
+        `Response will be truncated to top-scoring ${this.CREATIVE_LIMIT} results.`,
+      ].join('');
+      debug(message);
+      combinedResponse.logs.push(new LogEntry(`INFO`, null, message).getLog());
+    }
+
     // trim extra results and prune kg
     response.message.results = response.message.results.slice(0, this.CREATIVE_LIMIT);
     response.description = `Query processed successfully, retrieved ${response.message.results.length} results.`;
@@ -734,7 +747,7 @@ export default class InferredQueryHandler {
         .forEach((log) => response.logs.push(log));
     }
     if (!this.pathfinder) {
-        response.logs = (response.logs as StampedLog[]).map((log) => log.toJSON());
+      response.logs = (response.logs as StampedLog[]).map((log) => log.toJSON());
     }
 
     return response;
