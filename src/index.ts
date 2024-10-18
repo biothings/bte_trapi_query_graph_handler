@@ -278,7 +278,7 @@ export default class TRAPIQueryHandler {
           ]);
           this.bteGraph.edges[boundEdgeID] = boundEdge;
         } else {
-          (this.bteGraph.edges[boundEdgeID].attributes['biolink:support_graphs'] as Set<string>).add(supportGraphID);
+          this.bteGraph.edges[boundEdgeID].addAdditionalAttributes('biolink:support_graphs', supportGraphID);
         }
         if (!edgesToRebind[edgeID]) edgesToRebind[edgeID] = {};
         if (!edgesToRebind[edgeID][subject]) edgesToRebind[edgeID][subject] = {};

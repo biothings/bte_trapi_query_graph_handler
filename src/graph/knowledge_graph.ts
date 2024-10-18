@@ -17,7 +17,8 @@ import { toArray, Telemetry } from '@biothings-explorer/utils';
 
 const debug = Debug('bte:biothings-explorer-trapi:KnowledgeGraph');
 
-const NON_ARRAY_ATTRIBUTES = ['biolink:knowledge_level', 'biolink:agent_type', 'biolink:evidence_count'];
+const NON_ARRAY_ATTRIBUTES = ['biolink:knowledge_level', 'biolink:agent_type'];
+const SUM_ATTRIBUTES = ['biolink:evidence_count'];
 
 interface SpecialAttributeHandlers {
   [attribute_type_id: string]: (value: Set<string | number>, kgEdge: KGEdge) => TrapiAttribute['value'];
@@ -149,12 +150,19 @@ export default class KnowledgeGraph {
     Object.entries(kgEdge.attributes).forEach(([key, value]) => {
       if (key === 'edge-attributes') return;
 
-      let formatted_value: TrapiAttribute['value'] = NON_ARRAY_ATTRIBUTES.includes(key)
-        ? Array.from(value as Set<string>).reduce((acc, val) => acc + val)
-        : Array.from(value as Set<string>);
+      let formatted_value: TrapiAttribute['value'];
+      if (SUM_ATTRIBUTES.includes(key)) {
+        // for sums we don't want to remove duplicates
+        formatted_value = (value as string[]).reduce((acc, val) => acc + val);
+      } else if (NON_ARRAY_ATTRIBUTES.includes(key)) {
+        // for non array attributes we want to remove duplicates (ie. same string for knowledge_level multiple times)
+        formatted_value = Array.from(new Set(value as string[])).reduce((acc, val) => acc + val);
+      } else {
+        formatted_value = Array.from(new Set(value as string[]));
+      }
 
       if (key in SPECIAL_ATTRIBUTE_HANDLERS) {
-        formatted_value = SPECIAL_ATTRIBUTE_HANDLERS[key](value as Set<string | number>, kgEdge);
+        formatted_value = SPECIAL_ATTRIBUTE_HANDLERS[key](new Set(value as string[]), kgEdge);
       }
 
       attributes.push({
