@@ -83,7 +83,9 @@ async function getAllByScrolling(
 
   if (data) {
     hits.push(...data.hits);
-    debug(`Batch window ${batchIndex}-${batchIndex + 1000}: ${data.hits.filter(hit => !hit.notfound).length} hits retrieved for PFOCR figure data`);
+    debug(
+      `Batch window ${batchIndex}-${batchIndex + 1000}: ${data.hits.filter((hit) => !hit.notfound).length} hits retrieved for PFOCR figure data`,
+    );
   }
 
   if (data && batchIndex + 1000 < data.max_total) {
@@ -163,14 +165,25 @@ function traverseResultForNodes(result: TrapiResult, response: TrapiResponse): S
   return nodes;
 }
 
-function generateQterms(response: TrapiResponse): { qTerms: string[]; qTermByResults: Map<TrapiResult, string> } {
+function generateQterms(response: TrapiResponse): {
+  qTerms: string[];
+  qTermByResults: Map<TrapiResult, string>;
+  primaryCuriebyCurie: Map<string, string>;
+} {
   const results = response.message.results;
 
   const qTermByResults: Map<TrapiResult, string> = new Map();
+  const primaryCuriebyCurie: Map<string, string> = new Map();
   const qTerms = results.reduce((qTerms: string[], result: TrapiResult) => {
     const nodes: Set<TrapiKGNode> = new Set();
+    const primaryCurieByNode: Map<TrapiKGNode, string> = new Map();
     Object.values(result.node_bindings).forEach((bindings) =>
-      bindings.forEach((binding) => nodes.add(response.message.knowledge_graph.nodes[binding.id])),
+      bindings.forEach((binding) => {
+        const node = response.message.knowledge_graph.nodes[binding.id];
+        nodes.add(node);
+        primaryCurieByNode.set(node, binding.id);
+        primaryCuriebyCurie.set(binding.id, binding.id); // Ensure self-primary relationship
+      }),
     );
 
     // Generate sets per supported node of supported curies
@@ -186,6 +199,8 @@ function generateQterms(response: TrapiResponse): { qTerms: string[]; qTermByRes
       const equivalentCuries =
         (node.attributes?.find((attribute) => attribute.attribute_type_id === 'biolink:xref')?.value as string[]) ?? [];
       equivalentCuries.forEach((curie) => {
+        primaryCuriebyCurie.set(curie, primaryCurieByNode.get(node)); // Keep track of primary for later use
+
         const prefix = curie.split(':')[0];
         if (supportedCategory && Object.keys(SUPPORTED_PREFIXES).includes(prefix.toLowerCase())) {
           supportedEquivalents.add(curie);
@@ -228,7 +243,7 @@ function generateQterms(response: TrapiResponse): { qTerms: string[]; qTermByRes
     return qTerms;
   }, []);
 
-  return { qTerms, qTermByResults };
+  return { qTerms, qTermByResults, primaryCuriebyCurie };
 }
 
 export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse): Promise<StampedLog[]> {
@@ -238,7 +253,7 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
   const results = response.message.results;
   const logs: StampedLog[] = [];
 
-  const { qTerms, qTermByResults } = generateQterms(response);
+  const { qTerms, qTermByResults, primaryCuriebyCurie } = generateQterms(response);
 
   if (qTerms.length < 1) {
     // No TRAPI result can satisfy MATCH_COUNT_MIN
@@ -320,8 +335,28 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
       const precision = resultCuriesInFigure.size / figureCuries.size;
       const recall = resultCuriesInFigure.size / resultCuriesInAllFigures.size;
 
-      if (!('pfocr' in result)) result.pfocr = [];
+      const matchedCuries = new Set<string>();
+      resultCuriesInFigure.forEach((curie) => {
+        let primary = primaryCuriebyCurie.get(curie);
+        if (primary) {
+          matchedCuries.add(primary);
+          return;
+        }
+        // Didn't match, so it's from a node used in an aux graph somewhere
+        // Thankfully, this is an edge case, and the search space is already pretty small
+        // So performance hit should be minimal in the vast majority of cases
+        [...resultNodes].find((node) => {
+          const equivalentCuries =
+            (node.attributes?.find((attribute) => attribute.attribute_type_id === 'biolink:xref')?.value as string[]) ??
+            [];
+          if (equivalentCuries.includes(curie)) {
+            matchedCuries.add(equivalentCuries[0]); // First equivalent is always the primary
+            return true;
+          }
+        });
+      });
 
+      if (!('pfocr' in result)) result.pfocr = [];
       result.pfocr.push({
         // TODO: do we want to include figure title? Note: this would need to be added to queryBody.
         //title: figure.associatedWith.title,
@@ -329,6 +364,7 @@ export async function enrichTrapiResultsWithPfocrFigures(response: TrapiResponse
         pfocrUrl: figure.associatedWith.pfocrUrl,
         pmc: figure.associatedWith.pmc,
         matchedCuries: [...resultCuriesInFigure],
+        matchedKGNodes: [...matchedCuries],
         score: 2 * ((precision * recall) / (precision + recall)),
       });
       matchedResults.add(result);
