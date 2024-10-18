@@ -172,7 +172,11 @@ export default class KnowledgeGraph {
       // Do not add multiple SemmedDB sentences/other "supporting study results" from the same publication
       if (attribute.attribute_type_id === "biolink:has_supporting_study_result" && attribute?.attributes?.find((attr) => attr.attribute_type_id === "biolink:publications")) {
         const publication = attribute.attributes.find((attr) => attr.attribute_type_id === "biolink:publications").value;
-        if (seenPmids.has(publication) || seenPmids.size >= 50) return; // publication has been seen or cap reached
+        // publication has been seen or cap reached
+        if (seenPmids.has(publication) || seenPmids.size >= 50) {
+          seenPmids.add(publication);
+          return;
+        } 
         seenPmids.add(publication);
       }
 
