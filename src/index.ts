@@ -192,7 +192,8 @@ export default class TRAPIQueryHandler {
           subject,
           object,
         });
-        const source = ontologyKnowledgeSourceMapping[this.subclassEdges[expanded][original].source] ?? 'error-not-provided';
+        const source =
+          ontologyKnowledgeSourceMapping[this.subclassEdges[expanded][original].source] ?? 'error-not-provided';
         subclassEdge.addAdditionalAttributes('biolink:knowledge_level', 'knowledge_assertion');
         subclassEdge.addAdditionalAttributes('biolink:agent_type', 'manual_agent');
         subclassEdge.addSource([
@@ -430,7 +431,9 @@ export default class TRAPIQueryHandler {
         const descendantsByCurie: { [curie: string]: { [descendants: string]: string } } = getDescendants(
           queryGraph.nodes[nodeId].ids,
         );
-        let expanded = Object.values(descendantsByCurie).map(descendants => Object.keys(descendants)).flat()
+        let expanded = Object.values(descendantsByCurie)
+          .map((descendants) => Object.keys(descendants))
+          .flat();
 
         expanded = _.uniq([...queryGraph.nodes[nodeId].ids, ...expanded]);
 
@@ -442,10 +445,11 @@ export default class TRAPIQueryHandler {
 
         if (foundExpandedIds) {
           Object.entries(descendantsByCurie).forEach(([curie, descendants]) => {
-            Object.entries(descendants).forEach(([ descendant, source ]) => {
+            Object.entries(descendants).forEach(([descendant, source]) => {
               if (queryGraph.nodes[nodeId].ids.includes(descendant)) return;
               if (!this.subclassEdges[descendant]) this.subclassEdges[descendant] = {};
-              if (!this.subclassEdges[descendant][curie]) this.subclassEdges[descendant][curie] = { source, qNodes: [] };
+              if (!this.subclassEdges[descendant][curie])
+                this.subclassEdges[descendant][curie] = { source, qNodes: [] };
               this.subclassEdges[descendant][curie].qNodes.push(nodeId);
             });
           });
@@ -563,9 +567,17 @@ export default class TRAPIQueryHandler {
   }
 
   _queryIsPathfinder(): boolean {
-    const inferredEdgeCount = Object.values(this.queryGraph.edges).reduce((i, edge) => i + (edge.knowledge_type === 'inferred' ? 1 : 0), 0);
+    const inferredEdgeCount = Object.values(this.queryGraph.edges).reduce(
+      (i, edge) => i + (edge.knowledge_type === 'inferred' ? 1 : 0),
+      0,
+    );
     const pinnedNodes = Object.values(this.queryGraph.nodes).reduce((i, node) => i + (node.ids?.length > 0 ? 1 : 0), 0);
-    return inferredEdgeCount === 3 && pinnedNodes == 2 && Object.keys(this.queryGraph.edges).length === 3 && Object.keys(this.queryGraph.nodes).length === 3;
+    return (
+      inferredEdgeCount === 3 &&
+      pinnedNodes == 2 &&
+      Object.keys(this.queryGraph.edges).length === 3 &&
+      Object.keys(this.queryGraph.nodes).length === 3
+    );
   }
 
   _queryUsesInferredMode(): boolean {
@@ -585,7 +597,7 @@ export default class TRAPIQueryHandler {
     const pathfinderResponse = await pathfinderHandler.query();
 
     if (pathfinderResponse) {
-        this.getResponse = () => pathfinderResponse;
+      this.getResponse = () => pathfinderResponse;
     }
   }
 
@@ -603,7 +615,7 @@ export default class TRAPIQueryHandler {
       this.options,
       this.path,
       this.predicatePath,
-      this.includeReasoner
+      this.includeReasoner,
     );
     const inferredQueryResponse = await inferredQueryHandler.query();
     if (inferredQueryResponse) {
@@ -689,7 +701,7 @@ export default class TRAPIQueryHandler {
     ];
   };
 
-  async query(): Promise<void> {
+  async query(abortSignal?: AbortSignal): Promise<void> {
     this._initializeResponse();
     await this.addQueryNodes();
 
@@ -757,11 +769,20 @@ export default class TRAPIQueryHandler {
     }
     const manager = new EdgeManager(queryEdges, metaKG, this.subclassEdges, this.options);
 
-    const executionSuccess = await manager.executeEdges();
+    let executionSuccess: boolean;
+    try {
+      executionSuccess = await manager.executeEdges(abortSignal);
+    } catch (error) {
+      // Make sure we preserve the logs we can
+      this.logs = [...this.logs, ...manager.logs]
+      throw error;
+    }
     this.logs = [...this.logs, ...manager.logs];
     if (!executionSuccess) {
       return;
     }
+
+    if (abortSignal?.aborted) return;
 
     const span3 = Telemetry.startSpan({ description: 'resultsAssembly' });
 

@@ -1,4 +1,3 @@
-import { toArray } from '../utils';
 import Debug from 'debug';
 import {
   TrapiAttribute,
@@ -14,7 +13,7 @@ import KGNode from './kg_node';
 import KGEdge from './kg_edge';
 import { BTEGraphUpdate } from './graph';
 import { APIDefinition } from '@biothings-explorer/types';
-import { Telemetry } from '@biothings-explorer/utils';
+import { toArray, Telemetry } from '@biothings-explorer/utils';
 
 const debug = Debug('bte:biothings-explorer-trapi:KnowledgeGraph');
 

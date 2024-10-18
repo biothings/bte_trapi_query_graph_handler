@@ -375,6 +375,7 @@ export default class QueryEdgeManager {
 
   _createBatchQueryHandler(qEdge: QEdge, metaKG: MetaKG): BatchEdgeQueryHandler {
     const handler = new BatchEdgeQueryHandler(metaKG, this.options.resolveOutputIDs, {
+      ...this.options,
       caching: this.options.caching,
       submitter: this.options.submitter,
       recordHashEdgeAttributes: config.EDGE_ATTRIBUTES_USED_IN_RECORD_HASH,
@@ -404,9 +405,11 @@ export default class QueryEdgeManager {
     debug(logMessage);
   }
 
-  async executeEdges(): Promise<boolean> {
+  async executeEdges(abortSignal?: AbortSignal): Promise<boolean> {
     const unavailableAPIs: UnavailableAPITracker = {};
     while (this.getEdgesNotExecuted()) {
+      if (abortSignal?.aborted) return false;
+
       const span = Telemetry.startSpan({ description: 'edgeExecution' });
       //next available/most efficient edge
       const currentQEdge = this.getNext();
@@ -423,7 +426,7 @@ export default class QueryEdgeManager {
       );
       debug(`(5) Executing current edge >> "${currentQEdge.getID()}"`);
       //execute current edge query
-      const queryRecords = await queryBatchHandler.query(queryBatchHandler.qEdges, unavailableAPIs);
+      const queryRecords = await queryBatchHandler.query(queryBatchHandler.qEdges, unavailableAPIs, abortSignal);
       this.logs = [...this.logs, ...queryBatchHandler.logs];
       if (queryRecords === undefined) return;
       // create an edge execution summary
