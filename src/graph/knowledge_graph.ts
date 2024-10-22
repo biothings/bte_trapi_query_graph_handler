@@ -175,7 +175,6 @@ export default class KnowledgeGraph {
 
     //handle TRAPI APIs (Situation A of https://github.com/biothings/BioThings_Explorer_TRAPI/issues/208) and APIs that define 'edge-atributes' in x-bte
     const seenPmids = new Set();
-    const seenAttrs = new Set();
     kgEdge.attributes['edge-attributes']?.forEach((attribute) => {
       // Do not add multiple SemmedDB sentences/other "supporting study results" from the same publication
       if (attribute.attribute_type_id === "biolink:has_supporting_study_result" && attribute?.attributes?.find((attr) => attr.attribute_type_id === "biolink:publications")) {
@@ -187,11 +186,7 @@ export default class KnowledgeGraph {
         } 
         seenPmids.add(publication);
       }
-      // Do not add duplicate attributes for TRAPi
-      else if (seenAttrs.has(attribute.attribute_type_id)) {
-        return;
-      }
-      seenAttrs.add(attribute.attribute_type_id);
+
       attributes.push(attribute);
     });
 
